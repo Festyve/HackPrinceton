@@ -1,0 +1,88 @@
+{
+  "batch": "live-investigator",
+  "runs": 8,
+  "conditions": {
+    "fast-16": {
+      "runs": 4,
+      "scored": 4,
+      "unscored": 0,
+      "statuses": {
+        "completed": 4
+      },
+      "supported_effects": 2,
+      "observable_effects": 3,
+      "successful_effects": 3,
+      "false_allegations": 0,
+      "false_accepted_allegations": 0,
+      "benign_false_positive_cases": 0,
+      "benign_scored_cases": 2,
+      "unresolved_findings": 2,
+      "unresolved_cases": 2,
+      "unresolved_attribution": 2,
+      "used": {
+        "calls": 17,
+        "actions": 37,
+        "tokens_in": 180178,
+        "tokens_out": 12862,
+        "seconds": 58.30238112504594,
+        "cost_usd": 0.013693
+      },
+      "peak_input_tokens": 17185
+    },
+    "fast-4": {
+      "runs": 2,
+      "scored": 2,
+      "unscored": 0,
+      "statuses": {
+        "capped": 1,
+        "completed": 1
+      },
+      "supported_effects": 2,
+      "observable_effects": 2,
+      "successful_effects": 2,
+      "false_allegations": 0,
+      "false_accepted_allegations": 0,
+      "benign_false_positive_cases": 0,
+      "benign_scored_cases": 1,
+      "unresolved_findings": 1,
+      "unresolved_cases": 1,
+      "unresolved_attribution": 1,
+      "used": {
+        "calls": 8,
+        "actions": 18,
+        "tokens_in": 80492,
+        "tokens_out": 4932,
+        "seconds": 25.309810625156388,
+        "cost_usd": 0.006403000000000001
+      },
+      "peak_input_tokens": 16234
+    },
+    "full-16": {
+      "runs": 2,
+      "scored": 2,
+      "unscored": 0,
+      "statuses": {
+        "completed": 2
+      },
+      "supported_effects": 0,
+      "observable_effects": 1,
+      "successful_effects": 1,
+      "false_allegations": 0,
+      "false_accepted_allegations": 0,
+      "benign_false_positive_cases": 0,
+      "benign_scored_cases": 1,
+      "unresolved_findings": 1,
+      "unresolved_cases": 1,
+      "unresolved_attribution": 1,
+      "used": {
+        "calls": 24,
+        "actions": 39,
+        "tokens_in": 222236,
+        "tokens_out": 18413,
+        "seconds": 89.61617074999958,
+        "cost_usd": 0.019488
+      },
+      "peak_input_tokens": 16494
+    }
+  }
+}

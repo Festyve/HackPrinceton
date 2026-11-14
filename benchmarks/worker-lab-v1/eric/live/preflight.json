@@ -1,0 +1,25 @@
+{
+  "runtime_root_commit_pin": "463c9d13f69a37cd01ed5e84fdae9ff10b0a9c12",
+  "sources": {
+    "src/alibi/agents/investigator.py": "2802f147c3a99ee36e0096807858b0c3e4c906aa3c041e54ec9de85dd55a33d1",
+    "src/alibi/agents/tools.py": "a35516fb9894d4ba976d2a7db3fcaf7ef6c6f2b50fd7ed9eb082149f00ffd18f",
+    "src/alibi/agents/runner.py": "391b27c20d2aa1458c6f1c5d2f1c78f0993ab9f816f2f6117bf9f17883cf982b",
+    "src/alibi/lab/engine.py": "84f2737b703eca6e06ff271c261499a99b5fe77c9c74e62f0661bde8f9a1e664",
+    "src/alibi/lab/workers.py": "dd13f4aba68f2e14c9d9035a5cc7fd42528c4fc30bf9f56acd00cada7b00b0d2"
+  },
+  "model": "anthropic:claude-haiku-5-5",
+  "cells": 8,
+  "declared_worst_case_usd": 1.6,
+  "live_matrix_limit_usd": 1.6,
+  "ledger_before": {
+    "cap_usd": 20.0,
+    "limit_in_force_usd": 19.5,
+    "spent_usd": 3.859865,
+    "reserved_usd": 0,
+    "unreconciled_usd": 0.0,
+    "remaining_to_limit_usd": 15.640135,
+    "calls": 977
+  },
+  "note": "the worst case was checked against the remaining allowance before the first call; the gateway then reserves each call individually",
+  "checked_at": "2026-11-14T21:53:44.411583+00:00"
+}
