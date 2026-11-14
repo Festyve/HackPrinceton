@@ -1951,3 +1951,32 @@ details li {
 .evaluation th:not(:first-child) {
   font-variant-numeric: tabular-nums;
 }
+.design-link {
+  display: block;
+  margin: 8px 0 0 auto;
+  font-size: 12px;
+}
+.designer > button {
+  margin: 6px 0 14px;
+}
+.design-result {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.design-label {
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+.design-preview {
+  margin: 0 0 14px;
+  padding-left: 18px;
+  font-size: 13px;
+}
+.design-result label {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.design-result select {
+  max-width: 100%;
+}

@@ -10,6 +10,7 @@ import type {
   PairedSummary,
   QuestionAnswer,
   Runtime,
+  ScenarioDesign,
   SensorPoint,
   SensorStreams,
   SourceExperiment,
@@ -1043,5 +1044,131 @@ export function EvaluationSummary({ s }: { s: PairedSummary }) {
         </details>
       )}
     </section>
+  );
+}
+
+// --------------------------------------------------------------------------- environment designer
+
+const FIXTURE_WORDS: Record<string, string> = {
+  none: "No incident · an ordinary day",
+  "inside-job-plain": "Inside job · scripted scenario",
+  "inside-job-coverup": "Inside job with a removed log line · scripted scenario",
+};
+
+/** One bounded design request, a preview a person reads, then offline generation. The model plans no incident. */
+export function DesignerDialog({
+  runtime,
+  mode,
+  onCase,
+}: {
+  runtime: Runtime | null;
+  mode: string | null;
+  onCase: (view: CaseView) => void;
+}) {
+  const [design, setDesign] = useState<ScenarioDesign | null>(null);
+  const [fixture, setFixture] = useState("none");
+  const [busy, setBusy] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const live = runtime?.capabilities?.scenario_designer?.model === "CONFIGURED";
+  const run = async (what: string, fn: () => Promise<void>) => {
+    setBusy(what);
+    setErr(null);
+    try {
+      await fn();
+    } catch (e) {
+      setErr(message(e));
+    } finally {
+      setBusy(null);
+    }
+  };
+  const usable = !!design?.design;
+  return (
+    <div className="designer" data-testid="designer">
+      <p>
+        A model chooses an ordinary working day from fixed options: how busy it
+        is, one routine condition and when it happens. It plans no incident and
+        writes no step.
+      </p>
+      <p className="small muted">
+        {live
+          ? "One bounded model response, then the case is generated offline."
+          : "No model is configured on this server, so a default environment is returned and labeled as a default."}
+      </p>
+      <button
+        className="primary"
+        data-testid="btn-design-ask"
+        disabled={busy !== null}
+        onClick={() =>
+          run("ask", async () => {
+            setDesign(await api.design(token()));
+          })
+        }
+      >
+        {busy === "ask"
+          ? "Asking…"
+          : design
+            ? "Ask for another design"
+            : "Ask for a design"}
+      </button>
+      {design && (
+        <section className="design-result" data-testid="design-result">
+          <p className="design-label" data-testid="design-label">
+            {design.label ?? words(design.status)}
+          </p>
+          {!usable && (
+            <p className="small amber">
+              {design.fallback_reason ??
+                "This request ended without a design, so no case can be made from it."}
+            </p>
+          )}
+          <ul className="design-preview">
+            {(design.preview ?? []).map((line, i) => (
+              <li key={i}>{line}</li>
+            ))}
+          </ul>
+          {usable && (
+            <>
+              <label className="small">
+                Operator only: what happens in this environment
+                <select
+                  data-testid="design-fixture"
+                  value={fixture}
+                  onChange={(e) => setFixture(e.target.value)}
+                  disabled={busy !== null}
+                >
+                  {(design.fixtures ?? ["none"]).map((f) => (
+                    <option key={f} value={f}>
+                      {FIXTURE_WORDS[f] ?? words(f)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p className="small muted">
+                This choice is yours, never the model's. The case looks the
+                same either way until its answer is unsealed.
+              </p>
+              <button
+                data-testid="btn-design-generate"
+                disabled={busy !== null}
+                onClick={() =>
+                  run("generate", async () => {
+                    onCase(
+                      await api.createFromDesign(design.design_id, fixture, mode),
+                    );
+                  })
+                }
+              >
+                {busy === "generate" ? "Generating…" : "Generate the case"}
+              </button>
+            </>
+          )}
+        </section>
+      )}
+      {err && (
+        <p role="alert" className="small bad">
+          {err}
+        </p>
+      )}
+    </div>
   );
 }

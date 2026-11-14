@@ -17,6 +17,7 @@ import { EvidenceColumn, RawViewer } from "./evidence";
 import { ScoreOverlay } from "./score";
 import { BenchmarkTab } from "./bench";
 import {
+  DesignerDialog,
   ExperimentComparison,
   QuestionPanel,
   TemperatureRecords,
@@ -87,6 +88,7 @@ export default function App() {
   const [disconnected, setDisconnected] = useState(false);
   const [attaching, setAttaching] = useState(false);
   const [mode, setMode] = useState<string | null>(null);
+  const [showDesigner, setShowDesigner] = useState(false);
   const rawRequest = useRef(0);
 
   const esRef = useRef<EventSource | null>(null);
@@ -546,6 +548,10 @@ export default function App() {
               runtime={runtime}
               mode={mode}
               onMode={setMode}
+              onDesign={() => {
+                setShowLibrary(false);
+                setShowDesigner(true);
+              }}
             />
           </main>
         ) : (
@@ -619,6 +625,10 @@ export default function App() {
               runtime={runtime}
               mode={mode}
               onMode={setMode}
+              onDesign={() => {
+                setShowLibrary(false);
+                setShowDesigner(true);
+              }}
             />
             <div className="modal-actions">
               {err && (
@@ -634,6 +644,22 @@ export default function App() {
                 {busy === "run" ? "Opening case…" : "Open selected case"}
               </button>
             </div>
+          </Dialog>
+        )}
+        {showDesigner && (
+          <Dialog
+            title="Design an environment"
+            onClose={() => setShowDesigner(false)}
+          >
+            <DesignerDialog
+              runtime={runtime}
+              mode={mode}
+              onCase={(v) => {
+                setShowDesigner(false);
+                setTab("case");
+                void attach(v.case.case_id, v);
+              }}
+            />
           </Dialog>
         )}
         {showDetails && (
@@ -675,6 +701,7 @@ function StartState(p: {
   runtime: Runtime | null;
   mode: string | null;
   onMode: (m: string) => void;
+  onDesign: () => void;
 }) {
   const modes = p.runtime?.capabilities?.investigation_modes;
   if (p.err)
@@ -758,6 +785,16 @@ function StartState(p: {
                 ))}
               </select>
             </label>
+          )}
+          {p.runtime?.capabilities?.scenario_designer?.endpoint && (
+            <button
+              className="linkish design-link"
+              data-testid="btn-design"
+              disabled={p.busy}
+              onClick={p.onDesign}
+            >
+              Design an environment for a new case
+            </button>
           )}
         </div>
       </div>

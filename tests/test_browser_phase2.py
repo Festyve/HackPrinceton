@@ -260,3 +260,33 @@ def test_the_benchmark_tab_shows_the_six_system_evaluation_with_its_limits(serve
     # the first-run results are still there, named as the first run
     assert page.locator(tid("benchmark-summary")).count() == 1 and "First run" in page.inner_text(".bench")
     assert page.errors == []
+
+
+def test_a_designed_environment_is_previewed_labeled_and_generated_without_showing_the_operators_choice(server, page):
+    base, _ = server
+    page.goto(base + "/")
+    page.click(tid("btn-design"))
+    page.wait_for_selector(tid("designer"))
+    intro = page.inner_text(tid("designer"))
+    assert "plans no incident" in intro and "No model is configured" in intro
+    assert page.locator(tid("design-result")).count() == 0
+    page.click(tid("btn-design-ask"))
+    page.wait_for_selector(tid("design-label"))
+    # with no model the server returns a default and says so; it is never shown as a model's design
+    assert page.inner_text(tid("design-label")) == "Default environment · no model was asked"
+    assert "No incident is part of a design" in page.inner_text(tid("design-result"))
+    assert page.locator(tid("design-fixture")).input_value() == "none"  # nothing is placed unless the operator chooses
+    page.select_option(tid("design-fixture"), "inside-job-coverup")
+    page.click(tid("btn-design-generate"))
+    wait_state(page, "awaiting_review")
+    # before the reveal nothing on the case says what the operator chose
+    body = page.inner_text("body")
+    assert "inside-job-coverup" not in body and "Operator only" not in body and page.locator(tid("designer")).count() == 0
+    assert "Scripted fixture · no model inference" in page.inner_text(tid("badge-inference"))
+    page.click(tid("btn-accept"))
+    wait_state(page, "report_locked")
+    page.click(tid("btn-unseal"))
+    wait_state(page, "scored")
+    page.wait_for_selector(tid("score-panel"))
+    assert "no model chose these steps" in page.inner_text(tid("score-panel"))  # the incident is a scripted scenario
+    assert page.errors == []

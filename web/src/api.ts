@@ -31,6 +31,19 @@ export interface Capabilities {
   source_experiments?: { endpoint?: boolean; max_excluded_sources?: number };
   report_export?: { endpoint?: boolean };
   sensor_streams?: { endpoint?: boolean };
+  scenario_designer?: { endpoint?: boolean; model?: "CONFIGURED" | "BLOCKED" };
+}
+/** An ordinary operating environment chosen from fixed options. It never contains an incident. */
+export interface ScenarioDesign {
+  design_id: string;
+  status: "designed" | "default_used" | "refused" | "unavailable" | string;
+  source?: string;
+  label?: string;
+  preview?: string[];
+  design?: Record<string, unknown> | null;
+  fallback_reason?: string | null;
+  fixtures?: string[];
+  model_id?: string | null;
 }
 export interface Runtime {
   runtime_mode?: string;
@@ -566,6 +579,19 @@ export const api = {
   explanations: (id: string) =>
     req<{ explanations: Explanation[] }>(`/api/cases/${q(id)}/explanations`),
   benchmark: () => req<Benchmark>("/api/benchmark"),
+  design: (client_token: string) =>
+    post<ScenarioDesign>("/api/scenario-designs", { client_token }),
+  createFromDesign: (
+    design_id: string,
+    design_fixture: string,
+    investigation_mode?: string | null,
+  ) =>
+    post<CaseView>("/api/cases", {
+      design_id,
+      design_fixture,
+      client_token: token(),
+      ...(investigation_mode ? { investigation_mode } : {}),
+    }),
   questions: (id: string) =>
     req<{ questions: QuestionAnswer[] }>(`/api/cases/${q(id)}/questions`),
   ask: (id: string, question: string, client_token: string) =>
