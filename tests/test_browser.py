@@ -210,7 +210,8 @@ def test_predefined_explanations_cite_evidence(server, page):
     page.click(tid("explain-missing-line"))
     assert "retention boundary" in page.inner_text(tid("explain-answer"))
     assert page.locator(f'{tid("explain-answer")} [data-testid^="chip-"]').count() >= 3
-    assert page.locator('input[type="text"]').is_disabled()  # unavailable capability is explained, never a fake answer
+    # with no model configured the composer says so; the predefined explanations are never passed off as its answer
+    assert "No model is configured" in page.inner_text(tid("question-composer"))
     shot(page, "05-explain")
 
 
@@ -347,9 +348,9 @@ def test_workbench_layout_and_unavailable_capabilities(server, browser, width, h
             box = pg.locator(selector).first.bounding_box()
             assert box and box["x"] >= 0 and box["x"] + box["width"] <= width
             assert box["y"] >= 0 and box["y"] + box["height"] <= height
-    assert pg.locator("#case-question").is_disabled()
-    assert "unavailable in this server version" in pg.inner_text(tid("question-composer"))
-    assert "unavailable" in pg.inner_text(tid("source-experiment-unavailable"))
+    assert pg.locator("#case-question").is_enabled() and pg.locator(tid("btn-ask")).is_disabled()  # nothing typed yet
+    assert "No model is configured" in pg.inner_text(tid("question-composer"))
+    assert "original evidence is not changed" in pg.inner_text(tid("source-experiment"))
     assert "confidence (uncalibrated)" not in pg.inner_text("body")
     assert blocked == []
     if SHOTS:

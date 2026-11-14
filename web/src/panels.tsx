@@ -97,7 +97,23 @@ export function CenterColumn(p: {
               Findings and citations are locked.
             </p>
           )}
-          {state === "report_locked" && (
+          {(state === "report_locked" || state === "scored") && (
+            <a
+              className="export-link"
+              data-testid="report-export"
+              href={api.reportExportUrl(view.case.case_id)}
+              download
+            >
+              Download the locked report
+            </a>
+          )}
+          {state === "report_locked" && view.case.scored === false && (
+            <p className="small muted">
+              Imported evidence has no sealed answer key, so there is nothing to
+              unseal.
+            </p>
+          )}
+          {state === "report_locked" && view.case.scored !== false && (
             <button
               className="primary"
               data-testid="btn-unseal"
@@ -209,7 +225,7 @@ function FindingCard({ f, index }: { f: Finding; index: number }) {
     <article className={`finding ${cls}`} data-testid={`finding-${f.id}`}>
       <header>
         <span className="finding-number">{String(index).padStart(2, "0")}</span>
-        <h3>{CLAIM_TITLES[f.claim_type] ?? f.claim_type}</h3>
+        <h3>{CLAIM_TITLES[f.claim_type] ?? f.claim_type.replace(/_/g, " ")}</h3>
       </header>
       <p className="observation">
         {observation.length > 165

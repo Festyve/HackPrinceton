@@ -9,7 +9,6 @@ import { Dialog } from "./dialog";
 import {
   Sources,
   RuntimeDetails,
-  Questions,
   ProgressActivity,
   humanState,
   originLabel,
@@ -17,6 +16,11 @@ import {
 import { EvidenceColumn, RawViewer } from "./evidence";
 import { ScoreOverlay } from "./score";
 import { BenchmarkTab } from "./bench";
+import {
+  ExperimentComparison,
+  QuestionPanel,
+  TemperatureRecords,
+} from "./phase2";
 
 const EVENT_TYPES = [
   "state",
@@ -82,6 +86,7 @@ export default function App() {
   const [selectedHost, setSelectedHost] = useState<string | null>(null);
   const [disconnected, setDisconnected] = useState(false);
   const [attaching, setAttaching] = useState(false);
+  const [mode, setMode] = useState<string | null>(null);
   const rawRequest = useRef(0);
 
   const esRef = useRef<EventSource | null>(null);
@@ -293,10 +298,11 @@ export default function App() {
       setTab("case");
       const v =
         choice.kind === "preset"
-          ? await api.createCase(choice.id)
+          ? await api.createCase(choice.id, mode)
           : await api.openReplay(choice.id);
       await attach(v.case.case_id, v);
     });
+  const doOpenCase = (id: string) => guard("run", () => attach(id));
   const doReset = () =>
     guard("reset", async () => {
       const id = caseIdRef.current;
@@ -536,6 +542,8 @@ export default function App() {
               onRun={(choice) => doRun(choice)}
               busy={busy !== null}
               runtime={runtime}
+              mode={mode}
+              onMode={setMode}
             />
           </main>
         ) : (
@@ -545,11 +553,21 @@ export default function App() {
                 view={view}
                 selectedHost={selectedHost}
                 onSelect={setSelectedHost}
+                onOpenCase={doOpenCase}
               />
               <section
                 className="col evidence-area"
                 aria-label="Evidence comparison"
               >
+                {view.case.parent_case_id && (
+                  <ExperimentComparison view={view} />
+                )}
+                {view.case.card_id === "cold-chain" && hasReport(state) && (
+                  <TemperatureRecords
+                    caseId={view.case.case_id}
+                    stateKey={view.manifest?.bundle_id ?? ""}
+                  />
+                )}
                 {hasReport(state) ? (
                   <EvidenceColumn
                     caseId={view.case.case_id}
@@ -572,7 +590,11 @@ export default function App() {
                 onShowScore={() => setShowScore(true)}
               />
             </main>
-            <Questions caseId={view.case.case_id} available={!!view.report} />
+            <QuestionPanel
+              caseId={view.case.case_id}
+              available={!!view.report}
+              runtime={runtime}
+            />
           </>
         )}
         {showLibrary && (
@@ -593,6 +615,8 @@ export default function App() {
               onRun={(choice) => doRun(choice)}
               busy={busy !== null}
               runtime={runtime}
+              mode={mode}
+              onMode={setMode}
             />
             <div className="modal-actions">
               {err && (
@@ -647,7 +671,10 @@ function StartState(p: {
   onRun: (s: { kind: "preset" | "replay"; id: string }) => void;
   busy: boolean;
   runtime: Runtime | null;
+  mode: string | null;
+  onMode: (m: string) => void;
 }) {
+  const modes = p.runtime?.capabilities?.investigation_modes;
   if (p.err)
     return (
       <div className="banner err" role="alert">
@@ -708,11 +735,29 @@ function StartState(p: {
           <p className="eyebrow">Case library</p>
           <h2>Fresh investigations</h2>
         </div>
-        <p className="small muted">
-          {p.runtime?.live_inference === "CONFIGURED"
-            ? "Live AI configured. New cases use the server runtime."
-            : "Fresh cases use a scripted fixture. Recorded AI works offline."}
-        </p>
+        <div>
+          <p className="small muted">
+            {p.runtime?.live_inference === "CONFIGURED"
+              ? "Live AI configured. New cases use the server runtime."
+              : "Fresh cases use a scripted fixture. Recorded AI works offline."}
+          </p>
+          {(modes?.available?.length ?? 0) > 1 && (
+            <label className="small mode-picker">
+              Investigation
+              <select
+                data-testid="mode-select"
+                value={p.mode ?? modes?.default ?? ""}
+                onChange={(e) => p.onMode(e.target.value)}
+              >
+                {(modes?.available ?? []).map((m) => (
+                  <option key={m} value={m}>
+                    {modes?.labels?.[m] ?? m}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
       </div>
       <div className="cards">
         {p.presets.presets.map((x) => (

@@ -106,6 +106,15 @@ export const CLAIM_TITLES: Record<string, string> = {
   collection_gap: "Collection gap (cause unknown)",
   account_use: "Account use",
   other: "Other observation",
+  timestamp_alteration: "File time contradicts independent records",
+  forwarding_stopped: "Log forwarding stopped",
+  second_host_session: "Session opened from another host",
+  sensor_stream_discrepancy: "Temperature records disagree",
+  shell_history_gap: "Activity without a shell-history command",
+  metadata_change: "File metadata changed later",
+  temperature_excursion: "Temperature outside the permitted range",
+  sensor_maintenance: "Discrepancy inside a maintenance window",
+  policy_consistent_access: "Access consistent with policy",
 };
 export const CATEGORY_WORDS: Record<string, string> = {
   incident_allegation: "incident allegation",

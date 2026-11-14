@@ -3,6 +3,7 @@ import { EvidenceCtx } from "./common";
 import type { CaseView, Runtime } from "./api";
 import type { Run } from "./model";
 import { Chips, hhmmss } from "./common";
+import { SpendLine, WitnessPanel } from "./phase2";
 
 export const humanState = (state: string) =>
   ({
@@ -29,10 +30,12 @@ export function Sources({
   view,
   selectedHost,
   onSelect,
+  onOpenCase,
 }: {
   view: CaseView;
   selectedHost: string | null;
   onSelect: (host: string) => void;
+  onOpenCase: (caseId: string) => void;
 }) {
   const openEvidence = useContext(EvidenceCtx);
   const sources = view.manifest?.sources ?? [];
@@ -149,16 +152,7 @@ export function Sources({
           Incomplete evidence. {(view.manifest.capture_notes ?? []).join(" ")}
         </p>
       )}
-      <section
-        className="source-experiment"
-        data-testid="source-experiment-unavailable"
-      >
-        <h4>Remove a witness</h4>
-        <p className="small muted">
-          Source experiments are unavailable in this server version. The
-          original evidence remains sealed.
-        </p>
-      </section>
+      <WitnessPanel view={view} onOpenCase={onOpenCase} />
       <p className="seal-note">
         {view.case.state === "scored"
           ? "Answer key unsealed"
@@ -199,6 +193,10 @@ export function RuntimeDetails({
         <dd>{view?.case.labels.playback ?? "No active case"}</dd>
         <dt>Model</dt>
         <dd>{view?.case.labels.model_id ?? "Not reported"}</dd>
+        <dt>Investigation</dt>
+        <dd data-testid="investigation-mode">
+          {view?.case.labels.investigation_mode_label ?? "Not reported"}
+        </dd>
         <dt>Evidence</dt>
         <dd>{originLabel(view?.case.labels.evidence_origin)}</dd>
         <dt>Seed</dt>
@@ -223,10 +221,7 @@ export function RuntimeDetails({
       ) : (
         <p className="muted">No usage reported.</p>
       )}
-      <p className="small muted">
-        Spend ledger status is not exposed by this server. Recorded usage
-        belongs to the saved run.
-      </p>
+      <SpendLine />
       <h3>Pipeline</h3>
       <ol className="pipe">
         {Object.values(run.stages).map((s) => (
@@ -271,43 +266,6 @@ export function RuntimeDetails({
         </>
       )}
     </div>
-  );
-}
-
-export function Questions({
-  caseId,
-  available,
-}: {
-  caseId: string;
-  available: boolean;
-}) {
-  // Existing endpoint returns deterministic explanations, never pretend it is live Q&A.
-  return (
-    <section
-      className="questions"
-      aria-label="Questions"
-      data-testid="question-composer"
-    >
-      <div>
-        <label htmlFor="case-question">Ask about this evidence</label>
-        <p id="question-reason">
-          {available
-            ? "Open-ended questions are unavailable in this server version. Use the cited explanations below."
-            : "Questions become available after the report is drafted. Open-ended Q&A is not supported by this server."}
-        </p>
-      </div>
-      <div className="composer">
-        <input
-          key={caseId}
-          id="case-question"
-          type="text"
-          placeholder="What can these records establish?"
-          disabled
-          aria-describedby="question-reason"
-        />
-        <button disabled>Ask</button>
-      </div>
-    </section>
   );
 }
 
