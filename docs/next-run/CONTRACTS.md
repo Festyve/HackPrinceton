@@ -1,6 +1,6 @@
 # Phase-two interfaces and file ownership
 
-These are **target contracts**, not endpoints present in the reviewed commit. Eric defines the Pydantic schemas and implements them; Terry builds against fixtures until those routes exist. Keep existing routes and fields backward compatible.
+These were the **target contracts** written before the second run. **They are now implemented.** The reference for what exists, with real example payloads, is [`docs/api.md`](../api.md) and `docs/api-examples/`; build against that. Where this page and `docs/api.md` differ, `docs/api.md` is what the server does. Existing routes and fields are backward compatible.
 
 ## Product API
 
