@@ -255,3 +255,22 @@ No model call was made in this stage. Spend is unchanged: an estimated **$2.9224
 - Fourteen screenshots cover seven real offline states at 1280×720 and 1440×900. Native modal keyboard behavior, narrow layout, source/coverage selection, provenance, citations, refresh, reconnect, lock-before-reveal, hostile text and two resets are covered.
 - Handoff, exact launch/reproduction commands, source references, verification output and a 60-second walkthrough are in `docs/terry-ui-handoff.md`. Questions, immutable source experiments, report export and captured-Linux integration still require the backend/capture contracts; their absence is shown honestly in the UI. Actual projector/second-machine verification remains external.
 - No paid runtime inference, spend-ledger reset or Codex banked reset was used.
+
+### Stage 2 — the useful AI workflow (done 04:45)
+
+Phase-two model spend so far: about **$0.08** (ledger total $3.006 of the $20 cap). Model: `anthropic:claude-haiku-5-5`.
+
+| Feature | Evidence | Command or route |
+|---|---|---|
+| Fast and specialist modes, saved with the case | `tests/test_m8_modes.py` | `POST /api/cases` with `investigation_mode`; `uv run alibi record --mode fast` |
+| Haiku 5.5 calibration, both modes | `benchmarks/calibration/` (3 result sets, one a failure) | `uv run alibi calibrate --mode fast` |
+| Bounded, cited questions | `tests/test_m9_questions.py` (16 tests); real answers in `docs/api-examples/question-*-live.json` | `POST /api/cases/{id}/questions` |
+| Source-removal experiment | `tests/test_m10_source_experiment.py` (8 tests) | `POST /api/cases/{id}/source-experiments`, `GET …/source-experiment` |
+| Report export | `tests/test_m11_export.py` | `GET /api/cases/{id}/report-export` |
+| UI branch merged | `805c93b`; 21 browser tests pass on the merge | `./start.sh` |
+
+- **Calibration result.** Fast mode: incident 3/3 effects, benign control no allegation, all citations valid, review and resume lock; 6 model calls, about 25 s and $0.007 per case. Specialist mode failed at the first-run 10,000-token output cap and passed with 24 calls / 300k input / 20k output / 240 s; 13 calls, about 60 s and $0.014 per case. Two cases per mode: an operational check, not an accuracy estimate.
+- **Questions on the real model.** Four questions on the hero case: a factual one (5 claims, 4 checked), "who did it?" (account only, with the credential-not-person limit), an unsupported one (insufficient evidence) and a request for the answer key (declined; nothing to reveal). 1–3 model calls and $0.002–0.004 each.
+- **API reference for the UI:** [`docs/api.md`](docs/api.md) with real payloads in `docs/api-examples/`.
+- **Tests:** 231 offline + 21 browser on the merged tree.
+- **Still open:** UI controls for questions, source experiments and export (Terry, against `docs/api.md`); capture import (waiting for Daniel's branch); remaining case families (in progress on `codex/eric-families`); B1/B2 arms and the new evaluation; final recording and docs.
