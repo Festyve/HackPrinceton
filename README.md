@@ -65,14 +65,14 @@ uv run alibi experiment <case-id> --without collector
 uv run alibi ask <case-id> "Who did it?"         # needs a configured model; offline it says so
 uv run alibi review <case-id> accept
 uv run alibi export <case-id> > report.md
-uv run alibi import <capture-directory>          # captured evidence, as an unscored case
+uv run alibi import tests/fixtures/capture/missing-local-record --investigate   # captured evidence, unscored
 ```
 
 ## What is real and what is not
 
 - The investigator, the question answering and the environment designer have run on real models. Four recordings are committed and replay offline, labeled "Recorded AI run".
 - Every incident is a **scripted scenario**. No model plans or stages an incident. The one request to have a model plan an adversary's steps was declined by the model, and that route stays disabled.
-- All evidence is **simulated**. Capture from real Linux processes is being built separately and is not part of this build.
+- All scored evidence is **simulated**. Three small captures written by running processes (a test application and an independent collector in Docker containers) import as **unscored** cases and go through the same pipeline: the deterministic comparison reports the one removed line and nothing on the two controls. A real model, run once on each, alleged nothing on the controls and described the missing line without calling it removal. These are not system logs and not a detection rate ([capture](docs/capture.md), [importing](docs/importing.md)).
 - Scores are agreement with a simulation's sealed answer key. They are not real-world forensic accuracy.
 
 ## Measured results
@@ -103,7 +103,7 @@ We then ran the eight model cells of the first two incident cases once more on t
 
 ## Live AI and budget
 
-Live inference uses a server-side Anthropic key in a gitignored `.env`. **The total API allowance is $20 across both runs.** About $3.64 has been used. Follow [API setup](docs/next-run/API_SETUP.md) and never delete the spend ledger.
+Live inference uses a server-side Anthropic key in a gitignored `.env`. **The total API allowance is $20 across both runs.** About $3.65 has been used. Follow [API setup](docs/next-run/API_SETUP.md) and never delete the spend ledger.
 
 Every model call goes through one budget gateway. It counts the outgoing request before sending it, refuses one that is too large or cannot be counted, reserves tokens and money so parallel agents cannot jointly pass a cap, and keeps the worst-case cost of any call whose billing outcome is unknown until someone reconciles it. Automatic calls stop $0.50 short of the cap. The totals are a conservative estimate at list prices, not a bill; the provider console is the billing authority.
 

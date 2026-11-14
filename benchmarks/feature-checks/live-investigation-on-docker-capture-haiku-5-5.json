@@ -1,0 +1,282 @@
+{
+ "kind": "feature-check",
+ "what": "A real model investigates evidence captured from running processes (Docker), in fast mode.",
+ "note": "Three small captures of a test application and an independent collector (docs/capture.md). Imported evidence has no answer key in this system, so nothing here is scored. What each capture was built to contain is stated in docs/capture.md and was not given to the model. One run per capture: this shows the path works on captured evidence, not how often.",
+ "generated_at": "2026-11-14T18:44:19+00:00",
+ "backend_commit": "4883834",
+ "working_tree_clean": true,
+ "captures": {
+  "missing-local-record": {
+   "capture_id": "capture-002",
+   "bundle_id": "bndl-11728054e73e1b37",
+   "state": "awaiting_review",
+   "error": null,
+   "labels": {
+    "evidence_origin": "DOCKER",
+    "inference": "LIVE_MODEL",
+    "inference_label": "Live model",
+    "playback": "LIVE",
+    "model_id": "anthropic:claude-haiku-5-5",
+    "investigation_mode": "fast",
+    "investigation_mode_label": "Fast investigation \u00b7 one agent",
+    "ground_truth": "none \u00b7 imported evidence is not scored"
+   },
+   "scored": false,
+   "source_origins": [
+    "DOCKER"
+   ],
+   "seconds": 13.5,
+   "findings": [
+    {
+     "claim_type": "collection_gap",
+     "category": "unresolved",
+     "status": "proposed",
+     "verification": "structurally_valid",
+     "verifier_notes": [
+      "references resolve; no allegation is made"
+     ],
+     "host": "records",
+     "cited_records": 5,
+     "rationale": "The collector retained seq=2 (demo read of dummy-2 at 17:23:42.300417) from records access.log, but the host-local copy lacks that line, while local records bracket it on both sides (dummy-1 and dummy-3). No rotation or retention boundary explains the absence, and the records host has no heartbeat coverage. The absence is real but could be a local deletion, a write or forwarding fault, or a collection problem. The bundle does not distinguish these, so it is not established as an incident."
+    },
+    {
+     "claim_type": "policy_consistent_transfer",
+     "category": "unresolved",
+     "status": "proposed",
+     "verification": "structurally_valid",
+     "verifier_notes": [
+      "references resolve; no allegation is made"
+     ],
+     "host": "records",
+     "cited_records": 2,
+     "rationale": "No bulk outbound transfers were reported, but the check lacks flow, shell history and file metadata coverage, so no transfer or staging can be assessed either way. Nothing in the bundle shows data staging."
+    }
+   ],
+   "incident_allegations_accepted": 0,
+   "incident_allegations_not_accepted": 0,
+   "account_used": "demo",
+   "human_identity": "insufficient_evidence",
+   "person_named": null,
+   "summary": "Bundle bndl-11728054e73e1b37 is small (5 events, 3-second capture). The only anomaly is one line (seq=2, demo read of dummy-2 at 2026-11-14T17:23:42.300417Z) that the collector retained from records /var/log/records-app/access.log but that is absent from the host-local copy, although local records bracket it on both sides. No rotation explains it. This is unresolved: it could be local removal, a write or forwarding fault, or a collection artifact, and records has no heartbeat data. No bulk transfer or data staging can be assessed because flow, shell history and file metadata are absent. The account 'demo' is used; the human operator is not established. No incident is substantiated.",
+   "open_questions": [
+    "Why is seq=2 missing locally? Check records host integrity, forwarder logs and write history for access.log.",
+    "Obtain records heartbeat data to measure collection gaps.",
+    "Obtain flow, shell history and file metadata to assess transfers and staging.",
+    "Identify the session origin for account demo; the bundle does not establish who used it."
+   ],
+   "mentions_clinic": false,
+   "usage": {
+    "llm_calls": 5,
+    "tool_calls": 8,
+    "tokens_in": 45602,
+    "tokens_out": 2656,
+    "cost_estimate_usd": 0.00308,
+    "wall_seconds": 13.455
+   },
+   "tools_called_in_order": [
+    "get_case_brief",
+    "check_transfer_sessions",
+    "check_local_vs_collector",
+    "search_events",
+    "search_events",
+    "submit_finding",
+    "submit_finding",
+    "submit_attribution",
+    "finalize_report"
+   ]
+  },
+  "benign-gap": {
+   "capture_id": "capture-003",
+   "bundle_id": "bndl-19608040a942285d",
+   "state": "awaiting_review",
+   "error": null,
+   "labels": {
+    "evidence_origin": "DOCKER",
+    "inference": "LIVE_MODEL",
+    "inference_label": "Live model",
+    "playback": "LIVE",
+    "model_id": "anthropic:claude-haiku-5-5",
+    "investigation_mode": "fast",
+    "investigation_mode_label": "Fast investigation \u00b7 one agent",
+    "ground_truth": "none \u00b7 imported evidence is not scored"
+   },
+   "scored": false,
+   "source_origins": [
+    "DOCKER"
+   ],
+   "seconds": 10.2,
+   "findings": [
+    {
+     "claim_type": "collection_gap",
+     "category": "unresolved",
+     "status": "proposed",
+     "verification": "structurally_valid",
+     "verifier_notes": [
+      "references resolve; no allegation is made"
+     ],
+     "host": "records",
+     "cited_records": 5,
+     "rationale": "The collector holds delivery seq=2 (dummy-2 read by demo, ev_e947d6895d18) that is absent from the host-local copy. The local records bracket it on both sides (ev_3513a8dd99cb before, ev_11770fcbefb9 after). The host's capture states a maintenance pause over that interval, so the absence falls in a local coverage gap. This is a collection gap, not evidence of log removal."
+    }
+   ],
+   "incident_allegations_accepted": 0,
+   "incident_allegations_not_accepted": 0,
+   "account_used": "demo",
+   "human_identity": "insufficient_evidence",
+   "person_named": null,
+   "summary": "Bundle bndl-19608040a942285d holds 5 events over 3 seconds (capture marked incomplete). They show the 'demo' account reading dummy records dummy-1 to dummy-3 on the records host. Nothing supports an incident. No transfer, staging, or log-removal allegation is supported. The one apparent discrepancy is a single collector-retained line (seq=2, dummy-2, ev_e947d6895d18) absent from the host-local copy. The local records bracket it on both sides, and the host's capture states a maintenance pause over that interval, so it is treated as a collection gap (finding F-3e971f, unresolved). The transfer check was not assessable: no flow or file-metadata sources are in the bundle, so an empty transfer li",
+   "open_questions": [
+    "Confirm the maintenance pause on records covering 17:23:55 with the host operator or change records.",
+    "Obtain network flow and shell history for records to assess bulk transfers; the current check is not assessable.",
+    "The records host has no heartbeat data, so collection gaps there cannot be measured.",
+    "Identify who controls the 'demo' account; the bundle cannot establish this."
+   ],
+   "mentions_clinic": false,
+   "usage": {
+    "llm_calls": 4,
+    "tool_calls": 6,
+    "tokens_in": 33533,
+    "tokens_out": 1904,
+    "cost_estimate_usd": 0.002478,
+    "wall_seconds": 9.914
+   },
+   "tools_called_in_order": [
+    "check_transfer_sessions",
+    "get_case_brief",
+    "check_local_vs_collector",
+    "search_events",
+    "submit_attribution",
+    "submit_finding"
+   ]
+  },
+  "complete": {
+   "capture_id": "capture-001",
+   "bundle_id": "bndl-8cc214580e671c15",
+   "state": "awaiting_review",
+   "error": null,
+   "labels": {
+    "evidence_origin": "DOCKER",
+    "inference": "LIVE_MODEL",
+    "inference_label": "Live model",
+    "playback": "LIVE",
+    "model_id": "anthropic:claude-haiku-5-5",
+    "investigation_mode": "fast",
+    "investigation_mode_label": "Fast investigation \u00b7 one agent",
+    "ground_truth": "none \u00b7 imported evidence is not scored"
+   },
+   "scored": false,
+   "source_origins": [
+    "DOCKER"
+   ],
+   "seconds": 11.5,
+   "findings": [
+    {
+     "claim_type": "policy_consistent_transfer",
+     "category": "unresolved",
+     "status": "proposed",
+     "verification": "structurally_valid",
+     "verifier_notes": [
+      "references resolve; no allegation is made"
+     ],
+     "host": "records",
+     "cited_records": 1,
+     "rationale": "No bulk outbound transfer could be assessed: the bundle has no flow, shell-history or file-metadata sources, and the transfer check returned not_assessable with no transfers listed. Absence of a transfer here is not evidence that none occurred."
+    },
+    {
+     "claim_type": "collection_gap",
+     "category": "neutral_reconstruction",
+     "status": "proposed",
+     "verification": "structurally_valid",
+     "verifier_notes": [
+      "references resolve; no allegation is made"
+     ],
+     "host": "records",
+     "cited_records": 6,
+     "rationale": "Three read events by account 'demo' on records (dummy-1..3, status 200) match exactly the three collector copies (seq 1-3). The local log and collector copy are consistent: no unexplained local absence, no duplicates, no rotation. Capture window is only about 3 seconds, so coverage is minimal."
+    }
+   ],
+   "incident_allegations_accepted": 0,
+   "incident_allegations_not_accepted": 0,
+   "account_used": "demo",
+   "human_identity": "insufficient_evidence",
+   "person_named": null,
+   "summary": "Bundle bndl-8cc214580e671c15 (capture 2026-11-14 17:23:28 to 17:23:31 UTC) contains six events: three read actions by account 'demo' on the records host (dummy-1 to dummy-3, HTTP 200), and their three collector copies. The local records access.log and the collector copy are fully consistent; no unexplained local log removal, no rotation, no duplicates. No incident allegation is supported. No transfer or staging can be assessed: there are no flow, shell-history or file-metadata sources, so the transfer check is not assessable (absence is not evidence of absence). Attribution: account 'demo' used; human operator not established. No badge or session data was provided.",
+   "open_questions": [
+    "Flow, shell-history and file-metadata sources would be needed to assess bulk transfer or staging.",
+    "No heartbeat data for records, so collection gaps there cannot be measured.",
+    "No transfer policy or approved destination list was supplied.",
+    "Is the 'demo' account expected to be active on records, and who owns it?"
+   ],
+   "mentions_clinic": false,
+   "usage": {
+    "llm_calls": 4,
+    "tool_calls": 7,
+    "tokens_in": 33230,
+    "tokens_out": 2390,
+    "cost_estimate_usd": 0.002791,
+    "wall_seconds": 11.413
+   },
+   "tools_called_in_order": [
+    "get_case_brief",
+    "check_transfer_sessions",
+    "search_events",
+    "check_local_vs_collector",
+    "submit_attribution",
+    "submit_finding",
+    "submit_finding"
+   ]
+  }
+ },
+ "question": {
+  "capture": "missing-local-record",
+  "asked": "Which request is absent from the host's own log, and which record shows that it was written?",
+  "status": "answered",
+  "seconds": 8.0,
+  "answer": "The request absent from records' local access.log is seq=2: user demo reading record dummy-2 at 2026-11-14T17:23:42.300417Z (status 200, delivery_id=2). The collector retained it, and the collector record shows the forwarder received it from records access.log. Local records for seq=1 (dummy-1) and seq=3 (dummy-3) are present on both sides, and no rotation or retention boundary explains the gap. Whether the host wrote, lost, or failed to keep the line is not established. The bundle has no heartbeat data for records.",
+  "claims_by_support": {
+   "checked": 2,
+   "cited": 1,
+   "interpretation": 1,
+   "contradicted": 0,
+   "unsupported": 1
+  },
+  "mentions_clinic": false,
+  "usage": {
+   "llm_calls": 2,
+   "tokens_in": 13599,
+   "tokens_out": 1688,
+   "cost_estimate_usd": 0.001963
+  },
+  "error": null
+ },
+ "after_review": {
+  "review_status": 200,
+  "state": "report_locked",
+  "export_status": 200,
+  "export_names_docker_sources": 2,
+  "unseal_status": 409,
+  "unseal_answer": "{\"error\":\"this case has no answer key: imported evidence is not scored, so there is nothing to unseal. The locked report can be exported\",\"state\":\"report_locked\"}"
+ },
+ "spend_ledger": {
+  "before_usd": 3.64108,
+  "after_usd": 3.651786,
+  "this_check_usd": 0.010706,
+  "calls_before": 634,
+  "calls_after": 650,
+  "reserved_after_usd": 0,
+  "unreconciled_after_usd": 0.0
+ },
+ "deterministic_checks_on_the_same_bundles": {
+  "complete": "no finding",
+  "benign-gap": "no finding",
+  "missing-local-record": "one incident allegation, local_log_removal, verified",
+  "where": "tests/test_m18_capture_integration.py pins these; no model is involved"
+ },
+ "what_this_shows": [
+  "The live path runs on captured evidence end to end: import, fast investigation, question, review, export. Labels: live model, DOCKER evidence, not scored.",
+  "No incident was alleged on the two captures built without one (complete, benign-gap), and no person was named on any.",
+  "On the capture where the host's copy lacks a line the collector kept, the model ran the comparison, described the missing line with the right records, and filed it as unresolved (it listed local removal, a write or forwarding fault, or a collection artifact as possible). It did not file an incident allegation. The deterministic runner files that same observation as a verified local_log_removal.",
+  "Asked directly, the model named the missing request (seq 2, dummy-2) and the collector record that shows it was written."
+ ],
+ "what_this_does_not_show": "One run per capture on three five-or-six-line bundles from one test application. It says nothing about how often the model would allege or withhold an incident, and it is not a detection rate."
+}
