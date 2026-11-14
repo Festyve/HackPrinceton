@@ -488,10 +488,12 @@ def test_answers_stay_with_their_case_when_another_case_is_opened(model_server, 
     page.click(tid("btn-ask"))
     try:
         page.wait_for_selector(f'{tid("question-answer")}[data-status="pending"]')
-        # open a second case while the first one's answer is still being produced
-        page.goto(base + "/")
-        page.click(tid("replay-sealed-control-fixture"))
-        page.click(tid("btn-run"))
+        # open a second case while the first one's answer is still being produced, through the in-app library:
+        # no page load happens, so anything the page still remembers about the first case is still there
+        page.get_by_role("button", name="Case library", exact=True).click()
+        page.locator(f'dialog {tid("replay-sealed-control-fixture")}').click()
+        page.locator('dialog button:has-text("Open selected case")').click()
+        page.wait_for_function("old => !location.hash.includes(old)", arg=first)
         wait_state(page, "awaiting_review")
         second = _case_id(page)
         assert second != first and page.locator(tid("question-answer")).count() == 0
@@ -502,7 +504,7 @@ def test_answers_stay_with_their_case_when_another_case_is_opened(model_server, 
     assert page.request.get(f"{base}/api/cases/{second}/questions").json()["questions"] == []
     # it is where it belongs
     page.goto(f"{base}/#case={first}")
-    page.reload()
+    page.wait_for_function("id => document.querySelector('[data-testid=app-root]')?.dataset.caseId === id", arg=first)
     page.wait_for_selector(f'{tid("question-answer")}[data-status="insufficient_evidence"]', timeout=30_000)
     assert "Belongs to the first case?" in page.inner_text(tid("question-answers"))
     assert _quiet(page) == []
