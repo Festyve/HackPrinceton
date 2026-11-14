@@ -3,6 +3,47 @@
 > Times are America/New_York. Entries record concrete check results, not intentions.
 > Status vocabulary: **OFFLINE-READY**, **AI-READY**, **INCOMPLETE** (PLAN §14).
 
+## Current state — second run, Saturday November 14, 05:50 ET
+
+This block is the handoff. Everything below it is the build history, oldest first.
+
+| | |
+|---|---|
+| Branch and commit | `codex/eric-phase2`, pushed. The commit is the tip of that branch (this file is updated with each slice). |
+| Launch | `uv sync --frozen && ./start.sh`, then http://127.0.0.1:8000. `./start.sh --port 8010` if the port is busy. |
+| Demo selection | Recorded replays. For the pitch: **Inside job · cover-up** recorded on Claude Opus 5.5 (specialist mode) or on Claude Haiku 5.5 (fast mode, with two recorded question answers). Also recorded on Haiku: **Records heist** and **Cold chain**. No key or network needed. |
+| Model in use | `anthropic:claude-haiku-5-5`, effort low, for every role. Opus 5.5 recordings and pilot are from the first run and unchanged. |
+| Spend | Estimated **$3.357** of the **$20** cap across both runs (427 model calls). This run: about **$0.43**. Reserved: $0. Unreconciled: $0. Automatic calls stop at $19.50. `uv run alibi spend`. |
+| Tests | `uv run pytest` → **394 passed**: 373 offline, 21 in headless Chrome. |
+| Recordings | `demo/replays/`: 4 real-model runs (1 Opus, 3 Haiku) and 2 scripted-fixture runs. All six reproduce their evidence byte for byte and replay offline. |
+| Measured results | `benchmarks/offline-v1`, `benchmarks/ai-pilot-v1` (first run, frozen); `benchmarks/paired-v2` (this run's evaluation); `benchmarks/calibration`, `benchmarks/feature-checks`, `benchmarks/paired-v2-dev` (operational checks). |
+
+**What works end to end now**
+
+- Budget gateway that counts, bounds and reserves every model call and keeps unknown outcomes at worst case.
+- Fast (one agent) and specialist (three agents) investigations, saved with the case.
+- Questions about a case, with each claim checked by trusted code. Real answers recorded.
+- Source-removal experiment: a derived evidence view without chosen sources, a deterministic comparison of the original claims, and a fresh real-model investigation of the reduced view.
+- Three case families and four more cover-up steps, each with sealed controls.
+- Scenario designer: a model chooses an ordinary environment from fixed options. It plans no incident.
+- Report export with lock hash, provenance and exact cited lines.
+- Paired evaluation of six systems on four new cases, declared before it ran.
+
+**What is not done, and who has it** (details in [BLOCKERS.md](BLOCKERS.md))
+
+- **Capture from real Linux processes is not integrated.** `codex/daniel-capture` has not been pushed. Every bundle is simulated. (Daniel, then Eric to wire it in.)
+- **The UI does not yet call the new routes** (questions, source experiment, export, mode choice, new presets, designer, new results). The backend is ready and documented in [`docs/api.md`](docs/api.md). (Terry.)
+- **The adversary planner stays disabled** after the model's refusal. Not worked around. Every incident is a scripted scenario.
+- Not verified: a second machine, the venue projector, any model other than Opus 5.5 and Haiku 5.5, run-to-run variance.
+
+**Owner actions**
+
+1. Eric: rotate the API key (it was pasted into chat); edit only the key line in `.env`.
+2. Terry: add UI controls for the new routes; rebase on `codex/eric-phase2`.
+3. Daniel: push the capture branch with its importer entry point.
+4. Repository owner: make the repository public. A redacted scan of the worktree and of every commit found no credential-like string, and `.env` and the ledger were never committed.
+5. Rayan: decide the pitch from [`docs/claims.md`](docs/claims.md). The honest headline from the measurements is that the deterministic comparison does the detecting and the model investigates, explains and answers; one agent did as well as or better than three.
+
 ## Pre-existing state (before the overnight goal)
 
 **Last passing check (scaffold):** `uv run python -c "from deepagents import create_deep_agent"` (deepagents 0.7.38, langgraph 1.2.22)
@@ -274,3 +315,41 @@ Phase-two model spend so far: about **$0.08** (ledger total $3.006 of the $20 ca
 - **API reference for the UI:** [`docs/api.md`](docs/api.md) with real payloads in `docs/api-examples/`.
 - **Tests:** 231 offline + 21 browser on the merged tree.
 - **Still open:** UI controls for questions, source experiments and export (Terry, against `docs/api.md`); capture import (waiting for Daniel's branch); remaining case families (in progress on `codex/eric-families`); B1/B2 arms and the new evaluation; final recording and docs.
+
+### Stage 3 — integration (UI merged 04:38; capture waiting)
+
+- Merged `origin/codex/terry-ui` (`805c93b`). Build and all browser tests pass on the merge; generated contracts regenerated from the models.
+- First-run recordings stay usable: a test pins 22 first-run bundles and both baselines' results byte for byte, and all six recordings replay. The scenario seed namespace is kept at `1.0.0` because it is part of every random seed (a version bump was caught by the pin test and reverted).
+- `codex/daniel-capture` does not exist on the remote yet, so capture import is not built. Nothing is labeled `DOCKER` or `HYBRID`.
+
+### Stage 4 — remaining case families and the scenario designer (done 05:25)
+
+- Records heist, Cold chain, and four bounded steps (clear shell history, backdate a file, stop log forwarding, second-host session), each with a legitimate counterpart. Built by a helper agent on `codex/eric-families`, merged (`0a838aa`) and wired into runners, tools, the scripted fixture, presets and the CLI (`e947ac3`).
+- Six presets: `evasion`, `maintenance-control`, `records-heist`, `records-control`, `cold-chain`, `cold-chain-control`. Each runs through the deterministic runner and the scripted fixture to the same findings; incidents score every observable effect, controls allege nothing. Cleared shell history is recorded as unobservable and not scored.
+- Real model on the new families (fast mode, Haiku 5.5): Records heist 3/3, Cold chain 1/1. Saved as recordings.
+- Scenario designer (`src/alibi/agents/designer.py`): one bounded model response choosing from fixed options; a real call returned a valid design for $0.0002. Invalid output becomes a labeled default; a refusal ends the request. The adversary planner is untouched and disabled.
+
+### Stage 5 — the evaluation (run 05:21–05:34)
+
+- Declared in `docs/evaluation-config-v2.json` and committed (`5efc7e1`) before the run. Results: `benchmarks/paired-v2/20261114t102149z/`, report `docs/evaluation-v2.md`. All 24 cells completed; estimated cost $0.22 against a $0.72 worst case.
+
+| System | Effects established (2 incident cases) | Benign cases with an accepted allegation | Stopped by a cap | Est. cost |
+|---|---|---|---|---|
+| B0 keyword recipe | 2/8 | 0/2 | – | – |
+| BR deterministic checks | 8/8 | 0/2 | – | – |
+| B1 one agent, generic tools | 5/8 | 0/2 | 2 of 4 | $0.054 |
+| B1+ one agent with checks | 7/8 | 0/2 | 0 | $0.029 |
+| B2 three agents, generic tools | 5/8 | 0/2 | 2 of 4 | $0.081 |
+| ALIBI three agents with checks | 5/8 | 0/2 | 0 | $0.057 |
+
+- No verifier feedback during investigation in any arm. No named attribution in any cell.
+- A development-case check before the run found that the product's 40,000-token per-request ceiling stopped both arms without checks; the evaluation budget uses 90,000. Both checks are kept in `benchmarks/paired-v2-dev/`.
+- Reading: the checks helped one agent; three agents did no better than one; the checks alone did best. One run per cell on two incident cases is not an accuracy estimate.
+- `offline-v1` and `ai-pilot-v1` are untouched; `alibi bench` and `alibi pilot` now refuse to rewrite them.
+
+### Stage 6 — shipping work so far
+
+- Report export, question export and reveal export routes (`a01a7d8`).
+- README, architecture, API reference, claims, judge answers, demo script and Devpost copy rewritten to what is built and measured.
+- Redacted secret scan: no credential-like string in any tracked file or in any commit on any branch; `.env` and `.alibi/` were never committed.
+- Real-model check of the source-removal experiment: `benchmarks/feature-checks/source-experiment-haiku-5-5.json`.
