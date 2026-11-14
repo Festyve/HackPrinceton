@@ -562,20 +562,20 @@
   "tokens_out": 0,
   "tokens_cache_read": 0,
   "cost_estimate_usd": 0.0,
-  "wall_seconds": 0.017402,
+  "wall_seconds": 0.015766,
   "tool_calls": 0,
   "scripted_turns": 0,
   "retries": 0,
   "errors": 0,
   "timed_out": false
  },
- "created_at": "2026-11-14T06:17:26.099500Z",
+ "created_at": "2026-11-14T06:20:15.925024Z",
  "locked": true,
- "locked_at": "2026-11-14T06:17:26.119784Z",
+ "locked_at": "2026-11-14T06:20:15.943079Z",
  "report_sha256": "540c9f78b32a3e461efea55175e0a27aae5cd2cd310642856ed2589f797dddef",
  "review_history": [
   {
-   "at": "2026-11-14T06:17:26.119784Z",
+   "at": "2026-11-14T06:20:15.943079Z",
    "decision": "skipped_for_benchmark",
    "by_human": false,
    "note": ""

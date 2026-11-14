@@ -1,8 +1,9 @@
 {
  "suite": "offline-v1",
- "run_id": "20261114T061721Z",
- "generated_at": "2026-11-14T06:17:28.361226+00:00",
- "git_commit": "6827f89",
+ "run_id": "20261114T062011Z",
+ "generated_at": "2026-11-14T06:20:18.161329+00:00",
+ "git_commit": "b6ec49c",
+ "git_dirty": false,
  "scorer_version": "1.0.0",
  "verifier_version": "1.0.0",
  "simulator_version": "1.0.0",
@@ -114,8 +115,8 @@
    "unobservable_effects": 0,
    "failed_or_partial_steps": 0,
    "system_order": [
-    "B0",
-    "BR"
+    "BR",
+    "B0"
    ]
   },
   {
@@ -131,8 +132,8 @@
    "unobservable_effects": 0,
    "failed_or_partial_steps": 1,
    "system_order": [
-    "B0",
-    "BR"
+    "BR",
+    "B0"
    ]
   },
   {
@@ -199,8 +200,8 @@
    "unobservable_effects": 0,
    "failed_or_partial_steps": 0,
    "system_order": [
-    "BR",
-    "B0"
+    "B0",
+    "BR"
    ]
   },
   {
@@ -216,8 +217,8 @@
    "unobservable_effects": 0,
    "failed_or_partial_steps": 0,
    "system_order": [
-    "BR",
-    "B0"
+    "B0",
+    "BR"
    ]
   },
   {
@@ -233,8 +234,8 @@
    "unobservable_effects": 0,
    "failed_or_partial_steps": 0,
    "system_order": [
-    "B0",
-    "BR"
+    "BR",
+    "B0"
    ]
   }
  ],
@@ -309,10 +310,10 @@
      "den": 198,
      "value": 1.0
     },
-    "median_wall_seconds": 0.017,
+    "median_wall_seconds": 0.016,
     "wall_seconds_range": [
      0.016,
-     0.028
+     0.029
     ],
     "llm_calls": 0,
     "tokens_in": 0,
@@ -390,10 +391,10 @@
      "den": 216,
      "value": 1.0
     },
-    "median_wall_seconds": 0.09,
+    "median_wall_seconds": 0.083,
     "wall_seconds_range": [
-     0.075,
-     0.114
+     0.074,
+     0.096
     ],
     "llm_calls": 0,
     "tokens_in": 0,
@@ -475,7 +476,7 @@
    "score": {
     "scorer_version": "1.0.0",
     "report_id": "rep-BR-bndl-2ef68c85c7b51c20",
-    "episode_id": "bench-t01-20261114t061721z",
+    "episode_id": "bench-t01-20261114t062011z",
     "system_id": "BR",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "incident",
@@ -598,7 +599,7 @@
      "tokens_out": 0,
      "tokens_cache_read": 0,
      "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.089757,
+     "wall_seconds": 0.083349,
      "tool_calls": 0,
      "scripted_turns": 0,
      "retries": 0,
@@ -622,7 +623,7 @@
    "score": {
     "scorer_version": "1.0.0",
     "report_id": "rep-B0-bndl-2ef68c85c7b51c20",
-    "episode_id": "bench-t01-20261114t061721z",
+    "episode_id": "bench-t01-20261114t062011z",
     "system_id": "B0",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "incident",
@@ -811,7 +812,7 @@
      "tokens_out": 0,
      "tokens_cache_read": 0,
      "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.027905,
+     "wall_seconds": 0.025295,
      "tool_calls": 0,
      "scripted_turns": 0,
      "retries": 0,
@@ -835,7 +836,7 @@
    "score": {
     "scorer_version": "1.0.0",
     "report_id": "rep-BR-bndl-7b554aad640f523c",
-    "episode_id": "bench-t02-20261114t061721z",
+    "episode_id": "bench-t02-20261114t062011z",
     "system_id": "BR",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "incident",
@@ -958,7 +959,7 @@
      "tokens_out": 0,
      "tokens_cache_read": 0,
      "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.090643,
+     "wall_seconds": 0.082023,
      "tool_calls": 0,
      "scripted_turns": 0,
      "retries": 0,
@@ -982,7 +983,7 @@
    "score": {
     "scorer_version": "1.0.0",
     "report_id": "rep-B0-bndl-7b554aad640f523c",
-    "episode_id": "bench-t02-20261114t061721z",
+    "episode_id": "bench-t02-20261114t062011z",
     "system_id": "B0",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "incident",
@@ -1153,7 +1154,7 @@
      "tokens_out": 0,
      "tokens_cache_read": 0,
      "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.017111,
+     "wall_seconds": 0.016062,
      "tool_calls": 0,
      "scripted_turns": 0,
      "retries": 0,
@@ -1177,7 +1178,7 @@
    "score": {
     "scorer_version": "1.0.0",
     "report_id": "rep-B0-bndl-6d83f9a2aa5e2a07",
-    "episode_id": "bench-t03-20261114t061721z",
+    "episode_id": "bench-t03-20261114t062011z",
     "system_id": "B0",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "incident",
@@ -1390,7 +1391,7 @@
      "tokens_out": 0,
      "tokens_cache_read": 0,
      "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.027169,
+     "wall_seconds": 0.029196,
      "tool_calls": 0,
      "scripted_turns": 0,
      "retries": 0,
@@ -1414,7 +1415,7 @@
    "score": {
     "scorer_version": "1.0.0",
     "report_id": "rep-BR-bndl-6d83f9a2aa5e2a07",
-    "episode_id": "bench-t03-20261114t061721z",
+    "episode_id": "bench-t03-20261114t062011z",
     "system_id": "BR",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "incident",
@@ -1537,7 +1538,7 @@
      "tokens_out": 0,
      "tokens_cache_read": 0,
      "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.089732,
+     "wall_seconds": 0.082732,
      "tool_calls": 0,
      "scripted_turns": 0,
      "retries": 0,
@@ -1561,7 +1562,7 @@
    "score": {
     "scorer_version": "1.0.0",
     "report_id": "rep-BR-bndl-ec06c6f85e96ca2d",
-    "episode_id": "bench-t04-20261114t061721z",
+    "episode_id": "bench-t04-20261114t062011z",
     "system_id": "BR",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "incident",
@@ -1684,7 +1685,7 @@
      "tokens_out": 0,
      "tokens_cache_read": 0,
      "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.114185,
+     "wall_seconds": 0.095547,
      "tool_calls": 0,
      "scripted_turns": 0,
      "retries": 0,
@@ -1708,7 +1709,7 @@
    "score": {
     "scorer_version": "1.0.0",
     "report_id": "rep-B0-bndl-ec06c6f85e96ca2d",
-    "episode_id": "bench-t04-20261114t061721z",
+    "episode_id": "bench-t04-20261114t062011z",
     "system_id": "B0",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "incident",
@@ -1885,7 +1886,7 @@
      "tokens_out": 0,
      "tokens_cache_read": 0,
      "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.016077,
+     "wall_seconds": 0.015876,
      "tool_calls": 0,
      "scripted_turns": 0,
      "retries": 0,
@@ -1902,6 +1903,175 @@
    "report_file": "benchmarks/offline-v1/reports/T04-B0.report.json"
   },
   {
+   "system_id": "BR",
+   "case_ref": "T05",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-BR-bndl-8f72b187cf81b29a",
+    "episode_id": "bench-t05-20261114t062011z",
+    "system_id": "BR",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 22,
+     "den": 22,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 0,
+     "den": 3,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "coverup_detected": true,
+    "coverup_detected_na_reason": null,
+    "account_identification_correct": true,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 5,
+    "proposals_incident": 3,
+    "final_accepted_incident": 3,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [
+     {
+      "finding_id": "BR-01",
+      "effect_id": "e3",
+      "effect_type": "local_log_removal"
+     },
+     {
+      "finding_id": "BR-02",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "BR-03",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "BR-01",
+      "outcome": "matched",
+      "effect_id": "e3",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-02",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-03",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-04",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "BR-05",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/var/tmp/.pkg-cache/rx-7f3.db",
+      "t_start": "2026-11-10T11:23:08Z",
+      "t_end": "2026-11-10T11:23:12Z",
+      "outcome": "caught",
+      "finding_id": "BR-02",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.70:8080",
+      "t_start": "2026-11-10T11:26:27Z",
+      "t_end": "2026-11-10T11:26:38Z",
+      "outcome": "caught",
+      "finding_id": "BR-03",
+      "description": ""
+     },
+     {
+      "effect_id": "e3",
+      "effect_type": "local_log_removal",
+      "host": "workstation",
+      "object": "/var/log/auth.log",
+      "t_start": "2026-11-10T11:21:09Z",
+      "t_end": "2026-11-10T11:21:09Z",
+      "outcome": "caught",
+      "finding_id": "BR-01",
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.083401,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "0f6aa82759029b8e733d802479608a55ab3b9fc06aa307e8398a4dae6c7e6685",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T05-BR.report.json"
+  },
+  {
    "system_id": "B0",
    "case_ref": "T05",
    "status": "completed",
@@ -1909,7 +2079,7 @@
    "score": {
     "scorer_version": "1.0.0",
     "report_id": "rep-B0-bndl-8f72b187cf81b29a",
-    "episode_id": "bench-t05-20261114t061721z",
+    "episode_id": "bench-t05-20261114t062011z",
     "system_id": "B0",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "incident",
@@ -2097,7 +2267,7 @@
      "tokens_out": 0,
      "tokens_cache_read": 0,
      "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.015645,
+     "wall_seconds": 0.016023,
      "tool_calls": 0,
      "scripted_turns": 0,
      "retries": 0,
@@ -2115,13 +2285,13 @@
   },
   {
    "system_id": "BR",
-   "case_ref": "T05",
+   "case_ref": "T06",
    "status": "completed",
    "error": null,
    "score": {
     "scorer_version": "1.0.0",
-    "report_id": "rep-BR-bndl-8f72b187cf81b29a",
-    "episode_id": "bench-t05-20261114t061721z",
+    "report_id": "rep-BR-bndl-faa4d064f0290fe1",
+    "episode_id": "bench-t06-20261114t062011z",
     "system_id": "BR",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "incident",
@@ -2175,7 +2345,7 @@
     "proposals_incident": 3,
     "final_accepted_incident": 3,
     "unobservable_effects": 0,
-    "failed_or_partial_steps": 0,
+    "failed_or_partial_steps": 1,
     "matches": [
      {
       "finding_id": "BR-01",
@@ -2230,9 +2400,9 @@
       "effect_id": "e1",
       "effect_type": "data_staging",
       "host": "workstation",
-      "object": "/var/tmp/.pkg-cache/rx-7f3.db",
-      "t_start": "2026-11-10T11:23:08Z",
-      "t_end": "2026-11-10T11:23:12Z",
+      "object": "/var/tmp/.pkg-cache/upd-4c2e.pkg",
+      "t_start": "2026-11-10T11:09:05Z",
+      "t_end": "2026-11-10T11:09:09Z",
       "outcome": "caught",
       "finding_id": "BR-02",
       "description": ""
@@ -2241,9 +2411,9 @@
       "effect_id": "e2",
       "effect_type": "policy_violating_transfer",
       "host": "workstation",
-      "object": "10.20.9.70:8080",
-      "t_start": "2026-11-10T11:26:27Z",
-      "t_end": "2026-11-10T11:26:38Z",
+      "object": "10.20.9.72:8080",
+      "t_start": "2026-11-10T11:12:16Z",
+      "t_end": "2026-11-10T11:12:28Z",
       "outcome": "caught",
       "finding_id": "BR-03",
       "description": ""
@@ -2253,8 +2423,8 @@
       "effect_type": "local_log_removal",
       "host": "workstation",
       "object": "/var/log/auth.log",
-      "t_start": "2026-11-10T11:21:09Z",
-      "t_end": "2026-11-10T11:21:09Z",
+      "t_start": "2026-11-10T11:08:02Z",
+      "t_end": "2026-11-10T11:08:02Z",
       "outcome": "caught",
       "finding_id": "BR-01",
       "description": ""
@@ -2266,7 +2436,7 @@
      "tokens_out": 0,
      "tokens_cache_read": 0,
      "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.096554,
+     "wall_seconds": 0.085165,
      "tool_calls": 0,
      "scripted_turns": 0,
      "retries": 0,
@@ -2275,12 +2445,12 @@
     },
     "review_status": "skipped_for_benchmark",
     "approved_by_human": false,
-    "report_sha256": "84666c6877fbfab8f5545b2c389e37f4d74c75530776ff1b6bdd6d53a9c321fe",
+    "report_sha256": "b01d3fe151c2acd2ace3f7ff09283b5234f796f129185791d682b7f99669a190",
     "notes": [
      "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
     ]
    },
-   "report_file": "benchmarks/offline-v1/reports/T05-BR.report.json"
+   "report_file": "benchmarks/offline-v1/reports/T06-BR.report.json"
   },
   {
    "system_id": "B0",
@@ -2290,7 +2460,7 @@
    "score": {
     "scorer_version": "1.0.0",
     "report_id": "rep-B0-bndl-faa4d064f0290fe1",
-    "episode_id": "bench-t06-20261114t061721z",
+    "episode_id": "bench-t06-20261114t062011z",
     "system_id": "B0",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "incident",
@@ -2508,7 +2678,7 @@
      "tokens_out": 0,
      "tokens_cache_read": 0,
      "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.015687,
+     "wall_seconds": 0.016434,
      "tool_calls": 0,
      "scripted_turns": 0,
      "retries": 0,
@@ -2525,175 +2695,6 @@
    "report_file": "benchmarks/offline-v1/reports/T06-B0.report.json"
   },
   {
-   "system_id": "BR",
-   "case_ref": "T06",
-   "status": "completed",
-   "error": null,
-   "score": {
-    "scorer_version": "1.0.0",
-    "report_id": "rep-BR-bndl-faa4d064f0290fe1",
-    "episode_id": "bench-t06-20261114t061721z",
-    "system_id": "BR",
-    "inference_mode": "NO_MODEL_BASELINE",
-    "case_kind": "incident",
-    "step_recall": {
-     "num": 3,
-     "den": 3,
-     "value": 1.0,
-     "na_reason": null
-    },
-    "proposal_precision": {
-     "num": 3,
-     "den": 3,
-     "value": 1.0,
-     "na_reason": null
-    },
-    "final_precision": {
-     "num": 3,
-     "den": 3,
-     "value": 1.0,
-     "na_reason": null
-    },
-    "evidence_reference_validity": {
-     "num": 22,
-     "den": 22,
-     "value": 1.0,
-     "na_reason": null
-    },
-    "supported_claim_rate": {
-     "num": 3,
-     "den": 3,
-     "value": 1.0,
-     "na_reason": null
-    },
-    "verifier_rejection_rate": {
-     "num": 0,
-     "den": 3,
-     "value": 0.0,
-     "na_reason": null
-    },
-    "coverup_detected": true,
-    "coverup_detected_na_reason": null,
-    "account_identification_correct": true,
-    "account_identification_na_reason": null,
-    "attribution_abstained": true,
-    "unsupported_named_attribution": 0,
-    "false_accusation": false,
-    "named_attribution_correct": null,
-    "benign_false_alert": null,
-    "false_claims_final": 0,
-    "proposals_total": 5,
-    "proposals_incident": 3,
-    "final_accepted_incident": 3,
-    "unobservable_effects": 0,
-    "failed_or_partial_steps": 1,
-    "matches": [
-     {
-      "finding_id": "BR-01",
-      "effect_id": "e3",
-      "effect_type": "local_log_removal"
-     },
-     {
-      "finding_id": "BR-02",
-      "effect_id": "e1",
-      "effect_type": "data_staging"
-     },
-     {
-      "finding_id": "BR-03",
-      "effect_id": "e2",
-      "effect_type": "policy_violating_transfer"
-     }
-    ],
-    "finding_outcomes": [
-     {
-      "finding_id": "BR-01",
-      "outcome": "matched",
-      "effect_id": "e3",
-      "reason": "matches one executed, successful effect"
-     },
-     {
-      "finding_id": "BR-02",
-      "outcome": "matched",
-      "effect_id": "e1",
-      "reason": "matches one executed, successful effect"
-     },
-     {
-      "finding_id": "BR-03",
-      "outcome": "matched",
-      "effect_id": "e2",
-      "reason": "matches one executed, successful effect"
-     },
-     {
-      "finding_id": "BR-04",
-      "outcome": "not_an_allegation",
-      "effect_id": null,
-      "reason": "benign explanation; not scored as an incident claim"
-     },
-     {
-      "finding_id": "BR-05",
-      "outcome": "not_an_allegation",
-      "effect_id": null,
-      "reason": "benign explanation; not scored as an incident claim"
-     }
-    ],
-    "effect_outcomes": [
-     {
-      "effect_id": "e1",
-      "effect_type": "data_staging",
-      "host": "workstation",
-      "object": "/var/tmp/.pkg-cache/upd-4c2e.pkg",
-      "t_start": "2026-11-10T11:09:05Z",
-      "t_end": "2026-11-10T11:09:09Z",
-      "outcome": "caught",
-      "finding_id": "BR-02",
-      "description": ""
-     },
-     {
-      "effect_id": "e2",
-      "effect_type": "policy_violating_transfer",
-      "host": "workstation",
-      "object": "10.20.9.72:8080",
-      "t_start": "2026-11-10T11:12:16Z",
-      "t_end": "2026-11-10T11:12:28Z",
-      "outcome": "caught",
-      "finding_id": "BR-03",
-      "description": ""
-     },
-     {
-      "effect_id": "e3",
-      "effect_type": "local_log_removal",
-      "host": "workstation",
-      "object": "/var/log/auth.log",
-      "t_start": "2026-11-10T11:08:02Z",
-      "t_end": "2026-11-10T11:08:02Z",
-      "outcome": "caught",
-      "finding_id": "BR-01",
-      "description": ""
-     }
-    ],
-    "usage": {
-     "llm_calls": 0,
-     "tokens_in": 0,
-     "tokens_out": 0,
-     "tokens_cache_read": 0,
-     "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.103259,
-     "tool_calls": 0,
-     "scripted_turns": 0,
-     "retries": 0,
-     "errors": 0,
-     "timed_out": false
-    },
-    "review_status": "skipped_for_benchmark",
-    "approved_by_human": false,
-    "report_sha256": "8f9b031d08f35516aa0cab43b79e54f1923a2fe3fe39b0a54d97ac1569475942",
-    "notes": [
-     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
-    ]
-   },
-   "report_file": "benchmarks/offline-v1/reports/T06-BR.report.json"
-  },
-  {
    "system_id": "B0",
    "case_ref": "T07",
    "status": "completed",
@@ -2701,7 +2702,7 @@
    "score": {
     "scorer_version": "1.0.0",
     "report_id": "rep-B0-bndl-de8e9639d3ec6bfb",
-    "episode_id": "bench-t07-20261114t061721z",
+    "episode_id": "bench-t07-20261114t062011z",
     "system_id": "B0",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "incident",
@@ -2889,7 +2890,7 @@
      "tokens_out": 0,
      "tokens_cache_read": 0,
      "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.015601,
+     "wall_seconds": 0.016078,
      "tool_calls": 0,
      "scripted_turns": 0,
      "retries": 0,
@@ -2913,7 +2914,7 @@
    "score": {
     "scorer_version": "1.0.0",
     "report_id": "rep-BR-bndl-de8e9639d3ec6bfb",
-    "episode_id": "bench-t07-20261114t061721z",
+    "episode_id": "bench-t07-20261114t062011z",
     "system_id": "BR",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "incident",
@@ -3058,7 +3059,7 @@
      "tokens_out": 0,
      "tokens_cache_read": 0,
      "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.083626,
+     "wall_seconds": 0.082737,
      "tool_calls": 0,
      "scripted_turns": 0,
      "retries": 0,
@@ -3067,7 +3068,7 @@
     },
     "review_status": "skipped_for_benchmark",
     "approved_by_human": false,
-    "report_sha256": "83f6846cd6a56d1c06a4f15e57d1ebe2fc99b4d439827726879ff49122a3422e",
+    "report_sha256": "24588e315f3990e2744504c54c61a8858c166898a73db8b34c8eec583cf84431",
     "notes": [
      "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
     ]
@@ -3082,7 +3083,7 @@
    "score": {
     "scorer_version": "1.0.0",
     "report_id": "rep-BR-bndl-ceb8e79cfa1580a8",
-    "episode_id": "bench-t08-20261114t061721z",
+    "episode_id": "bench-t08-20261114t062011z",
     "system_id": "BR",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "incident",
@@ -3227,7 +3228,7 @@
      "tokens_out": 0,
      "tokens_cache_read": 0,
      "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.088832,
+     "wall_seconds": 0.084759,
      "tool_calls": 0,
      "scripted_turns": 0,
      "retries": 0,
@@ -3236,7 +3237,7 @@
     },
     "review_status": "skipped_for_benchmark",
     "approved_by_human": false,
-    "report_sha256": "c9cf29dfb5a0bc499e350014c969efbc4367290fa05d2700b92262c5686399a7",
+    "report_sha256": "d3c0fb0d950f46344b6831b903e1714a47e92a22ba949542805d5f1a632e2526",
     "notes": [
      "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
     ]
@@ -3251,7 +3252,7 @@
    "score": {
     "scorer_version": "1.0.0",
     "report_id": "rep-B0-bndl-ceb8e79cfa1580a8",
-    "episode_id": "bench-t08-20261114t061721z",
+    "episode_id": "bench-t08-20261114t062011z",
     "system_id": "B0",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "incident",
@@ -3457,7 +3458,7 @@
      "tokens_out": 0,
      "tokens_cache_read": 0,
      "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.017402,
+     "wall_seconds": 0.015766,
      "tool_calls": 0,
      "scripted_turns": 0,
      "retries": 0,
@@ -3481,7 +3482,7 @@
    "score": {
     "scorer_version": "1.0.0",
     "report_id": "rep-B0-bndl-5e5b5ec67633e67d",
-    "episode_id": "bench-t09-20261114t061721z",
+    "episode_id": "bench-t09-20261114t062011z",
     "system_id": "B0",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "benign",
@@ -3636,7 +3637,7 @@
      "tokens_out": 0,
      "tokens_cache_read": 0,
      "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.017239,
+     "wall_seconds": 0.015858,
      "tool_calls": 0,
      "scripted_turns": 0,
      "retries": 0,
@@ -3660,7 +3661,7 @@
    "score": {
     "scorer_version": "1.0.0",
     "report_id": "rep-BR-bndl-5e5b5ec67633e67d",
-    "episode_id": "bench-t09-20261114t061721z",
+    "episode_id": "bench-t09-20261114t062011z",
     "system_id": "BR",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "benign",
@@ -3743,7 +3744,7 @@
      "tokens_out": 0,
      "tokens_cache_read": 0,
      "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.078057,
+     "wall_seconds": 0.076413,
      "tool_calls": 0,
      "scripted_turns": 0,
      "retries": 0,
@@ -3760,113 +3761,6 @@
    "report_file": "benchmarks/offline-v1/reports/T09-BR.report.json"
   },
   {
-   "system_id": "BR",
-   "case_ref": "T10",
-   "status": "completed",
-   "error": null,
-   "score": {
-    "scorer_version": "1.0.0",
-    "report_id": "rep-BR-bndl-6b86c8203b2372ed",
-    "episode_id": "bench-t10-20261114t061721z",
-    "system_id": "BR",
-    "inference_mode": "NO_MODEL_BASELINE",
-    "case_kind": "benign",
-    "step_recall": {
-     "num": null,
-     "den": null,
-     "value": null,
-     "na_reason": "no-crime case: recall is not applicable"
-    },
-    "proposal_precision": {
-     "num": 0,
-     "den": 0,
-     "value": null,
-     "na_reason": "no incident allegation was proposed"
-    },
-    "final_precision": {
-     "num": 0,
-     "den": 0,
-     "value": null,
-     "na_reason": "no incident allegation was accepted"
-    },
-    "evidence_reference_validity": {
-     "num": 10,
-     "den": 10,
-     "value": 1.0,
-     "na_reason": null
-    },
-    "supported_claim_rate": {
-     "num": 0,
-     "den": 0,
-     "value": null,
-     "na_reason": "no incident allegation was proposed"
-    },
-    "verifier_rejection_rate": {
-     "num": 0,
-     "den": 0,
-     "value": null,
-     "na_reason": "no incident allegation was proposed"
-    },
-    "coverup_detected": null,
-    "coverup_detected_na_reason": "no successful anti-forensic effect in this case",
-    "account_identification_correct": null,
-    "account_identification_na_reason": "no incident occurred; account identification is not applicable",
-    "attribution_abstained": true,
-    "unsupported_named_attribution": 0,
-    "false_accusation": false,
-    "named_attribution_correct": null,
-    "benign_false_alert": false,
-    "false_claims_final": 0,
-    "proposals_total": 3,
-    "proposals_incident": 0,
-    "final_accepted_incident": 0,
-    "unobservable_effects": 0,
-    "failed_or_partial_steps": 0,
-    "matches": [],
-    "finding_outcomes": [
-     {
-      "finding_id": "BR-01",
-      "outcome": "not_an_allegation",
-      "effect_id": null,
-      "reason": "benign explanation; not scored as an incident claim"
-     },
-     {
-      "finding_id": "BR-02",
-      "outcome": "not_an_allegation",
-      "effect_id": null,
-      "reason": "benign explanation; not scored as an incident claim"
-     },
-     {
-      "finding_id": "BR-03",
-      "outcome": "not_an_allegation",
-      "effect_id": null,
-      "reason": "benign explanation; not scored as an incident claim"
-     }
-    ],
-    "effect_outcomes": [],
-    "usage": {
-     "llm_calls": 0,
-     "tokens_in": 0,
-     "tokens_out": 0,
-     "tokens_cache_read": 0,
-     "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.092294,
-     "tool_calls": 0,
-     "scripted_turns": 0,
-     "retries": 0,
-     "errors": 0,
-     "timed_out": false
-    },
-    "review_status": "skipped_for_benchmark",
-    "approved_by_human": false,
-    "report_sha256": "72f8a192027cf46e3f5b8319cbf43eb8bfc09668a86dda3b1f9edd8a59fbf552",
-    "notes": [
-     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
-    ]
-   },
-   "report_file": "benchmarks/offline-v1/reports/T10-BR.report.json"
-  },
-  {
    "system_id": "B0",
    "case_ref": "T10",
    "status": "completed",
@@ -3874,7 +3768,7 @@
    "score": {
     "scorer_version": "1.0.0",
     "report_id": "rep-B0-bndl-6b86c8203b2372ed",
-    "episode_id": "bench-t10-20261114t061721z",
+    "episode_id": "bench-t10-20261114t062011z",
     "system_id": "B0",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "benign",
@@ -4035,7 +3929,7 @@
      "tokens_out": 0,
      "tokens_cache_read": 0,
      "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.015869,
+     "wall_seconds": 0.01618,
      "tool_calls": 0,
      "scripted_turns": 0,
      "retries": 0,
@@ -4053,13 +3947,13 @@
   },
   {
    "system_id": "BR",
-   "case_ref": "T11",
+   "case_ref": "T10",
    "status": "completed",
    "error": null,
    "score": {
     "scorer_version": "1.0.0",
-    "report_id": "rep-BR-bndl-70dfa7ac0c275aa1",
-    "episode_id": "bench-t11-20261114t061721z",
+    "report_id": "rep-BR-bndl-6b86c8203b2372ed",
+    "episode_id": "bench-t10-20261114t062011z",
     "system_id": "BR",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "benign",
@@ -4082,8 +3976,8 @@
      "na_reason": "no incident allegation was accepted"
     },
     "evidence_reference_validity": {
-     "num": 8,
-     "den": 8,
+     "num": 10,
+     "den": 10,
      "value": 1.0,
      "na_reason": null
     },
@@ -4109,7 +4003,7 @@
     "named_attribution_correct": null,
     "benign_false_alert": false,
     "false_claims_final": 0,
-    "proposals_total": 2,
+    "proposals_total": 3,
     "proposals_incident": 0,
     "final_accepted_incident": 0,
     "unobservable_effects": 0,
@@ -4127,6 +4021,12 @@
       "outcome": "not_an_allegation",
       "effect_id": null,
       "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "BR-03",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
      }
     ],
     "effect_outcomes": [],
@@ -4136,7 +4036,7 @@
      "tokens_out": 0,
      "tokens_cache_read": 0,
      "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.075224,
+     "wall_seconds": 0.081902,
      "tool_calls": 0,
      "scripted_turns": 0,
      "retries": 0,
@@ -4145,12 +4045,12 @@
     },
     "review_status": "skipped_for_benchmark",
     "approved_by_human": false,
-    "report_sha256": "7cf9a8c5f815c3d94c33bc1eb6b1e6de8d25691d930323061c9fef333eb65bb9",
+    "report_sha256": "72f8a192027cf46e3f5b8319cbf43eb8bfc09668a86dda3b1f9edd8a59fbf552",
     "notes": [
      "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
     ]
    },
-   "report_file": "benchmarks/offline-v1/reports/T11-BR.report.json"
+   "report_file": "benchmarks/offline-v1/reports/T10-BR.report.json"
   },
   {
    "system_id": "B0",
@@ -4160,7 +4060,7 @@
    "score": {
     "scorer_version": "1.0.0",
     "report_id": "rep-B0-bndl-70dfa7ac0c275aa1",
-    "episode_id": "bench-t11-20261114t061721z",
+    "episode_id": "bench-t11-20261114t062011z",
     "system_id": "B0",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "benign",
@@ -4297,7 +4197,7 @@
      "tokens_out": 0,
      "tokens_cache_read": 0,
      "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.016129,
+     "wall_seconds": 0.015892,
      "tool_calls": 0,
      "scripted_turns": 0,
      "retries": 0,
@@ -4314,6 +4214,214 @@
    "report_file": "benchmarks/offline-v1/reports/T11-B0.report.json"
   },
   {
+   "system_id": "BR",
+   "case_ref": "T11",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-BR-bndl-70dfa7ac0c275aa1",
+    "episode_id": "bench-t11-20261114t062011z",
+    "system_id": "BR",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "benign",
+    "step_recall": {
+     "num": null,
+     "den": null,
+     "value": null,
+     "na_reason": "no-crime case: recall is not applicable"
+    },
+    "proposal_precision": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was proposed"
+    },
+    "final_precision": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was accepted"
+    },
+    "evidence_reference_validity": {
+     "num": 8,
+     "den": 8,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was proposed"
+    },
+    "verifier_rejection_rate": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was proposed"
+    },
+    "coverup_detected": null,
+    "coverup_detected_na_reason": "no successful anti-forensic effect in this case",
+    "account_identification_correct": null,
+    "account_identification_na_reason": "no incident occurred; account identification is not applicable",
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": false,
+    "false_claims_final": 0,
+    "proposals_total": 2,
+    "proposals_incident": 0,
+    "final_accepted_incident": 0,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [],
+    "finding_outcomes": [
+     {
+      "finding_id": "BR-01",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "BR-02",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     }
+    ],
+    "effect_outcomes": [],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.087056,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "7cf9a8c5f815c3d94c33bc1eb6b1e6de8d25691d930323061c9fef333eb65bb9",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T11-BR.report.json"
+  },
+  {
+   "system_id": "BR",
+   "case_ref": "T12",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-BR-bndl-2cd6c099234d468b",
+    "episode_id": "bench-t12-20261114t062011z",
+    "system_id": "BR",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "benign",
+    "step_recall": {
+     "num": null,
+     "den": null,
+     "value": null,
+     "na_reason": "no-crime case: recall is not applicable"
+    },
+    "proposal_precision": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was proposed"
+    },
+    "final_precision": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was accepted"
+    },
+    "evidence_reference_validity": {
+     "num": 11,
+     "den": 11,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was proposed"
+    },
+    "verifier_rejection_rate": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was proposed"
+    },
+    "coverup_detected": null,
+    "coverup_detected_na_reason": "no successful anti-forensic effect in this case",
+    "account_identification_correct": null,
+    "account_identification_na_reason": "no incident occurred; account identification is not applicable",
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": false,
+    "false_claims_final": 0,
+    "proposals_total": 3,
+    "proposals_incident": 0,
+    "final_accepted_incident": 0,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [],
+    "finding_outcomes": [
+     {
+      "finding_id": "BR-01",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "unresolved; not scored as an incident claim"
+     },
+     {
+      "finding_id": "BR-02",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "BR-03",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     }
+    ],
+    "effect_outcomes": [],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.074294,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "9cd90be52611e976ca71b74cffe2d9fbc1cad34851d496a5460158da0271320b",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T12-BR.report.json"
+  },
+  {
    "system_id": "B0",
    "case_ref": "T12",
    "status": "completed",
@@ -4321,7 +4429,7 @@
    "score": {
     "scorer_version": "1.0.0",
     "report_id": "rep-B0-bndl-2cd6c099234d468b",
-    "episode_id": "bench-t12-20261114t061721z",
+    "episode_id": "bench-t12-20261114t062011z",
     "system_id": "B0",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "benign",
@@ -4446,7 +4554,7 @@
      "tokens_out": 0,
      "tokens_cache_read": 0,
      "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.016929,
+     "wall_seconds": 0.0164,
      "tool_calls": 0,
      "scripted_turns": 0,
      "retries": 0,
@@ -4461,113 +4569,6 @@
     ]
    },
    "report_file": "benchmarks/offline-v1/reports/T12-B0.report.json"
-  },
-  {
-   "system_id": "BR",
-   "case_ref": "T12",
-   "status": "completed",
-   "error": null,
-   "score": {
-    "scorer_version": "1.0.0",
-    "report_id": "rep-BR-bndl-2cd6c099234d468b",
-    "episode_id": "bench-t12-20261114t061721z",
-    "system_id": "BR",
-    "inference_mode": "NO_MODEL_BASELINE",
-    "case_kind": "benign",
-    "step_recall": {
-     "num": null,
-     "den": null,
-     "value": null,
-     "na_reason": "no-crime case: recall is not applicable"
-    },
-    "proposal_precision": {
-     "num": 0,
-     "den": 0,
-     "value": null,
-     "na_reason": "no incident allegation was proposed"
-    },
-    "final_precision": {
-     "num": 0,
-     "den": 0,
-     "value": null,
-     "na_reason": "no incident allegation was accepted"
-    },
-    "evidence_reference_validity": {
-     "num": 11,
-     "den": 11,
-     "value": 1.0,
-     "na_reason": null
-    },
-    "supported_claim_rate": {
-     "num": 0,
-     "den": 0,
-     "value": null,
-     "na_reason": "no incident allegation was proposed"
-    },
-    "verifier_rejection_rate": {
-     "num": 0,
-     "den": 0,
-     "value": null,
-     "na_reason": "no incident allegation was proposed"
-    },
-    "coverup_detected": null,
-    "coverup_detected_na_reason": "no successful anti-forensic effect in this case",
-    "account_identification_correct": null,
-    "account_identification_na_reason": "no incident occurred; account identification is not applicable",
-    "attribution_abstained": true,
-    "unsupported_named_attribution": 0,
-    "false_accusation": false,
-    "named_attribution_correct": null,
-    "benign_false_alert": false,
-    "false_claims_final": 0,
-    "proposals_total": 3,
-    "proposals_incident": 0,
-    "final_accepted_incident": 0,
-    "unobservable_effects": 0,
-    "failed_or_partial_steps": 0,
-    "matches": [],
-    "finding_outcomes": [
-     {
-      "finding_id": "BR-01",
-      "outcome": "not_an_allegation",
-      "effect_id": null,
-      "reason": "unresolved; not scored as an incident claim"
-     },
-     {
-      "finding_id": "BR-02",
-      "outcome": "not_an_allegation",
-      "effect_id": null,
-      "reason": "benign explanation; not scored as an incident claim"
-     },
-     {
-      "finding_id": "BR-03",
-      "outcome": "not_an_allegation",
-      "effect_id": null,
-      "reason": "benign explanation; not scored as an incident claim"
-     }
-    ],
-    "effect_outcomes": [],
-    "usage": {
-     "llm_calls": 0,
-     "tokens_in": 0,
-     "tokens_out": 0,
-     "tokens_cache_read": 0,
-     "cost_estimate_usd": 0.0,
-     "wall_seconds": 0.087638,
-     "tool_calls": 0,
-     "scripted_turns": 0,
-     "retries": 0,
-     "errors": 0,
-     "timed_out": false
-    },
-    "review_status": "skipped_for_benchmark",
-    "approved_by_human": false,
-    "report_sha256": "9cd90be52611e976ca71b74cffe2d9fbc1cad34851d496a5460158da0271320b",
-    "notes": [
-     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
-    ]
-   },
-   "report_file": "benchmarks/offline-v1/reports/T12-BR.report.json"
   }
  ],
  "paired": {
@@ -4635,7 +4636,8 @@
   "BR's checks were developed against this simulator. Its score shows the checks work on the modeled world, not that they generalize.",
   "B0's final precision benefits from the shared verifier, which filters its raw keyword hits. Its raw proposal counts are reported next to it for that reason.",
   "In simulator v1 the adversary's staging and transfer commands stay in shell history, which favors the keyword baseline. Clearing history is a later difficulty level.",
-  "AI arms were not run: no zero-charge model runtime was available. They are not zero; they are unrun."
+  "AI arms were not run: no zero-charge model runtime was available. They are not zero; they are unrun.",
+  "Run history: the first run on the declared seeds is preserved at commit 146a7a3 (BR 1.0.0). It was followed by a label-only correction of one ATT&CK id (T1070.002 now redirects to T1685.006 on attack.mitre.org; BR 1.0.1). No rule, predicate, threshold or scorer changed, and all 24 per-run scores were verified identical between the two runs, so the same declared split is reported."
  ],
  "reproduce": [
   "uv run alibi bench --check",
