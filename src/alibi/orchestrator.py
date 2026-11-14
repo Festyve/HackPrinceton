@@ -256,7 +256,10 @@ class CaseRecord:
             "ground_truth": "sealed answer key" if self.scored else "none · imported evidence is not scored",
         }
         if self.lab:
-            d["labels"]["worker_choices"] = self.lab["provenance"]["ordinary_work_label"]
+            work = self.lab["provenance"]["ordinary_work_label"]
+            # in a replay nothing is chosen again: the workers' choices are the saved ones
+            d["labels"]["worker_choices"] = (work.replace("live model", "recorded choices of a model")
+                                             if self.playback == "REPLAY" else work)
             d["labels"]["changed_objective_policy"] = self.lab["provenance"]["changed_objective_label"]
         return d
 
@@ -763,6 +766,7 @@ class Orchestrator:
 
         investigator_budget: the same frozen evidence (the saved tape is replayed, so the hashes are equal) with a
         different request allowance for the investigator.
+        workflow: the same frozen evidence investigated in the other mode (one agent, or three).
         rogue_permissions: a new execution on the same seed and the same ordinary work (replayed from the tape),
         in which a changed objective acts under a different permission profile. Its evidence may differ."""
         parent = self._lab_record(case_id)
@@ -797,8 +801,20 @@ class Orchestrator:
                 child_spec, _ = lab_engine.run_fresh(fresh, lab_engine.ordinary_work_from(spec["lab"]["tape"]))
                 note = ("a new execution: the workers' ordinary choices are replayed from the first run's tape, and a "
                         "changed objective acts again under the new permissions. The evidence may differ")
+            elif kind == "workflow":
+                if investigation_mode not in ("fast", "specialist") or investigation_mode == parent.investigation_mode:
+                    raise ValueError("workflow needs investigation_mode fast or specialist, different from the first run's")
+                changed = {"investigation_mode": {"from": parent.investigation_mode, "to": investigation_mode}}
+                if investigator_requests is not None:
+                    if not 1 <= int(investigator_requests) <= 40:
+                        raise ValueError("investigator_requests must be between 1 and 40")
+                    if int(investigator_requests) != cond["investigator_requests"]:
+                        changed["investigator_requests"] = {"from": cond["investigator_requests"], "to": int(investigator_requests)}
+                        cond.update(investigator_requests=int(investigator_requests), preset=None, preset_label="Custom")
+                child_spec = spec
+                note = "same frozen evidence; one agent against three agents"
             else:
-                raise ValueError("kind must be investigator_budget or rogue_permissions")
+                raise ValueError("kind must be investigator_budget, rogue_permissions or workflow")
             rec = self._lab_case(new_id, child_spec, conditions=cond, worker_usage=None,
                                  runner_id=runner_id or parent.runner_id,
                                  investigation_mode=investigation_mode or parent.investigation_mode, client_token=key,
@@ -828,7 +844,8 @@ class Orchestrator:
             if outcome is None:
                 outcome = "stopped" if stop else "complete"
             row = {
-                "case_id": rec.case_id, "is_root": rec.case_id == root, "lineage": rec.lab["lineage"],
+                "case_id": rec.case_id, "is_root": rec.lab["lineage"]["parent_case_id"] is None,
+                "lineage": rec.lab["lineage"], "playback": rec.playback, "replay_of": rec.replay_of,
                 "conditions": rec.lab["conditions"], "bundle_id": rec.bundle_id, "state": rec.state, "outcome": outcome,
                 "stop_reason": stop, "error": rec.error, "labels": rec.public()["labels"],
                 "allowed": {"investigator_requests": rec.lab["conditions"]["investigator_requests"],
@@ -1241,6 +1258,12 @@ class Orchestrator:
         rec = self._load(case_id)
         out = trace.investigation_trace(self._log(case_id).since(0))
         out.update(case_id=case_id, state=rec.state, labels=rec.public()["labels"])
+        # what wrote the plan matters: a checklist in code and a script are not a model's plan
+        out["plan_written_by"] = {
+            "NO_MODEL_BASELINE": "fixed code: this run has no agent, and its checklist is not a plan anyone made",
+            "SCRIPTED_FIXTURE": "a scripted fixture, not a model",
+            "LIVE_MODEL": "the model, during this run", "RECORDED_MODEL": "the model, in the recorded run",
+        }.get(rec.inference_mode, rec.inference_mode)
         return out
 
     def _store(self, case_id: str) -> tuple[EvidenceStore, EpisodePaths]:
@@ -1542,7 +1565,7 @@ class Orchestrator:
         out.write_text(json.dumps({
             "meta": {"title": rec.title, "preset_id": rec.preset_id, "difficulty": rec.difficulty,
                      "inference_mode": rec.inference_mode, "model_id": rec.model_id, "runner_id": rec.runner_id,
-                     "investigation_mode": rec.investigation_mode,
+                     "investigation_mode": rec.investigation_mode, "lab": rec.lab,
                      "recorded_at": _iso_now(), "git_commit": ep.git_commit, "note": note,
                      "simulator_version": ep.simulator_version, "raw_bundle_sha256": ep.raw_bundle_sha256},
             "spec": ep.scenario_spec,
@@ -1572,7 +1595,7 @@ class Orchestrator:
                          investigation_mode=_recorded_mode(meta),
                          inference_mode=("RECORDED_MODEL" if meta["inference_mode"] == "LIVE_MODEL" else meta["inference_mode"]),
                          playback="REPLAY", model_id=meta.get("model_id"), replay_of=replay_id,
-                         recorded_at=meta.get("recorded_at"), client_token=client_token)
+                         recorded_at=meta.get("recorded_at"), client_token=client_token, lab=meta.get("lab"))
         rec = self._generate(rec, seed=None, variant=None, spec=data["spec"])
         got = load_manifest(self._paths(rec.case_id)).raw_bundle_sha256
         if got != meta.get("raw_bundle_sha256"):

@@ -329,6 +329,130 @@ def _cmd_investigate(args: argparse.Namespace) -> int:
     return _investigate_to_review(_orchestrator(), args.case_id)
 
 
+def _wait_for_review(orch: Any, case_id: str) -> str:
+    import time
+
+    deadline = time.time() + max(60.0, load_settings().caps.max_seconds + 60.0)
+    state = orch.record(case_id).state
+    while time.time() < deadline:
+        state = orch.record(case_id).state
+        if state in ("awaiting_review", "failed", "cancelled"):
+            break
+        time.sleep(0.1)
+    return state
+
+
+def _lab_row(row: dict[str, Any]) -> str:
+    cond, used, scored = row["conditions"], row["used"] or {}, row["scored"] or {}
+    est = (scored.get("effects_established") or {})
+    what = "first run" if row["is_root"] else f"{row['lineage']['comparison']}: " + ", ".join(
+        f"{k} {v['from']} -> {v['to']}" for k, v in (row["lineage"]["changed"] or {}).items())
+    return (f"{row['case_id']}  {row['bundle_id']}  {what:<52} allowed {cond['investigator_requests']:>2} "
+            f"used {str(used.get('llm_calls', '-')):>2}  {row['outcome']:<16} "
+            f"accepted allegations {(row['findings'] or {}).get('incident_allegations_accepted', '-')}"
+            + (f"  established {est.get('num')}/{est.get('den')}" if est.get("den") else ""))
+
+
+def _cmd_lab(args: argparse.Namespace) -> int:
+    """The worker lab from a terminal: run an experiment, read the operator's record, compare runs."""
+    import tempfile
+    import time
+    import uuid
+    from dataclasses import replace
+    from pathlib import Path
+
+    from alibi.orchestrator import Orchestrator
+
+    if args.lab_cmd == "options":
+        print(json.dumps(_orchestrator().lab_options(), indent=2))
+        return 0
+    if args.lab_cmd == "operator":
+        rec = _orchestrator().lab_operator(args.case_id)
+        tr = rec["transition"]
+        print(rec["label"])
+        print("objective changed: " + (f"worker {tr['worker']} at tick {tr['tick']} ({tr['t']}), permissions {tr['permissions']}, "
+                                       f"policy {tr['policy_version']}" if tr else "no worker's objective was changed"))
+        for r in rec["records"]:
+            print(f"  {r['seq']:>3} tick {r['tick']:<2} {r['worker']} {r['objective']:<7} {r['action']:<21} "
+                  f"{str(r['target'] or ''):<12} {r['status']:<9} {r['outcome']}")
+        return 0
+    if args.lab_cmd == "table":
+        table = _orchestrator().lab_comparisons(args.case_id)
+        for row in table["runs"]:
+            print(_lab_row(row))
+        print(table["note"])
+        return 0
+    if args.lab_cmd == "compare":
+        orch = _orchestrator()
+        rec = orch.lab_compare(args.case_id, kind=args.kind, investigator_requests=args.investigator_requests,
+                               rogue_permissions=args.permissions, client_token=f"cli-{uuid.uuid4().hex[:10]}",
+                               runner_id=args.runner, investigation_mode=args.mode)
+        lin = rec.lab["lineage"]
+        print(f"case {rec.case_id}: {lin['comparison']} · {lin['note']} · same evidence as the first run: {lin['same_evidence_as_parent']}")
+        return _investigate_to_review(orch, rec.case_id) if args.investigate else 0
+    # run
+    settings = load_settings()
+    holder = tempfile.TemporaryDirectory(prefix="alibi-lab-record-") if args.save_as else None
+    try:
+        if holder:  # a recording is made beside the real case list, not in it
+            settings = replace(settings, runs_dir=Path(holder.name) / "runs", sealed_dir=Path(holder.name) / "sealed")
+        orch = Orchestrator(settings, pace_s=0.0)
+        rec = orch.create_lab_case(
+            variant=args.variant, seed=args.seed, preset=args.preset, rogue_permissions=args.permissions,
+            rogue_requests=args.rogue_requests, investigator_requests=args.investigator_requests,
+            context_load=args.context_load, ordinary_work=args.work, runner_id=args.runner, investigation_mode=args.mode,
+            client_token=f"cli-{uuid.uuid4().hex[:10]}")
+        cond, prov = rec.lab["conditions"], rec.lab["provenance"]
+        print(f"case {rec.case_id}: {rec.title} · {cond['preset_label']} · changed worker {cond['rogue_requests']} request(s), "
+              f"investigator {cond['investigator_requests']} · permissions {cond['rogue_permissions']} · context {cond['context_load']}")
+        print(f"  {prov['ordinary_work_label']}" + (f" · {prov['worker_usage']['llm_calls']} request(s), est. "
+                                                     f"${prov['worker_usage']['cost_estimate_usd']:.4f}" if prov["worker_usage"] else ""))
+        print(f"  {prov['changed_objective_label']}")
+        if not (args.investigate or args.save_as):
+            print(f"next: alibi investigate {rec.case_id}")
+            return 0
+        code = _investigate_to_review(orch, rec.case_id)
+        if code or not args.save_as:
+            return code
+        asked = []
+        for n, text in enumerate(args.question or []):
+            q = orch.ask_question(rec.case_id, text, f"record-{n}")
+            end = time.time() + 120
+            while q.status == "pending" and time.time() < end:
+                time.sleep(0.2)
+                q = orch.get_question(rec.case_id, q.question_id)
+            asked.append(f"{q.status} ({q.usage.llm_calls} model call(s))")
+        out = orch.save_recording(rec.case_id, args.save_as, note=args.note)
+        print(f"saved {out}" + (f"\nquestions: {', '.join(asked)}" if asked else ""))
+        return 0
+    finally:
+        if holder:
+            holder.cleanup()
+
+
+def _cmd_trace(args: argparse.Namespace) -> int:
+    """What the recorded investigation of a case did: plan, delegations, plan changes, case-file use."""
+    tr = _orchestrator().investigation_trace(args.case_id)
+    if args.json:
+        print(json.dumps(tr, indent=2))
+        return 0
+    b = tr["behaviors"]
+    print(f"case {args.case_id} · {tr['labels']['inference_label']} · {tr['labels']['investigation_mode_label']}")
+    print(f"planned before examining: {'yes' if b['planned_before_examining'] else 'no'} · plan written by {tr['plan_written_by']}")
+    for d in b["delegations"]:
+        print(f"delegated to {d['to']}: {d['tool_calls']} tool call(s), {d['status']} · {str(d['result_summary'] or '')[:80]}")
+    for r in b["plan_revisions"]:
+        after = r["after"] or {}
+        print(f"plan changed at event {r['seq']} (after event {after.get('seq')}: {after.get('what')}):")
+        for item in r["added"]:
+            print(f"    + {item}")
+    cf = b["case_file"]
+    print(f"case file: {cf['writes']} write(s), {cf['reads_after_a_write']} read(s) after a write · {', '.join(cf['paths']) or 'none'}")
+    print(f"resumed: {b['resumed']['times']} time(s), {b['resumed']['tool_calls_after_resume']} tool call(s) afterwards")
+    print(tr["note"])
+    return 0
+
+
 def _cmd_review(args: argparse.Namespace) -> int:
     """Record the human decision on a drafted report. Either decision locks the report as proposed."""
     view = _orchestrator().review(args.case_id, args.decision, args.note)
@@ -618,6 +742,43 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("investigate", help="investigate a case that is already frozen and stop at human review")
     p.add_argument("case_id")
     p.set_defaults(func=_cmd_investigate)
+
+    p = sub.add_parser("trace", help="what a case's recorded investigation did: plan, delegations, plan changes, case file")
+    p.add_argument("case_id")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=_cmd_trace)
+
+    p = sub.add_parser("lab", help="the worker lab: run an experiment, read the operator's record, compare runs")
+    lsub = p.add_subparsers(dest="lab_cmd", required=True)
+    q = lsub.add_parser("options", help="presets in their units, permission profiles, context loads")
+    q = lsub.add_parser("run", help="run the workers once and freeze what they left as a new case")
+    q.add_argument("--variant", default="incident", choices=["incident", "control"])
+    q.add_argument("--seed", type=int, default=None)
+    q.add_argument("--preset", default=None, choices=["offense_heavy", "balanced", "defense_heavy"])
+    q.add_argument("--permissions", default=None, choices=["export_only", "export_log", "export_log_artifact"])
+    q.add_argument("--rogue-requests", type=int, default=None)
+    q.add_argument("--investigator-requests", type=int, default=None)
+    q.add_argument("--context-load", default=None, choices=["light", "standard", "heavy"])
+    q.add_argument("--work", default=None, choices=["model", "scripted"], help="who chooses the workers' ordinary actions")
+    q.add_argument("--runner", default=None, help="deterministic | agent-fixture | agent-live (default: runtime default)")
+    q.add_argument("--mode", default=None, choices=["fast", "specialist"])
+    q.add_argument("--investigate", action="store_true", help="investigate it straight away and stop at human review")
+    q.add_argument("--save-as", default=None, help="investigate, then save under demo/replays/<name> for offline replay")
+    q.add_argument("--note", default="")
+    q.add_argument("--question", action="append", help="with --save-as: ask this and save the answer with the recording")
+    q = lsub.add_parser("operator", help="every attempted action and the change of objective (after the report is locked)")
+    q.add_argument("case_id")
+    q = lsub.add_parser("compare", help="a second run that changes one thing")
+    q.add_argument("case_id")
+    q.add_argument("--kind", required=True, choices=["investigator_budget", "rogue_permissions", "workflow"])
+    q.add_argument("--investigator-requests", type=int, default=None)
+    q.add_argument("--permissions", default=None, choices=["export_only", "export_log", "export_log_artifact"])
+    q.add_argument("--runner", default=None)
+    q.add_argument("--mode", default=None, choices=["fast", "specialist"])
+    q.add_argument("--investigate", action="store_true")
+    q = lsub.add_parser("table", help="this run and the runs derived from the same first run")
+    q.add_argument("case_id")
+    p.set_defaults(func=_cmd_lab)
 
     p = sub.add_parser("eval", help="the phase-two paired evaluation: six systems, four new cases, no verifier feedback")
     p.add_argument("--declare", action="store_true", help="write docs/evaluation-config-v2.json (before any run)")

@@ -439,7 +439,7 @@ def test_the_trace_reports_only_what_the_event_log_holds(env):
     assert b["resumed"]["times"] == 0
     tools = [s for s in tr["spans"] if s["kind"] == "tool"]
     assert tools and all(s["parent_id"] for s in tools) and tr["labels"]["inference"] == "SCRIPTED_FIXTURE"
-    assert "not a model's thoughts" in tr["note"]
+    assert "not a model's thoughts" in tr["note"] and tr["plan_written_by"] == "a scripted fixture, not a model"
 
 
 def test_the_trace_recognises_a_rewritten_plan_and_a_note_read_back():
@@ -471,3 +471,82 @@ def test_the_trace_recognises_a_rewritten_plan_and_a_note_read_back():
     assert b["delegations"][0]["tool_calls"] == 1 and b["delegations"][0]["result_summary"] == "3 candidates"
     # no plan at all, or a plan written only after examining, is reported as such
     assert investigation_trace(events[3:])["behaviors"]["planned_before_examining"] is False
+
+
+# ---------------------------------------------------------------- recording, replay and the terminal
+
+
+def test_a_lab_run_can_be_saved_and_replayed_with_its_settings_and_the_same_evidence(env, monkeypatch, tmp_path):
+    from alibi import orchestrator as orch_module
+
+    monkeypatch.setattr(orch_module, "REPLAY_DIR", tmp_path / "replays")
+    settings, orch, c, _ = env
+    cid = _create(c, variant="incident", preset="defense_heavy", runner="agent-fixture")["case"]["case_id"]
+    _wait(c, cid)
+    original = orch._load(cid)
+    orch.save_recording(cid, "lab-test", note="test recording")
+    saved = json.loads((tmp_path / "replays" / "lab-test" / "recording.json").read_text())
+    assert saved["meta"]["lab"]["conditions"]["preset"] == "defense_heavy" and saved["spec"]["lab"]["tape"]
+    replay = orch.open_replay("lab-test", client_token="r-1")
+    assert replay.state == "frozen" and replay.error is None
+    assert replay.bundle_id == original.bundle_id  # the tape reproduced the evidence
+    assert replay.playback == "REPLAY" and replay.lab["conditions"] == original.lab["conditions"]
+    orch.start_investigation(replay.case_id)
+    _wait(c, replay.case_id)
+    view = c.get(f"/api/cases/{replay.case_id}").json()
+    assert view["case"]["labels"]["playback"] == "REPLAY" and "scripted fixture" in view["case"]["labels"]["worker_choices"]
+    assert c.get(f"/api/cases/{replay.case_id}/lab").json()["activity_total"] > 5
+    assert c.get(f"/api/cases/{replay.case_id}/trace").json()["behaviors"]["planned_before_examining"] is True
+    # a replayed run that was live says its workers' choices are recorded ones
+    live_like = orch._load(replay.case_id)
+    live_like.lab["provenance"]["ordinary_work_label"] = "Workers' ordinary choices: live model (anthropic:x)"
+    assert live_like.public()["labels"]["worker_choices"] == "Workers' ordinary choices: recorded choices of a model (anthropic:x)"
+
+
+def test_one_agent_against_three_on_the_same_evidence_is_its_own_comparison(env):
+    _, orch, c, _ = env
+    cid = _create(c, variant="incident", runner="agent-fixture", investigation_mode="fast")["case"]["case_id"]
+    _wait(c, cid)
+    made = c.post(f"/api/cases/{cid}/lab/comparisons", json={"kind": "workflow", "investigation_mode": "specialist",
+                                                             "runner": "agent-fixture", "client_token": "w-1", "autostart": True})
+    assert made.status_code == 200, made.text
+    lin = made.json()["lab"]["lineage"]
+    assert lin["changed"] == {"investigation_mode": {"from": "fast", "to": "specialist"}} and lin["same_evidence_as_parent"] is True
+    same = c.post(f"/api/cases/{cid}/lab/comparisons", json={"kind": "workflow", "investigation_mode": "fast",
+                                                             "runner": "agent-fixture", "client_token": "w-2"})
+    assert same.status_code == 400  # the same mode is not a comparison
+
+
+def test_the_lab_from_a_terminal(env, monkeypatch, capsys, tmp_path):
+    from alibi import cli
+    from alibi import orchestrator as orch_module
+
+    settings, orch, c, _ = env
+    monkeypatch.setattr(cli, "load_settings", lambda: settings)
+    monkeypatch.setattr(orch_module, "REPLAY_DIR", tmp_path / "replays")
+    assert cli.main(["lab", "options"]) == 0 and '"offense_heavy"' in capsys.readouterr().out
+    assert cli.main(["lab", "run", "--variant", "incident", "--seed", str(SEED), "--preset", "balanced", "--work", "scripted",
+                     "--runner", "deterministic", "--investigate"]) == 0
+    out = capsys.readouterr().out
+    cid = out.split()[1].rstrip(":")
+    assert "Balanced · 50/50" in out and "changed worker 10 request(s), investigator 10" in out
+    assert "scripted fixture · no model" in out and "scripted policy · no model chooses them" in out
+    assert "local_log_removal" in out and "state awaiting_review" in out
+    assert cli.main(["lab", "operator", cid]) == 1 and "sealed until the report is locked" in capsys.readouterr().err
+    assert cli.main(["review", cid, "accept"]) == 0
+    capsys.readouterr()
+    assert cli.main(["lab", "operator", cid]) == 0
+    out = capsys.readouterr().out
+    assert "objective changed: worker W1 at tick 3" in out and "copy_restricted" in out and "failed" in out
+    assert cli.main(["lab", "compare", cid, "--kind", "investigator_budget", "--investigator-requests", "4",
+                     "--runner", "deterministic", "--investigate"]) == 0
+    assert "same evidence as the first run: True" in capsys.readouterr().out
+    assert cli.main(["lab", "table", cid]) == 0
+    table = capsys.readouterr().out
+    assert "first run" in table and "investigator_requests 10 -> 4" in table and "nothing here is an average" in table
+    assert cli.main(["trace", cid]) == 0 and "fixed code: this run has no agent" in capsys.readouterr().out
+    assert cli.main(["lab", "run", "--variant", "control", "--seed", str(SEED), "--work", "scripted", "--runner", "agent-fixture",
+                     "--save-as", "lab-cli-test", "--note", "from a test"]) == 0
+    assert (tmp_path / "replays" / "lab-cli-test" / "recording.json").exists()
+    assert not any(p.name.startswith("case-") and "lab-cli-test" in p.name for p in settings.runs_dir.glob("*"))
+    assert cli.main(["lab", "run", "--work", "model"]) == 1 and "not available" in capsys.readouterr().err
