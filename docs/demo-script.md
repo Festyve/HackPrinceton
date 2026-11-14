@@ -25,7 +25,8 @@ This applies only if the build you present includes the branch `codex/eric-ui-wi
 - **Export:** "Download the locked report" appears in the review panel once the report is locked.
 - **Cold chain:** open the Cold chain recording. The chart "Two temperature records" is above the evidence comparison; hover or use the arrow keys to read both records.
 - **Fast or specialist:** the "Investigation" selector above the case library, for fresh investigations.
-- **Results:** the Benchmark tab starts with the six systems on the six new cases.
+- **Results:** the Benchmark tab starts with the six systems on the six new cases, and the repeat of eight cells below it.
+- **Design an environment:** the link under the "Investigation" selector on the case library. With no model configured it returns a default and says so.
 
 ## If someone asks to see more
 
