@@ -2335,3 +2335,437 @@ td {
     width: 100%;
   }
 }
+/* Real worker execution and its separately sealed operator history. */
+.config-grid {
+  border: 0;
+  padding: 0;
+  margin: 16px 0;
+  min-width: 0;
+}
+.config-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+.config-grid small {
+  color: var(--muted);
+  font-size: 11px;
+}
+.config-grid input,
+.config-grid select {
+  min-width: 0;
+  width: 100%;
+}
+.lab-run-action {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 18px;
+}
+.lab-run-action button {
+  flex: none;
+}
+.policy-label {
+  max-width: 850px;
+}
+.worker-activity {
+  padding-bottom: 28px;
+}
+.worker-activity h2,
+.lab-experiments h2 {
+  font-size: 26px;
+}
+.provenance-label {
+  padding: 10px 14px;
+  border-left: 2px solid var(--amber);
+  background: #d9ae7308;
+  color: #cdc9be;
+  line-height: 1.8;
+}
+.worker-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 22px 0;
+}
+.worker-cards article {
+  border: 1px solid var(--line);
+  background: #1b2226;
+  border-radius: 10px;
+  padding: 18px;
+}
+.worker-cards h3 {
+  display: inline-block;
+  margin: 0 0 8px 10px;
+  font-size: 20px;
+  text-transform: capitalize;
+}
+.worker-id {
+  color: var(--amber);
+  font: 12px var(--mono);
+  padding: 4px 5px;
+  border: 1px solid #d9ae7355;
+  border-radius: 5px;
+}
+.worker-cards article > span.mono {
+  display: block;
+  color: var(--muted);
+}
+.worker-cards article p {
+  font-size: 14px;
+  color: #d1d2c8;
+}
+.worker-cards article > small {
+  font-size: 11px;
+  color: var(--muted);
+}
+.worker-conditions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  padding-bottom: 18px;
+  color: var(--amber);
+  font-size: 12px;
+}
+.worker-records {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #171c21;
+}
+.worker-records table {
+  width: 100%;
+  min-width: 610px;
+}
+.worker-records th,
+.worker-records td {
+  padding: 10px 14px;
+  font-size: 13px;
+}
+.worker-records small,
+.lab-experiments td small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 5px;
+}
+.worker-records .linkish {
+  font-size: 12px;
+  white-space: nowrap;
+}
+.scheduler-records {
+  margin-top: 20px;
+}
+.scheduler-records > div {
+  border-top: 1px solid var(--line);
+  padding: 12px 0;
+  font-size: 13px;
+}
+.scheduler-records time {
+  color: var(--amber);
+  font: 11px var(--mono);
+}
+.operator-boundary {
+  margin: 24px 0 0;
+  padding: 20px;
+  border: 1px dashed #d9ae7345;
+  border-radius: 10px;
+}
+.operator-boundary h3 {
+  margin-top: 0;
+}
+.sealed-note {
+  color: var(--amber);
+  font-size: 13px;
+  margin-bottom: 0;
+}
+.operator-record ol {
+  list-style: none;
+  margin: 20px 0;
+  padding: 0;
+}
+.operator-record li {
+  padding: 15px 0;
+  border-top: 1px solid var(--line);
+}
+.operator-record li > div {
+  display: flex;
+  gap: 15px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.operator-record li b {
+  flex: 1;
+}
+.operator-record li p {
+  font-size: 14px;
+  margin: 8px 0;
+}
+.operator-record small {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+.new-worker-experiment {
+  border-top: 1px solid var(--line);
+  padding: 22px 0;
+}
+.new-worker-experiment > summary {
+  font-size: 20px;
+  color: var(--amber);
+}
+.worker-run-context {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 24px;
+  background: #d9ae7306;
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+.worker-run-context > div {
+  flex: 1;
+  font-size: 11px;
+  color: #ccc5b6;
+}
+.worker-run-context span {
+  display: block;
+}
+.worker-run-context button {
+  font-size: 12px;
+  white-space: nowrap;
+}
+.lab-experiments {
+  border-bottom: 1px solid var(--line);
+  padding: 0 0 28px;
+  margin-bottom: 30px;
+}
+.lab-parent {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+}
+.lab-parent select {
+  display: block;
+  width: min(100%, 650px);
+  margin-top: 8px;
+}
+.comparison-create {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #1b2226;
+  margin: 20px 0;
+}
+.comparison-create fieldset {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr;
+  gap: 16px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.comparison-create legend {
+  font-size: 16px;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+.comparison-create label {
+  font-size: 12px;
+  min-width: 0;
+  color: var(--muted);
+}
+.comparison-create select,
+.comparison-create input {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  min-width: 0;
+  font-size: 13px;
+}
+.comparison-variable {
+  font-size: 13px;
+  color: #d1c7b6;
+  margin: 18px 0;
+}
+.lab-experiments table {
+  min-width: 1120px;
+}
+.lab-experiments th,
+.lab-experiments td {
+  font-size: 12px;
+  padding: 12px 15px;
+  vertical-align: top;
+}
+.lab-experiments table th:first-child {
+  width: 270px;
+}
+.lab-experiments .mono {
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 1100px) {
+  .comparison-create fieldset {
+    grid-template-columns: 1fr 1fr;
+  }
+  .comparison-create label:first-of-type {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 760px) {
+  .lab-run-action,
+  .worker-run-context {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .worker-cards {
+    grid-template-columns: 1fr;
+  }
+  .worker-run-context {
+    padding: 10px 14px;
+  }
+  .worker-run-context button {
+    align-self: flex-start;
+  }
+  .comparison-create {
+    padding: 14px;
+  }
+  .comparison-create fieldset {
+    grid-template-columns: 1fr;
+  }
+  .lab-experiments .section-heading {
+    align-items: flex-start;
+    gap: 10px;
+    flex-direction: column;
+  }
+  .worker-activity h2,
+  .lab-experiments h2 {
+    font-size: 24px;
+  }
+}
+.record-playback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.record-playback button {
+  font-size: 12px;
+  padding: 7px 10px;
+}
+.record-playback label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.record-playback select {
+  padding: 5px 8px;
+  font-size: 12px;
+}
+.record-playback > span {
+  flex-basis: 100%;
+  margin-top: 4px;
+}
+.comparison-options {
+  margin: 18px 0;
+}
+.comparison-options > summary {
+  color: var(--amber);
+  font-size: 14px;
+}
+.recorded-revisions {
+  margin: 24px 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.recorded-revisions article {
+  padding: 12px 16px;
+  background: #171c21;
+  margin: 12px 0;
+  border-left: 2px solid var(--amber);
+}
+.recorded-revisions h4 {
+  margin-top: 0;
+}
+.case-file-history {
+  padding: 14px;
+  background: #171c21;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.case-file-history p {
+  font-size: 13px;
+  color: var(--muted);
+}
+.case-file-history li {
+  padding: 7px 0;
+  font-size: 13px;
+}
+.case-file-history small {
+  display: block;
+  color: var(--muted);
+}
+.trace-events li[data-kind="delegation"] {
+  border-left: 2px solid #d9ae7377;
+  padding-left: 10px;
+}
+.lab-config-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lab-config-actions .tag {
+  white-space: nowrap;
+}
+.lab-config-actions button {
+  font-size: 13px;
+}
+@media (max-width: 1100px) {
+  .lab-config-actions .tag {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  .lab-config-actions {
+    width: 100%;
+  }
+  .lab-config-actions button {
+    width: 100%;
+  }
+}
+.app[data-case-family="worker-lab"] .comparison-context {
+  margin: 4px 0;
+}
+.app[data-case-family="worker-lab"] .headline {
+  font-size: 20px;
+  margin: 8px 0;
+}
+.app[data-case-family="worker-lab"] .comparison-coverage {
+  margin: 6px 0 8px;
+}
+.app[data-case-family="worker-lab"] .plan-summary {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+}
+.tool-plan-progress {
+  font: 10px var(--mono);
+  color: var(--amber);
+  margin-left: 4px;
+}
+@media (min-width: 900px) and (max-width: 1350px) {
+  .app[data-case-family="worker-lab"] .plan-summary {
+    display: none;
+  }
+  .app[data-case-family="worker-lab"] .compare td {
+    padding-top: 7px;
+    padding-bottom: 7px;
+  }
+}

@@ -64,9 +64,30 @@ export function SavedComparison({
     views[0]?.manifest?.raw_bundle_sha256 ===
       views[1]?.manifest?.raw_bundle_sha256;
   const both = views[0] && views[1];
-  const modeChange =
-    both &&
-    views[0]!.case.investigation_mode !== views[1]!.case.investigation_mode;
+  const changes: string[] = [];
+  const [left, right] = views;
+  if (both) {
+    if (left!.case.runner_id !== right!.case.runner_id)
+      changes.push("investigator system");
+    if (left!.case.investigation_mode !== right!.case.investigation_mode)
+      changes.push("investigation mode");
+    if (left!.case.lab && right!.case.lab) {
+      const a = left!.case.lab.conditions,
+        b = right!.case.lab.conditions;
+      if (a.investigator_requests !== b.investigator_requests)
+        changes.push(
+          `investigator allowance (${a.investigator_requests} → ${b.investigator_requests} requests)`,
+        );
+      if (a.rogue_permissions !== b.rogue_permissions)
+        changes.push("worker permissions / execution");
+      if (a.context_load !== b.context_load) changes.push("context load");
+    }
+  }
+  const identity = !sameHash
+    ? "Different execution or evidence. This comparison does not isolate a budget effect."
+    : changes.length
+      ? `Same frozen evidence bytes; changed ${changes.join(", ")}.${changes.some((c) => c.includes("execution")) ? " These are different execution conditions." : ""}`
+      : "Same frozen evidence; no changed resource condition is recorded here.";
   return (
     <section className="saved-comparison" data-testid="saved-comparison">
       <div className="section-heading">
@@ -126,11 +147,7 @@ export function SavedComparison({
             className={`comparison-identity ${sameHash ? "same" : "different"}`}
             data-testid="comparison-identity"
           >
-            {sameHash
-              ? modeChange
-                ? "Same frozen evidence; the investigation mode changed."
-                : "Same frozen evidence; no changed resource condition is recorded here."
-              : "Different execution or evidence. This comparison does not isolate a budget effect."}
+            {identity}
           </p>
           <div className="tablewrap">
             <table data-testid="saved-comparison-table">
@@ -163,6 +180,24 @@ export function SavedComparison({
                       `${v.case.labels.inference_label} · ${v.case.labels.model_id ?? "model not recorded"}`,
                   ],
                   [
+                    "Worker choices",
+                    (v: CaseView) =>
+                      v.case.labels.worker_choices ?? "Not a worker-lab run",
+                  ],
+                  [
+                    "Changed-objective policy",
+                    (v: CaseView) =>
+                      v.case.labels.changed_objective_policy ??
+                      "Not a worker-lab run",
+                  ],
+                  [
+                    "Permission / context",
+                    (v: CaseView) =>
+                      v.case.lab
+                        ? `${v.case.lab.conditions.rogue_permissions} / ${v.case.lab.conditions.context_load}`
+                        : "Not recorded",
+                  ],
+                  [
                     "Investigation mode",
                     (v: CaseView) =>
                       v.case.labels.investigation_mode_label ??
@@ -177,7 +212,7 @@ export function SavedComparison({
                   [
                     "Decision requests used / allowed",
                     (v: CaseView) =>
-                      `${v.report?.usage?.llm_calls ?? "Not recorded"} / allowance not recorded`,
+                      `${v.report?.usage?.llm_calls ?? "Not recorded"} / ${v.case.lab?.conditions.investigator_requests ?? "allowance not recorded"}`,
                   ],
                   [
                     "Measured tokens in / out",

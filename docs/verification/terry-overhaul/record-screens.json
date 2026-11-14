@@ -1,0 +1,26 @@
+[
+  {
+    "viewport": [
+      1440,
+      900
+    ],
+    "record_id_visible": true,
+    "page_overflow": false
+  },
+  {
+    "viewport": [
+      1280,
+      720
+    ],
+    "record_id_visible": true,
+    "page_overflow": false
+  },
+  {
+    "viewport": [
+      390,
+      844
+    ],
+    "record_id_visible": true,
+    "page_overflow": false
+  }
+]

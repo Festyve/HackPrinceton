@@ -1,0 +1,13 @@
+
+> alibi-web@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v5.4.11 building for production...
+transforming...
+✓ 57 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.40 kB │ gzip:  0.27 kB
+dist/assets/index--KSMdKuS.css   65.56 kB │ gzip: 14.75 kB
+dist/assets/index-DIIQYeaN.js   282.52 kB │ gzip: 85.54 kB
+✓ built in 420ms

@@ -471,3 +471,10 @@ Phase-two model spend so far: about **$0.08** (ledger total $3.006 of the $20 ca
 - Preserved existing UI and merged product-definition fc30b01 plus UI wiring 1b9216d. New serif graphite shell, Pip, command palette, evidence inspector, actual plan/trace/case file and saved-case comparison; all phase-two features retained.
 - `npm --prefix web run build` passed; 49 real-browser checks passed; offline suite 453 passed. 21 screenshots at the three requested sizes had zero page overflow and JavaScript errors. Artifacts: `docs/verification/terry-overhaul/`, `docs/screenshots/terry-overhaul/`.
 - Runtime stayed offline: no paid calls. Worker execution was visibly unavailable in this slice. Eric published c1148c8 while checks ran; worker-contract integration follows. P9 human sign-off remains pending; no P1–P10 release completion is claimed.
+
+## Terry integrated worker interface — 2026-11-14
+
+- Replaced the Lab preview with Eric's real worker contract, integrated through `6caa909`. No backend edits or paid runtime calls from this UI session. Current branch preserves checkpoint `9591107` and the backend history.
+- Added real worker activity/proof, explicitly sealed operator history and recorded action outcomes, exact allocation/permission/context controls, same-evidence budget comparisons and new-execution permission comparisons. Actual trace parent spans, plan content changes, filesystem reads/writes and local record playback are inspectable. All earlier phase-two features remain.
+- Build passed; full browser regression 57 passed (179.84 s); the final worker-log/default/above-fold adjustment passed five focused browser cases. Full offline suite 474 passed (344.20 s). Thirty final screenshots across the requested sizes had zero page overflow and JavaScript errors. Proof: `docs/verification/terry-overhaul/`; reproducible capture: `tests/capture_overhaul.py`.
+- P9 now has implementation/automated evidence; Rayan's actual usability reviews remain pending. Other release gates retain Eric's documented limits, including scripted fault actions, pending worker recording and checkpoint-resume proof. Handoff: `docs/terry-overhaul-handoff.md`.

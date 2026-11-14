@@ -25,7 +25,8 @@ import { ScoreOverlay } from "./score";
 import { BenchmarkTab } from "./bench";
 import { Navigation, CommandPalette, SavedCases } from "./shell";
 import type { Workspace, PaletteAction } from "./shell";
-import { Lab } from "./lab";
+import { Lab, WorkerActivity } from "./lab";
+import { LabExperiments } from "./lab-experiments";
 import { useActionToken } from "./features/operation";
 import { SavedComparison } from "./comparisons";
 import {
@@ -52,6 +53,7 @@ const EVENT_TYPES = [
   "tool",
   "finding",
   "note",
+  "note_read",
   "attribution",
   "usage",
   "report",
@@ -86,6 +88,8 @@ export default function App() {
   const [workspace, setWorkspace] = useState<Workspace>(
     hashId() ? "investigation" : "lab",
   );
+  const workspaceRef = useRef(workspace);
+  workspaceRef.current = workspace;
   const [palette, setPalette] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showSources, setShowSources] = useState(false);
@@ -377,6 +381,11 @@ export default function App() {
       }
       clearCase();
     });
+  const doCancel = () =>
+    guard("cancel", async () => {
+      const id = caseIdRef.current;
+      if (id) setView(await api.cancel(id));
+    });
   const doReview = (d: "accept" | "reject") =>
     guard("review", async () => {
       const id = caseIdRef.current;
@@ -404,7 +413,7 @@ export default function App() {
     setShowDetails(false);
     setShowSources(false);
     setPanelDialog(null);
-    setWorkspace("investigation");
+    if (workspaceRef.current !== "lab") setWorkspace("investigation");
     const requestId = ++rawRequest.current;
     const gen = genRef.current;
     setRaw({
@@ -474,7 +483,8 @@ export default function App() {
   const labeledCase = workspace === "investigation" ? c : undefined;
   const failed = state === "failed" || state === "cancelled";
   const bannerMsg = failed ? c?.error || c?.detail || state : run.error;
-  const title = view?.card?.title ?? c?.title ?? "Case library";
+  const title =
+    (c?.lab ? c.title : view?.card?.title) ?? c?.title ?? "Case library";
   const reviewPhase = state === "awaiting_review" || state === "report_locked";
   const closeRaw = () => {
     rawRequest.current += 1;
@@ -552,6 +562,7 @@ export default function App() {
         data-testid="app-root"
         data-case-id={c?.case_id ?? ""}
         data-workspace={workspace}
+        data-case-family={c?.card_id ?? ""}
         aria-busy={attaching || busy === "run"}
       >
         <header className="hdr app-bar">
@@ -650,6 +661,18 @@ export default function App() {
                     <button onClick={() => setShowLibrary(true)}>
                       Case library
                     </button>
+                    {state === "investigating" &&
+                      c?.labels.playback !== "REPLAY" && (
+                        <button
+                          data-testid="btn-cancel"
+                          disabled={busy !== null}
+                          onClick={doCancel}
+                        >
+                          {busy === "cancel"
+                            ? "Requesting cancellation…"
+                            : "Cancel investigation"}
+                        </button>
+                      )}
                     <button
                       data-testid="btn-reset"
                       disabled={busy !== null}
@@ -658,6 +681,14 @@ export default function App() {
                       {busy === "reset" ? "Resetting…" : "Reset"}
                     </button>
                   </>
+                ) : workspace === "lab" && c?.lab ? (
+                  <button
+                    className="primary"
+                    data-testid="btn-return-investigation"
+                    onClick={() => setWorkspace("investigation")}
+                  >
+                    Open investigation <span aria-hidden="true">→</span>
+                  </button>
                 ) : workspace === "experiments" ? (
                   <button onClick={() => setWorkspace("cases")}>
                     Browse saved cases <span aria-hidden="true">↗</span>
@@ -666,7 +697,11 @@ export default function App() {
                   !selected &&
                   presets?.replays.some((x) => x.presentation_default) ? (
                   <button
-                    className="primary"
+                    className={
+                      runtime?.capabilities?.worker_lab?.endpoint
+                        ? ""
+                        : "primary"
+                    }
                     data-testid="btn-lab-replay"
                     disabled={busy !== null}
                     onClick={() => {
@@ -728,13 +763,43 @@ export default function App() {
             )}
             {workspace === "experiments" ? (
               <main className="single experiments-workspace">
+                <LabExperiments
+                  cases={savedCases}
+                  currentId={c?.case_id}
+                  runtime={runtime}
+                  onOpen={doOpenCase}
+                />
                 <SavedComparison cases={savedCases} onOpen={doOpenCase} />
                 <BenchmarkTab />
               </main>
             ) : workspace === "cases" || workspace === "lab" || !view ? (
               <main className="single library-workspace">
                 {workspace === "lab" && (
-                  <Lab onCases={() => setWorkspace("cases")} />
+                  <>
+                    {c?.lab && (
+                      <WorkerActivity
+                        key={c.case_id}
+                        caseId={c.case_id}
+                        state={state}
+                      />
+                    )}
+                    {c?.lab ? (
+                      <details className="new-worker-experiment">
+                        <summary>Configure another worker experiment</summary>
+                        <Lab
+                          runtime={runtime}
+                          onCases={() => setWorkspace("cases")}
+                          onCase={doOpenCase}
+                        />
+                      </details>
+                    ) : (
+                      <Lab
+                        runtime={runtime}
+                        onCases={() => setWorkspace("cases")}
+                        onCase={doOpenCase}
+                      />
+                    )}
+                  </>
                 )}
                 {workspace === "cases" && (
                   <>
@@ -776,8 +841,30 @@ export default function App() {
                     {humanState(state)}
                   </span>
                 </div>
+                {c?.lab && (
+                  <div
+                    className="worker-run-context"
+                    data-testid="worker-provenance"
+                  >
+                    <div>
+                      <span>
+                        {c.labels.investigation_mode_label} ·{" "}
+                        {c.labels.worker_choices}
+                      </span>
+                      <span>{c.labels.changed_objective_policy}</span>
+                    </div>
+                    <button onClick={() => setWorkspace("lab")}>
+                      Inspect workers & activity ↗
+                    </button>
+                  </div>
+                )}
                 <InvestigationTools
                   hasCase={!!view}
+                  planProgress={
+                    run.todo.length
+                      ? `${run.todo.filter((t) => t.status === "completed").length}/${run.todo.length}`
+                      : undefined
+                  }
                   onSources={() => setShowSources(true)}
                   onPlan={() => setPanelDialog("plan")}
                   onCaseFile={() => setPanelDialog("notes")}
@@ -880,9 +967,9 @@ export default function App() {
             onClose={() => setPanelDialog(null)}
           >
             {panelDialog === "plan" ? (
-              <PlanView run={run} />
+              <PlanView run={run} caseId={view.case.case_id} />
             ) : panelDialog === "trace" ? (
-              <TraceView run={run} />
+              <TraceView run={run} caseId={view.case.case_id} />
             ) : (
               <CaseFile view={view} run={run} />
             )}
@@ -935,7 +1022,7 @@ export default function App() {
             <RuntimeDetails view={view} run={run} runtime={runtime} />
           </Dialog>
         )}
-        {raw && narrow && (
+        {raw && (narrow || workspace === "lab") && (
           <Dialog title="Raw evidence" wide onClose={closeRaw}>
             <RawViewer raw={raw} />
           </Dialog>
