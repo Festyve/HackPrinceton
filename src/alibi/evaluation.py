@@ -401,8 +401,9 @@ def run(settings: Settings, *, cases: list[dict[str, Any]] | None = None, runner
         "spend": {"estimated_cost_usd": round(end["committed_usd"] - start, 6) if end else 0.0,
                   "unreconciled_usd_after": end["unreconciled_usd"] if end else 0.0,
                   "total_after_usd": end["committed_usd"] if end else None, "ceiling_usd": ceiling_usd},
-        "notes": ["One run per cell on four simulated cases: a demonstration that the six systems run and how they "
-                  "differed here, not an accuracy estimate. Model output varies between runs; that variance was not measured.",
+        "notes": [f"One run per cell on {_count_words(len(cases))} simulated cases: a demonstration that the six systems "
+                  "run and how they differed here, not an accuracy estimate. Model output varies between runs; that "
+                  "variance was not measured.",
                   "No AI arm received verifier feedback while investigating. Rule support was applied after lock, "
                   "identically for all six systems.",
                   "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."],
@@ -453,6 +454,25 @@ def _r(x: dict[str, Any] | None) -> str:
     return "n/a" if not x or not x.get("den") else f"{x['num']}/{x['den']}"
 
 
+def _count_words(n: int) -> str:
+    return {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six"}.get(n, str(n))
+
+
+def _notes(doc: dict[str, Any]) -> list[str]:
+    """The stored notes, with one known wording error corrected in the open.
+
+    The first replication's results file carries a note written with a fixed "four simulated cases" although
+    that suite has two. Result files are never edited, so the correction is made here and stated.
+    """
+    notes = list(doc["notes"])
+    n = _count_words(len(doc["cases"]))
+    if notes and "four simulated cases" in notes[0] and len(doc["cases"]) != 4:
+        notes[0] = notes[0].replace("four simulated cases", f"{n} simulated cases")
+        notes.append(f"Erratum: the first note stored in the results file says \"four simulated cases\"; this suite has {n}. "
+                     "It is corrected above. No measurement is affected and the results file is unchanged.")
+    return notes
+
+
 def render_markdown(doc: dict[str, Any]) -> str:
     """docs/evaluation-v2.md, generated only from a result document."""
     sysd = {s["id"]: s for s in doc["systems"]}
@@ -463,9 +483,10 @@ def render_markdown(doc: dict[str, Any]) -> str:
            "Do not edit by hand.", "",
            f"Run `{doc['run_id']}` · commit `{doc['git_commit']}` · model `{doc['model']}` · simulated evidence · "
            f"estimated cost ${doc['spend']['estimated_cost_usd']:.4f}", "",
-           "**Read this first.** One run per cell on four simulated cases. It shows that the six systems run and how "
-           "they differed here. It is not an accuracy estimate. No AI arm was told whether a finding was supported "
-           "while it investigated; support was decided after each report was locked, the same way for every system.", "",
+           f"**Read this first.** One run per cell on {_count_words(len(doc['cases']))} simulated cases. It shows that "
+           "the six systems run and how they differed here. It is not an accuracy estimate. No AI arm was told whether "
+           "a finding was supported while it investigated; support was decided after each report was locked, the same "
+           "way for every system.", "",
            "## Systems", "", "| Arm | What it is | Cells done | Stopped by a cap | Errors | Not started |", "|---|---|---|---|---|---|"]
     out += [f"| {a} | {sysd[a]['label']} | {sysd[a]['completed']}/{sysd[a]['n_cases']} | {sysd[a]['censored']} | "
             f"{sysd[a]['errors']} | {sysd[a]['unrun']} |" for a in arms]
@@ -498,7 +519,7 @@ def render_markdown(doc: dict[str, Any]) -> str:
                    f"{g['false_claims_final']} | {_r(g['evidence_reference_validity'])} | {g['unsupported_named_attribution']} | "
                    f"{g['llm_calls']} | ${g['cost_estimate_usd']:.4f} | "
                    f"{g['median_wall_seconds'] if g['median_wall_seconds'] is not None else 'n/a'} s |")
-    out += ["", "## Notes", ""] + [f"- {n}" for n in doc["notes"]]
+    out += ["", "## Notes", ""] + [f"- {n}" for n in _notes(doc)]
     stops = [r for r in doc["runs"] if r.get("stop_note") or r.get("error")]
     if stops:
         out += ["", "## Cells that did not complete normally", ""]

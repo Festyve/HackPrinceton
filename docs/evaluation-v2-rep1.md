@@ -4,7 +4,7 @@
 
 Run `20261114T110812Z` · commit `d10d31e` · model `anthropic:claude-haiku-5-5` · simulated evidence · estimated cost $0.1058
 
-**Read this first.** One run per cell on four simulated cases. It shows that the six systems run and how they differed here. It is not an accuracy estimate. No AI arm was told whether a finding was supported while it investigated; support was decided after each report was locked, the same way for every system.
+**Read this first.** One run per cell on two simulated cases. It shows that the six systems run and how they differed here. It is not an accuracy estimate. No AI arm was told whether a finding was supported while it investigated; support was decided after each report was locked, the same way for every system.
 
 ## Systems
 
@@ -39,9 +39,10 @@ Incident cases: effects established / observable effects. Benign cases: accepted
 
 ## Notes
 
-- One run per cell on four simulated cases: a demonstration that the six systems run and how they differed here, not an accuracy estimate. Model output varies between runs; that variance was not measured.
+- One run per cell on two simulated cases: a demonstration that the six systems run and how they differed here, not an accuracy estimate. Model output varies between runs; that variance was not measured.
 - No AI arm received verifier feedback while investigating. Rule support was applied after lock, identically for all six systems.
 - Scores describe agreement with a controlled simulation, not real-world forensic accuracy.
+- Erratum: the first note stored in the results file says "four simulated cases"; this suite has two. It is corrected above. No measurement is affected and the results file is unchanged.
 
 ## Cells that did not complete normally
 

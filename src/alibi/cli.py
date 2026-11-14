@@ -435,6 +435,15 @@ def _cmd_eval(args: argparse.Namespace) -> int:
             cells = len(spec["cases"]) * len(evaluation.AI_ARMS)
             print(json.dumps(evaluation.preflight(settings, cells, spec["ceiling"]), indent=2))
             return 0
+        if args.render:  # regenerate a suite's report from its saved results; reads only, no model call
+            doc = evaluation.latest(suite=suite)
+            if doc is None:
+                print(f"{suite} has no results yet", file=sys.stderr)
+                return 1
+            name = "evaluation-v2.md" if suite == evaluation.SUITE else f"evaluation-{suite.replace('paired-', '')}.md"
+            evaluation.REPORT_MD.with_name(name).write_text(evaluation.render_markdown(doc), encoding="utf-8")
+            print(f"wrote docs/{name} from {suite} run {doc['run_id']}")
+            return 0
         if args.summary:
             docs = [d for d in (evaluation.latest(suite=name) for name in evaluation.SUITES) if d]
             out = evaluation.REPORT_MD.with_name("evaluation-summary.md")
@@ -593,6 +602,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--dev-check", action="store_true", help="one development case through the four AI arms (not a result)")
     p.add_argument("--run", action="store_true", help="run the declared matrix and write an immutable result directory")
     p.add_argument("--summary", action="store_true", help="write docs/evaluation-summary.md from the saved results")
+    p.add_argument("--render", action="store_true", help="regenerate a suite's report from its saved results (no model call)")
     p.add_argument("--suite", default="paired-v2", choices=["paired-v2", "paired-v2-rep1"],
                    help="paired-v2 (four cases) or its separately declared replication on two more incident seeds")
     p.set_defaults(func=_cmd_eval)
