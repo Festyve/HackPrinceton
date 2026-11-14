@@ -1,0 +1,33 @@
+# Every writable filesystem is container-local and disposable.
+x-common: &common
+  image: alibi-capture:local
+  pull_policy: never
+  build:
+    context: .
+    network: none
+  user: "10001:10001"
+  read_only: true
+  stop_grace_period: 1s
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  tmpfs:
+    - /data:uid=10001,gid=10001,mode=0700
+  networks: [capture]
+  healthcheck:
+    test: [CMD, python, /app/runtime.py, health]
+    interval: 1s
+    timeout: 2s
+    retries: 30
+services:
+  collector:
+    <<: *common
+    command: [collector]
+  service:
+    <<: *common
+    command: [service]
+    depends_on:
+      collector:
+        condition: service_healthy
+networks:
+  capture:
+    internal: true
