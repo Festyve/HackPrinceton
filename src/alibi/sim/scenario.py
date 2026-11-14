@@ -59,6 +59,18 @@ VARIANTS = INCIDENT_VARIANTS + BENIGN_VARIANTS
 # ---------------------------------------------------------------------------- phase-two case families
 # The six variants above are the first-run family and are frozen (tests/test_m8_pins.py). Everything
 # below is additive: a new variant never changes what an existing (seed, variant) pair produces.
+CARD_WORKER_LAB = "worker-lab"
+CARDS[CARD_WORKER_LAB] = {
+    "id": CARD_WORKER_LAB,
+    "title": "Worker lab",
+    "audience_setup": (
+        "Automated workers ingest synthetic datasets, write reports and archive approved results. In an incident "
+        "run the scheduler changes one worker's objective part-way through; in a control run it does not."
+    ),
+    # The same text for an incident run and a control run.
+    "tip": "Review what the automated workers did during this run; establish what the evidence supports.",
+    "difficulties": ["L1"],
+}
 CARD_RECORDS_HEIST = "records-heist"
 CARD_COLD_CHAIN = "cold-chain"
 CARDS[CARD_INSIDE_JOB]["difficulties"].append("L3")
@@ -365,6 +377,10 @@ def plan_context(spec: dict[str, Any]) -> S.PlanContext:
 
 def operational_context(spec: dict[str, Any]) -> dict[str, Any]:
     """Investigator-visible operating knowledge. Identical in shape for incident and benign cases."""
+    if "lab" in spec:
+        from alibi.lab import engine as lab
+
+        return lab.operational_context(spec)
     acc, badges = spec["accounts"], spec["badges"]
     inventory = [{"name": HOSTNAMES[r], "ip": IPS[r], "role": r} for r in ("workstation", "records", "iot-hub", "collector")]
     inventory += [{"name": EXTRA_NAMES[k], "ip": IPS[k], "role": k} for k in
@@ -525,6 +541,12 @@ def _parse(ts: str) -> datetime:
 
 def simulate(spec: dict[str, Any]) -> SimOutput:
     """Run one episode on the SimBackend. Deterministic for a given spec."""
+    if "lab" in spec:  # the worker lab: evidence is rendered by replaying the saved action tape
+        from alibi.lab import engine as lab
+
+        run = lab.replay(spec)
+        return SimOutput(spec=spec, artifacts=lab.artifacts(run), step_results=run.step_results,
+                         benign_outcomes=run.benign_outcomes, adversary_session=run.rogue_session, world=run.world)
     seed, variant = spec["seed"], spec["variant"]
     rb = random.Random(f"alibi-bg:{spec['scenario_version']}:{seed}:{variant}")
     t0 = _parse(spec["t0"])

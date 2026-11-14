@@ -201,7 +201,16 @@ def build_answer_key(episode_id: str, sim: SimOutput, canary: str, executed_plan
             effect_id=effect_id,
         ))
     benign = [BenignOutcome(outcome_id=f"b{i + 1}", **o) for i, o in enumerate(sim.benign_outcomes)]
-    if spec["case_kind"] == "incident":
+    if spec["case_kind"] == "incident" and "lab" in spec:
+        # Worker lab: the actor is a worker, not a person. Its account is the one that worker was given, and
+        # it is truth only if the objective actually changed during the run (a session then exists for it).
+        wid = spec["lab"]["transition"]["worker"]
+        used = next(w["account"] for w in spec["lab"]["workers"] if w["id"] == wid) if sim.adversary_session else None
+        attribution = AttributionTruth(
+            account_used=used, account_owner_person=f"worker:{wid}" if used else None, operator_true=f"worker:{wid}",
+            framed=False, session=sim.adversary_session, named_attribution_supportable=False,
+        )
+    elif spec["case_kind"] == "incident":
         # Truth is what was executed: the account comes from the login step that actually succeeded,
         # not from what the scenario or a planning model intended.
         logins = [r for r in sim.step_results if r.step in LOGIN_STEPS and r.status == "succeeded"]

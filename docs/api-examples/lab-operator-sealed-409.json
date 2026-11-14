@@ -1,0 +1,7 @@
+{
+  "status": 409,
+  "body": {
+    "error": "the operator's record is sealed until the report is locked",
+    "state": "awaiting_review"
+  }
+}

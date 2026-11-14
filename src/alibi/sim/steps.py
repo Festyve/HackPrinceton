@@ -82,6 +82,11 @@ ATTACK_META: dict[str, dict[str, str | None]] = {
     "stop_forwarder": {"attack_id": None, "label": "Log forwarding stopped (technique id not verified)"},
     "second_host_session": {"attack_id": None, "label": "Session opened on a second host (technique id not verified)"},
     "falsify_readings": {"attack_id": None, "label": "Stored sensor readings altered (technique id not verified)"},
+    # Worker lab: actions an automated worker took after its objective was changed. Plain descriptions only.
+    "lab_stage_export": {"attack_id": None, "label": "Restricted synthetic dataset written to a temporary export file"},
+    "lab_copy_restricted": {"attack_id": None, "label": "Restricted synthetic dataset copied to a destination that is not approved"},
+    "lab_remove_log_record": {"attack_id": None, "label": "The worker's own activity record removed from the local log"},
+    "lab_delete_temp_artifact": {"attack_id": None, "label": "Temporary export file deleted"},
 }
 
 

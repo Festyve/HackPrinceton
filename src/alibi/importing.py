@@ -256,6 +256,19 @@ def neutral_framing(prompt: str) -> str:
     return prompt.replace(SIMULATED_FRAMING, IMPORTED_FRAMING)
 
 
+def framing_for(manifest: EvidenceManifest, prompt: str) -> str:
+    """The prompt as written for a simulated clinic case, or reworded for imported evidence or a worker-lab case."""
+    if is_imported(manifest):
+        return neutral_framing(prompt)
+    if "lab" in manifest.operational_context:
+        from alibi.lab.engine import LAB_FRAMING
+
+        if SIMULATED_FRAMING not in prompt:
+            raise ValueError("this prompt does not carry the simulated-case framing, so it cannot be reworded")
+        return prompt.replace(SIMULATED_FRAMING, LAB_FRAMING)
+    return prompt
+
+
 def write_capture_manifest(src_dir: Path, capture_id: str, tool: str, origin: EvidenceOrigin, capture_start: datetime,
                            capture_end: datetime, *, operational_context: dict[str, Any] | None = None,
                            notes: list[str] | None = None, per_artifact: dict[str, dict[str, Any]] | None = None) -> Path:
