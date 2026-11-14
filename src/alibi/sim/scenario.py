@@ -411,6 +411,15 @@ def simulate(spec: dict[str, Any]) -> SimOutput:
     if variant == "benign_approved_transfer":
         ts0 = _parse(benign["start"])
         reserved.append((ts0 - _m(2), ts0 + _m(14)))
+    if variant == "benign_collection_gap":
+        # someone logs in at the shared station while forwarding is interrupted, so the host
+        # holds records the collector never received
+        g0 = _parse(benign["start"])
+        who = next((n for n in (nurse_a, nurse_b)
+                    if present(n, g0 - _m(2), g0 + timedelta(seconds=benign["duration_s"]) + _m(6))), None)
+        if who is not None:
+            reserved.append((g0 - _m(2), g0 + timedelta(seconds=benign["duration_s"]) + _m(5)))
+            console_session(who, g0 + timedelta(seconds=35), benign["duration_s"] + 110)
 
     # ---------------- routine console sessions (shared station, one user at a time)
     t = t0 + timedelta(seconds=rb.randrange(120, 420))
