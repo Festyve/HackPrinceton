@@ -101,7 +101,7 @@ No system made an accepted false allegation on the two benign controls, and none
 
 ## Live AI and budget
 
-Live inference uses a server-side Anthropic key in a gitignored `.env`. **The total API allowance is $20 across both runs.** About $3.47 has been used. Follow [API setup](docs/next-run/API_SETUP.md) and never delete the spend ledger.
+Live inference uses a server-side Anthropic key in a gitignored `.env`. **The total API allowance is $20 across both runs.** About $3.52 has been used. Follow [API setup](docs/next-run/API_SETUP.md) and never delete the spend ledger.
 
 Every model call goes through one budget gateway. It counts the outgoing request before sending it, refuses one that is too large or cannot be counted, reserves tokens and money so parallel agents cannot jointly pass a cap, and keeps the worst-case cost of any call whose billing outcome is unknown until someone reconciles it. Automatic calls stop $0.50 short of the cap. The totals are a conservative estimate at list prices, not a bill; the provider console is the billing authority.
 

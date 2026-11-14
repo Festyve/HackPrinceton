@@ -2,6 +2,8 @@
 
 For whoever owns `web/`. The backend routes below exist on `codex/alibi-build` and `codex/eric-phase2`, are tested, and return the payloads saved in [`docs/api-examples/`](api-examples/). The full reference is [`docs/api.md`](api.md). Nothing here needs a backend change; ask Eric if a field is missing instead of inventing one in a component.
 
+**A working version of items 1 to 5 and 9 is on the branch `codex/eric-ui-wiring`** (one new file, `web/src/phase2.tsx`, small mounts in `App.tsx`, `workbench.tsx` and `panels.tsx`, styles appended, seven browser tests in `tests/test_browser_phase2.py`). Take it, change it or replace it; it is not merged into `codex/alibi-build`.
+
 The merged interface currently shows two honest placeholders: `question-composer` ("Open-ended questions are unavailable in this server version") in `web/src/workbench.tsx`, and `source-experiment-unavailable`. Both can now become real.
 
 ## What to wire, in order of demo value
@@ -22,7 +24,7 @@ Items 1 to 4 are the demo. 5 to 9 are worth doing only after those work. Item 9 
 
 ## Rules that keep the labels honest
 
-1. **Remove a witness.** Send `source_id` values from `manifest.sources[]` (never an artifact path) and a fresh `client_token` per click. Show the comparison rows as the server returns them: `change` is `retains_support`, `loses_support` or `never_supported`, with `reason`. Word `loses_support` as "cannot be established from this evidence", never as "did not happen" or "disproved". The derived case is an ordinary case: navigate to it by `child_case_id`; `case.parent_case_id` and `case.excluded_sources` identify it. Do not compute a changed conclusion in React.
+1. **Remove a witness.** Send `source_id` values from `manifest.sources[]` (never an artifact path) and a fresh `client_token` per click. Show the comparison rows as the server returns them: `change` is `retains_support`, `loses_support` or `never_supported`, with `reason`. Word `loses_support` as "cannot be established from this evidence", never as "did not happen" or "disproved". Unsealing a derived case returns 409 until the original case's report is locked; show the server's message. The derived case is an ordinary case: navigate to it by `child_case_id`; `case.parent_case_id` and `case.excluded_sources` identify it. Do not compute a changed conclusion in React.
 2. **Questions.** Every claim has a `support` label decided by the server: `checked`, `contradicted`, `cited`, `interpretation`, `unsupported`. Show the label and `basis` beside each claim, and make `evidence_ids` open like any other citation. Show `inference_label` on the answer ("Live model", "Recorded AI answer"). For `status: "unavailable"` show the first entry of `limitations`; never substitute the predefined explanations as if they were the answer. They stay below, under their own "Predefined · no model inference" label. `409` means another question is still being answered for this case.
 3. **Offline.** With no model configured, a question returns `unavailable` and the designer returns a default labeled "Default environment · no model was asked". Both are real server responses; render them, do not hide the controls behind a fake success.
 4. **Unscored cases.** `case.scored === false` (imported evidence) has no answer key: hide Unseal for it; `POST …/reveal` returns 409.

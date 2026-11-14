@@ -30,7 +30,9 @@ Rules the importer enforces:
 - Every path is relative, stays inside the directory, is not a link, and is listed once.
 - Size and SHA-256 must match the file. A file changed after the manifest was written is refused.
 - `evidence_origin` is `SIM`, `DOCKER` or `HYBRID`. If artifacts state different origins the capture must say `HYBRID`. The importer never changes an origin.
-- **No ground truth.** Unknown top-level keys are refused, and so is any key in `operational_context` named like an answer (`truth`, `labels`, `steps`, `attacker`, `is_incident`, …). Keep the record of what a capture fixture did on the capture side.
+- **No ground truth.** Unknown top-level keys are refused. So is any key in `operational_context` named like an answer, however it is spelled (`truth`, `groundTruth`, `Answer_Key`, `labels`, `scenario`, `variant`, `steps`, `attacker`, `is_incident`, …), and any text there or in `notes` that announces one ("ground truth", "answer:", "the answer is"). Keep the record of what a capture fixture did on the capture side. This filter catches honest mistakes; it cannot understand ordinary prose, so what a capture author writes in a note is still their responsibility.
+- **No tip.** `operational_context.tip` is refused. Every imported case starts from the same neutral tip, because the tip is the first thing an investigating model reads.
+- Artifact paths use letters, digits, spaces and `. _ @ + = , ~ -` between slashes. The name is printed in reports and exports.
 - The location must be one the normalizer reads: `…/var/log/auth.log`, `…/var/log/syslog`, `…/records-app/access.log`, `…/mosquitto/mosquitto.log`, `…/collected/collected.log`, `…/.bash_history`, `…/fs_stat.tsv`, `…/badge/*.jsonl`, `tap/flows.jsonl`, `…/sensors/*.jsonl`, `…/coldchain/*.csv`.
 
 Bytes are copied verbatim and made read-only. Lines a parser does not understand stay in the evidence as unparsed records and are counted in that source's coverage note. Nothing is rewritten.

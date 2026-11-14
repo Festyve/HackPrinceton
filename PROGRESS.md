@@ -3,7 +3,7 @@
 > Times are America/New_York. Entries record concrete check results, not intentions.
 > Status vocabulary: **OFFLINE-READY**, **AI-READY**, **INCOMPLETE** (PLAN §14).
 
-## Current state — second run, Saturday November 14, 06:45 ET
+## Current state — second run, Saturday November 14, 07:50 ET
 
 This block is the handoff. Everything below it is the build history, oldest first.
 
@@ -13,8 +13,8 @@ This block is the handoff. Everything below it is the build history, oldest firs
 | Launch | `uv sync --frozen && ./start.sh`, then http://127.0.0.1:8000. `./start.sh --port 8010` if the port is busy. |
 | Demo selection | Recorded replays. For the pitch: **Inside job · cover-up** recorded on Claude Opus 5.5 (specialist mode) or on Claude Haiku 5.5 (fast mode, with two recorded question answers). Also recorded on Haiku: **Records heist** and **Cold chain**. No key or network needed. |
 | Model in use | `anthropic:claude-haiku-5-5`, effort low, for every role. Opus 5.5 recordings and pilot are from the first run and unchanged. |
-| Spend | Estimated **$3.475** of the **$20** cap across both runs (508 model calls). This run: about **$0.55**. Reserved: $0. Unreconciled: $0. Automatic calls stop at $19.50. `uv run alibi spend`. |
-| Tests | `uv run pytest` → **422 passed**: 401 offline, 21 in headless Chrome. A fresh clone of the branch also installs, builds, passes the offline tests and serves the recorded demo with no key. |
+| Spend | Estimated **$3.515** of the **$20** cap across both runs (541 model calls). This run: about **$0.59**. Reserved: $0. Unreconciled: $0. Automatic calls stop at $19.50. `uv run alibi spend`. |
+| Tests | `uv run pytest` → **449 passed**: 428 offline, 21 in headless Chrome (07:40). On the UI fallback branch the browser count is 28. A fresh clone of the branch also installed, built, passed the offline tests and served the recorded demo with no key (checked at 06:00, before the last three commits). |
 | Recordings | `demo/replays/`: 4 real-model runs (1 Opus, 3 Haiku) and 2 scripted-fixture runs. All six reproduce their evidence byte for byte and replay offline. |
 | Measured results | `benchmarks/offline-v1`, `benchmarks/ai-pilot-v1` (first run, frozen); `benchmarks/paired-v2` and `benchmarks/paired-v2-rep1` (this run's evaluation and its replication; summary in `docs/evaluation-summary.md`); `benchmarks/calibration`, `benchmarks/feature-checks`, `benchmarks/paired-v2-dev` (operational checks). |
 
@@ -29,18 +29,20 @@ This block is the handoff. Everything below it is the build history, oldest firs
 - Report export with lock hash, provenance and exact cited lines.
 - Paired evaluation of six systems on six new cases in two separately declared suites.
 - Terminal commands for the whole flow: `alibi run`, `experiment`, `ask`, `review`, `export`, `import`, `cases`.
+- A read-only view of a cold-chain case's two temperature records (`GET /api/cases/{id}/evidence/sensor-streams`).
+- Two independent reviews (budget code; information barrier and input handling) with every finding fixed and pinned by a test.
 
 **What is not done, and who has it** (details in [BLOCKERS.md](BLOCKERS.md))
 
 - **No captured evidence exists in this build.** `codex/daniel-capture` has not been pushed. Every bundle is simulated. The receiving side is built and tested: `uv run alibi import <directory>` freezes a capture as an unscored case ([`docs/importing.md`](docs/importing.md)). (Daniel to deliver the capture; Eric to merge it.)
-- **The UI does not yet call the new routes** (questions, source experiment, export, mode choice, new presets, designer, new results). The backend is ready and documented in [`docs/api.md`](docs/api.md). (Terry.)
+- **The case board on the default branch does not yet call the new routes** (questions, source experiment, export, mode choice, temperature records, designer, new results). `codex/terry-ui` has not moved since 04:24. A working fallback for all but the designer and the new results table is on **`codex/eric-ui-wiring`** (`04620e3`): 28 browser tests pass there, checked by eye in Chrome at 1440 and 390 px wide. It is **not merged**, because `web/` is Terry's. (Terry to take, change or replace it. If nothing arrives before the feature freeze, Eric's session merges the fallback and records that in DECISIONS.md.)
 - **The adversary planner stays disabled** after the model's refusal. Not worked around. Every incident is a scripted scenario.
 - Not verified: a second machine, the venue projector, any model other than Opus 5.5 and Haiku 5.5, run-to-run variance.
 
 **Owner actions**
 
 1. Eric: rotate the API key (it was pasted into chat); edit only the key line in `.env`.
-2. Terry: add UI controls for the new routes; rebase on `codex/eric-phase2`.
+2. Terry: add UI controls for the new routes, or take `codex/eric-ui-wiring`; rebase on `codex/eric-phase2`. See [`docs/ui-integration-brief.md`](docs/ui-integration-brief.md).
 3. Daniel: push the capture branch with its importer entry point.
 4. Repository owner: make the repository public. A redacted scan of the worktree and of every commit found no credential-like string, and `.env` and the ledger were never committed.
 5. Rayan: decide the pitch from [`docs/claims.md`](docs/claims.md). The honest headline from the measurements is that the deterministic comparison does the detecting (16 of 16 incident effects on the new cases) and the model investigates, explains and answers; the checks lifted one agent from 10 to 15 of 16; one agent did better than three.
@@ -394,3 +396,11 @@ Phase-two model spend so far: about **$0.08** (ledger total $3.006 of the $20 ca
 - The cold-chain and records-heist recordings were re-recorded with one recorded answer each; both replay offline and score 1/1 and 3/3 (`d4b83f2`). In the cold-chain run the model again put the backup service account in the attribution although no account was involved in that incident; the report still says the human is not established, and the scorer treats account identification as not applicable there.
 - Planted instructions in evidence, tried once on the real model (`benchmarks/feature-checks/planted-instructions-haiku-5-5.json`): 3/3 effects, nobody named, nothing leaked, and the model described the line as data. One run; not a robustness measurement.
 - A background watcher wakes the session when `codex/terry-ui` moves, when `codex/daniel-capture` appears, or at 09:00 ET.
+
+### Temperature view, UI fallback and a second review (07:00–07:50)
+
+- **Cold chain made visible.** `GET /api/cases/{id}/evidence/sensor-streams` returns the stored readings and the independent reference logger as two series with the deterministic comparison; a withheld source is an empty series marked absent (`8a6e8e6`, 4 tests). Before this the decisive evidence of that case could only be cited, not shown.
+- **Route smoke over every recording.** All six committed recordings were opened in a temporary directory and run through every route the case board calls, then accepted and unsealed: no errors.
+- **UI fallback on its own branch** (`codex/eric-ui-wiring`, `04620e3`, not merged): question composer with recorded and unanswered states, witness removal with the server's comparison, report download, investigation mode, spend line, and a temperature chart for cold-chain cases. Three assertions in Terry's browser tests that pinned the old "unavailable" placeholders are changed on that branch only. 28 browser tests pass there; screenshots were checked by eye.
+- **Second independent review** (information barrier, input handling, new routes): ten defects, each reproduced by the reviewer, all fixed with regression tests (`32eb417`). The three that mattered: a derived evidence view could be unsealed while its original's report was still open; a command-line call beside a running server marked the server's running work as failed; a designed case's public seed differed with and without a placed incident. Details in DECISIONS.md. Recorded answers' labels were re-derived with the stricter claim check: all 22 unchanged.
+- Tests after these: **449 passed** (428 offline, 21 browser on this branch). Spend unchanged at $3.515: nothing in this stretch called a model.
