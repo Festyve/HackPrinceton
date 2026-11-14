@@ -1,0 +1,1742 @@
+{
+ "suite": "paired-v2-dev",
+ "run_id": "20261114T101743Z",
+ "generated_at": "2026-11-14T10:21:03.847313+00:00",
+ "git_commit": "c91c0d1",
+ "evidence_origin": "SIM",
+ "scorer_version": "1.1.0",
+ "versions": {
+  "simulator": "1.1.0",
+  "scenario_seed_namespace": "1.0.0",
+  "scenario_catalog": "1.1.0",
+  "normalizer": "1.1.0",
+  "checks": "1.1.0",
+  "family_checks": "1.0.0",
+  "verifier": "1.1.0",
+  "scorer": "1.1.0",
+  "b0": "1.0.0",
+  "br": "1.1.0"
+ },
+ "config_sha256": null,
+ "inference": "LIVE_MODEL",
+ "model": "anthropic:claude-haiku-5-5",
+ "caps": {
+  "max_calls": 24,
+  "max_input_tokens": 280000,
+  "max_output_tokens": 20000,
+  "max_seconds": 240.0
+ },
+ "verifier_feedback_during_investigation": false,
+ "cases": [
+  {
+   "case_ref": "D01",
+   "variant": "incident_coverup",
+   "seed": 29,
+   "group": "development check",
+   "why": "harness check",
+   "kind": "incident",
+   "bundle_id": "bndl-60a45fbc357bc397",
+   "raw_bundle_sha256": "60a45fbc357bc397d372fb417f5b80e7e9662fb73963abbc68fef61d531c8445",
+   "events": 12787,
+   "scorable_effects": 3,
+   "unobservable_effects": 0,
+   "effect_types": [
+    "data_staging",
+    "local_log_removal",
+    "policy_violating_transfer"
+   ],
+   "system_order": [
+    "ALIBI",
+    "B1",
+    "B2",
+    "B1+"
+   ]
+  }
+ ],
+ "runs": [
+  {
+   "suite": "paired-v2-dev",
+   "system_id": "B0",
+   "kind": "offline",
+   "case_ref": "D01",
+   "status": "completed",
+   "error": null,
+   "censored": false,
+   "refused": false,
+   "stop_note": null,
+   "score": {
+    "scorer_version": "1.1.0",
+    "report_id": "rep-B0-bndl-60a45fbc357bc397",
+    "episode_id": "eval-d01-20261114t101743z",
+    "system_id": "B0",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 2,
+     "den": 3,
+     "value": 0.6666666666666666,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 2,
+     "den": 21,
+     "value": 0.09523809523809523,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 23,
+     "den": 23,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 2,
+     "den": 21,
+     "value": 0.09523809523809523,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 19,
+     "den": 21,
+     "value": 0.9047619047619048,
+     "na_reason": null
+    },
+    "coverup_detected": false,
+    "coverup_detected_na_reason": null,
+    "account_identification_correct": false,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 21,
+    "proposals_incident": 21,
+    "final_accepted_incident": 2,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [
+     {
+      "finding_id": "B0-07",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "B0-09",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "B0-01",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-02",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-03",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-04",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-05",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-06",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-07",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "B0-08",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-09",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "B0-10",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-11",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-12",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-13",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-14",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-15",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-16",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-17",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-18",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-19",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-20",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-21",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/home/tmori/Downloads/rx-7f3.db",
+      "t_start": "2026-11-10T09:56:38Z",
+      "t_end": "2026-11-10T09:56:42Z",
+      "outcome": "caught",
+      "finding_id": "B0-07",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.15:8080",
+      "t_start": "2026-11-10T09:59:41Z",
+      "t_end": "2026-11-10T09:59:52Z",
+      "outcome": "caught",
+      "finding_id": "B0-09",
+      "description": ""
+     },
+     {
+      "effect_id": "e3",
+      "effect_type": "local_log_removal",
+      "host": "workstation",
+      "object": "/var/log/auth.log",
+      "t_start": "2026-11-10T09:55:47Z",
+      "t_end": "2026-11-10T09:55:47Z",
+      "outcome": "missed",
+      "finding_id": null,
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.017554,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "48dc9c1797143caecac686b8c0ed87bf4adbf0b184945e406393613e512f63a9",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/paired-v2-dev/20261114t101743z/reports/D01-B0.report.json"
+  },
+  {
+   "suite": "paired-v2-dev",
+   "system_id": "BR",
+   "kind": "offline",
+   "case_ref": "D01",
+   "status": "completed",
+   "error": null,
+   "censored": false,
+   "refused": false,
+   "stop_note": null,
+   "score": {
+    "scorer_version": "1.1.0",
+    "report_id": "rep-BR-bndl-60a45fbc357bc397",
+    "episode_id": "eval-d01-20261114t101743z",
+    "system_id": "BR",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 24,
+     "den": 24,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 0,
+     "den": 3,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "coverup_detected": true,
+    "coverup_detected_na_reason": null,
+    "account_identification_correct": true,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 5,
+    "proposals_incident": 3,
+    "final_accepted_incident": 3,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [
+     {
+      "finding_id": "BR-01",
+      "effect_id": "e3",
+      "effect_type": "local_log_removal"
+     },
+     {
+      "finding_id": "BR-02",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "BR-03",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "BR-01",
+      "outcome": "matched",
+      "effect_id": "e3",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-02",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-03",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-04",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "BR-05",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/home/tmori/Downloads/rx-7f3.db",
+      "t_start": "2026-11-10T09:56:38Z",
+      "t_end": "2026-11-10T09:56:42Z",
+      "outcome": "caught",
+      "finding_id": "BR-02",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.15:8080",
+      "t_start": "2026-11-10T09:59:41Z",
+      "t_end": "2026-11-10T09:59:52Z",
+      "outcome": "caught",
+      "finding_id": "BR-03",
+      "description": ""
+     },
+     {
+      "effect_id": "e3",
+      "effect_type": "local_log_removal",
+      "host": "workstation",
+      "object": "/var/log/auth.log",
+      "t_start": "2026-11-10T09:55:47Z",
+      "t_end": "2026-11-10T09:55:47Z",
+      "outcome": "caught",
+      "finding_id": "BR-01",
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.106572,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "036f5a63f666be444a8dd86bfd912511580c28923767ab293aa90cc61b772008",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/paired-v2-dev/20261114t101743z/reports/D01-BR.report.json"
+  },
+  {
+   "suite": "paired-v2-dev",
+   "system_id": "ALIBI",
+   "kind": "ai",
+   "case_ref": "D01",
+   "status": "completed",
+   "error": null,
+   "censored": false,
+   "refused": false,
+   "stop_note": null,
+   "score": {
+    "scorer_version": "1.1.0",
+    "report_id": "rep-eval-d01-20261114t101743z-alibi",
+    "episode_id": "eval-d01-20261114t101743z",
+    "system_id": "ALIBI",
+    "inference_mode": "LIVE_MODEL",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 25,
+     "den": 25,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 0,
+     "den": 3,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "coverup_detected": true,
+    "coverup_detected_na_reason": null,
+    "account_identification_correct": true,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 4,
+    "proposals_incident": 3,
+    "final_accepted_incident": 3,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [
+     {
+      "finding_id": "F-0f5e75",
+      "effect_id": "e3",
+      "effect_type": "local_log_removal"
+     },
+     {
+      "finding_id": "F-1aa6c9",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "F-a7de8a",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "F-0f5e75",
+      "outcome": "matched",
+      "effect_id": "e3",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "F-1aa6c9",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "F-a7de8a",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "F-d714af",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/home/tmori/Downloads/rx-7f3.db",
+      "t_start": "2026-11-10T09:56:38Z",
+      "t_end": "2026-11-10T09:56:42Z",
+      "outcome": "caught",
+      "finding_id": "F-1aa6c9",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.15:8080",
+      "t_start": "2026-11-10T09:59:41Z",
+      "t_end": "2026-11-10T09:59:52Z",
+      "outcome": "caught",
+      "finding_id": "F-a7de8a",
+      "description": ""
+     },
+     {
+      "effect_id": "e3",
+      "effect_type": "local_log_removal",
+      "host": "workstation",
+      "object": "/var/log/auth.log",
+      "t_start": "2026-11-10T09:55:47Z",
+      "t_end": "2026-11-10T09:55:47Z",
+      "outcome": "caught",
+      "finding_id": "F-0f5e75",
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 13,
+     "tokens_in": 153373,
+     "tokens_out": 12498,
+     "tokens_cache_read": 114130,
+     "cost_estimate_usd": 0.012295,
+     "wall_seconds": 55.71,
+     "tool_calls": 22,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "1b3d0ec1f061efbb3f27233b7783479de3b9245974a8dbce38b9e29c12867ca6",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/paired-v2-dev/20261114t101743z/reports/D01-ALIBI.report.json",
+   "model_id": "anthropic:claude-haiku-5-5",
+   "inference_mode": "LIVE_MODEL"
+  },
+  {
+   "suite": "paired-v2-dev",
+   "system_id": "B1",
+   "kind": "ai",
+   "case_ref": "D01",
+   "status": "completed",
+   "error": null,
+   "censored": false,
+   "refused": false,
+   "stop_note": null,
+   "score": {
+    "scorer_version": "1.1.0",
+    "report_id": "rep-eval-d01-20261114t101743z-b1",
+    "episode_id": "eval-d01-20261114t101743z",
+    "system_id": "B1",
+    "inference_mode": "LIVE_MODEL",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 23,
+     "den": 23,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 0,
+     "den": 3,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "coverup_detected": true,
+    "coverup_detected_na_reason": null,
+    "account_identification_correct": true,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 6,
+    "proposals_incident": 3,
+    "final_accepted_incident": 3,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [
+     {
+      "finding_id": "F-459d55",
+      "effect_id": "e3",
+      "effect_type": "local_log_removal"
+     },
+     {
+      "finding_id": "F-a7de8a",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     },
+     {
+      "finding_id": "F-c490ff",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "F-0ac188",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "F-152c10",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "F-459d55",
+      "outcome": "matched",
+      "effect_id": "e3",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "F-a7de8a",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "F-bd4bb3",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "F-c490ff",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/home/tmori/Downloads/rx-7f3.db",
+      "t_start": "2026-11-10T09:56:38Z",
+      "t_end": "2026-11-10T09:56:42Z",
+      "outcome": "caught",
+      "finding_id": "F-c490ff",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.15:8080",
+      "t_start": "2026-11-10T09:59:41Z",
+      "t_end": "2026-11-10T09:59:52Z",
+      "outcome": "caught",
+      "finding_id": "F-a7de8a",
+      "description": ""
+     },
+     {
+      "effect_id": "e3",
+      "effect_type": "local_log_removal",
+      "host": "workstation",
+      "object": "/var/log/auth.log",
+      "t_start": "2026-11-10T09:55:47Z",
+      "t_end": "2026-11-10T09:55:47Z",
+      "outcome": "caught",
+      "finding_id": "F-459d55",
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 7,
+     "tokens_in": 275340,
+     "tokens_out": 9998,
+     "tokens_cache_read": 216390,
+     "cost_estimate_usd": 0.014531,
+     "wall_seconds": 45.191,
+     "tool_calls": 28,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "88862a45fa75e7da6422ab6900ff6ea67522decabfc96b247f3efadf72f6a1f8",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/paired-v2-dev/20261114t101743z/reports/D01-B1.report.json",
+   "model_id": "anthropic:claude-haiku-5-5",
+   "inference_mode": "LIVE_MODEL"
+  },
+  {
+   "suite": "paired-v2-dev",
+   "system_id": "B2",
+   "kind": "ai",
+   "case_ref": "D01",
+   "status": "completed",
+   "error": null,
+   "censored": false,
+   "refused": false,
+   "stop_note": null,
+   "score": {
+    "scorer_version": "1.1.0",
+    "report_id": "rep-eval-d01-20261114t101743z-b2",
+    "episode_id": "eval-d01-20261114t101743z",
+    "system_id": "B2",
+    "inference_mode": "LIVE_MODEL",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 2,
+     "den": 3,
+     "value": 0.6666666666666666,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 20,
+     "den": 20,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 0,
+     "den": 2,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "coverup_detected": false,
+    "coverup_detected_na_reason": null,
+    "account_identification_correct": true,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 4,
+    "proposals_incident": 2,
+    "final_accepted_incident": 2,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [
+     {
+      "finding_id": "F-1aa6c9",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "F-a7de8a",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "F-152c10",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "F-1aa6c9",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "F-a7de8a",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "F-bcfca4",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "unresolved; not scored as an incident claim"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/home/tmori/Downloads/rx-7f3.db",
+      "t_start": "2026-11-10T09:56:38Z",
+      "t_end": "2026-11-10T09:56:42Z",
+      "outcome": "caught",
+      "finding_id": "F-1aa6c9",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.15:8080",
+      "t_start": "2026-11-10T09:59:41Z",
+      "t_end": "2026-11-10T09:59:52Z",
+      "outcome": "caught",
+      "finding_id": "F-a7de8a",
+      "description": ""
+     },
+     {
+      "effect_id": "e3",
+      "effect_type": "local_log_removal",
+      "host": "workstation",
+      "object": "/var/log/auth.log",
+      "t_start": "2026-11-10T09:55:47Z",
+      "t_end": "2026-11-10T09:55:47Z",
+      "outcome": "missed",
+      "finding_id": null,
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 13,
+     "tokens_in": 222461,
+     "tokens_out": 14524,
+     "tokens_cache_read": 152492,
+     "cost_estimate_usd": 0.017532,
+     "wall_seconds": 72.264,
+     "tool_calls": 34,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "a4c2ada45879f69aa698c17760a66552c2864727a5e3acd11d300b55a4f470ed",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/paired-v2-dev/20261114t101743z/reports/D01-B2.report.json",
+   "model_id": "anthropic:claude-haiku-5-5",
+   "inference_mode": "LIVE_MODEL"
+  },
+  {
+   "suite": "paired-v2-dev",
+   "system_id": "B1+",
+   "kind": "ai",
+   "case_ref": "D01",
+   "status": "completed",
+   "error": null,
+   "censored": false,
+   "refused": false,
+   "stop_note": null,
+   "score": {
+    "scorer_version": "1.1.0",
+    "report_id": "rep-eval-d01-20261114t101743z-b1plus",
+    "episode_id": "eval-d01-20261114t101743z",
+    "system_id": "B1+",
+    "inference_mode": "LIVE_MODEL",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 21,
+     "den": 21,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 0,
+     "den": 3,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "coverup_detected": true,
+    "coverup_detected_na_reason": null,
+    "account_identification_correct": true,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 5,
+    "proposals_incident": 3,
+    "final_accepted_incident": 3,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [
+     {
+      "finding_id": "F-1aa6c9",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "F-4e6e32",
+      "effect_id": "e3",
+      "effect_type": "local_log_removal"
+     },
+     {
+      "finding_id": "F-a7de8a",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "F-182b80",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "F-1aa6c9",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "F-4e6e32",
+      "outcome": "matched",
+      "effect_id": "e3",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "F-a7de8a",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "F-d164f6",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/home/tmori/Downloads/rx-7f3.db",
+      "t_start": "2026-11-10T09:56:38Z",
+      "t_end": "2026-11-10T09:56:42Z",
+      "outcome": "caught",
+      "finding_id": "F-1aa6c9",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.15:8080",
+      "t_start": "2026-11-10T09:59:41Z",
+      "t_end": "2026-11-10T09:59:52Z",
+      "outcome": "caught",
+      "finding_id": "F-a7de8a",
+      "description": ""
+     },
+     {
+      "effect_id": "e3",
+      "effect_type": "local_log_removal",
+      "host": "workstation",
+      "object": "/var/log/auth.log",
+      "t_start": "2026-11-10T09:55:47Z",
+      "t_end": "2026-11-10T09:55:47Z",
+      "outcome": "caught",
+      "finding_id": "F-4e6e32",
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 6,
+     "tokens_in": 126651,
+     "tokens_out": 6061,
+     "tokens_cache_read": 100145,
+     "cost_estimate_usd": 0.007345,
+     "wall_seconds": 25.937,
+     "tool_calls": 16,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "65a46a81bd06ec7451b710deef5667044e517c8796f80ad672eeb7f37406f9af",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/paired-v2-dev/20261114t101743z/reports/D01-B1plus.report.json",
+   "model_id": "anthropic:claude-haiku-5-5",
+   "inference_mode": "LIVE_MODEL"
+  }
+ ],
+ "systems": [
+  {
+   "id": "B0",
+   "label": "Fixed keyword recipe (no model)",
+   "kind": "offline",
+   "n_cases": 1,
+   "completed": 1,
+   "errors": 0,
+   "censored": 0,
+   "refused": 0,
+   "unrun": 0,
+   "aggregate": {
+    "step_recall": {
+     "num": 2,
+     "den": 3,
+     "value": 0.6666666666666666
+    },
+    "incident_cases_fully_reconstructed": {
+     "num": 0,
+     "den": 1,
+     "value": 0.0
+    },
+    "median_case_recall": 0.6666666666666666,
+    "proposal_precision": {
+     "num": 2,
+     "den": 21,
+     "value": 0.09523809523809523
+    },
+    "final_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0
+    },
+    "coverup_detected": {
+     "num": 0,
+     "den": 1,
+     "value": 0.0
+    },
+    "account_identification": {
+     "num": 0,
+     "den": 1,
+     "value": 0.0
+    },
+    "benign_false_alert": {
+     "num": 0,
+     "den": 0,
+     "value": null
+    },
+    "benign_raw_alert": {
+     "num": 0,
+     "den": 0,
+     "value": null
+    },
+    "raw_incident_proposals": 21,
+    "raw_incident_proposals_in_benign_cases": 0,
+    "false_claims_final": 0,
+    "unsupported_named_attribution": 0,
+    "false_accusations": 0,
+    "abstained": {
+     "num": 1,
+     "den": 1,
+     "value": 1.0
+    },
+    "evidence_reference_validity": {
+     "num": 23,
+     "den": 23,
+     "value": 1.0
+    },
+    "median_wall_seconds": 0.018,
+    "wall_seconds_range": [
+     0.018,
+     0.018
+    ],
+    "llm_calls": 0,
+    "tokens_in": 0,
+    "tokens_out": 0,
+    "cost_estimate_usd": 0.0
+   }
+  },
+  {
+   "id": "BR",
+   "label": "Deterministic checks, templated findings (no model)",
+   "kind": "offline",
+   "n_cases": 1,
+   "completed": 1,
+   "errors": 0,
+   "censored": 0,
+   "refused": 0,
+   "unrun": 0,
+   "aggregate": {
+    "step_recall": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0
+    },
+    "incident_cases_fully_reconstructed": {
+     "num": 1,
+     "den": 1,
+     "value": 1.0
+    },
+    "median_case_recall": 1.0,
+    "proposal_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0
+    },
+    "final_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0
+    },
+    "coverup_detected": {
+     "num": 1,
+     "den": 1,
+     "value": 1.0
+    },
+    "account_identification": {
+     "num": 1,
+     "den": 1,
+     "value": 1.0
+    },
+    "benign_false_alert": {
+     "num": 0,
+     "den": 0,
+     "value": null
+    },
+    "benign_raw_alert": {
+     "num": 0,
+     "den": 0,
+     "value": null
+    },
+    "raw_incident_proposals": 3,
+    "raw_incident_proposals_in_benign_cases": 0,
+    "false_claims_final": 0,
+    "unsupported_named_attribution": 0,
+    "false_accusations": 0,
+    "abstained": {
+     "num": 1,
+     "den": 1,
+     "value": 1.0
+    },
+    "evidence_reference_validity": {
+     "num": 24,
+     "den": 24,
+     "value": 1.0
+    },
+    "median_wall_seconds": 0.107,
+    "wall_seconds_range": [
+     0.107,
+     0.107
+    ],
+    "llm_calls": 0,
+    "tokens_in": 0,
+    "tokens_out": 0,
+    "cost_estimate_usd": 0.0
+   }
+  },
+  {
+   "id": "B1",
+   "label": "One agent, generic evidence tools only",
+   "kind": "ai",
+   "n_cases": 1,
+   "completed": 1,
+   "errors": 0,
+   "censored": 0,
+   "refused": 0,
+   "unrun": 0,
+   "aggregate": {
+    "step_recall": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0
+    },
+    "incident_cases_fully_reconstructed": {
+     "num": 1,
+     "den": 1,
+     "value": 1.0
+    },
+    "median_case_recall": 1.0,
+    "proposal_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0
+    },
+    "final_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0
+    },
+    "coverup_detected": {
+     "num": 1,
+     "den": 1,
+     "value": 1.0
+    },
+    "account_identification": {
+     "num": 1,
+     "den": 1,
+     "value": 1.0
+    },
+    "benign_false_alert": {
+     "num": 0,
+     "den": 0,
+     "value": null
+    },
+    "benign_raw_alert": {
+     "num": 0,
+     "den": 0,
+     "value": null
+    },
+    "raw_incident_proposals": 3,
+    "raw_incident_proposals_in_benign_cases": 0,
+    "false_claims_final": 0,
+    "unsupported_named_attribution": 0,
+    "false_accusations": 0,
+    "abstained": {
+     "num": 1,
+     "den": 1,
+     "value": 1.0
+    },
+    "evidence_reference_validity": {
+     "num": 23,
+     "den": 23,
+     "value": 1.0
+    },
+    "median_wall_seconds": 45.191,
+    "wall_seconds_range": [
+     45.191,
+     45.191
+    ],
+    "llm_calls": 7,
+    "tokens_in": 275340,
+    "tokens_out": 9998,
+    "cost_estimate_usd": 0.014531
+   }
+  },
+  {
+   "id": "B1+",
+   "label": "One agent, generic tools + checks",
+   "kind": "ai",
+   "n_cases": 1,
+   "completed": 1,
+   "errors": 0,
+   "censored": 0,
+   "refused": 0,
+   "unrun": 0,
+   "aggregate": {
+    "step_recall": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0
+    },
+    "incident_cases_fully_reconstructed": {
+     "num": 1,
+     "den": 1,
+     "value": 1.0
+    },
+    "median_case_recall": 1.0,
+    "proposal_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0
+    },
+    "final_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0
+    },
+    "coverup_detected": {
+     "num": 1,
+     "den": 1,
+     "value": 1.0
+    },
+    "account_identification": {
+     "num": 1,
+     "den": 1,
+     "value": 1.0
+    },
+    "benign_false_alert": {
+     "num": 0,
+     "den": 0,
+     "value": null
+    },
+    "benign_raw_alert": {
+     "num": 0,
+     "den": 0,
+     "value": null
+    },
+    "raw_incident_proposals": 3,
+    "raw_incident_proposals_in_benign_cases": 0,
+    "false_claims_final": 0,
+    "unsupported_named_attribution": 0,
+    "false_accusations": 0,
+    "abstained": {
+     "num": 1,
+     "den": 1,
+     "value": 1.0
+    },
+    "evidence_reference_validity": {
+     "num": 21,
+     "den": 21,
+     "value": 1.0
+    },
+    "median_wall_seconds": 25.937,
+    "wall_seconds_range": [
+     25.937,
+     25.937
+    ],
+    "llm_calls": 6,
+    "tokens_in": 126651,
+    "tokens_out": 6061,
+    "cost_estimate_usd": 0.007345
+   }
+  },
+  {
+   "id": "B2",
+   "label": "Lead + auditor + skeptic, generic evidence tools only",
+   "kind": "ai",
+   "n_cases": 1,
+   "completed": 1,
+   "errors": 0,
+   "censored": 0,
+   "refused": 0,
+   "unrun": 0,
+   "aggregate": {
+    "step_recall": {
+     "num": 2,
+     "den": 3,
+     "value": 0.6666666666666666
+    },
+    "incident_cases_fully_reconstructed": {
+     "num": 0,
+     "den": 1,
+     "value": 0.0
+    },
+    "median_case_recall": 0.6666666666666666,
+    "proposal_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0
+    },
+    "final_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0
+    },
+    "coverup_detected": {
+     "num": 0,
+     "den": 1,
+     "value": 0.0
+    },
+    "account_identification": {
+     "num": 1,
+     "den": 1,
+     "value": 1.0
+    },
+    "benign_false_alert": {
+     "num": 0,
+     "den": 0,
+     "value": null
+    },
+    "benign_raw_alert": {
+     "num": 0,
+     "den": 0,
+     "value": null
+    },
+    "raw_incident_proposals": 2,
+    "raw_incident_proposals_in_benign_cases": 0,
+    "false_claims_final": 0,
+    "unsupported_named_attribution": 0,
+    "false_accusations": 0,
+    "abstained": {
+     "num": 1,
+     "den": 1,
+     "value": 1.0
+    },
+    "evidence_reference_validity": {
+     "num": 20,
+     "den": 20,
+     "value": 1.0
+    },
+    "median_wall_seconds": 72.264,
+    "wall_seconds_range": [
+     72.264,
+     72.264
+    ],
+    "llm_calls": 13,
+    "tokens_in": 222461,
+    "tokens_out": 14524,
+    "cost_estimate_usd": 0.017532
+   }
+  },
+  {
+   "id": "ALIBI",
+   "label": "Lead + auditor + skeptic, generic tools + checks",
+   "kind": "ai",
+   "n_cases": 1,
+   "completed": 1,
+   "errors": 0,
+   "censored": 0,
+   "refused": 0,
+   "unrun": 0,
+   "aggregate": {
+    "step_recall": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0
+    },
+    "incident_cases_fully_reconstructed": {
+     "num": 1,
+     "den": 1,
+     "value": 1.0
+    },
+    "median_case_recall": 1.0,
+    "proposal_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0
+    },
+    "final_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0
+    },
+    "coverup_detected": {
+     "num": 1,
+     "den": 1,
+     "value": 1.0
+    },
+    "account_identification": {
+     "num": 1,
+     "den": 1,
+     "value": 1.0
+    },
+    "benign_false_alert": {
+     "num": 0,
+     "den": 0,
+     "value": null
+    },
+    "benign_raw_alert": {
+     "num": 0,
+     "den": 0,
+     "value": null
+    },
+    "raw_incident_proposals": 3,
+    "raw_incident_proposals_in_benign_cases": 0,
+    "false_claims_final": 0,
+    "unsupported_named_attribution": 0,
+    "false_accusations": 0,
+    "abstained": {
+     "num": 1,
+     "den": 1,
+     "value": 1.0
+    },
+    "evidence_reference_validity": {
+     "num": 25,
+     "den": 25,
+     "value": 1.0
+    },
+    "median_wall_seconds": 55.71,
+    "wall_seconds_range": [
+     55.71,
+     55.71
+    ],
+    "llm_calls": 13,
+    "tokens_in": 153373,
+    "tokens_out": 12498,
+    "cost_estimate_usd": 0.012295
+   }
+  }
+ ],
+ "paired": {
+  "checks_effect_one_agent": {
+   "a": "B1+",
+   "b": "B1",
+   "metric": "effects caught per incident case",
+   "per_case": [
+    {
+     "case_ref": "D01",
+     "B1+": "3/3",
+     "B1": "3/3",
+     "difference_in_effects_caught": 0
+    }
+   ],
+   "cases_a_better": 0,
+   "cases_equal": 1,
+   "cases_b_better": 0,
+   "n": 1
+  },
+  "checks_effect_three_agents": {
+   "a": "ALIBI",
+   "b": "B2",
+   "metric": "effects caught per incident case",
+   "per_case": [
+    {
+     "case_ref": "D01",
+     "ALIBI": "3/3",
+     "B2": "2/3",
+     "difference_in_effects_caught": 1
+    }
+   ],
+   "cases_a_better": 1,
+   "cases_equal": 0,
+   "cases_b_better": 0,
+   "n": 1
+  },
+  "delegation_effect_with_checks": {
+   "a": "ALIBI",
+   "b": "B1+",
+   "metric": "effects caught per incident case",
+   "per_case": [
+    {
+     "case_ref": "D01",
+     "ALIBI": "3/3",
+     "B1+": "3/3",
+     "difference_in_effects_caught": 0
+    }
+   ],
+   "cases_a_better": 0,
+   "cases_equal": 1,
+   "cases_b_better": 0,
+   "n": 1
+  },
+  "delegation_effect_without_checks": {
+   "a": "B2",
+   "b": "B1",
+   "metric": "effects caught per incident case",
+   "per_case": [
+    {
+     "case_ref": "D01",
+     "B2": "2/3",
+     "B1": "3/3",
+     "difference_in_effects_caught": -1
+    }
+   ],
+   "cases_a_better": 0,
+   "cases_equal": 0,
+   "cases_b_better": 1,
+   "n": 1
+  }
+ },
+ "system_runs_started": 4,
+ "spend": {
+  "estimated_cost_usd": 0.051703,
+  "unreconciled_usd_after": 0.0,
+  "total_after_usd": 3.092017,
+  "ceiling_usd": 0.25
+ },
+ "notes": [
+  "One run per cell on four simulated cases: a demonstration that the six systems run and how they differed here, not an accuracy estimate. Model output varies between runs; that variance was not measured.",
+  "No AI arm received verifier feedback while investigating. Rule support was applied after lock, identically for all six systems.",
+  "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+ ]
+}

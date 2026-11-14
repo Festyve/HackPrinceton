@@ -1,0 +1,270 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-d01-20261114t101743z-b1",
+ "bundle_id": "bndl-60a45fbc357bc397",
+ "system_id": "B1",
+ "system_label": "Arm B1: one agent with generic evidence tools only (no checks)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-459d55",
+   "claim_type": "local_log_removal",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "tmori",
+   "t_start": "2026-11-10T09:55:47Z",
+   "t_end": "2026-11-10T09:55:51Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_7d20d518a543",
+    "ev_39e6469fed9d",
+    "ev_5c057e458d33",
+    "ev_8dad3bb6c44d"
+   ],
+   "counterevidence_ids": [
+    "ev_391d2a3b9525"
+   ],
+   "check_refs": [],
+   "confidence": 0.5,
+   "rationale": "The collector holds the session-72 tty1 login for tmori at 09:55:47 (two copies, both seq 20), and the logout at 10:01:50. The workstation's own auth.log has the 10:01:50 logout but no matching login line. Its sequence number gap relative to the collector's copies is consistent with the line being removed locally. Scheduled rotation at 08:53 (ev_391d2a3b9525) predates the gap and does not explain it. Rotation does not explain the absence, but the collector duplicate and a missing host line could also come from forwarding or parser error; this is a moderate-confidence claim.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Forwarding or parse error dropped the login line on the host side",
+    "Collector duplicated seq 20 and the host copy is simply incomplete"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-c490ff",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "tmori",
+   "t_start": "2026-11-10T09:56:38Z",
+   "t_end": "2026-11-10T09:59:41Z",
+   "object_or_session": "/home/tmori/Downloads/rx-7f3.db",
+   "evidence_ids": [
+    "ev_244bd0403704",
+    "ev_96abab423307"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.7,
+   "rationale": "clinic-export --dataset patients_full wrote the full patient dataset to /home/tmori/Downloads/rx-7f3.db at 09:56:38, about three minutes before the upload of that same file to 10.20.9.15:8080. The export is a bulk patient dump into a user download directory, a plausible staging step. The file itself was not seen in fs_stat, so its size and existence are unverified.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-a7de8a",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": "T1048",
+   "technique_family": "exfiltration",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "tmori",
+   "t_start": "2026-11-10T09:59:41Z",
+   "t_end": "2026-11-10T09:59:52Z",
+   "object_or_session": "10.20.9.15:8080",
+   "evidence_ids": [
+    "ev_6912341a9ccd",
+    "ev_96abab423307",
+    "ev_244bd0403704"
+   ],
+   "counterevidence_ids": [
+    "ev_e0ad000502e3"
+   ],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "Shell history on workstation shows tmori running clinic-export --dataset patients_full to /home/tmori/Downloads/rx-7f3.db at 09:56:38, then curl -T of that file to http://10.20.9.15:8080 at 09:59:41. The tap flow from 10.20.1.21 (the workstation address, per records-app client IP) to 10.20.9.15:8080 at 09:59:41-09:59:52 sent 16,651,318 bytes out. 10.20.9.15 is not an approved bulk destination (approved: 10.20.0.45 and 10.20.8.20), and the transfer exceeds the 5,000,000-byte threshold, so under the brief's policy it is a violating transfer. Session attribution to tmori rests on account activity only.",
+   "assumptions": [
+    "10.20.1.21 is the workstation address (records-app client IP for workstation users)",
+    "shell history timestamps are accurate UTC"
+   ],
+   "alternative_explanations": [
+    "Authorized one-off export to an unlisted internal system not yet in the policy list (no evidence of this)",
+    "Credential used by someone other than the account holder (shared station credentials noted in brief)"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-0ac188",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "mreyes",
+   "t_start": "2026-11-10T06:59:06Z",
+   "t_end": "2026-11-10T12:15:33Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_119f167d6a26",
+    "ev_7adab229b2a6",
+    "ev_b4b2468c80b5"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.7,
+   "rationale": "Repeated curl -T uploads of lab requests from mreyes and tmori to 10.20.8.20 (lab-gw-01, approved for laboratory and registry submissions). Each flow is roughly 150 KB to 550 KB, far below the 5 MB bulk threshold, and the destination is approved.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-152c10",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "records-app",
+   "t_start": "2026-11-10T08:53:03Z",
+   "t_end": "2026-11-10T08:53:04Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_8209927e51b3",
+    "ev_d3af183ed50f"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "The records-app access.log was rotated at 08:53 and the segment was archived off-host to stor-nas-01 (keep 0). Local absence of older access.log segments is explained by the documented rotation policy, not by removal.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-bd4bb3",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "svc-backup",
+   "t_start": "2026-11-10T12:00:00Z",
+   "t_end": "2026-11-10T12:00:09Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_e0ad000502e3",
+    "ev_602070d11b71"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "Scheduled svc-backup incremental job at 12:00 sent about 16.6 MB to 10.20.0.45:873 (stor-nas-01, approved for backup and log archive). This is over the bulk threshold but to an approved destination and matches a scheduled job.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  }
+ ],
+ "attribution": {
+  "account_used": "tmori",
+  "session_ref": "workstation#72",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_7d20d518a543",
+   "ev_244bd0403704",
+   "ev_96abab423307",
+   "ev_6912341a9ccd"
+  ],
+  "contrary_evidence_ids": [
+   "ev_391d2a3b9525"
+  ],
+  "assumptions": [
+   "Shell history timestamps match session times"
+  ],
+  "limits": [
+   "No evidence beyond account activity identifies a person",
+   "Shell history carries no session id; linkage to session 72 is by time window",
+   "Remote VPN sessions (vpn-gw-01) are not covered by badge records"
+  ],
+  "statement": "Account tmori was used on workstation (ws-nurse-01) for the patient export, staging and upload to 10.20.9.15:8080 between 09:55 and 10:00 UTC. The account is a credential, not a person. Human operator is not established: the brief notes shared console credentials have been written down before, and badge records do not cover remote VPN sessions.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Bundle bndl-60a45fbc357bc397. The main supported incident is a policy-violating transfer from workstation (ws-nurse-01) under account tmori. At 09:56:38 UTC clinic-export wrote the patients_full dataset to /home/tmori/Downloads/rx-7f3.db, and at 09:59:41 curl uploaded it to 10.20.9.15:8080. The tap recorded 16.65 MB out to that address, which is not an approved bulk destination (approved: 10.20.0.45 and 10.20.8.20) and exceeds the 5 MB threshold. A possible local log removal is also recorded at moderate confidence: the collector holds tmori's session-72 login at 09:55:47, but the workstation's own auth.log lacks that line. Benign items: mreyes and tmori lab uploads to the approved lab gateway (small flows), the scheduled svc-backup transfer to stor-nas-01 at 12:00, and the records access.log rotation archived off-host. Attribution: the account tmori was used; the human operator is not established. Shared console credentials have been found written down before, and badge records do not cover VPN sessions.",
+ "open_questions": [
+  "Does the missing session-72 login line on workstation auth.log reflect deliberate removal, or a forwarding/parser artifact? The auth.log.1 rotated copy returned no events in the bundle and should be checked.",
+  "The export file /home/tmori/Downloads/rx-7f3.db does not appear in the fs_stat extract reviewed; its presence and size are unverified.",
+  "Who was physically or remotely at the tmori session at 09:55-10:00 UTC is not established.",
+  "10.20.9.15 has not been identified; its ownership and whether it is an approved external system should be confirmed.",
+  "Tap flow 10.20.1.21 is attributed to the workstation by records-app client IP; confirm the address mapping."
+ ],
+ "usage": {
+  "llm_calls": 7,
+  "tokens_in": 275340,
+  "tokens_out": 9998,
+  "tokens_cache_read": 216390,
+  "cost_estimate_usd": 0.014531,
+  "wall_seconds": 45.191,
+  "tool_calls": 28,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T10:19:25.090820Z",
+ "report_sha256": "88862a45fa75e7da6422ab6900ff6ea67522decabfc96b247f3efadf72f6a1f8",
+ "review_history": [
+  {
+   "at": "2026-11-14T10:19:25.090820Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

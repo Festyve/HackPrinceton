@@ -1,0 +1,205 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-d01-20261114t101743z-b2",
+ "bundle_id": "bndl-60a45fbc357bc397",
+ "system_id": "B2",
+ "system_label": "Arm B2: lead + integrity-auditor + skeptic with generic evidence tools only (no checks)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-1aa6c9",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "tmori",
+   "t_start": "2026-11-10T09:56:38Z",
+   "t_end": "2026-11-10T09:56:42Z",
+   "object_or_session": "/home/tmori/Downloads/rx-7f3.db",
+   "evidence_ids": [
+    "ev_244bd0403704",
+    "ev_e99c55f7d89b",
+    "ev_96abab423307"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "clinic-export --dataset patients_full created a 16.6 MB file under tmori at 09:56:38, about three minutes before the upload of that same file to a non-approved destination.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Unauthorised but non-malicious export; fs_stat is a host-local snapshot"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": "Export and file size match the upload; host-local evidence only, so moderate confidence.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-a7de8a",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": "T1048",
+   "technique_family": "exfiltration",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "tmori",
+   "t_start": "2026-11-10T09:59:41Z",
+   "t_end": "2026-11-10T09:59:52Z",
+   "object_or_session": "10.20.9.15:8080",
+   "evidence_ids": [
+    "ev_6912341a9ccd",
+    "ev_96abab423307",
+    "ev_244bd0403704",
+    "ev_e99c55f7d89b"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "Tap flow sent 16,651,318 bytes to 10.20.9.15:8080, above the 5 MB bulk threshold and not an approved destination. The workstation shell history shows a matching curl upload of rx-7f3.db at the same second, under tmori.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Sanctioned transfer to a vendor not on the approved list; no approval record in bundle",
+    "Shared or misused tmori credential; VPN sessions not covered by badges"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": "Independent tap flow to non-approved 10.20.9.15:8080 above threshold; matches host history.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-bcfca4",
+   "claim_type": "collection_gap",
+   "category": "unresolved",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "tmori",
+   "t_start": "2026-11-10T09:55:47Z",
+   "t_end": "2026-11-10T09:55:51Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_7d20d518a543",
+    "ev_39e6469fed9d",
+    "ev_5c057e458d33",
+    "ev_0627fca0949b",
+    "ev_6673f55d9474",
+    "ev_f3d9d5ddbdd9"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.4,
+   "rationale": "The collector holds the tmori login for session 72 at 09:55:47, but the workstation auth.log lacks that login line. Collector seq=20 is duplicated, so this may be a forwarding gap rather than deletion. Not established as log removal.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Collector forwarding artifact (duplicate seq=20)",
+    "Host auth.log incomplete for non-deletion reasons"
+   ],
+   "status": "downgraded_by_skeptic",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": "Collector copies contain the login; no forwarding break shown, so no log removal is established.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-152c10",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T08:53:03Z",
+   "t_end": "2026-11-10T08:53:04Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_d3af183ed50f",
+    "ev_8209927e51b3",
+    "ev_b4345dec8779",
+    "ev_b7aa40518b7f"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "Scheduled logrotate at 08:53 archived records-app access.log off-host (keep 0), which explains earlier gaps in the local copy.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": "Scheduled rotation with off-host archive explains the local absence.",
+   "produced_by": "lead-investigator"
+  }
+ ],
+ "attribution": {
+  "account_used": "tmori",
+  "session_ref": null,
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_244bd0403704",
+   "ev_96abab423307",
+   "ev_6912341a9ccd"
+  ],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Host-local shell history is writable",
+   "No approval record for 10.20.9.15",
+   "Session 72 gap downgraded"
+  ],
+  "statement": "Account used; human operator not established. The tmori session on workstation ran the export, staging and upload. The account identifies a credential, not a person. Shared console credentials and VPN access limit attribution.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Bundle bndl-60a45fbc357bc397 (Northside Clinic, 2026-11-10 06:10-15:10Z). Supported: on the workstation, account tmori ran clinic-export --dataset patients_full at 09:56:38, creating /home/tmori/Downloads/rx-7f3.db (~16.6 MB). At 09:59:41 a 16.65 MB upload went to 10.20.9.15:8080 per the tap flow, which is not an approved bulk destination (policy threshold 5 MB). The tap flow is an independent witness; staging and shell history are host-local. Not supported: log removal. The collector holds the session 72 login that is missing from the host auth.log, and the skeptic found no forwarding break, so that finding was downgraded. The records access.log gaps are explained by scheduled logrotate with off-host archive. Attribution: account tmori used; human operator not established. Shared credentials and VPN access mean no individual should be named.",
+ "open_questions": [
+  "Was there an approval for the export of patients_full or for the transfer to 10.20.9.15? Who owns that destination?",
+  "Who was operating the tmori session? Was it local console or remote VPN?",
+  "Confirm the 10.20.1.21 to workstation mapping.",
+  "Does the session 72 login gap in the host auth.log need a fuller collector check?",
+  "The auditor's candidate list was truncated after the rotation item; a policy-consistent transfer at records 12:00Z was not verified."
+ ],
+ "usage": {
+  "llm_calls": 13,
+  "tokens_in": 222461,
+  "tokens_out": 14524,
+  "tokens_cache_read": 152492,
+  "cost_estimate_usd": 0.017532,
+  "wall_seconds": 72.264,
+  "tool_calls": 34,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T10:20:37.577951Z",
+ "report_sha256": "a4c2ada45879f69aa698c17760a66552c2864727a5e3acd11d300b55a4f470ed",
+ "review_history": [
+  {
+   "at": "2026-11-14T10:20:37.577951Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

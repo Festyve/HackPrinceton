@@ -1,0 +1,55 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-d01-20261114t101533z-b2",
+ "bundle_id": "bndl-60a45fbc357bc397",
+ "system_id": "B2",
+ "system_label": "Arm B2: lead + integrity-auditor + skeptic with generic evidence tools only (no checks)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [],
+ "attribution": {
+  "account_used": null,
+  "session_ref": null,
+  "human_identity": "not_assessed",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [],
+  "statement": "The investigator did not submit an attribution assessment.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "The investigator did not write a summary.",
+ "open_questions": [
+  "Incomplete run: stopped by the budget gateway: request too large: 50274 input tokens counted, the per-request ceiling is 40000. It was not sent.."
+ ],
+ "usage": {
+  "llm_calls": 5,
+  "tokens_in": 53209,
+  "tokens_out": 2858,
+  "tokens_cache_read": 17483,
+  "cost_estimate_usd": 0.006069,
+  "wall_seconds": 16.406,
+  "tool_calls": 17,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T10:16:14.856057Z",
+ "report_sha256": "acd15d6c81bba1f09825055f532c9462489dbf1171c17f01a4577973880801b9",
+ "review_history": [
+  {
+   "at": "2026-11-14T10:16:14.856057Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

@@ -1,0 +1,176 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-d01-20261114t101533z-alibi",
+ "bundle_id": "bndl-60a45fbc357bc397",
+ "system_id": "ALIBI",
+ "system_label": "Specialist review: lead + integrity-auditor + skeptic with deterministic checks (benchmark arm ALIBI)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-4e6e32",
+   "claim_type": "local_log_removal",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "tmori",
+   "t_start": "2026-11-10T09:55:47Z",
+   "t_end": "2026-11-10T09:55:49Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_7d20d518a543",
+    "ev_39e6469fed9d",
+    "ev_8dad3bb6c44d",
+    "ev_5c057e458d33",
+    "ev_b2b2e38c8d03",
+    "ev_391d2a3b9525"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.6,
+   "rationale": "Collector retained the tmori tty1 login for session 72 (seq 20, 09:55:47). The host-local auth.log lacks that line while bracketing lines exist. Rotation at 08:53 predates it, so rotation does not explain the absence. This is consistent with local removal but could also be a local write or sync failure.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Local write or sync failure dropped one line",
+    "Collector copy error"
+   ],
+   "status": "downgraded_by_skeptic",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+   ],
+   "skeptic_note": "Single-line absence from a host-writable log; the removal mechanism (deliberate, logger fault, or tamper) is not established. Kept as an unresolved gap rather than an incident effect.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-b9d891",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "tmori",
+   "t_start": "2026-11-10T09:56:38Z",
+   "t_end": "2026-11-10T09:56:43Z",
+   "object_or_session": "/home/tmori/Downloads/rx-7f3.db",
+   "evidence_ids": [
+    "ev_244bd0403704",
+    "ev_e99c55f7d89b",
+    "ev_cf00835d7acf",
+    "ev_52d40eda9460",
+    "ev_d080620c9c7b"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "clinic-export of patients_full wrote a 16.6 MB file to Downloads at 09:56:38. Records logged export_bulk for tmori at 09:56:39, corroborated by the collector copy. The tap shows about 16.6 MB retrieved at the same time. The file was then uploaded about 3 minutes later.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Routine export by the holder for legitimate work",
+    "fs_stat and shell history are host-local"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": "Records export_bulk ev_cf00835d7acf, corroborated by collector ev_52d40eda9460, matches the staged file size in ev_e99c55f7d89b. No approved sender or backup job recorded.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-a7de8a",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": "T1048",
+   "technique_family": "exfiltration",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "tmori",
+   "t_start": "2026-11-10T09:59:41Z",
+   "t_end": "2026-11-10T09:59:52Z",
+   "object_or_session": "10.20.9.15:8080",
+   "evidence_ids": [
+    "ev_6912341a9ccd",
+    "ev_96abab423307"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "Tap flow shows 16.65 MB sent from workstation 10.20.1.21 to 10.20.9.15:8080 (not approved). Shell history shows curl -T upload of rx-7f3.db at the same time. Policy treats bulk outbound clinic data to unapproved destinations as a violation.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Authorized destination not yet on the approved list",
+    "Credential used by someone other than the holder",
+    "Tap records are simulated flow metadata, not content"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": "Tap flow ev_6912341a9ccd: 16.65 MB to unapproved 10.20.9.15:8080; shell ev_96abab423307 shows matching curl upload. No approved-destination explanation.",
+   "produced_by": "lead-investigator"
+  }
+ ],
+ "attribution": {
+  "account_used": "tmori",
+  "session_ref": null,
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_7d20d518a543",
+   "ev_244bd0403704",
+   "ev_cf00835d7acf",
+   "ev_6912341a9ccd"
+  ],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Badge records do not cover console credential use; badge may miss tailgating",
+   "Shell history and fs_stat are host-local and writable",
+   "Auditor output truncated after third candidate"
+  ],
+  "statement": "Account tmori was used for the console session workstation#72 (tty1) that performed the export, staging and upload. Account used; human operator not established. The account identifies a credential, not a person; the credential may have been shared or written down.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Tip: review of records access and transfers on 2026-11-10. Supported by the evidence: on workstation (console session workstation#72, account tmori), a patients_full export wrote /home/tmori/Downloads/rx-7f3.db at 09:56:38 UTC. Records-app logged the bulk export at 09:56:39, corroborated by the collector copy (seq 271). About 16.6 MB was then sent from 10.20.1.21 to 10.20.9.15:8080 at 09:59:41-09:59:52 (tap flow), matching a curl upload in shell history. 10.20.9.15 is not an approved destination, so the transfer is a policy violation on its face. Downgraded: a single collector-retained login line (seq 20, 09:55:47) missing from the host-local auth.log. Rotation at 08:53 does not explain it, but the mechanism (deliberate removal, logger fault, or tamper) is not established, so it is an open gap, not a confirmed log removal. Attribution: account tmori was used; human operator not established. Credentials may be shared or written down, and badge records do not cover console use.",
+ "open_questions": [
+  "Who was operating session workstation#72 (tty1, no source IP) at 09:55-10:01 UTC, and was the tmori credential shared?",
+  "Why is login seq 20 missing from the host-local auth.log while the collector retained it? Is this a logger fault or deliberate removal? Check host integrity.",
+  "Is 10.20.9.15 a known or authorized destination outside the approved list?",
+  "The integrity-auditor output was truncated after its third candidate; remaining candidates (records access, vpn-gw-01 sessions, svc-backup, fd-* accounts) were not verified here.",
+  "Shell history and fs_stat are host-local and not independently witnessed; the staged file's content and purpose are unknown."
+ ],
+ "usage": {
+  "llm_calls": 13,
+  "tokens_in": 165692,
+  "tokens_out": 12264,
+  "tokens_cache_read": 110399,
+  "cost_estimate_usd": 0.014147,
+  "wall_seconds": 56.389,
+  "tool_calls": 21,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T10:17:11.463178Z",
+ "report_sha256": "abdbe7596d5ec31f3ef03d0d4940668b6b3ae0fa8e74625521aad882e681f48b",
+ "review_history": [
+  {
+   "at": "2026-11-14T10:17:11.463178Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

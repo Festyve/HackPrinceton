@@ -1,0 +1,234 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-d01-20261114t101743z-b1plus",
+ "bundle_id": "bndl-60a45fbc357bc397",
+ "system_id": "B1+",
+ "system_label": "Fast investigation: one agent with deterministic checks, no delegation (same configuration as benchmark arm B1+)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-4e6e32",
+   "claim_type": "local_log_removal",
+   "category": "incident_allegation",
+   "attack_id": "T1070.002",
+   "technique_family": "defense evasion",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "tmori",
+   "t_start": "2026-11-10T09:55:47Z",
+   "t_end": "2026-11-10T09:55:49Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_7d20d518a543",
+    "ev_8dad3bb6c44d",
+    "ev_5c057e458d33"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "check_local_vs_collector"
+   ],
+   "confidence": 0.6,
+   "rationale": "The collector retained the login line for tmori session 72 (seq 20, line time 09:55:47) but the host copy of /var/log/auth.log lacks it, although local records bracket it before (session 71 logout, 09:43:08) and after (session 72 logout, 10:01:50). The check classes this as unexplained: the local rotation at 08:53 kept one generation and does not cover this period. This is an absence on the host, not proof of deliberate deletion; other causes (write failure, host tampering) are not excluded.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-1aa6c9",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": "T1074",
+   "technique_family": "collection/staging",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "tmori",
+   "t_start": "2026-11-10T09:56:38Z",
+   "t_end": "2026-11-10T09:56:42Z",
+   "object_or_session": "/home/tmori/Downloads/rx-7f3.db",
+   "evidence_ids": [
+    "ev_244bd0403704",
+    "ev_cf00835d7acf",
+    "ev_52d40eda9460",
+    "ev_d080620c9c7b",
+    "ev_e99c55f7d89b"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "Under account tmori's console session 72, shell history shows clinic-export of dataset patients_full to /home/tmori/Downloads/rx-7f3.db. Records app logged export_bulk for patients_full (16,647,611 bytes) from client 10.20.1.21 at 09:56:39; the collector copy confirms it; the tap shows a 16.6 MB flow to 10.20.0.10:443; fs_stat shows the 16,647,611-byte file at 09:56:42.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-a7de8a",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": "T1048",
+   "technique_family": "exfiltration",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "tmori",
+   "t_start": "2026-11-10T09:59:41Z",
+   "t_end": "2026-11-10T09:59:52Z",
+   "object_or_session": "10.20.9.15:8080",
+   "evidence_ids": [
+    "ev_6912341a9ccd",
+    "ev_96abab423307"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "check_transfer_sessions"
+   ],
+   "confidence": 0.8,
+   "rationale": "Shell history from tmori's session 72 shows curl -T uploading rx-7f3.db to http://10.20.9.15:8080. The tap records 16,651,318 bytes out from 10.20.1.21 to 10.20.9.15:8080, above the 5 MB threshold. 10.20.9.15 is not on the approved bulk-destination list (10.20.0.45, 10.20.8.20). Flow records do not show content.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-182b80",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:18:56Z",
+   "t_end": "2026-11-10T08:53:04Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_b4345dec8779",
+    "ev_8209927e51b3",
+    "ev_45efc0524e9f",
+    "ev_2c65256beef6"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "check_local_vs_collector"
+   ],
+   "confidence": 0.9,
+   "rationale": "173 collector-retained access.log lines from before 08:53:04 are missing locally. Logrotate at 08:53:04 (keep 0) archived the segment off-host, so these absences are explained by scheduled rotation, not by removal.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-d164f6",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T12:00:04Z",
+   "t_end": "2026-11-10T12:00:09Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_e0ad000502e3"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "check_transfer_sessions"
+   ],
+   "confidence": 0.7,
+   "rationale": "A 16.65 MB outbound flow from records (10.20.0.10) to 10.20.0.45:873 (stor-nas-01, approved backup and log archive destination). Consistent with the scheduled backup; no interactive session is linked to it.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  }
+ ],
+ "attribution": {
+  "account_used": "tmori",
+  "session_ref": null,
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_7d20d518a543",
+   "ev_244bd0403704",
+   "ev_96abab423307",
+   "ev_cf00835d7acf"
+  ],
+  "contrary_evidence_ids": [
+   "ev_535d287e8231",
+   "ev_e919ac6bd3c7"
+  ],
+  "assumptions": [],
+  "limits": [
+   "An account name identifies a credential, not a person",
+   "Badge records show presence, not who used the console; tailgating is not visible",
+   "No named person is accused or cleared"
+  ],
+  "statement": "Account tmori (badge B-4181) was used for a console session (workstation#72, tty1, 09:55:47 to 10:01:50 UTC) that performed the export of patients_full, the staging of rx-7f3.db, and the upload to 10.20.9.15:8080. The account is the credential used. The human operator is not established: the badge was inside the building, but that is consistent with the holder or anyone else with the credential, and console credentials at the shared station have been found written down before.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Bundle bndl-60a45fbc357bc397 (Northside Clinic, 2026-11-10 06:10-15:10 UTC). Findings:\n1) Data staging (incident allegation, workstation, confidence 0.8): under account tmori's console session 72, clinic-export wrote the patients_full dataset (16,647,611 bytes) to /home/tmori/Downloads/rx-7f3.db at 09:56:38-09:56:42.\n2) Policy-violating transfer (incident allegation, workstation to 10.20.9.15:8080, confidence 0.8): curl uploaded rx-7f3.db; the tap recorded 16,651,318 bytes out at 09:59:41-09:59:52. 10.20.9.15 is not an approved bulk destination.\n3) Local log removal (incident allegation, workstation /var/log/auth.log, confidence 0.6): the collector retained the tmori session-72 login line (09:55:47), but it is absent from the host copy although bracketed by local records on both sides. Rotation does not explain it. Deliberate deletion is not proven; host write failure or other causes are not excluded.\n4) Benign: records access.log absences before 08:53:04 are explained by scheduled logrotate (keep 0, archived off-host).\n5) Benign: records-to-10.20.0.45:873 transfer of 16.65 MB at 12:00 goes to the approved NAS, with no linked interactive session.\nAttribution: account tmori was used. The human operator is not established. Badge B-4181 was inside the building at login, which neither identifies nor clears the holder. No person is named.",
+ "open_questions": [
+  "Who physically or remotely used the tmori credential at 09:55 (shared console credentials, tailgating, or the holder)? Not established by the bundle.",
+  "Why is the auth.log login line for session 72 missing on the host? Requires host forensics beyond this bundle.",
+  "What was the destination 10.20.9.15:8080 and was the data received? Flow records show bytes only, not content.",
+  "The workstation auth.log.1 rotation kept one generation; confirm whether any other lines are missing from the host copy."
+ ],
+ "usage": {
+  "llm_calls": 6,
+  "tokens_in": 126651,
+  "tokens_out": 6061,
+  "tokens_cache_read": 100145,
+  "cost_estimate_usd": 0.007345,
+  "wall_seconds": 25.937,
+  "tool_calls": 16,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T10:21:03.725736Z",
+ "report_sha256": "65a46a81bd06ec7451b710deef5667044e517c8796f80ad672eeb7f37406f9af",
+ "review_history": [
+  {
+   "at": "2026-11-14T10:21:03.725736Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

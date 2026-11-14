@@ -1,0 +1,209 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-d01-20261114t101743z-alibi",
+ "bundle_id": "bndl-60a45fbc357bc397",
+ "system_id": "ALIBI",
+ "system_label": "Specialist review: lead + integrity-auditor + skeptic with deterministic checks (benchmark arm ALIBI)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-0f5e75",
+   "claim_type": "local_log_removal",
+   "category": "incident_allegation",
+   "attack_id": "T1070.002",
+   "technique_family": "indicator_removal",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "tmori",
+   "t_start": "2026-11-10T09:55:47Z",
+   "t_end": "2026-11-10T09:55:47Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_7d20d518a543",
+    "ev_39e6469fed9d",
+    "ev_8dad3bb6c44d",
+    "ev_5c057e458d33",
+    "ev_391d2a3b9525",
+    "ev_b2b2e38c8d03"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.75,
+   "rationale": "Collector holds auth.log seq 20 (session 72 login by tmori at 09:55:47); the workstation's local auth.log lacks it while bracketing entries exist. Rotation at 08:53 predates it and archived nothing off-host. Local deletion is supported but write fault is not excluded.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Local write or sync fault on workstation",
+    "Collector delivery anomaly"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+   ],
+   "skeptic_note": "One auth.log line absent locally but present in collector copy; rotation does not explain it. Write fault untested.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-1aa6c9",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": "T1074.001",
+   "technique_family": "collection",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "tmori",
+   "t_start": "2026-11-10T09:56:38Z",
+   "t_end": "2026-11-10T09:56:42Z",
+   "object_or_session": "/home/tmori/Downloads/rx-7f3.db",
+   "evidence_ids": [
+    "ev_244bd0403704",
+    "ev_cf00835d7acf",
+    "ev_52d40eda9460",
+    "ev_d080620c9c7b",
+    "ev_e99c55f7d89b"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "clinic-export of patients_full to rx-7f3.db at 09:56:38 by tmori; records app logged a 16.6MB export_bulk for tmori from 10.20.1.21, corroborated by collector copy and tap inbound flow; fs_stat shows the 16,647,611-byte file owned by tmori.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Local export for a legitimate purpose, later upload unauthorized"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": "Staging command, records export, collector copy and tap inbound flow agree; fs_stat corroborates only.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-a7de8a",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": "T1048",
+   "technique_family": "exfiltration",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "tmori",
+   "t_start": "2026-11-10T09:59:41Z",
+   "t_end": "2026-11-10T09:59:52Z",
+   "object_or_session": "10.20.9.15:8080",
+   "evidence_ids": [
+    "ev_6912341a9ccd",
+    "ev_96abab423307"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.9,
+   "rationale": "Tap flow shows 16,651,318 bytes out from the workstation to 10.20.9.15:8080, above the 5MB threshold and not an approved destination; shell history shows the matching curl -T of rx-7f3.db.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Authorized upload outside this bundle's evidence"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": "Tap flow over 5MB to unapproved destination, matched by upload command. Destination identity unverified.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-d714af",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:18:56Z",
+   "t_end": "2026-11-10T08:52:45Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_b4345dec8779",
+    "ev_8209927e51b3",
+    "ev_45efc0524e9f",
+    "ev_2c65256beef6",
+    "ev_b0f3571759a6",
+    "ev_45f948c8a7ec",
+    "ev_5e314163dad9"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.9,
+   "rationale": "Collector-retained access.log lines from 06:18 to 08:52 are absent locally because the 08:53 rotation (keep 0) archived them off-host; this is scheduled retention, not removal.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": "Absence explained by scheduled rotation with off-host archive; benign.",
+   "produced_by": "lead-investigator"
+  }
+ ],
+ "attribution": {
+  "account_used": "tmori",
+  "session_ref": null,
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_7d20d518a543",
+   "ev_244bd0403704",
+   "ev_cf00835d7acf",
+   "ev_6912341a9ccd",
+   "ev_96abab423307"
+  ],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Shell history and fs_stat are host-local writable",
+   "Tap shows bytes, not content",
+   "No person named"
+  ],
+  "statement": "Account tmori (console session workstation#72 on ws-nurse-01, 10.20.1.21) was used for the export, staging, and upload. Account used; human operator not established. Shared console credentials and remote access are not excluded, and badge records do not cover VPN sessions.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Tip: review of records access and transfers on 2026-11-10. Evidence supports an incident sequence on the nurse workstation (ws-nurse-01, 10.20.1.21) under account tmori, console session workstation#72. (1) At 09:56:38Z a clinic-export of the patients_full dataset wrote /home/tmori/Downloads/rx-7f3.db; records app logged a 16.6 MB export_bulk for tmori, corroborated by the collector copy, the tap, and fs_stat (ev_244bd0403704, ev_cf00835d7acf, ev_52d40eda9460, ev_d080620c9c7b, ev_e99c55f7d89b). (2) At 09:59:41Z the file was uploaded with curl to 10.20.9.15:8080, 16.65 MB out on the tap. That is over the 5 MB threshold and not an approved destination (ev_6912341a9ccd, ev_96abab423307). (3) A session-72 login at 09:55:47Z is present in the collector copy but missing from the workstation's local auth.log, which is consistent with local log removal; rotation does not explain it (ev_7d20d518a543, ev_39e6469fed9d, ev_391d2a3b9525). Confidence 0.75, since a write fault is not excluded. (4) The records access.log gap from 06:18 to 08:52 is explained by scheduled rotation with off-host archive and is not an incident. Attribution: account tmori was used; human operator not established. Shared credentials and remote VPN use are not excluded, and no person is named.",
+ "open_questions": [
+  "Who operated account tmori at 09:55-10:01Z? Badge records do not cover VPN sessions; the console credential may have been shared or written down.",
+  "What is 10.20.9.15:8080, and was rx-7f3.db received there? The tap shows bytes only, not content.",
+  "Is the missing auth.log line deliberate deletion or a local write fault? Check the workstation's filesystem and the .1 rotated generation.",
+  "Was the export authorized for a clinical or administrative purpose?",
+  "Are there other exports or uploads from tmori outside this window, given that shell histories and fs_stat are host-local writable?"
+ ],
+ "usage": {
+  "llm_calls": 13,
+  "tokens_in": 153373,
+  "tokens_out": 12498,
+  "tokens_cache_read": 114130,
+  "cost_estimate_usd": 0.012295,
+  "wall_seconds": 55.71,
+  "tool_calls": 22,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T10:18:39.732267Z",
+ "report_sha256": "1b3d0ec1f061efbb3f27233b7783479de3b9245974a8dbce38b9e29c12867ca6",
+ "review_history": [
+  {
+   "at": "2026-11-14T10:18:39.732267Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

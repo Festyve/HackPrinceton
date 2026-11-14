@@ -57,7 +57,11 @@ MAX_TOKENS_PER_CALL = 3000
 PRICE_IN, PRICE_OUT = 0.10, 0.50
 # One budget per investigation for every AI arm. Sized from calibration (benchmarks/calibration/): the
 # specialist graph on this model needed up to 176k input and 13.5k output tokens on development cases.
-CAPS = RunCaps(max_calls=24, max_input_tokens=280_000, max_output_tokens=20_000, max_seconds=240.0)
+# The per-request ceiling is 90,000 (the hard maximum is 95,000, under this model's 100,000-token price tier):
+# a development check showed arms without the checks build larger requests from generic search results, and
+# the product's 40,000 ceiling stopped them before they could report. That would have been a handicap, not a result.
+CAPS = RunCaps(max_calls=24, max_input_tokens=280_000, max_output_tokens=20_000, max_seconds=240.0,
+               max_input_tokens_per_call=90_000)
 
 # arm -> (graph, has the deterministic check tools)
 AI_ARMS: dict[str, tuple[str, bool]] = {"B1": ("single-agent", False), "B1+": ("single-agent", True),
