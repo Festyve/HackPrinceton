@@ -63,7 +63,7 @@ uv sync                # install Python dependencies
 Open http://127.0.0.1:8000, pick **Inside job · cover-up**, press **Run**, read the comparison on the right, **Accept report**, then **Unseal answer key**. **Reset** starts over. Stop the server with Ctrl-C.
 
 ```sh
-uv run pytest                      # 141 tests, offline, no key (8 of them drive Chrome; skipped if absent)
+uv run pytest                      # 142 tests, offline, no key (8 of them drive Chrome; skipped if absent)
 uv run alibi runtime               # runtime mode, caps and the live-inference blocker
 uv run alibi generate --seed 7 --variant incident_coverup --episode-id demo-7
 uv run alibi verify demo-7         # re-hash the frozen bundle and reproduce it from the saved scenario

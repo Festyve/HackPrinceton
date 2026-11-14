@@ -32,7 +32,7 @@ Draft for Terry and Rayan to edit. **Mode this script is written for:** evidence
 | Red error banner (`FAILED`) | Press **Reset** in the banner and run again. |
 | The page was refreshed | Nothing is lost. The case id is in the URL and the case reloads, including during review. |
 | The server was restarted during review | Reload the page. The report is still awaiting review and Accept still works. |
-| The port is busy | `./start.sh --port 8001` |
+| The port is busy | `./start.sh --port 8010` (the launcher says so if a port is taken; on Eric's machine another project already uses 8001) |
 | Judge asks for another case | **Sealed control case**: nothing malicious happened, the report alleges nothing, the unseal says "No incident occurred". Good for "does it cry wolf?". |
 
 ## Ask box (if a judge wants to dig in)

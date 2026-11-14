@@ -23,7 +23,7 @@ The central screen is a comparison of the host's own log with the collector's co
 - **Verifier and scorer:** one verifier and one one-to-one matching scorer for every system.
 - **Agents:** a LangChain `deepagents` graph (lead investigator, integrity auditor, skeptic) with typed read-only tools, a virtual case file, a shared budget gateway and a human review interrupt with checkpoint resume.
 - **Case board:** FastAPI with server-sent events and a React + TypeScript UI with no external assets.
-- **Tests:** 141 automated tests, 8 of them in a real browser.
+- **Tests:** 142 automated tests, 8 of them in a real browser.
 
 ## Challenges we ran into
 

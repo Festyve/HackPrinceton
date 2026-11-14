@@ -63,3 +63,116 @@ Earlier scaffold milestones, kept for the record (superseded by PLAN.md §12):
 - `uv run alibi record --preset hero-coverup --name hero-coverup-fixture` and `sealed-control-fixture`: committed replays, labeled "Scripted fixture · no model inference". Replay regenerates the evidence from the saved scenario and refuses to play if the raw-bundle hash differs.
 - Check: `uv run pytest tests/test_m7_demo.py tests/test_browser.py` → 17 passed (replay with network blocked and no runner; every displayed citation opens its raw record for all three presets).
 - Measured with `./start.sh` (default display pacing 0.45 s/step, MacBook arm64): hero case generation 0.24 s; first finding on screen 3.4 s; review-ready 10.6 s (compute 0.67 s, the rest is display pacing); accept+lock 0.5 s; unseal+score 0.1 s. Replay of the recorded hero case: review-ready 15.5 s.
+
+### 01:35 — Final verification
+- Fresh clone of the branch into a temp directory: `uv sync` → `./start.sh --port 8031` installed npm packages, built the UI and served it; `uv run pytest` passed there; the hero flow ran against that server (early reveal 409 → review → lock → reveal 3/3 → reset).
+- Added, because they cost little and unblock Saturday: `uv run alibi smoke` and `uv run alibi pilot` (both refuse to run while live AI is blocked; pilot plumbing tested with a marked test double), provider-aware model arguments for a local Ollama route.
+- Pushed `codex/alibi-build` to `origin` (private team repository). Local `runs/` and `sealed/` from tonight's dev servers were removed (gitignored, regenerable).
+
+---
+
+# Morning Handoff (written 01:40 ET, Saturday Nov 14, 2026)
+
+## Status: **OFFLINE-READY**
+
+Not AI-READY. Live inference is **BLOCKED** (no zero-charge runtime was available: no key, no local model). Nothing in this repository is an AI result. The overnight goal stopped early because every applicable OFFLINE-READY check in PLAN §14 passed with real command output; the deadline was 08:30.
+
+- **Branch:** `codex/alibi-build`, pushed to `origin` (`owly1/HackPrinceton`, currently private). `main` has no commits. HEAD is the commit that contains this handoff (`git log -1`); the last code commit before it is `c234ab5`.
+- **Spend:** $0. Model calls made by the application: 0. No billing or account setting was touched.
+
+## Commands
+
+```sh
+uv sync                                   # once
+./start.sh                                # launch: builds the UI if needed, serves http://127.0.0.1:8000
+#   stop: Ctrl-C        other port: ./start.sh --port 8010        (8001 is used by another project on Eric's Mac)
+uv run pytest                             # all tests (offline, no key)
+uv run pytest -m "not browser"            # skip the 8 Chrome tests
+uv run alibi runtime                      # mode, caps, and why live AI is blocked
+uv run alibi bench --check && uv run alibi bench     # reproduce the offline benchmark
+uv run alibi generate --seed 7 --variant incident_coverup --episode-id demo-7 && uv run alibi verify demo-7
+uv run alibi record --preset hero-coverup --name <name>    # save a replay under demo/replays/
+```
+
+Replay: on the start screen choose a card under **Recorded replays**, press **Run** (or `POST /api/replays/hero-coverup-fixture/open`). Fallbacks: `ALIBI_DEFAULT_RUNNER=deterministic ./start.sh` (checks without the agent graph), `ALIBI_DEMO_PACE_S=0.25 ./start.sh` (faster display pacing).
+
+## Test output (01:35 ET, this machine)
+
+```
+$ uv run pytest
+142 passed in 63.36s (0:01:03)
+$ uv run pytest -m browser
+8 passed, 134 deselected in 17.82s
+$ npm --prefix web run build
+✓ built in 239ms            (tsc --noEmit strict + vite build)
+$ uv run alibi bench --check
+evaluation config matches the code: docs/evaluation-config.json
+```
+
+## Modes actually used
+
+| | Mode |
+|---|---|
+| Evidence origin | `SIM` (simulated). No Docker, no real artifact, no external dataset. |
+| Demo inference | `Scripted fixture · no model inference`: the real DeepAgents graph (lead + integrity-auditor + skeptic) driven by scripted control flow. Fallback: `Deterministic baseline · no model inference`. |
+| Demo playback | `LIVE` (runs on the spot) or `REPLAY` (two committed fixture recordings). |
+| Adversary plan | `Scripted scenario · no model chose these steps`. |
+| Benchmark | B0 and BR only, offline. B1, B1+, B2, ALIBI: `NOT RUN — runtime unavailable`. |
+| Model credits / caps | None available. Defaults: `RUNTIME_MODE=offline`, `LLM_MAX_USD=0`, `BENCH_MAX_SYSTEM_RUNS=0`. Caps if a runtime appears: 12 calls, 40k input / 6k output tokens, 90 s per investigation, shared. |
+
+## Measured results
+
+Offline benchmark `offline-v1`, 12 declared cases (8 incidents, 4 benign controls), simulated evidence, run `20261114T062011Z` at commit `b6ec49c` on a clean tree. Source: [`benchmarks/offline-v1/results.json`](benchmarks/offline-v1/results.json), report: [`docs/benchmark.md`](docs/benchmark.md), locked reports: `benchmarks/offline-v1/reports/`.
+
+| System | Effects caught | Incident cases fully reconstructed | Cover-ups detected | Final precision | Raw proposals correct | Account identified | Benign final false alerts | Benign raw alerts |
+|---|---|---|---|---|---|---|---|---|
+| B0 keyword recipe | 16/20 | 4/8 | 0/4 | 16/16 | 16/172 | 0/8 | 0/4 | 4/4 |
+| BR deterministic checks | 20/20 | 8/8 | 4/4 | 20/20 | 20/20 | 8/8 | 0/4 | 0/4 |
+| AI arms | NOT RUN | | | | | | | |
+
+Read this with its caveats: n = 12; BR's checks were written against this simulator; B0's final precision is produced by the shared verifier; simulator v1 leaves the adversary's commands in shell history, which favors B0. No significance is claimed.
+
+Demo timings, `./start.sh` defaults, Eric's MacBook: generation 0.24 s · first finding on screen ~3.4 s · review-ready ~10.6 s (0.67 s compute, the rest is display pacing) · accept+lock 0.5 s · unseal+score 0.1 s. Replay review-ready ~15.5 s.
+
+## PLAN §14 checklist
+
+| # | Check | Result | Evidence |
+|---|---|---|---|
+| 1 | One command launches; hero case and benign controls run capture → normalize → checks → review → lock → reveal → score → reset | **PASS** | `./start.sh`; `tests/test_browser.py` (hero twice with reset, sealed control), `tests/test_m4_api_isolation.py`; fresh-clone run |
+| 2 | P0 controls and scorer checks pass; every displayed citation opens; read-only evidence vs writable notes | **PASS** | `tests/test_m2_checks.py`, `tests/test_m2_verifier_scorer.py`, `tests/test_m7_demo.py::test_every_displayed_citation_opens_its_raw_record` |
+| 3 | Tool/manifest/stream isolation tests; no shell or arbitrary SQL for either runtime agent | **PASS** as an agent capability boundary (not OS isolation) | `tests/test_m3_agents.py`, `tests/test_m4_api_isolation.py` |
+| 4 | B0 and BR on the declared suite with counts, raw records, reproduction; AI arms unrun | **PASS** | `benchmarks/offline-v1/`, `docs/benchmark.md`, `tests/test_m6_bench.py` |
+| 5 | Labeled fixture/replay with model access disabled; failure, reconnect, reset; no keys or truth before reveal | **PASS** | `tests/test_m7_demo.py`, restart/reconnect/cancel tests in `tests/test_m4_api_isolation.py`; secret-pattern scan of all tracked files: 0 hits (grep-based, not a full scanner) |
+| 6 | Offline tests and frontend build pass; branch green; push status | **PASS** | output above; pushed to `origin/codex/alibi-build` |
+| 7 | Real-model DeepAgents run with traces and usage | **BLOCKED** (B-1) | not attempted: no runtime |
+| 8 | Recording of a real run replays offline | **BLOCKED** (B-1) | only scripted-fixture recordings exist |
+| 9 | Paired 8-system-run AI pilot | **BLOCKED** (B-1) | `uv run alibi pilot` exists and refuses to run |
+
+## What went wrong overnight (so nobody is surprised)
+
+- **No AI ran.** This is the big one for the LangChain and "AI-driven" track stories.
+- A segfault when cancelling a run (checkpoint writer used after its SQLite connection was closed). Fixed and covered by a test that passed six repeated runs.
+- Reported compute time was negative when tool calls ran in parallel under display pacing. Fixed.
+- The ATT&CK id shown for host log removal was stale (T1070.002 now redirects to T1685.006). Corrected; benchmark rerun with identical scores; first run kept at commit `146a7a3`.
+- Commits `b6ec49c` and `0ffc5b8` had one red test (my command pipeline hid the failure). Fixed in `4043f5a`.
+- The UI was built by one bounded helper. I read `App.tsx`, `panels.tsx` and `bench.tsx` in full and restructured the centre column; `evidence.tsx`, `score.tsx`, `model.ts`, `api.ts` were checked through the browser tests and screenshots, not line by line.
+- Not built: network diagram with activity pulses, Docker backend, crime cards 1 and 2, B1/B2 builders, free-form Q&A, evidence-availability experiment, IoT-CAD.
+- Not verified: anything on a second physical machine or the venue projector; any model's behavior with the prompts and tool schemas.
+
+## Blockers (details in BLOCKERS.md)
+
+- **B-1** live AI inference (Eric) · **B-2** repository is private (Rayan/Eric) · **B-3** optional coding plugins not installed (non-blocking) · **B-4** not checked on a second machine/projector (Terry/Daniel) · **B-5** `main` does not exist on the remote (Eric).
+- No blocker remains for OFFLINE-READY.
+
+## Next task per person
+
+- **Eric (engineering):** (1) Decide the runtime route in BLOCKERS B-1 within a 15-minute box; if one works: `uv run alibi runtime` must show `"live_block_reason": null`, then `uv run alibi smoke`, then one hero case in the UI, then `BENCH_MAX_SYSTEM_RUNS=8 uv run alibi pilot`, then `uv run alibi record --preset hero-coverup --name hero-coverup-live --runner agent-live`. Expect to fix prompts or tool schemas on first contact. (2) Create `main` from this branch after reading the diff. (3) Only then choose one P1: second crime card with its benign control, or a thin Docker slice.
+- **Rayan (product, tracks, presentation):** Read [`docs/claims.md`](docs/claims.md) and decide the pitch wording for the offline state; item 12 lists phrases to avoid until a model has run. Decide whether the LangChain track entry is credible without a real run. Edit [`docs/devpost.md`](docs/devpost.md) and start the Devpost draft. Decide which planning-pack files become public and when the repository flips to public (B-2).
+- **Daniel (evidence and evaluation QA):** Do not take the 20/20 on trust. Open three locked reports in `benchmarks/offline-v1/reports/` and check their citations in the UI or with `uv run alibi generate --seed <seed> --variant <variant>`. Then write two cases designed to break BR (ideas: a line removed from the oldest retained log generation, a transfer just under the 5 MB threshold, two overlapping sessions) and report what happens. If a rule has to change, the version is bumped and a fresh test split is declared (`docs/evaluation-config.json`).
+- **Terry (UX, demo operation, video):** Run `./start.sh` on your own machine and on the real display. Rehearse [`docs/demo-script.md`](docs/demo-script.md) with a timer, including the replay fallback and a mid-review page refresh. Send Eric a list of anything unreadable at distance. Screenshots to start from: `docs/screenshots/`.
+
+## Where things are
+
+README: [`README.md`](README.md) · architecture: [`docs/architecture.md`](docs/architecture.md) · claims: [`docs/claims.md`](docs/claims.md) · judge Q&A: [`docs/judge-qa.md`](docs/judge-qa.md) · demo script: [`docs/demo-script.md`](docs/demo-script.md) · decisions: [`DECISIONS.md`](DECISIONS.md) · screenshots: [`docs/screenshots/case-board-review.png`](docs/screenshots/case-board-review.png), [`case-board-unsealed.png`](docs/screenshots/case-board-unsealed.png), [`benchmark-tab.png`](docs/screenshots/benchmark-tab.png) · replays: `demo/replays/`.
+
+Housekeeping: the human-owned planning pack (`PLAN.md`, `TEAM_RUNBOOK.md`, `JUDGING_KIT.md`, `CLAUDE.md`, …) is untouched and untracked on Eric's machine. ChatOverflow: 4 notes voted up after use, 1 comment, 1 generic field note (a LangGraph/SQLite shutdown-order crash); nothing about the project was shared.
