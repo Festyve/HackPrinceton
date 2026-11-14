@@ -205,3 +205,31 @@ def test_the_chosen_investigation_mode_is_recorded_with_the_case_and_spend_is_st
     page.click(tid("btn-details"))
     assert "Fast investigation · one agent" in page.inner_text(tid("investigation-mode"))
     assert page.errors == []
+
+
+def test_a_derived_view_is_not_unsealed_before_the_original_report_is_locked(server, page):
+    base, _ = server
+    run_case(page, base)
+    page.wait_for_selector(tid("compare-row-retained"))
+    page.click(tid("btn-derive"))
+    page.wait_for_selector(tid("experiment-comparison"))
+    wait_state(page, "awaiting_review")
+    page.click(tid("btn-accept"))
+    wait_state(page, "report_locked")
+    page.click(tid("btn-unseal"))
+    # the server refuses and says why; nothing sealed is shown
+    page.wait_for_selector('[role="alert"]:has-text("Lock the original case")')
+    assert page.inner_text(tid("case-state")) == "Report locked" and page.locator(tid("score-panel")).count() == 0
+    page.errors[:] = [e for e in page.errors if "409" not in e]  # that refusal is the point of this test
+    # lock the original, come back, and the derived view unseals
+    page.click(tid("btn-open-original"))
+    wait_state(page, "awaiting_review")
+    page.click(tid("btn-accept"))
+    wait_state(page, "report_locked")
+    page.locator(f'{tid("derived-cases")} button').first.click()
+    wait_state(page, "report_locked")
+    page.wait_for_selector(tid("experiment-comparison"))
+    page.click(tid("btn-unseal"))
+    wait_state(page, "scored")
+    page.wait_for_selector(tid("score-panel"))
+    assert page.errors == []
