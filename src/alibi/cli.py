@@ -173,12 +173,31 @@ def _cmd_smoke(args: argparse.Namespace) -> int:
         return f"pong {value}"
 
     ledger = gateway.make_ledger(settings, None, scripted=False, label="smoke",
-                                 caps=RunCaps(max_calls=2, max_input_tokens=3000, max_output_tokens=600, max_seconds=60))
-    model = gateway.wrap(gateway.live_chat_model(settings, settings.lead_model or ""), ledger, "smoke").bind_tools([ping])
+                                 caps=RunCaps(max_calls=2, max_input_tokens=3000, max_output_tokens=600, max_seconds=60,
+                                              max_input_tokens_per_call=2000))
+    inner = gateway.live_chat_model(settings, settings.lead_model or "")
+    model = gateway.wrap(inner, ledger, "smoke").bind_tools([ping])
+    prompt = "Call the tool `ping` with value 7. Do not answer in text."
+    if args.count_only:
+        # Token counting is a separate, unbilled endpoint. This proves the request can be measured before
+        # anything is sent, without making a model call.
+        from langchain_core.messages import HumanMessage
+
+        try:
+            counted, method = gateway.count_request_tokens(inner, model.bound, [HumanMessage(prompt)])
+        except gateway.CountFailed as exc:
+            print(f"the request could not be counted, so nothing would be sent: {exc}")
+            return 1
+        print(json.dumps({"model_requested": settings.lead_model, "counted_input_tokens_with_headroom": counted,
+                          "method": method, "model_call_made": False}, indent=2))
+        return 0
     try:
-        reply = model.invoke("Call the tool `ping` with value 7. Do not answer in text.")
+        reply = model.invoke(prompt)
     except gateway.ModelRefused as exc:
         print(f"the model declined the smoke request: {exc}")
+        return 1
+    except gateway.BudgetExceeded as exc:
+        print(f"stopped by the budget gateway before or during the call: {exc}")
         return 1
     calls = getattr(reply, "tool_calls", [])
     ok = any(c["name"] == "ping" and c["args"].get("value") == 7 for c in calls)
@@ -192,7 +211,7 @@ def _cmd_smoke(args: argparse.Namespace) -> int:
 
 
 def _cmd_spend(args: argparse.Namespace) -> int:
-    """Show the total-spend ledger shared by every billed model call."""
+    """Show the cumulative spend ledger; optionally reconcile one amount whose billing outcome was unknown."""
     from alibi.agents import gateway
 
     settings = load_settings()
@@ -200,7 +219,23 @@ def _cmd_spend(args: argparse.Namespace) -> int:
     if spend is None:
         print(json.dumps({"total_spend": None, "note": "no billed route is configured; nothing can be spent"}, indent=2))
         return 0
-    print(json.dumps(spend.snapshot(), indent=2))
+    try:
+        if args.reconcile:
+            # Operator action: after checking the provider console, state what a held amount really cost.
+            # This is the only way an unknown outcome or an abandoned reservation leaves the books.
+            if args.actual is None:
+                print("--reconcile needs --actual <usd>: the amount the provider console shows for that call "
+                      "(0 if it was not billed)", file=sys.stderr)
+                return 2
+            done = spend.reconcile(args.reconcile, args.actual, note=args.note or "operator reconciliation")
+            print(json.dumps({"reconciled": done}, indent=2))
+        print(json.dumps(spend.snapshot(), indent=2))
+    except (KeyError, ValueError) as exc:
+        print(f"not reconciled: {exc}", file=sys.stderr)
+        return 2
+    except gateway.LedgerError as exc:
+        print(f"the spend ledger cannot be used, so no model call will be made: {exc}", file=sys.stderr)
+        return 1
     return 0
 
 
@@ -261,9 +296,15 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(func=_cmd_bench)
 
     p = sub.add_parser("smoke", help="one tiny real model call to test tool calling (refused while live AI is blocked)")
+    p.add_argument("--count-only", action="store_true",
+                   help="only count the request with the provider's unbilled token-counting endpoint; no model call")
     p.set_defaults(func=_cmd_smoke)
 
-    p = sub.add_parser("spend", help="show estimated total model spend against the LLM_MAX_USD cap")
+    p = sub.add_parser("spend", help="show the cumulative spend estimate against the cap and the development ceiling")
+    p.add_argument("--reconcile", metavar="TOKEN", default=None,
+                   help="operator action: settle one unreconciled or abandoned reservation at its real cost")
+    p.add_argument("--actual", type=float, default=None, help="with --reconcile: the real cost in USD (0 if not billed)")
+    p.add_argument("--note", default="", help="with --reconcile: why (kept in the ledger log)")
     p.set_defaults(func=_cmd_spend)
 
     p = sub.add_parser("pilot", help="the predeclared 8-system-run AI pilot (refused without a zero-charge runtime)")
