@@ -377,3 +377,46 @@ def test_existing_cases_are_unchanged_by_the_coverage_rules(make_episode, store_
         for f in rec["files"]:
             assert f["status"] != "not_assessable"
             assert all(r["bracket_before_id"] and r["bracket_after_id"] for r in f["unexplained_local_absence"])
+
+
+# ----------------------------------------------------------------- delivery order and clocks
+def test_reordered_and_late_collector_delivery_is_not_read_as_a_missing_line(tmp_path):
+    a, b, c, d = (auth_open("09:00:00", "ann", 1), auth_close("09:05:00", "ann", 1),
+                  auth_open("09:10:00", "bob", 2), auth_close("09:15:00", "bob", 2))
+    st, m = mini_case(tmp_path, {
+        "workstation/var/log/auth.log": [a, b, c, d],
+        "collector/var/log/collected/collected.log": [   # arrives out of order, one line minutes late, one twice
+            fwd("09:00:02", 1, a), fwd("09:10:03", 3, c), fwd("09:10:04", 2, b),
+            fwd("09:21:40", 4, d), fwd("09:21:41", 4, d)],
+    })
+    f = checks.reconcile_logs(st, m)["files"][0]
+    assert f["status"] == "consistent" and f["unexplained_local_absence"] == [] and f["inconclusive_local_absence"] == []
+    assert f["collector_duplicate_deliveries"] == 1 and f["collector_lines"] == 4
+    assert f["missing_at_collector"]["all_local_event_ids"] == [] and _allegations(st, m) == []
+    # and a genuinely absent line is still found when its neighbours arrived out of order
+    st, m = mini_case(tmp_path, {
+        "workstation/var/log/auth.log": [a, c, d],
+        "collector/var/log/collected/collected.log": [fwd("09:10:03", 3, c), fwd("09:10:04", 2, b),
+                                                      fwd("09:10:05", 1, a), fwd("09:15:02", 4, d)],
+    })
+    f = checks.reconcile_logs(st, m)["files"][0]
+    assert [r["line"] for r in f["unexplained_local_absence"]] == [b]
+    assert f["unexplained_local_absence"][0]["line_ts"] == ts("09:05:00")  # the line's own time, not when it arrived
+
+
+def test_a_collector_clock_that_disagrees_with_the_host_does_not_create_or_hide_a_missing_line(tmp_path):
+    a, b, c = auth_open("09:00:00", "ann", 1), auth_open("09:05:00", "bob", 2), auth_close("09:10:00", "ann", 1)
+    for skew in ("08:5", "09:4"):  # the collector stamps receipts about ten minutes early, or forty minutes late
+        stamp = lambda n: f"{skew}{n}:00"  # noqa: E731
+        st, m = mini_case(tmp_path, {
+            "workstation/var/log/auth.log": [a, b, c],
+            "collector/var/log/collected/collected.log": [fwd(stamp(0), 1, a), fwd(stamp(1), 2, b), fwd(stamp(2), 3, c)]})
+        f = checks.reconcile_logs(st, m)["files"][0]
+        assert f["status"] == "consistent", skew  # lines are matched on their exact text, not on receipt times
+        st, m = mini_case(tmp_path, {
+            "workstation/var/log/auth.log": [a, c],
+            "collector/var/log/collected/collected.log": [fwd(stamp(0), 1, a), fwd(stamp(1), 2, b), fwd(stamp(2), 3, c)]})
+        f = checks.reconcile_logs(st, m)["files"][0]
+        rows = f["unexplained_local_absence"]
+        assert [r["line"] for r in rows] == [b] and rows[0]["line_ts"] == ts("09:05:00"), skew
+        assert rows[0]["bracket_before_id"] and rows[0]["bracket_after_id"]  # brackets come from the host's own clock
