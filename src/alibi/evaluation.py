@@ -96,12 +96,30 @@ REPLICATION_CASES: list[dict[str, Any]] = [
      "why": "the same kind of case as V02 on a new seed"},
 ]
 PAIRED_V2_ESTIMATED_COST_USD = 0.2198  # what paired-v2 used of the shared $0.75 evaluation ceiling
+REPLICATION_ESTIMATED_COST_USD = 0.1058  # what paired-v2-rep1 used of it
+# A repeat, declared separately after both suites above had run: the eight incident cells of paired-v2 once more,
+# on the SAME two bundles, to see whether those single-run outcomes repeat. It is refused unless the model, prompts,
+# tools, rules and caps equal paired-v2's own declaration. It is reported beside paired-v2 and is never added to
+# the per-system sums, because it repeats cells instead of adding cases.
+REPEAT_SUITE = "paired-v2-repeat1"
+REPEAT_CASES: list[dict[str, Any]] = [CASES[0], CASES[1]]
 SUITES: dict[str, dict[str, Any]] = {
     SUITE: {"cases": CASES, "config": CONFIG_PATH, "ceiling": CATEGORY_CEILING_USD, "reserved": list(range(205, 213))},
     REPLICATION_SUITE: {"cases": REPLICATION_CASES, "config": REPO_ROOT / "docs" / "evaluation-config-v2-rep1.json",
                         "ceiling": round(CATEGORY_CEILING_USD - PAIRED_V2_ESTIMATED_COST_USD, 4),
                         "reserved": list(range(207, 213))},
+    REPEAT_SUITE: {"cases": REPEAT_CASES, "config": REPO_ROOT / "docs" / "evaluation-config-v2-repeat1.json",
+                   "ceiling": round(CATEGORY_CEILING_USD - PAIRED_V2_ESTIMATED_COST_USD - REPLICATION_ESTIMATED_COST_USD, 4),
+                   "reserved": list(range(207, 213)), "repeat_of": SUITE},
 }
+# What must be identical between a repeat and the suite it repeats, or it is not a repeat.
+SAME_IN_A_REPEAT = ("versions", "model", "caps_per_investigation", "systems", "tools", "prompt_sha256",
+                    "verifier_feedback_during_investigation", "batch_review", "matching")
+
+
+def summed_suites() -> list[str]:
+    """Suites whose cells add cases. A repeat re-runs cells that are already counted, so it is not summed."""
+    return [s for s, spec in SUITES.items() if not spec.get("repeat_of")]
 
 # Development check only (not an evaluation result): one development-seed incident through all four AI arms,
 # to find harness faults before the declared cases are spent.
@@ -151,7 +169,22 @@ def declared_config(suite: str = SUITE) -> dict[str, Any]:
     worst = gateway.worst_case_usd(CAPS.max_input_tokens, CAPS.max_output_tokens, PRICE_IN, PRICE_OUT)
     cells = len(cases) * len(AI_ARMS)
     doc = _declared(suite, cases, cells, worst, spec, MAX_RECORDS, MAX_BYTES)
-    if suite != SUITE:
+    if spec.get("repeat_of"):
+        doc["repeats"] = {
+            "suite": spec["repeat_of"],
+            "note": "A second run of the eight incident cells of paired-v2 on the same two bundles. Declared after "
+                    "paired-v2 and its replication had run and their results had been seen. Nothing is tuned: the "
+                    "model, prompts, tools, rules and caps must equal paired-v2's declaration, and the configuration "
+                    "check refuses the run otherwise. Reported beside paired-v2; never added to the per-system sums.",
+            "must_equal_the_repeated_suite": list(SAME_IN_A_REPEAT),
+            "shared_ceiling_usd": CATEGORY_CEILING_USD,
+            "already_used_usd": {SUITE: PAIRED_V2_ESTIMATED_COST_USD, REPLICATION_SUITE: REPLICATION_ESTIMATED_COST_USD}}
+        doc["seed_split"]["note"] = ("These are the seeds of paired-v2's two incident cases. Their bundles existed and "
+                                     "their first results were known when this was declared. They are run again "
+                                     "unchanged; nothing was tuned on them.")
+        doc["what_this_cannot_show"] = ("One more run of eight cells. Beside the first run it shows whether each "
+                                        "outcome happened again once. Two runs are not a variance estimate.")
+    elif suite != SUITE:
         doc["replicates"] = {"suite": SUITE, "note": "Same model, arms, prompts, tools, budget and rules as paired-v2, on "
                                                       "two more reserved seeds. Declared after paired-v2 ran, so it is a "
                                                       "replication and is reported separately.",
@@ -215,8 +248,17 @@ def check_config(suite: str = SUITE) -> list[str]:
         return [f"{path.name} does not exist; declare it with `uv run alibi eval --declare`"]
     on_disk = json.loads(path.read_text(encoding="utf-8"))
     want = json.loads(json.dumps(declared_config(suite)))
-    return [f"config drift in '{k}': the declared file and the code disagree"
-            for k in sorted(set(on_disk) | set(want)) if k != "declared_at" and on_disk.get(k) != want.get(k)]
+    problems = [f"config drift in '{k}': the declared file and the code disagree"
+                for k in sorted(set(on_disk) | set(want)) if k != "declared_at" and on_disk.get(k) != want.get(k)]
+    original = SUITES.get(suite, {}).get("repeat_of")
+    if original:
+        first = _config_path(original)
+        if not first.exists():
+            return problems + [f"{first.name} does not exist, so there is nothing declared to repeat"]
+        was = json.loads(first.read_text(encoding="utf-8"))
+        problems += [f"'{k}' differs from the declaration of {original}: the system under test changed, so this "
+                     "would not be a repeat" for k in SAME_IN_A_REPEAT if was.get(k) != want.get(k)]
+    return problems
 
 
 def _out_root(suite: str) -> Path:
@@ -553,16 +595,117 @@ def summary(out_roots: dict[str, Path] | None = None) -> dict[str, Any] | None:
 
     The same figures as docs/evaluation-summary.md, from the same result files. None when no suite has run.
     """
-    docs = [d for d in (latest((out_roots or {}).get(s), suite=s) for s in SUITES) if d]
+    docs = [d for d in (latest((out_roots or {}).get(s), suite=s) for s in summed_suites()) if d]
     if not docs:
         return None
-    return {**combined(docs), "model": docs[0].get("model"), "inference": docs[0].get("inference"),
+    repeats = []
+    for name, spec in SUITES.items():
+        again = latest((out_roots or {}).get(name), suite=name) if spec.get("repeat_of") else None
+        first = latest((out_roots or {}).get(spec["repeat_of"]), suite=spec["repeat_of"]) if again else None
+        if again and first:
+            repeats.append(repeatability(first, again))
+    return {**combined(docs), "repeats": repeats, "model": docs[0].get("model"), "inference": docs[0].get("inference"),
             "evidence_origin": docs[0].get("evidence_origin"),
             "verifier_feedback_during_investigation": any(d.get("verifier_feedback_during_investigation") for d in docs),
             "incident_cases": sum(c["kind"] == "incident" for d in docs for c in d["cases"]),
             "benign_cases": sum(c["kind"] != "incident" for d in docs for c in d["cases"]),
             "correct_findings_not_counted": [x for d in docs for x in true_findings_not_accepted(d)],
             "reports": ["docs/evaluation-summary.md"]}
+
+
+def _outcome(run: dict[str, Any]) -> dict[str, Any]:
+    s = run.get("score") or {}
+    rec = s.get("step_recall") or {}
+    return {"status": run["status"], "stopped_by_a_cap": bool(run.get("censored")),
+            "effects": [rec.get("num"), rec.get("den")] if s else None,
+            "coverup_found": s.get("coverup_detected"), "accepted_allegations": s.get("final_accepted_incident"),
+            "unsupported_accepted": s.get("false_claims_final"), "named_a_person": s.get("unsupported_named_attribution"),
+            "cost_estimate_usd": (s.get("usage") or {}).get("cost_estimate_usd")}
+
+
+def repeatability(first: dict[str, Any], again: dict[str, Any]) -> dict[str, Any]:
+    """The first run of a suite beside a declared repeat of some of its cells, cell by cell. Read-only.
+
+    "Same" means the same number of incident effects established. It says nothing about which ones, and two
+    runs are not a variance estimate.
+    """
+    before = {(r["case_ref"], r["system_id"]): r for r in first["runs"]}
+    cells = []
+    for r in again["runs"]:
+        was = before.get((r["case_ref"], r["system_id"]))
+        if was is None:
+            continue
+        a, b = _outcome(was), _outcome(r)
+        cells.append({"case_ref": r["case_ref"], "system_id": r["system_id"], "kind": r["kind"], "first": a, "repeat": b,
+                      "same_effects": a["effects"] is not None and a["effects"] == b["effects"],
+                      "same_stop": a["stopped_by_a_cap"] == b["stopped_by_a_cap"]})
+    ai = [c for c in cells if c["kind"] == "ai"]
+    offline = [c for c in cells if c["kind"] != "ai"]
+    hashes = {c["case_ref"]: c.get("raw_bundle_sha256") for c in first["cases"]}
+    same_evidence = all(c.get("raw_bundle_sha256") and hashes.get(c["case_ref"]) == c["raw_bundle_sha256"] for c in again["cases"])
+    per_system = []
+    for arm in list(OFFLINE_ARMS) + list(AI_ARMS):
+        mine = [c for c in cells if c["system_id"] == arm and c["first"]["effects"] and c["repeat"]["effects"]]
+        if mine:
+            per_system.append({"id": arm, "label": ARM_LABELS[arm], "cells": len(mine),
+                               "first": [sum(c["first"]["effects"][0] for c in mine), sum(c["first"]["effects"][1] for c in mine)],
+                               "repeat": [sum(c["repeat"]["effects"][0] for c in mine), sum(c["repeat"]["effects"][1] for c in mine)],
+                               "stopped_by_a_cap": [sum(c["first"]["stopped_by_a_cap"] for c in mine),
+                                                    sum(c["repeat"]["stopped_by_a_cap"] for c in mine)]})
+    return {"first": {"suite": first["suite"], "run_id": first["run_id"]},
+            "repeat": {"suite": again["suite"], "run_id": again["run_id"]},
+            "cells": cells, "per_system": per_system, "same_evidence_bundles": same_evidence,
+            "ai_cells": len(ai), "ai_cells_same_effects": sum(c["same_effects"] for c in ai),
+            "offline_cells": len(offline), "offline_cells_same_effects": sum(c["same_effects"] for c in offline),
+            "note": "Two runs of the same cells on the same evidence. It shows whether each outcome happened again "
+                    "once. It is not a variance estimate, and it is not added to the per-system sums."}
+
+
+def render_repeat(first: dict[str, Any], again: dict[str, Any]) -> str:
+    rep = repeatability(first, again)
+
+    def eff(c: dict[str, Any]) -> str:
+        e = c["effects"]
+        text = "no score" if not e else f"{e[0]}/{e[1]}"
+        return text + (" (stopped by a cap)" if c["stopped_by_a_cap"] else "")
+
+    out = [f"# Evaluation repeat: {again['suite']}", "",
+           "> Generated by `uv run alibi eval --suite " + again["suite"] + " --render` from the result files. Do not edit by hand.", "",
+           f"A second run of the incident cells of `{first['suite']}` (run `{first['run_id']}`) on the same evidence "
+           f"bundles: `{again['suite']}` run `{again['run_id']}`, model `{again.get('model')}`, commit `{again.get('git_commit')}`.", "",
+           "It was declared after the first results were known. The model, prompts, tools, rules and budget caps are "
+           "those of the first run's declaration; the run is refused otherwise. No system was told whether a finding "
+           "was supported while it investigated.", "",
+           f"**{rep['ai_cells_same_effects']} of {rep['ai_cells']} model cells established the same number of incident "
+           f"effects in both runs.** The two systems without a model gave identical results in "
+           f"{rep['offline_cells_same_effects']} of {rep['offline_cells']} cells, as they must.", "",
+           rep["note"], "",
+           ("The evidence bundles of the repeated cases have the same hashes in both runs."
+            if rep["same_evidence_bundles"] else
+            "WARNING: the evidence bundles do NOT have the same hashes in both runs, so this is not a repeat."), "",
+           "## Per system, both incident cases together", "",
+           "| System | Effects established, first run | Effects established, repeat | Runs stopped by a cap, first / repeat |",
+           "|---|---|---|---|"]
+    out += [f"| {s['id']}: {s['label']} | {s['first'][0]}/{s['first'][1]} | {s['repeat'][0]}/{s['repeat'][1]} | "
+            f"{s['stopped_by_a_cap'][0]} / {s['stopped_by_a_cap'][1]} |" for s in rep["per_system"]]
+    out += ["", "## Per cell", "",
+            "| Case | System | First run | Repeat | Same number of effects | Unsupported accepted allegations, first / repeat | "
+            "Named a person, first / repeat | Est. cost, first / repeat |", "|---|---|---|---|---|---|---|---|"]
+    for c in rep["cells"]:
+        a, b = c["first"], c["repeat"]
+        cost = "–" if c["kind"] != "ai" else f"${a['cost_estimate_usd'] or 0:.4f} / ${b['cost_estimate_usd'] or 0:.4f}"
+        out.append(f"| {c['case_ref']} | {c['system_id']} | {eff(a)} | {eff(b)} | {'yes' if c['same_effects'] else 'no'} | "
+                   f"{a['unsupported_accepted']} / {b['unsupported_accepted']} | {a['named_a_person']} / {b['named_a_person']} | {cost} |")
+    lost = true_findings_not_accepted(again)
+    if lost:
+        out += ["", "## Correct findings that did not count in the repeat", "",
+                "| Case | System | Finding | Why it did not count | Check result |", "|---|---|---|---|---|"]
+        out += [f"| {x['case_ref']} | {x['system_id']} | {x['claim_type'].replace('_', ' ')} | "
+                f"{x['status'].replace('_', ' ')} | {x['check_result'].replace('_', ' ')} |" for x in lost]
+    spend = again.get("spend") or {}
+    out += ["", f"Estimated cost of the repeat: ${spend.get('estimated_cost_usd', 0):.4f}. Results: "
+            f"`{again.get('result_dir', 'benchmarks/' + again['suite'])}`.", ""]
+    return "\n".join(out)
 
 
 def true_findings_not_accepted(doc: dict[str, Any]) -> list[dict[str, Any]]:
