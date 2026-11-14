@@ -55,7 +55,8 @@ def test_hero_flow_create_review_lock_reveal_score(env):
                                    "inference_label": "Scripted fixture · no model inference", "playback": "LIVE",
                                    "model_id": "scripted-fixture-policy-v1 (no model)",
                                    "investigation_mode": "specialist",
-                                   "investigation_mode_label": "Specialist review · lead, auditor and skeptic"}
+                                   "investigation_mode_label": "Specialist review · lead, auditor and skeptic",
+                                   "ground_truth": "sealed answer key"}
     assert v["reveal"] is None and v["report"]["locked"] is False
     assert {f["status"] for f in v["report"]["findings"] if f["category"] == "incident_allegation"} == {"verified"}
     states = [e["data"]["state"] for e in c.get(f"/api/cases/{cid}/events.json").json()["events"] if e["type"] == "state"]
