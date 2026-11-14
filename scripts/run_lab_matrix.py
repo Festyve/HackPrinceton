@@ -1,4 +1,4 @@
-"""Run the declared worker-lab matrix (benchmarks/worker-lab-v1/protocol.json) and save every outcome.
+"""Run the declared worker-lab matrix (benchmarks/worker-lab-eric-matrix/protocol.json) and save every outcome.
 
     uv run python scripts/run_lab_matrix.py --check     # validate the protocol and its declared worst case; run nothing
     uv run python scripts/run_lab_matrix.py --run       # every declared cell, once, in order, through the budget gateway
@@ -25,7 +25,7 @@ from alibi.episode import load_episode_manifest
 from alibi.orchestrator import Orchestrator
 
 ROOT = Path(__file__).resolve().parents[1]
-SUITE = ROOT / "benchmarks" / "worker-lab-v1"
+SUITE = ROOT / "benchmarks" / "worker-lab-eric-matrix"
 PROTOCOL = SUITE / "protocol.json"
 WAIT_S = 420
 

@@ -1,7 +1,7 @@
 """Read one run of the declared worker-lab matrix, check it against the protocol, and render it.
 
     uv run python scripts/read_lab_matrix.py                 # the latest run directory
-    uv run python scripts/read_lab_matrix.py <run-id> --write docs/worker-lab-v1.md
+    uv run python scripts/read_lab_matrix.py <run-id> --write docs/worker-lab-eric-matrix.md
 
 Checks, each of which fails the read:
   * every declared cell has exactly one result, and nothing undeclared is present;
@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SUITE = ROOT / "benchmarks" / "worker-lab-v1"
+SUITE = ROOT / "benchmarks" / "worker-lab-eric-matrix"
 SAME_EVIDENCE = ("investigator_budget", "workflow")
 
 
@@ -120,10 +120,16 @@ def render(proto: dict, results: dict[str, dict], run_dir: Path, problems: list[
     wk_cost = sum(((r.get("worker_usage") or {}).get("cost_estimate_usd") or 0) for r in results.values()
                   if not (r.get("declared") or {}).get("derive_from"))
     out = [
-        "# Worker lab: the declared matrix (`worker-lab-v1`)", "",
-        f"Run `{run_dir.name}` · protocol `benchmarks/worker-lab-v1/protocol.json` (sha256 `{proto_hash}…`, declared "
-        f"{proto['declared_at']}) · code at `{', '.join(commits)}` · results in `benchmarks/worker-lab-v1/{run_dir.name}/`.", "",
+        "# Worker lab: the integration owner's declared matrix", "",
+        f"Run `{run_dir.name}` · protocol `benchmarks/worker-lab-eric-matrix/protocol.json` (sha256 `{proto_hash}…`, declared "
+        f"{proto['declared_at']}) · code at `{', '.join(commits)}` · results in `benchmarks/worker-lab-eric-matrix/{run_dir.name}/`.", "",
         f"**Who wrote this.** {proto['written_by']}", "",
+        "**Correction.** The sentence above, and the suite name `worker-lab-v1` inside the protocol and result files, are "
+        "wrong and are kept only so that the files stay byte-identical to what was committed before the run. Daniel had "
+        "pushed his independent `worker-lab-v1` protocol to his own branch at 15:56 ET, twenty minutes before this one was "
+        "declared; this session had not fetched it. This matrix is not that protocol. It uses different cases, and it was "
+        "moved here from `benchmarks/worker-lab-v1/` after the run so that Daniel's protocol keeps its path and digest. "
+        "Daniel's protocol and results are in `benchmarks/worker-lab-v1/`.", "",
         f"**What was asked.** {proto['question']}", "",
         f"**How to read it.** {proto['sample_size_note']} Every incident here has its objective changed by a scripted "
         "policy; no model chose a fault action. \"Effects established\" counts executed, observable effects that an accepted "

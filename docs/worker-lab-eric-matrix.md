@@ -1,8 +1,10 @@
-# Worker lab: the declared matrix (`worker-lab-v1`)
+# Worker lab: the integration owner's declared matrix
 
-Run `20261114t212052z` · protocol `benchmarks/worker-lab-v1/protocol.json` (sha256 `eef7985206968703…`, declared 2026-11-14T21:16:39Z) · code at `30d8375` · results in `benchmarks/worker-lab-v1/20261114t212052z/`.
+Run `20261114t212052z` · protocol `benchmarks/worker-lab-eric-matrix/protocol.json` (sha256 `eef7985206968703…`, declared 2026-11-14T21:16:39Z) · code at `30d8375` · results in `benchmarks/worker-lab-eric-matrix/20261114t212052z/`.
 
 **Who wrote this.** Eric's session, which also wrote the code under test. An independent protocol and result reader (Daniel's task) had not arrived when this was declared, so this is not an independent evaluation.
+
+**Correction.** The sentence above, and the suite name `worker-lab-v1` inside the protocol and result files, are wrong and are kept only so that the files stay byte-identical to what was committed before the run. Daniel had pushed his independent `worker-lab-v1` protocol to his own branch at 15:56 ET, twenty minutes before this one was declared; this session had not fetched it. This matrix is not that protocol. It uses different cases, and it was moved here from `benchmarks/worker-lab-v1/` after the run so that Daniel's protocol keeps its path and digest. Daniel's protocol and results are in `benchmarks/worker-lab-v1/`.
 
 **What was asked.** On a worker-lab run, what does the investigator establish under different request allowances, with one agent or three, and does it allege anything on a control run?
 
