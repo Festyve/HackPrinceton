@@ -232,6 +232,21 @@ def make_ledger(settings: Settings, path: Path | None, *, scripted: bool) -> Bud
                         price_in_per_mtok=settings.price_in_per_mtok, price_out_per_mtok=settings.price_out_per_mtok)
 
 
+def live_model_kwargs(model_spec: str, settings: Settings, env: Any = None) -> dict[str, Any]:
+    """Provider-specific construction arguments for a live model. Pure, so it can be tested offline.
+
+    Ollama: a small default context window silently truncates the agent harness prompt (reported in a
+    field note for deepagents 0.7.38; not verified on this machine), so num_ctx is set explicitly
+    (LLM_NUM_CTX, default 16384) and the output cap uses Ollama's own parameter name.
+    """
+    env = os.environ if env is None else env
+    out_cap = min(1500, settings.caps.max_output_tokens)
+    if model_spec.split(":", 1)[0] == "ollama":
+        raw = str(env.get("LLM_NUM_CTX") or "").strip()
+        return {"temperature": 0, "num_ctx": int(raw) if raw.isdigit() else 16384, "num_predict": out_cap}
+    return {"temperature": 0, "max_tokens": out_cap, "timeout": min(60.0, settings.caps.max_seconds), "max_retries": 0}
+
+
 def live_chat_model(settings: Settings, model_spec: str) -> BaseChatModel:
     """Construct a real model. Refused unless a zero-charge route is explicitly configured."""
     reason = settings.live_block_reason()
@@ -239,8 +254,7 @@ def live_chat_model(settings: Settings, model_spec: str) -> BaseChatModel:
         raise RuntimeBlocked(reason)
     from langchain.chat_models import init_chat_model
 
-    return init_chat_model(model_spec, temperature=0, max_tokens=min(1500, settings.caps.max_output_tokens),
-                           timeout=min(60.0, settings.caps.max_seconds), max_retries=0)
+    return init_chat_model(model_spec, **live_model_kwargs(model_spec, settings))
 
 
 def wrap(inner: BaseChatModel, ledger: BudgetLedger, role: str,

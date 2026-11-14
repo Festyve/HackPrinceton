@@ -407,3 +407,11 @@ def test_adversary_prompt_offers_only_the_bounded_library():
     for word in ("shell", "command", "script", "exploit", "malware"):
         assert word not in prompt.lower()
     assert "cannot run commands" in adversary.ADVERSARY_SYSTEM_PROMPT
+
+
+def test_live_model_arguments_are_provider_specific_and_bounded():
+    local = gateway.live_model_kwargs("ollama:some-model", SETTINGS, env={})
+    assert local == {"temperature": 0, "num_ctx": 16384, "num_predict": 1500}
+    assert gateway.live_model_kwargs("ollama:some-model", SETTINGS, env={"LLM_NUM_CTX": "32768"})["num_ctx"] == 32768
+    other = gateway.live_model_kwargs("anthropic:some-model", SETTINGS, env={})
+    assert other["max_retries"] == 0 and other["max_tokens"] <= SETTINGS.caps.max_output_tokens and other["timeout"] <= 60
