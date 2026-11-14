@@ -1,0 +1,118 @@
+{
+  "commit": "6caa909fa9fe3cf628dcd61627cf8b90116ae1b2",
+  "clean_checkout": true,
+  "keyless": true,
+  "startup": "./start.sh --port <free-local-port>",
+  "checks": [
+    "documented startup serves UI and runtime API",
+    "recorded model replay reaches review offline",
+    "Docker import retains 3 navigable exact citations",
+    "review locks imported report and Markdown export succeeds",
+    "imported capture remains unscored after review"
+  ],
+  "runtime": {
+    "runtime_mode": "offline",
+    "llm_max_usd": 0.0,
+    "bench_max_system_runs": 0,
+    "live_provider_kind": null,
+    "lead_model": null,
+    "subagent_model": null,
+    "adversary_model": null,
+    "live_block_reason": "RUNTIME_MODE is offline (default). No network model calls are made.",
+    "effort": "low",
+    "max_tokens_per_call": 3000,
+    "dev_ceiling_usd": 0.0,
+    "spend_limit_in_force_usd": 0.0,
+    "demo_reserve_open": false,
+    "price_in_per_mtok": null,
+    "price_out_per_mtok": null,
+    "caps": {
+      "max_calls": 16,
+      "max_input_tokens": 200000,
+      "max_output_tokens": 10000,
+      "max_seconds": 180.0,
+      "max_input_tokens_per_call": 40000,
+      "tool_result_max_records": 50,
+      "tool_result_max_bytes": 8192
+    },
+    "paid_overage_authorized_usd": 0,
+    "live_inference": "BLOCKED",
+    "default_inference_mode": "SCRIPTED_FIXTURE",
+    "inference_labels": {
+      "LIVE_MODEL": "Live model",
+      "RECORDED_MODEL": "Recorded AI run",
+      "SCRIPTED_FIXTURE": "Scripted fixture \u00b7 no model inference",
+      "NO_MODEL_BASELINE": "Deterministic baseline \u00b7 no model inference"
+    },
+    "frontend_built": true,
+    "capabilities": {
+      "investigation_modes": {
+        "available": [
+          "fast",
+          "specialist"
+        ],
+        "labels": {
+          "fast": "Fast investigation \u00b7 one agent",
+          "specialist": "Specialist review \u00b7 lead, auditor and skeptic"
+        },
+        "default": "specialist",
+        "note": "fast is the default for a live model; the scripted fixture defaults to specialist"
+      },
+      "live_model": {
+        "configured": false,
+        "model_id": null,
+        "note": "configured does not mean a successful model call has been observed"
+      },
+      "capture_import": {
+        "cli": "uv run alibi import <capture directory>",
+        "http": false,
+        "scored": false,
+        "note": "imports a directory with capture.json and its raw files as an unscored case; not offered over HTTP because it reads a local path. No captured evidence ships with this build"
+      },
+      "scenario_designer": {
+        "endpoint": true,
+        "model": "BLOCKED",
+        "chooses": [
+          "background activity",
+          "one routine operational condition",
+          "time of day",
+          "collection interruption cause and length"
+        ],
+        "never_chooses": "incident steps, commands, destinations or strategy. Incidents are pre-authored scripted scenarios",
+        "note": "no model is configured: a default environment is returned and labeled as a default"
+      },
+      "worker_lab": {
+        "endpoint": true,
+        "version": "worker-lab/1",
+        "ordinary_work": "SCRIPTED_FIXTURE_ONLY",
+        "changed_objective": "scripted policy; no model is asked to choose a fault action",
+        "note": "no model is configured: ordinary work comes from a scripted fixture and is labeled as one"
+      },
+      "report_export": {
+        "endpoint": true,
+        "formats": [
+          "markdown",
+          "json"
+        ],
+        "note": "available once a report is locked; never contains the sealed answer"
+      },
+      "sensor_streams": {
+        "endpoint": true,
+        "note": "for a cold-chain case: the stored readings beside the independent reference logger, with the deterministic comparison. Evidence only, no model"
+      },
+      "source_experiments": {
+        "endpoint": true,
+        "max_excluded_sources": 20,
+        "note": "derives a new evidence view with chosen sources withheld; the comparison of the original claims is deterministic and needs no model. A fresh investigation of the view is a separate run"
+      },
+      "questions": {
+        "endpoint": true,
+        "model_answers": "BLOCKED",
+        "max_question_chars": 1000,
+        "max_model_calls": 3,
+        "max_questions_per_case": 20,
+        "note": "no model is configured: a question returns status 'unavailable'; the predefined, labeled explanations remain available"
+      }
+    }
+  }
+}

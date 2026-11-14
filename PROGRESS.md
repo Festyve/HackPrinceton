@@ -1,5 +1,16 @@
 # Progress
 
+## Daniel’s independent worker-lab verification
+
+Protocol commit `20f6d7d` preceded the 12 baseline and seven runtime cells.
+The saved results distinguish unsupported proposals from accepted false
+allegations. All seven action tapes reproduced their evidence hashes. The
+clean release checkout at `6caa909` passed keyless startup,
+recorded replay, Docker import, citation navigation, review, and export.
+Daniel used zero model calls and incurred zero spend. The runnable commands,
+test results, reviewed live development trace and remaining acceptance
+dependencies are in the [handoff](docs/overhaul/daniel/HANDOFF.md).
+
 ## Daniel’s worker-lab fixtures — Saturday November 14, 2026
 
 Commit `test: add independent worker-lab evidence fixtures` on
