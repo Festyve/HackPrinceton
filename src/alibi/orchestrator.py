@@ -310,6 +310,7 @@ class Orchestrator:
         self._logs: dict[str, EventLog] = {}
         self._threads: dict[str, threading.Thread] = {}
         self._cancel: dict[str, threading.Event] = {}
+        self._resume: dict[str, dict[str, Any]] = {}  # case id -> a resume an operator asked for, until its run takes it
         self._tokens: dict[str, str] = {}
         self._token_locks: dict[str, threading.Lock] = {}
         self._design_seq = 0
@@ -1032,9 +1033,17 @@ class Orchestrator:
         allowance = ((rec.lab or {}).get("conditions") or {}).get("investigator_requests")
         if allowance:
             caps = replace(self.settings.caps, max_calls=min(self.settings.caps.max_calls, int(allowance)))
+        resume = self._resume.pop(rec.case_id, None)
+        if resume:
+            # the resumed leg may make `extra_requests` more requests; what was already used stays counted
+            base, used = caps or self.settings.caps, resume["used"]
+            extra = int(resume["extra_requests"])
+            caps = replace(base, max_calls=used["llm_calls"] + extra,
+                           max_input_tokens=used["tokens_in"] + extra * base.max_input_tokens_per_call,
+                           max_output_tokens=used["tokens_out"] + extra * self.settings.max_tokens_per_call)
         return RunContext(case_id=rec.case_id, store=store, manifest=load_manifest(paths), case_dir=paths.case,
                           settings=self.settings, emit=lambda t, d: log.append(t, d), pace_s=pace,
-                          is_cancelled=cancel.is_set, caps=caps)
+                          is_cancelled=cancel.is_set, caps=caps, resume=resume)
 
     def _finish_draft(self, rec: CaseRecord, paths: EpisodePaths, store: EvidenceStore,
                       report: InvestigationReport, compute_s: float) -> None:
@@ -1094,6 +1103,54 @@ class Orchestrator:
                     self._finish_draft(self._load(case_id), paths, store, report, compute)
         except BaseException as exc:  # noqa: BLE001 - a crashed run must become a visible state
             self._fail(case_id, exc)
+
+    def resume_investigation(self, case_id: str, extra_requests: int | None = None) -> CaseRecord:
+        """Continue an interrupted investigation from its checkpoint, in this process.
+
+        For a run that was cancelled, that failed, or that stopped incomplete (a cap, the turn limit). The graph's
+        saved messages, the case file and the findings already recorded are what it continues from. A finished
+        investigation, a recording and a run with no agent have nothing to resume.
+        """
+        with self._lock(case_id):
+            rec, paths = self._load(case_id), self._paths(case_id)
+            if rec.playback == "REPLAY":
+                raise Conflict("a recording is replayed, not resumed", rec.state)
+            if rec.runner_id not in ("agent-live", "agent-fixture"):
+                raise Conflict("only an agent's investigation has a checkpoint to resume", rec.state)
+            previous = None
+            if rec.state == "awaiting_review":
+                draft = self._report(paths)
+                previous = next((q for q in (draft.open_questions if draft else []) if q.startswith("Incomplete run:")), None)
+                if previous is None:
+                    raise Conflict("this investigation finished; there is nothing to resume", rec.state)
+            elif rec.state in ("failed", "cancelled"):
+                previous = rec.error or f"the run was {rec.state}"
+            else:
+                raise Conflict(f"an investigation in state {rec.state} cannot be resumed", rec.state)
+            if not (paths.case / "checkpoints.sqlite").exists():
+                raise Conflict("this case has no saved checkpoint to resume from", rec.state)
+            self._same_model_or_refuse(rec)
+            used = {"llm_calls": 0, "tokens_in": 0, "tokens_out": 0, "scripted_turns": 0}
+            budget = paths.case / "budget.json"
+            if budget.exists():
+                saved = json.loads(budget.read_text(encoding="utf-8"))
+                used = {k: int(saved.get(k, 0)) for k in used}
+            default = ((rec.lab or {}).get("conditions") or {}).get("investigator_requests") or self.settings.caps.max_calls
+            extra = int(extra_requests) if extra_requests is not None else int(default)
+            if not 1 <= extra <= 40:
+                raise ValueError("extra_requests must be between 1 and 40")
+            self._resume[case_id] = {"note": "resumed by the operator", "extra_requests": extra, "used": used,
+                                     "previous": previous}
+            self._cancel[case_id] = threading.Event()
+            rec.error = None
+            self._log(case_id).append("stage", {"name": "resume", "status": "started", "info": {
+                "interrupted_by": str(previous)[:240], "requests_used_before": used["llm_calls"],
+                "scripted_turns_before": used["scripted_turns"], "extra_requests": extra, "process_id": os.getpid()}})
+            self._set_state(rec, "investigating", "investigation resumed from its checkpoint")
+            th = threading.Thread(target=self._investigate_thread, args=(case_id,), name=f"resume-{case_id}", daemon=True)
+            self._threads[case_id] = th
+            th.start()
+            return rec
 
     # ------------------------------------------------------------------ review / lock
     def review(self, case_id: str, decision: str, note: str = "") -> dict[str, Any]:

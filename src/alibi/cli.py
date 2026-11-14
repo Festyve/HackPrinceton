@@ -289,11 +289,16 @@ def _cmd_cases(args: argparse.Namespace) -> int:
     return 0
 
 
-def _investigate_to_review(orch: Any, case_id: str) -> int:
-    """Investigate a frozen case and stop at human review. Prints the drafted findings; 1 if it did not get there."""
+def _investigate_to_review(orch: Any, case_id: str, resume: bool = False, extra_requests: int | None = None) -> int:
+    """Investigate a frozen case and stop at human review. Prints the drafted findings; 1 if it did not get there.
+
+    With resume, an interrupted investigation is continued from its checkpoint instead."""
     import time
 
-    orch.start_investigation(case_id)
+    if resume:
+        orch.resume_investigation(case_id, extra_requests)
+    else:
+        orch.start_investigation(case_id)
     deadline = time.time() + max(60.0, load_settings().caps.max_seconds + 60.0)
     state = orch.record(case_id).state
     while time.time() < deadline:
@@ -326,7 +331,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
 def _cmd_investigate(args: argparse.Namespace) -> int:
     """Investigate a case that is already frozen (an imported capture, for example) and stop at human review."""
-    return _investigate_to_review(_orchestrator(), args.case_id)
+    return _investigate_to_review(_orchestrator(), args.case_id, resume=args.resume, extra_requests=args.extra_requests)
 
 
 def _wait_for_review(orch: Any, case_id: str) -> str:
@@ -741,6 +746,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("investigate", help="investigate a case that is already frozen and stop at human review")
     p.add_argument("case_id")
+    p.add_argument("--resume", action="store_true",
+                   help="continue an interrupted investigation (cancelled, failed or stopped incomplete) from its checkpoint")
+    p.add_argument("--extra-requests", type=int, default=None, help="with --resume: how many more model requests it may make")
     p.set_defaults(func=_cmd_investigate)
 
     p = sub.add_parser("trace", help="what a case's recorded investigation did: plan, delegations, plan changes, case file")

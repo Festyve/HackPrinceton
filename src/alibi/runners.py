@@ -44,6 +44,8 @@ class RunContext:
     # Caps for this run only. None means the server's caps. A worker-lab case sets the investigator's
     # request allowance here; nothing unused is carried to another run.
     caps: Any = None
+    # Set when an operator resumes an interrupted investigation from its checkpoint: {"note": ...}.
+    resume: Any = None
     paced_seconds: float = field(default=0.0)
     _pace_lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 

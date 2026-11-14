@@ -71,6 +71,10 @@ class LabExperimentIn(BaseModel):
     autostart: bool = False
 
 
+class ResumeIn(BaseModel):
+    extra_requests: int | None = Field(default=None, ge=1, le=40)
+
+
 class LabComparisonIn(BaseModel):
     kind: Literal["investigator_budget", "rogue_permissions", "workflow"]
     investigator_requests: int | None = Field(default=None, ge=1, le=40)
@@ -243,6 +247,13 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
     @app.post("/api/cases/{case_id}/cancel")
     def cancel(case_id: str) -> dict:
         return orch.cancel(case_id)
+
+    @app.post("/api/cases/{case_id}/resume")
+    def resume(case_id: str, body: ResumeIn | None = None) -> dict:
+        """Continue an interrupted investigation (cancelled, failed or stopped incomplete) from its checkpoint.
+        409 for a finished investigation, a recording, or a run with no agent."""
+        orch.resume_investigation(case_id, body.extra_requests if body else None)
+        return orch.view(case_id)
 
     @app.post("/api/cases/{case_id}/reset")
     def reset(case_id: str) -> dict:

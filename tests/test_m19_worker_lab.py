@@ -550,3 +550,89 @@ def test_the_lab_from_a_terminal(env, monkeypatch, capsys, tmp_path):
     assert (tmp_path / "replays" / "lab-cli-test" / "recording.json").exists()
     assert not any(p.name.startswith("case-") and "lab-cli-test" in p.name for p in settings.runs_dir.glob("*"))
     assert cli.main(["lab", "run", "--work", "model"]) == 1 and "not available" in capsys.readouterr().err
+
+
+# ---------------------------------------------------------------- resuming an interrupted investigation
+
+
+def test_an_interrupted_investigation_resumes_from_its_checkpoint_in_another_orchestrator(tmp_path):
+    """Cancelled part-way, then continued by a second orchestrator on the same directories (as a new process would).
+    The scripted fixture stands in for a model; what is tested is the checkpoint, the case state and the record."""
+    settings = replace(load_settings({}, dotenv=False), runs_dir=tmp_path / "runs", sealed_dir=tmp_path / "sealed")
+    first = Orchestrator(settings, pace_s=0.05)
+    rec = first.create_lab_case(variant="incident", seed=SEED, runner_id="agent-fixture", client_token="r-1")
+    cid = rec.case_id
+    first.start_investigation(cid)
+    end = time.time() + 60
+    while time.time() < end:  # let the auditor finish, then interrupt
+        if any(e["type"] == "agent" and e["data"].get("agent") == "integrity-auditor" and e["data"].get("status") == "finished"
+               for e in first._log(cid).since(0)):
+            break
+        time.sleep(0.01)
+    first.cancel(cid)
+    while time.time() < end and first.record(cid).state == "investigating":
+        time.sleep(0.02)
+    assert first.record(cid).state == "cancelled"
+    before = len([e for e in first._log(cid).since(0) if e["type"] == "tool"])
+    assert (first._paths(cid).case / "checkpoints.sqlite").exists()
+
+    second = Orchestrator(settings, pace_s=0.0)
+    second.resume_investigation(cid)
+    while time.time() < end and second.record(cid).state == "investigating":
+        time.sleep(0.02)
+    assert second.record(cid).state == "awaiting_review", second.record(cid).error
+    view = second.view(cid)
+    alleged = sorted(f["claim_type"] for f in view["report"]["findings"] if f["category"] == "incident_allegation")
+    assert alleged == ["data_staging", "data_staging", "local_log_removal", "policy_violating_transfer", "policy_violating_transfer"]
+    assert all(f["status"] == "verified" for f in view["report"]["findings"])  # the citations still resolve
+    tr = second.investigation_trace(cid)
+    resumed = tr["behaviors"]["resumed"]
+    assert resumed["times"] == 1 and resumed["tool_calls_after_resume"] > 0
+    assert resumed["resumes"][0]["interrupted_by"] == "the run was cancelled" and resumed["resumes"][0]["process_id"] > 0
+    assert len([s for s in tr["spans"] if s["kind"] == "tool"]) > before
+    # It continues from the last saved checkpoint: steps completed before it are not repeated (the brief was read
+    # once), and only the step that was in progress when it was interrupted may run again.
+    tools = [(s["actor"], s["tool"]) for s in tr["spans"] if s["kind"] == "tool"]
+    assert tools.count(("lead-investigator", "get_case_brief")) == 1
+    assert [d["to"] for d in tr["behaviors"]["delegations"]].count("integrity-auditor") in (1, 2)
+    assert [d["to"] for d in tr["behaviors"]["delegations"]].count("skeptic") == 1
+    saved = json.loads((second._paths(cid).case / "budget.json").read_text())
+    assert len(saved["resumes"]) == 1 and saved["resumes"][0]["scripted_turns_before"] > 0
+    # a finished investigation has nothing to resume
+    with pytest.raises(Exception, match="nothing to resume"):
+        second.resume_investigation(cid)
+
+
+def test_what_cannot_be_resumed_says_why(env, monkeypatch, tmp_path):
+    from alibi import orchestrator as orch_module
+
+    _, orch, c, _ = env
+    checks_only = _create(c, variant="incident")["case"]["case_id"]
+    _wait(c, checks_only)
+    r = c.post(f"/api/cases/{checks_only}/resume")
+    assert r.status_code == 409 and "only an agent's investigation" in r.text
+    frozen = _create(c, variant="incident", runner="agent-fixture", client_token="t-9", autostart=False)["case"]["case_id"]
+    r = c.post(f"/api/cases/{frozen}/resume", json={"extra_requests": 5})
+    assert r.status_code == 409 and "cannot be resumed" in r.text
+    assert c.post(f"/api/cases/{frozen}/resume", json={"extra_requests": 500}).status_code == 422
+
+
+def test_a_reopened_ledger_keeps_what_was_counted_and_a_disabled_route_stays_disabled(tmp_path):
+    from alibi.config import RunCaps
+
+    path = tmp_path / "budget.json"
+    ledger = gateway.BudgetLedger(path, RunCaps(max_calls=2), kind="local")  # an unbilled route: caps and clock still apply
+    ledger.state.update(llm_calls=2, tokens_in=5000, started=time.time() - 10_000)
+    ledger._persist()
+    with pytest.raises(gateway.BudgetExceeded):
+        ledger.reserve("lead", 100)  # the time cap, and the call cap
+    again = gateway.BudgetLedger(path, RunCaps(max_calls=2 + 3), kind="local")
+    again.reopen("resumed by the operator")
+    assert again.state["llm_calls"] == 2 and again.state["tokens_in"] == 5000
+    assert again.state["started"] is None and again.state["resumes"][0]["llm_calls_before"] == 2
+    again.reserve("lead", 100)  # one of the three extra requests is admitted
+    assert again.state["reserved"] == 1 and again.state["started"] is not None
+    stopped = gateway.BudgetLedger(tmp_path / "other.json", RunCaps(), kind="local")
+    stopped.disable("credential error")
+    with pytest.raises(gateway.BudgetExceeded, match="disabled"):
+        stopped.reopen("resumed")

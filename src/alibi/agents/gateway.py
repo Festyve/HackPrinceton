@@ -546,6 +546,21 @@ class BudgetLedger:
             self.state["disabled_reason"] = reason
             self._persist()
 
+    def reopen(self, note: str) -> None:
+        """An operator resumed this investigation: its clock starts again and the resume is recorded.
+
+        Nothing is forgotten. The calls, tokens and money already counted stay counted, so the caps this ledger
+        is given for the resumed leg must include them. A route that was disabled stays disabled.
+        """
+        with self._lock:
+            if self.state["disabled_reason"]:
+                raise BudgetExceeded(f"model route disabled: {self.state['disabled_reason']}")
+            self.state["started"] = None
+            self.state.setdefault("resumes", []).append(
+                {"at": time.time(), "llm_calls_before": self.state["llm_calls"],
+                 "scripted_turns_before": self.state["scripted_turns"], "note": str(note)[:200]})
+            self._persist()
+
     def count_tool_call(self) -> None:
         with self._lock:
             self.state["tool_calls"] += 1

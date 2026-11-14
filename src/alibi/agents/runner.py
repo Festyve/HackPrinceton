@@ -51,6 +51,11 @@ SYSTEM_LABELS = {
 _CATEGORY_ORDER = {"incident_allegation": 0, "unresolved": 1, "benign_explanation": 2, "neutral_reconstruction": 3}
 
 
+RESUME_NOTE = ("This investigation was interrupted and has been resumed from its saved state in a new process. Your "
+               "case notes and the findings you already recorded are still there. Read your case file first, then "
+               "continue from where you stopped and finish: record what is supported, then finalize_report.")
+
+
 class AgentRunner:
     def __init__(self, runner_id: str, settings: Settings, *, architecture: str = "alibi",
                  with_checks: bool = True, verify_on_submit: bool = True):
@@ -111,6 +116,8 @@ class AgentRunner:
     def _parts(self, ctx: RunContext) -> tuple[CaseToolbox, gateway.BudgetLedger, sqlite3.Connection]:
         ctx.case_dir.mkdir(parents=True, exist_ok=True)
         ledger = gateway.make_ledger(self.settings, ctx.case_dir / "budget.json", scripted=self.scripted, caps=ctx.caps)
+        if ctx.resume:
+            ledger.reopen(str(ctx.resume.get("note", "resumed")))
         toolbox = CaseToolbox(ctx.store, ctx.manifest, ctx.case_dir / "draft_state.json", emit=ctx.emit,
                               pace=ctx.pace_quiet, on_tool_call=ledger.count_tool_call,
                               checks_enabled=self.with_checks, verify_on_submit=self.verify_on_submit)
@@ -135,12 +142,22 @@ class AgentRunner:
                      "Establish what the evidence supports, then submit a report for human review.")
             ctx.emit("agent", {"agent": self.lead_role, "status": "started", "task": "investigate the frozen bundle"})
             pending_tasks: dict[str, str] = {}
-            already_ran = bool((graph.get_state(self._config(ctx)).values or {}).get("messages"))
+            saved = (graph.get_state(self._config(ctx)).values or {}).get("messages") or []
+            already_ran = bool(saved)
             cancelled = False
-            # Idempotent: a case that already has a checkpointed run is never investigated twice
-            # (no duplicate tool work, no double-billed model calls). Its saved draft is returned.
-            stream = None if already_ran else graph.stream(
-                {"messages": [HumanMessage(brief)]}, self._config(ctx), stream_mode="updates")
+            if already_ran and ctx.resume:
+                # An operator resumed an interrupted run. The graph continues from its checkpoint: the same
+                # messages, the same case file, the same recorded findings. If a step was cut off with tool
+                # calls still waiting, they run first; otherwise the investigator is told that it was resumed.
+                last = saved[-1]
+                cut_off = isinstance(last, AIMessage) and bool(last.tool_calls)
+                resume_input = None if cut_off else {"messages": [HumanMessage(RESUME_NOTE)]}
+                stream = graph.stream(resume_input, self._config(ctx), stream_mode="updates")
+            else:
+                # Idempotent: a case that already has a checkpointed run is never investigated twice
+                # (no duplicate tool work, no double-billed model calls). Its saved draft is returned.
+                stream = None if already_ran else graph.stream(
+                    {"messages": [HumanMessage(brief)]}, self._config(ctx), stream_mode="updates")
             try:
                 for chunk in stream or []:
                     if ctx.is_cancelled():

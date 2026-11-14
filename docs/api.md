@@ -192,7 +192,7 @@ Implemented on `codex/eric-overhaul`. Real payloads: `api-examples/lab-*.json`, 
 | `POST /api/lab/experiments` | Runs the workers once, freezes the result, returns `{case, lab}`. Body: `variant` (`incident`, `control`), `seed?`, `preset?` (`offense_heavy`, `balanced`, `defense_heavy`), `rogue_permissions?` (`export_only`, `export_log`, `export_log_artifact`), `rogue_requests?`, `investigator_requests?`, `context_load?` (`light`, `standard`, `heavy`), `ordinary_work?` (`model`, `scripted`), `runner?`, `investigation_mode?`, `client_token` (required), `autostart` (default false). With a model this makes up to 18 small model requests before it answers, so expect several seconds. The same `client_token` returns the same case and is never billed twice. **409** if `ordinary_work: "model"` is asked for and no model is configured |
 | `GET /api/cases/{id}/lab` | `config` (workers, ticks), `conditions`, `provenance`, `lineage`, `activity` (what the collector recorded for each worker: `event_id`, `worker`, `account`, `t`, `action`, `dataset`, `status`), `scheduler_records`, `operator_record.available`. Built from the case record and the frozen evidence only |
 | `GET /api/cases/{id}/lab/operator` | Every attempted action with its real outcome (`records[]`: `seq`, `tick`, `t`, `worker`, `objective`, `action`, `target`, `status` = `succeeded`, `failed` or `denied`, `outcome`, `artifacts`), the `transition` (worker, tick, time), permissions and allowances. **409 until the report is locked** |
-| `POST /api/cases/{id}/lab/comparisons` | A second run that changes one thing. `kind: "investigator_budget"` with `investigator_requests`: the same frozen evidence (equal bundle id), a different request allowance. `kind: "rogue_permissions"` with `rogue_permissions`: a new execution on the same seed with the first run's ordinary work replayed; its evidence may differ. Body also takes `runner?`, `investigation_mode?`, `client_token` (required), `autostart` |
+| `POST /api/cases/{id}/lab/comparisons` | A second run that changes one thing. `kind: "investigator_budget"` with `investigator_requests`: the same frozen evidence (equal bundle id), a different request allowance. `kind: "workflow"` with `investigation_mode` (`fast` or `specialist`, different from the first run's): the same frozen evidence, one agent against three. `kind: "rogue_permissions"` with `rogue_permissions`: a new execution on the same seed with the first run's ordinary work replayed; its evidence may differ. Body also takes `runner?`, `client_token` (required), `autostart` |
 | `GET /api/cases/{id}/lab/comparisons` | The first run and every run derived from it: `lineage`, `conditions`, `bundle_id`, `outcome` (`not investigated`, `running`, `complete`, `stopped`, `failed`, `cancelled`), `stop_reason`, `allowed`, `used` (requests, tokens, cost, seconds), `findings`, and `scored` once that run is unsealed |
 
 **On the case record.** A lab case has `case.card_id = "worker-lab"`, `case.lab` (the same `config`, `conditions`, `provenance`, `lineage`) and two extra labels: `labels.worker_choices` and `labels.changed_objective_policy`. Show both wherever the inference label is shown. `conditions.investigator_requests` is the investigator's model-request allowance for that run; a run that reaches it ends as an incomplete report and says so in `report.open_questions` ("Incomplete run: ...").
@@ -209,4 +209,38 @@ type LabLineage = { root_case_id: string; parent_case_id: string | null; compari
 type LabActivity = { event_id: string; worker: "W1" | "W2" | "W3"; account: string; t: string; action: string; dataset: string | null; status: string | null };
 type LabOperatorRecord = { seq: number; tick: number; t: string; worker: string; account: string; objective: "normal" | "changed";
                            action: string; target: string | null; status: "succeeded" | "failed" | "denied"; outcome: string; artifacts: string[] };
+```
+
+## The investigation's trace
+
+`GET /api/cases/{id}/trace` works for any case. It is built from the case's event log and nothing else:
+
+- `spans[]`: the run, each delegation and each tool call, with `span_id`, `parent_id`, `kind` (`run`, `delegation`, `tool`), `actor`, `tool`, `arguments`, `result_summary`, `evidence_ids`, `status`, `start_seq`.
+- `plan[]`: each version of the investigator's plan with `items[]`, what was `added` and `removed` against the version before, and `after` (the last recorded result before that version).
+- `case_file[]`: each write, edit and read of a case file, in order.
+- `behaviors`: `planned_before_examining`, `delegations[]`, `plan_revisions[]` (only versions whose content changed, not items being ticked off), `case_file` (`writes`, `reads_after_a_write`), `resumed` (`times`, `tool_calls_after_resume`).
+- `plan_written_by`: the model, a scripted fixture, or fixed code. Show it: a checklist written by code is not a plan.
+
+Summaries are the tools' own return summaries. Nothing is a model's reasoning, and "after" is the recorded order, not a claimed cause.
+
+## Resuming an interrupted investigation
+
+`POST /api/cases/{id}/resume` with optional `{"extra_requests": n}` continues an agent's investigation that was cancelled, failed, or stopped incomplete (a cap or the turn limit). It continues from the last saved checkpoint with the same messages, case file and recorded findings; the step that was in progress when it was interrupted runs again. What was already used stays counted, and `extra_requests` is how many more model requests it may make. **409** for a finished investigation, a recording, or a run with no agent. The event log gets a `stage` event named `resume`, and the trace reports it.
+
+## Lab runs as recordings
+
+A lab run saved with `uv run alibi lab run ... --save-as <name>` appears in `GET /api/replays` like any recording. Opening it regenerates the evidence by replaying the saved action tape (the bundle hash must match or the case fails), restores `case.lab`, and replays the recorded investigation. Its `labels.worker_choices` then reads "recorded choices of a model", never "live".
+
+## Lab commands
+
+```sh
+uv run alibi lab options
+uv run alibi lab run --variant incident --preset balanced --investigate      # prints the case id and the findings
+uv run alibi lab operator <case-id>                                          # after the report is locked
+uv run alibi lab compare <case-id> --kind investigator_budget --investigator-requests 4 --investigate
+uv run alibi lab compare <case-id> --kind workflow --mode specialist --investigate
+uv run alibi lab compare <case-id> --kind rogue_permissions --permissions export_only --investigate
+uv run alibi lab table <case-id>
+uv run alibi trace <case-id>
+uv run alibi investigate <case-id> --resume --extra-requests 12
 ```
