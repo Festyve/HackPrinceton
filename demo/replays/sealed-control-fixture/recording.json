@@ -1,0 +1,843 @@
+{
+ "meta": {
+  "title": "Sealed control case",
+  "preset_id": "sealed-control",
+  "difficulty": "sealed",
+  "inference_mode": "SCRIPTED_FIXTURE",
+  "model_id": "scripted-fixture-policy-v1 (no model)",
+  "runner_id": "agent-fixture",
+  "recorded_at": "2026-11-14T06:21:27.425909+00:00",
+  "git_commit": "4043f5a",
+  "note": "Scripted fixture run of the sealed control case. No model inference. Recorded offline.",
+  "simulator_version": "1.0.0",
+  "raw_bundle_sha256": "15ecc915f73895f0d9b3d0bc363304463b5f5890c64be08cbf81f93ff5773de8"
+ },
+ "spec": {
+  "accounts": {
+   "admin": "adm-vrao",
+   "nurse_a": "jpark",
+   "nurse_b": "aokafor"
+  },
+  "badges": {
+   "adm-vrao": "B-1368",
+   "aokafor": "B-3167",
+   "facilities-1": "B-3545",
+   "jpark": "B-4606",
+   "pharmacy-1": "B-6697"
+  },
+  "benign": {
+   "actor": "jpark",
+   "dst_name": "imm-registry-561.db",
+   "start": "2026-11-10T12:02:17+00:00"
+  },
+  "capture_end": "2026-11-10T15:05:00+00:00",
+  "capture_start": "2026-11-10T06:05:00+00:00",
+  "card_id": "inside-job",
+  "case_kind": "benign",
+  "crime": null,
+  "dataset_sizes": {
+   "immunization_registry": 10683407,
+   "patients_full": 17307949
+  },
+  "difficulty": "none",
+  "dmz_ips": [
+   "10.20.9.19",
+   "10.20.9.21",
+   "10.20.9.66",
+   "10.20.9.73"
+  ],
+  "plan": [],
+  "plan_source": "scripted_scenario",
+  "scenario_version": "1.0.0",
+  "seed": 9003,
+  "simulator_version": "1.0.0",
+  "t0": "2026-11-10T06:50:00+00:00",
+  "t_backup": "2026-11-10T11:55:00+00:00",
+  "t_rot": "2026-11-10T08:40:00+00:00",
+  "variant": "benign_approved_transfer"
+ },
+ "events": [
+  {
+   "seq": 9,
+   "ts": "2026-11-14T06:21:26.987212+00:00",
+   "type": "agent",
+   "data": {
+    "agent": "lead-investigator",
+    "status": "started",
+    "task": "investigate the frozen bundle"
+   }
+  },
+  {
+   "seq": 10,
+   "ts": "2026-11-14T06:21:26.995611+00:00",
+   "type": "todo",
+   "data": {
+    "items": [
+     {
+      "text": "Read the brief and source inventory",
+      "status": "in_progress"
+     },
+     {
+      "text": "Delegate contradiction checks to the integrity auditor",
+      "status": "pending"
+     },
+     {
+      "text": "Record findings with cited evidence",
+      "status": "pending"
+     },
+     {
+      "text": "Have the skeptic test each finding for a benign explanation",
+      "status": "pending"
+     },
+     {
+      "text": "Assess account use vs. human identity",
+      "status": "pending"
+     },
+     {
+      "text": "Submit the report for human review",
+      "status": "pending"
+     }
+    ]
+   }
+  },
+  {
+   "seq": 11,
+   "ts": "2026-11-14T06:21:26.998995+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "lead-investigator",
+    "tool": "get_case_brief",
+    "args": {},
+    "result_summary": "brief for bndl-15ecc915f73895f0: 16 sources",
+    "evidence_ids": [],
+    "ok": true,
+    "ms": 0
+   }
+  },
+  {
+   "seq": 12,
+   "ts": "2026-11-14T06:21:27.000519+00:00",
+   "type": "agent",
+   "data": {
+    "agent": "integrity-auditor",
+    "status": "started",
+    "task": "Run the registered contradiction checks on this evidence bundle: reconcile host logs with collector copies, correlate bulk transfers with the destination policy and sessions, and compare the linked session with badge presence. Return candid"
+   }
+  },
+  {
+   "seq": 13,
+   "ts": "2026-11-14T06:21:27.075064+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "integrity-auditor",
+    "tool": "check_local_vs_collector",
+    "args": {},
+    "result_summary": "6 forwarded logs compared: 0 line(s) unexplainedly absent on the host, 170 explained by rotation, 0 collection gap(s)",
+    "evidence_ids": [],
+    "ok": true,
+    "ms": 68
+   }
+  },
+  {
+   "seq": 14,
+   "ts": "2026-11-14T06:21:27.093152+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "integrity-auditor",
+    "tool": "check_transfer_sessions",
+    "args": {},
+    "result_summary": "2 bulk transfer(s): 0 to a non-approved destination, 2 consistent with policy",
+    "evidence_ids": [
+     "ev_5ee479172eb4",
+     "ev_23b686af32f4"
+    ],
+    "ok": true,
+    "ms": 15
+   }
+  },
+  {
+   "seq": 15,
+   "ts": "2026-11-14T06:21:27.095881+00:00",
+   "type": "agent",
+   "data": {
+    "agent": "integrity-auditor",
+    "status": "finished",
+    "summary": "3 candidate finding(s) returned"
+   }
+  },
+  {
+   "seq": 16,
+   "ts": "2026-11-14T06:21:27.096881+00:00",
+   "type": "note",
+   "data": {
+    "path": "/case/notes.md",
+    "preview": "# Case notes (scripted fixture)\n\nAuditor returned 3 candidate(s); 0 incident allegation(s).\n\n- [benign_explanation] retention_explained_absence on records (/var/log/records-app/access.log): 7 cited record(s)\n- [benign_explanation] policy_consistent_transfer on records (10.20.0.45:873): 1 cited record(s)\n- [benign_explanation] policy_consistent_transfer on workstation (10.20.8.20:80): 2 cited recor"
+   }
+  },
+  {
+   "seq": 17,
+   "ts": "2026-11-14T06:21:27.183539+00:00",
+   "type": "finding",
+   "data": {
+    "finding": {
+     "id": "F-3f3412",
+     "claim_type": "policy_consistent_transfer",
+     "category": "benign_explanation",
+     "attack_id": null,
+     "technique_family": null,
+     "host": "records",
+     "actor_claimed": null,
+     "account_used": null,
+     "t_start": "2026-11-10T11:55:04Z",
+     "t_end": "2026-11-10T11:55:09Z",
+     "object_or_session": "10.20.0.45:873",
+     "evidence_ids": [
+      "ev_5ee479172eb4"
+     ],
+     "counterevidence_ids": [],
+     "check_refs": [
+      "transfer_session_correlation"
+     ],
+     "confidence": 0.9,
+     "rationale": "17,313,149 bytes from records to 10.20.0.45:873. destination 10.20.0.45 is an approved bulk destination: stor-nas-01 (backup and log archive).",
+     "assumptions": [],
+     "alternative_explanations": [],
+     "status": "verified",
+     "verification_status": "supported_observation",
+     "verifier_notes": [
+      "a deterministic check supports this observation; it is not an incident allegation"
+     ],
+     "skeptic_note": null,
+     "produced_by": "lead-investigator"
+    },
+    "phase": "proposed"
+   }
+  },
+  {
+   "seq": 18,
+   "ts": "2026-11-14T06:21:27.183668+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "lead-investigator",
+    "tool": "submit_finding",
+    "args": {
+     "claim_type": "policy_consistent_transfer",
+     "category": "benign_explanation",
+     "host": "records",
+     "object_or_session": "10.20.0.45:873"
+    },
+    "result_summary": "F-3f3412 policy_consistent_transfer: supported_observation",
+    "evidence_ids": [
+     "ev_5ee479172eb4"
+    ],
+    "ok": true,
+    "ms": 83
+   }
+  },
+  {
+   "seq": 19,
+   "ts": "2026-11-14T06:21:27.183955+00:00",
+   "type": "finding",
+   "data": {
+    "finding": {
+     "id": "F-ce8df7",
+     "claim_type": "policy_consistent_transfer",
+     "category": "benign_explanation",
+     "attack_id": null,
+     "technique_family": null,
+     "host": "workstation",
+     "actor_claimed": null,
+     "account_used": "jpark",
+     "t_start": "2026-11-10T12:06:12Z",
+     "t_end": "2026-11-10T12:06:19Z",
+     "object_or_session": "10.20.8.20:80",
+     "evidence_ids": [
+      "ev_23b686af32f4",
+      "ev_9b99935e5e8d"
+     ],
+     "counterevidence_ids": [],
+     "check_refs": [
+      "transfer_session_correlation"
+     ],
+     "confidence": 0.9,
+     "rationale": "10,686,707 bytes from workstation to 10.20.8.20:80. destination 10.20.8.20 is an approved bulk destination: lab-gw-01 (laboratory and registry submissions).",
+     "assumptions": [],
+     "alternative_explanations": [],
+     "status": "verified",
+     "verification_status": "supported_observation",
+     "verifier_notes": [
+      "a deterministic check supports this observation; it is not an incident allegation"
+     ],
+     "skeptic_note": null,
+     "produced_by": "lead-investigator"
+    },
+    "phase": "proposed"
+   }
+  },
+  {
+   "seq": 20,
+   "ts": "2026-11-14T06:21:27.184304+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "lead-investigator",
+    "tool": "submit_finding",
+    "args": {
+     "claim_type": "policy_consistent_transfer",
+     "category": "benign_explanation",
+     "host": "workstation",
+     "object_or_session": "10.20.8.20:80"
+    },
+    "result_summary": "F-ce8df7 policy_consistent_transfer: supported_observation",
+    "evidence_ids": [
+     "ev_23b686af32f4",
+     "ev_9b99935e5e8d"
+    ],
+    "ok": true,
+    "ms": 83
+   }
+  },
+  {
+   "seq": 21,
+   "ts": "2026-11-14T06:21:27.184458+00:00",
+   "type": "finding",
+   "data": {
+    "finding": {
+     "id": "F-5f73ec",
+     "claim_type": "retention_explained_absence",
+     "category": "benign_explanation",
+     "attack_id": null,
+     "technique_family": null,
+     "host": "records",
+     "actor_claimed": null,
+     "account_used": null,
+     "t_start": "2026-11-10T06:14:18Z",
+     "t_end": "2026-11-10T08:39:43Z",
+     "object_or_session": "/var/log/records-app/access.log",
+     "evidence_ids": [
+      "ev_dcdadc42ebba",
+      "ev_c239e20cef79",
+      "ev_535aecdfd453",
+      "ev_43f4e93a757f",
+      "ev_779e6f2b77cd",
+      "ev_b54439e24d56",
+      "ev_410360f0139b"
+     ],
+     "counterevidence_ids": [],
+     "check_refs": [
+      "local_vs_collector"
+     ],
+     "confidence": 0.9,
+     "rationale": "170 line(s) of /var/log/records-app/access.log on records exist only at the collector, and all of them predate the host's retention boundary at 2026-11-10T08:40:04+00:00 (log rotation). Their absence from the host is expected, not suspicious.",
+     "assumptions": [
+      "the rotation record and the stated retention policy are accurate"
+     ],
+     "alternative_explanations": [],
+     "status": "verified",
+     "verification_status": "supported_observation",
+     "verifier_notes": [
+      "a deterministic check supports this observation; it is not an incident allegation"
+     ],
+     "skeptic_note": null,
+     "produced_by": "lead-investigator"
+    },
+    "phase": "proposed"
+   }
+  },
+  {
+   "seq": 22,
+   "ts": "2026-11-14T06:21:27.185607+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "lead-investigator",
+    "tool": "submit_finding",
+    "args": {
+     "claim_type": "retention_explained_absence",
+     "category": "benign_explanation",
+     "host": "records",
+     "object_or_session": "/var/log/records-app/access.log"
+    },
+    "result_summary": "F-5f73ec retention_explained_absence: supported_observation",
+    "evidence_ids": [
+     "ev_dcdadc42ebba",
+     "ev_c239e20cef79",
+     "ev_535aecdfd453",
+     "ev_43f4e93a757f",
+     "ev_779e6f2b77cd",
+     "ev_b54439e24d56",
+     "ev_410360f0139b"
+    ],
+    "ok": true,
+    "ms": 84
+   }
+  },
+  {
+   "seq": 23,
+   "ts": "2026-11-14T06:21:27.187339+00:00",
+   "type": "todo",
+   "data": {
+    "items": [
+     {
+      "text": "Read the brief and source inventory",
+      "status": "completed"
+     },
+     {
+      "text": "Delegate contradiction checks to the integrity auditor",
+      "status": "completed"
+     },
+     {
+      "text": "Record findings with cited evidence",
+      "status": "completed"
+     },
+     {
+      "text": "Have the skeptic test each finding for a benign explanation",
+      "status": "in_progress"
+     },
+     {
+      "text": "Assess account use vs. human identity",
+      "status": "pending"
+     },
+     {
+      "text": "Submit the report for human review",
+      "status": "pending"
+     }
+    ]
+   }
+  },
+  {
+   "seq": 24,
+   "ts": "2026-11-14T06:21:27.189575+00:00",
+   "type": "agent",
+   "data": {
+    "agent": "skeptic",
+    "status": "started",
+    "task": "For each finding below, try to explain it benignly (scheduled log rotation, maintenance, approved transfers, collection gaps). Return a verdict per finding id: keep or downgrade, with the reason.\nFINDINGS_JSON:[{\"id\": \"F-5f73ec\", \"claim_typ"
+   }
+  },
+  {
+   "seq": 25,
+   "ts": "2026-11-14T06:21:27.279094+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "skeptic",
+    "tool": "check_local_vs_collector",
+    "args": {},
+    "result_summary": "6 forwarded logs compared: 0 line(s) unexplainedly absent on the host, 170 explained by rotation, 0 collection gap(s)",
+    "evidence_ids": [],
+    "ok": true,
+    "ms": 84
+   }
+  },
+  {
+   "seq": 26,
+   "ts": "2026-11-14T06:21:27.298004+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "skeptic",
+    "tool": "check_transfer_sessions",
+    "args": {},
+    "result_summary": "2 bulk transfer(s): 0 to a non-approved destination, 2 consistent with policy",
+    "evidence_ids": [
+     "ev_5ee479172eb4",
+     "ev_23b686af32f4"
+    ],
+    "ok": true,
+    "ms": 16
+   }
+  },
+  {
+   "seq": 27,
+   "ts": "2026-11-14T06:21:27.300720+00:00",
+   "type": "agent",
+   "data": {
+    "agent": "skeptic",
+    "status": "finished",
+    "summary": "3 verdict(s): 3 kept, 0 downgraded"
+   }
+  },
+  {
+   "seq": 28,
+   "ts": "2026-11-14T06:21:27.304072+00:00",
+   "type": "finding",
+   "data": {
+    "finding": {
+     "id": "F-5f73ec",
+     "claim_type": "retention_explained_absence",
+     "category": "benign_explanation",
+     "attack_id": null,
+     "technique_family": null,
+     "host": "records",
+     "actor_claimed": null,
+     "account_used": null,
+     "t_start": "2026-11-10T06:14:18Z",
+     "t_end": "2026-11-10T08:39:43Z",
+     "object_or_session": "/var/log/records-app/access.log",
+     "evidence_ids": [
+      "ev_dcdadc42ebba",
+      "ev_c239e20cef79",
+      "ev_535aecdfd453",
+      "ev_43f4e93a757f",
+      "ev_779e6f2b77cd",
+      "ev_b54439e24d56",
+      "ev_410360f0139b"
+     ],
+     "counterevidence_ids": [],
+     "check_refs": [
+      "local_vs_collector"
+     ],
+     "confidence": 0.9,
+     "rationale": "170 line(s) of /var/log/records-app/access.log on records exist only at the collector, and all of them predate the host's retention boundary at 2026-11-10T08:40:04+00:00 (log rotation). Their absence from the host is expected, not suspicious.",
+     "assumptions": [
+      "the rotation record and the stated retention policy are accurate"
+     ],
+     "alternative_explanations": [],
+     "status": "verified",
+     "verification_status": "supported_observation",
+     "verifier_notes": [
+      "a deterministic check supports this observation; it is not an incident allegation"
+     ],
+     "skeptic_note": "Not an allegation. The benign or open reading stands; nothing here needs a suspect.",
+     "produced_by": "lead-investigator"
+    },
+    "phase": "skeptic"
+   }
+  },
+  {
+   "seq": 29,
+   "ts": "2026-11-14T06:21:27.304132+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "lead-investigator",
+    "tool": "record_skeptic_verdict",
+    "args": {
+     "finding_id": "F-5f73ec",
+     "verdict": "keep"
+    },
+    "result_summary": "F-5f73ec: skeptic says keep",
+    "evidence_ids": [],
+    "ok": true,
+    "ms": 1
+   }
+  },
+  {
+   "seq": 30,
+   "ts": "2026-11-14T06:21:27.304542+00:00",
+   "type": "finding",
+   "data": {
+    "finding": {
+     "id": "F-3f3412",
+     "claim_type": "policy_consistent_transfer",
+     "category": "benign_explanation",
+     "attack_id": null,
+     "technique_family": null,
+     "host": "records",
+     "actor_claimed": null,
+     "account_used": null,
+     "t_start": "2026-11-10T11:55:04Z",
+     "t_end": "2026-11-10T11:55:09Z",
+     "object_or_session": "10.20.0.45:873",
+     "evidence_ids": [
+      "ev_5ee479172eb4"
+     ],
+     "counterevidence_ids": [],
+     "check_refs": [
+      "transfer_session_correlation"
+     ],
+     "confidence": 0.9,
+     "rationale": "17,313,149 bytes from records to 10.20.0.45:873. destination 10.20.0.45 is an approved bulk destination: stor-nas-01 (backup and log archive).",
+     "assumptions": [],
+     "alternative_explanations": [],
+     "status": "verified",
+     "verification_status": "supported_observation",
+     "verifier_notes": [
+      "a deterministic check supports this observation; it is not an incident allegation"
+     ],
+     "skeptic_note": "Not an allegation. The benign or open reading stands; nothing here needs a suspect.",
+     "produced_by": "lead-investigator"
+    },
+    "phase": "skeptic"
+   }
+  },
+  {
+   "seq": 31,
+   "ts": "2026-11-14T06:21:27.304733+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "lead-investigator",
+    "tool": "record_skeptic_verdict",
+    "args": {
+     "finding_id": "F-3f3412",
+     "verdict": "keep"
+    },
+    "result_summary": "F-3f3412: skeptic says keep",
+    "evidence_ids": [],
+    "ok": true,
+    "ms": 1
+   }
+  },
+  {
+   "seq": 32,
+   "ts": "2026-11-14T06:21:27.304856+00:00",
+   "type": "finding",
+   "data": {
+    "finding": {
+     "id": "F-ce8df7",
+     "claim_type": "policy_consistent_transfer",
+     "category": "benign_explanation",
+     "attack_id": null,
+     "technique_family": null,
+     "host": "workstation",
+     "actor_claimed": null,
+     "account_used": "jpark",
+     "t_start": "2026-11-10T12:06:12Z",
+     "t_end": "2026-11-10T12:06:19Z",
+     "object_or_session": "10.20.8.20:80",
+     "evidence_ids": [
+      "ev_23b686af32f4",
+      "ev_9b99935e5e8d"
+     ],
+     "counterevidence_ids": [],
+     "check_refs": [
+      "transfer_session_correlation"
+     ],
+     "confidence": 0.9,
+     "rationale": "10,686,707 bytes from workstation to 10.20.8.20:80. destination 10.20.8.20 is an approved bulk destination: lab-gw-01 (laboratory and registry submissions).",
+     "assumptions": [],
+     "alternative_explanations": [],
+     "status": "verified",
+     "verification_status": "supported_observation",
+     "verifier_notes": [
+      "a deterministic check supports this observation; it is not an incident allegation"
+     ],
+     "skeptic_note": "Not an allegation. The benign or open reading stands; nothing here needs a suspect.",
+     "produced_by": "lead-investigator"
+    },
+    "phase": "skeptic"
+   }
+  },
+  {
+   "seq": 33,
+   "ts": "2026-11-14T06:21:27.305020+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "lead-investigator",
+    "tool": "record_skeptic_verdict",
+    "args": {
+     "finding_id": "F-ce8df7",
+     "verdict": "keep"
+    },
+    "result_summary": "F-ce8df7: skeptic says keep",
+    "evidence_ids": [],
+    "ok": true,
+    "ms": 1
+   }
+  },
+  {
+   "seq": 35,
+   "ts": "2026-11-14T06:21:27.305328+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "lead-investigator",
+    "tool": "submit_attribution",
+    "args": {
+     "human_identity": "not_assessed"
+    },
+    "result_summary": "account not identified; human identity not_assessed",
+    "evidence_ids": [],
+    "ok": true,
+    "ms": 1
+   }
+  },
+  {
+   "seq": 36,
+   "ts": "2026-11-14T06:21:27.306818+00:00",
+   "type": "todo",
+   "data": {
+    "items": [
+     {
+      "text": "Read the brief and source inventory",
+      "status": "completed"
+     },
+     {
+      "text": "Delegate contradiction checks to the integrity auditor",
+      "status": "completed"
+     },
+     {
+      "text": "Record findings with cited evidence",
+      "status": "completed"
+     },
+     {
+      "text": "Have the skeptic test each finding for a benign explanation",
+      "status": "completed"
+     },
+     {
+      "text": "Assess account use vs. human identity",
+      "status": "completed"
+     },
+     {
+      "text": "Submit the report for human review",
+      "status": "in_progress"
+     }
+    ]
+   }
+  },
+  {
+   "seq": 37,
+   "ts": "2026-11-14T06:21:27.313700+00:00",
+   "type": "agent",
+   "data": {
+    "agent": "lead-investigator",
+    "status": "finished",
+    "summary": "3 finding(s) submitted for review"
+   }
+  }
+ ],
+ "report": {
+  "schema_version": "1.0.0",
+  "report_id": "rep-case-eebe53c7460d",
+  "bundle_id": "bndl-15ecc915f73895f0",
+  "system_id": "ALIBI-FIXTURE",
+  "system_label": "DeepAgents graph (lead + integrity-auditor + skeptic) driven by a scripted fixture policy; no model inference",
+  "inference_mode": "SCRIPTED_FIXTURE",
+  "model_id": "scripted-fixture-policy-v1 (no model)",
+  "findings": [
+   {
+    "id": "F-5f73ec",
+    "claim_type": "retention_explained_absence",
+    "category": "benign_explanation",
+    "attack_id": null,
+    "technique_family": null,
+    "host": "records",
+    "actor_claimed": null,
+    "account_used": null,
+    "t_start": "2026-11-10T06:14:18Z",
+    "t_end": "2026-11-10T08:39:43Z",
+    "object_or_session": "/var/log/records-app/access.log",
+    "evidence_ids": [
+     "ev_dcdadc42ebba",
+     "ev_c239e20cef79",
+     "ev_535aecdfd453",
+     "ev_43f4e93a757f",
+     "ev_779e6f2b77cd",
+     "ev_b54439e24d56",
+     "ev_410360f0139b"
+    ],
+    "counterevidence_ids": [],
+    "check_refs": [
+     "local_vs_collector"
+    ],
+    "confidence": 0.9,
+    "rationale": "170 line(s) of /var/log/records-app/access.log on records exist only at the collector, and all of them predate the host's retention boundary at 2026-11-10T08:40:04+00:00 (log rotation). Their absence from the host is expected, not suspicious.",
+    "assumptions": [
+     "the rotation record and the stated retention policy are accurate"
+    ],
+    "alternative_explanations": [],
+    "status": "verified",
+    "verification_status": "supported_observation",
+    "verifier_notes": [
+     "a deterministic check supports this observation; it is not an incident allegation"
+    ],
+    "skeptic_note": "Not an allegation. The benign or open reading stands; nothing here needs a suspect.",
+    "produced_by": "lead-investigator"
+   },
+   {
+    "id": "F-3f3412",
+    "claim_type": "policy_consistent_transfer",
+    "category": "benign_explanation",
+    "attack_id": null,
+    "technique_family": null,
+    "host": "records",
+    "actor_claimed": null,
+    "account_used": null,
+    "t_start": "2026-11-10T11:55:04Z",
+    "t_end": "2026-11-10T11:55:09Z",
+    "object_or_session": "10.20.0.45:873",
+    "evidence_ids": [
+     "ev_5ee479172eb4"
+    ],
+    "counterevidence_ids": [],
+    "check_refs": [
+     "transfer_session_correlation"
+    ],
+    "confidence": 0.9,
+    "rationale": "17,313,149 bytes from records to 10.20.0.45:873. destination 10.20.0.45 is an approved bulk destination: stor-nas-01 (backup and log archive).",
+    "assumptions": [],
+    "alternative_explanations": [],
+    "status": "verified",
+    "verification_status": "supported_observation",
+    "verifier_notes": [
+     "a deterministic check supports this observation; it is not an incident allegation"
+    ],
+    "skeptic_note": "Not an allegation. The benign or open reading stands; nothing here needs a suspect.",
+    "produced_by": "lead-investigator"
+   },
+   {
+    "id": "F-ce8df7",
+    "claim_type": "policy_consistent_transfer",
+    "category": "benign_explanation",
+    "attack_id": null,
+    "technique_family": null,
+    "host": "workstation",
+    "actor_claimed": null,
+    "account_used": "jpark",
+    "t_start": "2026-11-10T12:06:12Z",
+    "t_end": "2026-11-10T12:06:19Z",
+    "object_or_session": "10.20.8.20:80",
+    "evidence_ids": [
+     "ev_23b686af32f4",
+     "ev_9b99935e5e8d"
+    ],
+    "counterevidence_ids": [],
+    "check_refs": [
+     "transfer_session_correlation"
+    ],
+    "confidence": 0.9,
+    "rationale": "10,686,707 bytes from workstation to 10.20.8.20:80. destination 10.20.8.20 is an approved bulk destination: lab-gw-01 (laboratory and registry submissions).",
+    "assumptions": [],
+    "alternative_explanations": [],
+    "status": "verified",
+    "verification_status": "supported_observation",
+    "verifier_notes": [
+     "a deterministic check supports this observation; it is not an incident allegation"
+    ],
+    "skeptic_note": "Not an allegation. The benign or open reading stands; nothing here needs a suspect.",
+    "produced_by": "lead-investigator"
+   }
+  ],
+  "attribution": {
+   "account_used": null,
+   "session_ref": null,
+   "human_identity": "not_assessed",
+   "named_person_accused": null,
+   "named_person_exonerated": null,
+   "supporting_evidence_ids": [],
+   "contrary_evidence_ids": [],
+   "assumptions": [],
+   "limits": [],
+   "statement": "No incident is alleged from this evidence, so there is no attribution to assess.",
+   "review_status": "pending",
+   "approved_by_human": false,
+   "approved_at": null
+  },
+  "summary": "0 incident allegation(s), 3 benign explanation(s)/open note(s). No incident is alleged from this evidence, so there is no attribution to assess.",
+  "open_questions": [],
+  "usage": {
+   "llm_calls": 0,
+   "tokens_in": 0,
+   "tokens_out": 0,
+   "tokens_cache_read": 0,
+   "cost_estimate_usd": 0.0,
+   "wall_seconds": 0.363,
+   "tool_calls": 12,
+   "scripted_turns": 16,
+   "retries": 0,
+   "errors": 0,
+   "timed_out": false
+  },
+  "created_at": "2026-11-14T06:21:27.395192Z",
+  "locked": false,
+  "locked_at": null,
+  "report_sha256": null,
+  "review_history": [],
+  "verifier_version": "1.0.0"
+ }
+}

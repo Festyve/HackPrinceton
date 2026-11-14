@@ -126,6 +126,34 @@ def _cmd_bench(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_record(args: argparse.Namespace) -> int:
+    """Run one preset with the offline fixture runner and save it as a replayable recording."""
+    import tempfile
+    import time
+    from dataclasses import replace
+    from pathlib import Path
+
+    from alibi.orchestrator import Orchestrator
+
+    settings = load_settings()
+    with tempfile.TemporaryDirectory(prefix="alibi-record-") as tmp:
+        orch = Orchestrator(replace(settings, runs_dir=Path(tmp) / "runs", sealed_dir=Path(tmp) / "sealed"), pace_s=0.0)
+        rec = orch.create_case(preset_id=args.preset, runner_id=args.runner)
+        orch.start_investigation(rec.case_id)
+        for _ in range(1200):
+            state = orch.record(rec.case_id).state
+            if state in ("awaiting_review", "failed", "cancelled"):
+                break
+            time.sleep(0.05)
+        if state != "awaiting_review":
+            print(f"error: the run ended in state {state}: {orch.record(rec.case_id).error}", file=sys.stderr)
+            return 1
+        out = orch.save_recording(rec.case_id, args.name, note=args.note)
+        mode = orch.record(rec.case_id).inference_mode
+    print(f"saved {out}  (inference: {mode}; replay it from the case board start screen or POST /api/replays/{args.name}/open)")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="alibi", description="ALIBI forensic proving ground")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -148,6 +176,13 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("steps", help="print the sealed executed-step record of an episode (operator only)")
     p.add_argument("episode_id")
     p.set_defaults(func=_cmd_steps)
+
+    p = sub.add_parser("record", help="run a preset and save it under demo/replays/<name> for offline replay")
+    p.add_argument("--preset", default="hero-coverup")
+    p.add_argument("--name", required=True, help="recording id, e.g. hero-coverup-fixture")
+    p.add_argument("--runner", default=None, help="deterministic | agent-fixture | agent-live (default: runtime default)")
+    p.add_argument("--note", default="")
+    p.set_defaults(func=_cmd_record)
 
     p = sub.add_parser("bench", help="run the declared offline benchmark suite (B0 and BR; no model calls)")
     p.add_argument("--check", action="store_true", help="only verify that the frozen config matches the code")

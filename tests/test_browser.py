@@ -260,3 +260,23 @@ def test_failed_case_shows_an_error_banner_not_a_spinner(server, page):
     page.goto(f"{base}/#case=case-000000000000")
     page.wait_for_selector(tid("preset-hero-coverup"))
     assert "no longer exists" in page.inner_text("body")
+
+
+def test_recorded_fixture_replays_in_the_browser_with_replay_labels(server, page):
+    base, _ = server
+    page.goto(base + "/")
+    page.wait_for_selector(tid("replay-hero-coverup-fixture"))
+    card = page.inner_text(tid("replay-hero-coverup-fixture"))
+    assert "REPLAY" in card and "Scripted fixture · no model inference" in card
+    page.click(tid("replay-hero-coverup-fixture"))
+    page.click(tid("btn-run"))
+    wait_state(page, "awaiting_review")
+    assert "REPLAY" in page.inner_text(tid("badge-playback"))
+    assert "Scripted fixture · no model inference" in page.inner_text(tid("badge-inference"))
+    page.wait_for_selector(tid("compare-row-retained"))
+    page.click(tid("btn-accept"))
+    wait_state(page, "report_locked")
+    page.click(tid("btn-unseal"))
+    wait_state(page, "scored")
+    assert page.inner_text(tid("score-recall")).startswith("3/3")
+    shot(page, "08-replay-score")
