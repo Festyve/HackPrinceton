@@ -16,7 +16,7 @@ from typing import Any, Iterator
 
 from alibi.contracts import ArtifactRef, Event
 
-NORMALIZER_VERSION = "1.0.0"
+NORMALIZER_VERSION = "1.1.0"  # 1.1.0: sensor and reference sources
 
 HOSTNAME_ROLES = {
     "ws-nurse-01": "workstation",

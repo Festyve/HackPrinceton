@@ -31,7 +31,11 @@ from alibi.sim.world import (
     logical_clock_base,
 )
 
+# SCENARIO_VERSION is part of every random seed below: changing it would change every generated case and
+# break byte-for-byte replay of saved recordings. It therefore stays "1.0.0" for good. What the catalog
+# contains is tracked separately.
 SCENARIO_VERSION = "1.0.0"
+SCENARIO_CATALOG_VERSION = "1.1.0"  # 1.1.0: records heist, cold chain, evasion and maintenance variants added
 
 CARD_INSIDE_JOB = "inside-job"
 CARDS: dict[str, dict[str, Any]] = {

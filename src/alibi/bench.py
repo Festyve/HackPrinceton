@@ -66,15 +66,34 @@ SYSTEMS: list[dict[str, Any]] = [
 ]
 
 
+# The component versions that produced offline-v1 and ai-pilot-v1. A record of what ran, not the current
+# code: later versions add case families and coverage rules without changing what these components
+# produce on the first-run cases (tests/test_m8_pins.py pins the bundles and both baselines' results).
+V1_VERSIONS = {"simulator": "1.0.0", "scenario": "1.0.0", "normalizer": "1.0.0", "verifier": "1.0.0",
+               "scorer": "1.0.0", "b0": "1.0.0", "br": "1.0.1"}
+V1_FROZEN_NOTE = ("offline-v1 and ai-pilot-v1 are complete and are kept exactly as recorded. They are never rerun or "
+                  "rewritten. The phase-two evaluation is a separate suite: `uv run alibi eval`.")
+
+
+def current_versions() -> dict[str, str]:
+    from alibi import checks, checks_families
+
+    from alibi.sim.scenario import SCENARIO_CATALOG_VERSION
+
+    return {"simulator": SIMULATOR_VERSION, "scenario_seed_namespace": SCENARIO_VERSION,
+            "scenario_catalog": SCENARIO_CATALOG_VERSION, "normalizer": NORMALIZER_VERSION,
+            "checks": checks.CHECKS_VERSION, "family_checks": checks_families.FAMILY_CHECKS_VERSION,
+            "verifier": verifier.VERIFIER_VERSION, "scorer": scoring.SCORER_VERSION,
+            "b0": baselines.B0_VERSION, "br": baselines.BR_VERSION}
+
+
 def frozen_config() -> dict[str, Any]:
-    """The evaluation configuration implied by the code. Must equal docs/evaluation-config.json."""
+    """The declared configuration of the first-run suite. Must equal docs/evaluation-config.json."""
     caps = RunCaps()
     return {
         "suite": SUITE,
         "evidence_origin": "SIM",
-        "versions": {"simulator": SIMULATOR_VERSION, "scenario": SCENARIO_VERSION, "normalizer": NORMALIZER_VERSION,
-                     "verifier": verifier.VERIFIER_VERSION, "scorer": scoring.SCORER_VERSION,
-                     "b0": baselines.B0_VERSION, "br": baselines.BR_VERSION},
+        "versions": dict(V1_VERSIONS),
         "seed_splits": {
             "development": "seeds 1-40: hand-inspected while building; used by the automated tests",
             "demo": [9023, 9002, 9003],

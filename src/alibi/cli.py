@@ -96,8 +96,8 @@ def _cmd_bench(args: argparse.Namespace) -> int:
     from alibi import bench
 
     if args.write_config:
-        print(f"wrote {bench.write_config()}")
-        return 0
+        print(f"refused: {bench.V1_FROZEN_NOTE}", file=sys.stderr)
+        return 2
     problems = bench.check_config()
     if problems:
         for line in problems:
@@ -106,8 +106,11 @@ def _cmd_bench(args: argparse.Namespace) -> int:
               "fresh test split (uv run alibi bench --write-config).", file=sys.stderr)
         return 1
     if args.check:
-        print("evaluation config matches the code: docs/evaluation-config.json")
+        print("the first-run declaration is intact: docs/evaluation-config.json")
         return 0
+    if bench.RESULTS_PATH.exists():
+        print(f"refused: {bench.V1_FROZEN_NOTE}", file=sys.stderr)
+        return 2
     settings = load_settings()
     doc = bench.run_offline_suite(settings)
     bench.write_outputs(doc)
@@ -267,6 +270,9 @@ def _cmd_pilot(args: argparse.Namespace) -> int:
     from alibi import bench
     from alibi.runners import RuntimeBlocked
 
+    if (bench.PILOT_DIR / "results.json").exists():
+        print(f"refused: {bench.V1_FROZEN_NOTE}\nNo model call was made.", file=sys.stderr)
+        return 2
     settings = load_settings()
     try:
         doc = bench.run_ai_pilot(settings)
@@ -319,7 +325,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("bench", help="run the declared offline benchmark suite (B0 and BR; no model calls)")
     p.add_argument("--check", action="store_true", help="only verify that the frozen config matches the code")
-    p.add_argument("--write-config", action="store_true", help="write docs/evaluation-config.json from the code")
+    p.add_argument("--write-config", action="store_true", help="(refused: the first-run declaration is frozen)")
     p.set_defaults(func=_cmd_bench)
 
     p = sub.add_parser("smoke", help="one tiny real model call to test tool calling (refused while live AI is blocked)")

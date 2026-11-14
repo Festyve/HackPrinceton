@@ -22,7 +22,7 @@ from typing import Any, Callable
 
 from alibi.contracts import iso
 
-SIMULATOR_VERSION = "1.0.0"
+SIMULATOR_VERSION = "1.1.0"  # 1.1.0: sensor/reference streams, forwarder control, metadata times; first-run output unchanged
 
 HOSTNAMES = {
     "workstation": "ws-nurse-01",

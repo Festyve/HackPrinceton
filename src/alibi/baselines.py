@@ -21,7 +21,7 @@ from alibi.contracts import AttributionAssessment, EvidenceManifest, Finding, In
 from alibi.evidence.store import EvidenceStore
 
 B0_VERSION = "1.0.0"
-BR_VERSION = "1.0.1"  # 1.0.1: ATT&CK label corrected (T1070.002 -> T1685.006); no rule or threshold changed
+BR_VERSION = "1.1.0"  # 1.0.1: ATT&CK label corrected. 1.1.0: phase-two families and coverage limits; first-run results unchanged
 
 # ----------------------------------------------------------------------------- B0
 

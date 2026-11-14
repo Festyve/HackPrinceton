@@ -33,7 +33,7 @@ from alibi.contracts import (
 from alibi.evidence.store import EvidenceStore
 from alibi.verifier import is_accepted
 
-SCORER_VERSION = "1.0.0"
+SCORER_VERSION = "1.1.0"  # 1.1.0: phase-two effect types; account identification N/A when no account was used
 TOLERANCE_S = 120
 MAX_WINDOW_S = 1800
 ANTI_FORENSIC_EFFECTS = ("local_log_removal",

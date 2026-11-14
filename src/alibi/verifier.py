@@ -23,7 +23,7 @@ from alibi import checks, checks_families
 from alibi.contracts import EvidenceManifest, Finding, InvestigationReport
 from alibi.evidence.store import EvidenceStore
 
-VERIFIER_VERSION = "1.0.0"
+VERIFIER_VERSION = "1.1.0"  # 1.1.0: predicates for the phase-two claim types; absent sources give "cannot be run"
 MAX_ALLEGATION_WINDOW_S = 1800
 WINDOW_TOLERANCE_S = 120
 
