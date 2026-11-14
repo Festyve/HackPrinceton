@@ -1,0 +1,168 @@
+{
+  "schema_version": "1.0.0",
+  "report_id": "rep-case-c1f77070fdb8",
+  "bundle_id": "bndl-09d0d60e11897238",
+  "system_id": "ALIBI",
+  "system_label": "Specialist review: lead + integrity-auditor + skeptic with deterministic checks (benchmark arm ALIBI)",
+  "inference_mode": "LIVE_MODEL",
+  "model_id": "anthropic:claude-haiku-5-5",
+  "findings": [
+    {
+      "id": "F-f1607a",
+      "claim_type": "retention_explained_absence",
+      "category": "benign_explanation",
+      "attack_id": null,
+      "technique_family": null,
+      "host": "workstation",
+      "actor_claimed": null,
+      "account_used": "adm-tkim",
+      "t_start": "2026-11-10T06:24:00Z",
+      "t_end": "2026-11-10T09:03:01Z",
+      "object_or_session": "/var/log/auth.log",
+      "evidence_ids": [
+        "ev_4a0e85b515a9",
+        "ev_a549c22f4e7b",
+        "ev_920dcee0bd00",
+        "ev_62202515b778",
+        "ev_8bf2a7cb20ae",
+        "ev_4bf470e12531",
+        "ev_3e38e717ee22",
+        "ev_8da5b5231e25",
+        "ev_3db562449529"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [],
+      "confidence": 0.85,
+      "rationale": "Collector retained auth.log lines that predate the local oldest kept generation. Scheduled rotation with keep=1 explains the absence. Logrotate was also run manually by adm-tkim at 12:13:58, which is a rotation action, not a removal.",
+      "assumptions": [],
+      "alternative_explanations": [
+        "Scheduled rotation discarded older generations",
+        "Manual logrotate run by adm-tkim"
+      ],
+      "status": "verified",
+      "verification_status": "supported_observation",
+      "verifier_notes": [
+        "a deterministic check supports this observation; it is not an incident allegation"
+      ],
+      "skeptic_note": "Rotation with keep=1 explains the pre-generation absence; no witness shows removal.",
+      "produced_by": "lead-investigator"
+    },
+    {
+      "id": "F-28b58f",
+      "claim_type": "retention_explained_absence",
+      "category": "benign_explanation",
+      "attack_id": null,
+      "technique_family": null,
+      "host": "records",
+      "actor_claimed": null,
+      "account_used": "none",
+      "t_start": "2026-11-10T06:27:35Z",
+      "t_end": "2026-11-10T09:03:04Z",
+      "object_or_session": "/var/log/records-app/access.log",
+      "evidence_ids": [
+        "ev_767b1e148a5e",
+        "ev_23713506db01",
+        "ev_144f50e216eb",
+        "ev_23540c9e37bb",
+        "ev_56ea1b11f535",
+        "ev_287154f7b463",
+        "ev_15f3e901642b"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [],
+      "confidence": 0.85,
+      "rationale": "Collector retained 199 access.log lines that predate the local generation. The 09:03:04 rotation (keep=0, archived off-host) explains the absence. The policy describes the rotated segment as archived off-host.",
+      "assumptions": [],
+      "alternative_explanations": [
+        "Scheduled rotation with off-host archive"
+      ],
+      "status": "verified",
+      "verification_status": "supported_observation",
+      "verifier_notes": [
+        "a deterministic check supports this observation; it is not an incident allegation"
+      ],
+      "skeptic_note": "Policy-defined keep=0 off-host archive explains the absence; collector retains the lines.",
+      "produced_by": "lead-investigator"
+    },
+    {
+      "id": "F-a14946",
+      "claim_type": "policy_consistent_transfer",
+      "category": "benign_explanation",
+      "attack_id": null,
+      "technique_family": null,
+      "host": "records",
+      "actor_claimed": null,
+      "account_used": "svc-backup",
+      "t_start": "2026-11-10T11:47:04Z",
+      "t_end": "2026-11-10T11:47:09Z",
+      "object_or_session": "10.20.0.45:873",
+      "evidence_ids": [
+        "ev_af3d54bea7b4"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [],
+      "confidence": 0.8,
+      "rationale": "17.5 MB flow from records to stor-nas-01 (10.20.0.45), an approved backup and log-archive destination. The bulk transfer is policy-consistent, with no staged object or overlapping session.",
+      "assumptions": [],
+      "alternative_explanations": [
+        "Scheduled backup to NAS"
+      ],
+      "status": "verified",
+      "verification_status": "supported_observation",
+      "verifier_notes": [
+        "a deterministic check supports this observation; it is not an incident allegation"
+      ],
+      "skeptic_note": "Destination is on the approved list; no violation.",
+      "produced_by": "lead-investigator"
+    }
+  ],
+  "attribution": {
+    "account_used": "adm-tkim, svc-backup, and workstation/records console accounts (kcole, sdubois)",
+    "session_ref": null,
+    "human_identity": "insufficient_evidence",
+    "named_person_accused": null,
+    "named_person_exonerated": null,
+    "supporting_evidence_ids": [],
+    "contrary_evidence_ids": [],
+    "assumptions": [],
+    "limits": [
+      "Account name identifies a credential, not a person",
+      "Badge records do not cover remote VPN sessions",
+      "Shared console credentials have been found written down before"
+    ],
+    "statement": "Account used; human operator not established. Account activity shows routine admin and rotation commands by adm-tkim and routine nurse-workstation sessions; no human is identified.",
+    "review_status": "accepted",
+    "approved_by_human": true,
+    "approved_at": "2026-11-14T09:15:35.080318Z"
+  },
+  "summary": "The investigator did not write a summary.",
+  "open_questions": [
+    "Incomplete run: stopped by the budget gateway: output token cap reached: 10000 used + 0 reserved leaves 0 of 10000, under the 256-token minimum."
+  ],
+  "usage": {
+    "llm_calls": 12,
+    "tokens_in": 134675,
+    "tokens_out": 10000,
+    "tokens_cache_read": 81620,
+    "cost_estimate_usd": 0.012447,
+    "wall_seconds": 51.145,
+    "tool_calls": 28,
+    "scripted_turns": 0,
+    "retries": 0,
+    "errors": 0,
+    "timed_out": false
+  },
+  "created_at": "2026-11-14T09:15:34.887941Z",
+  "locked": true,
+  "locked_at": "2026-11-14T09:15:35.080318Z",
+  "report_sha256": "600090a570f1549a448a4f34e836cb9c0e9f26828e27428d6fe1da0b8702a59e",
+  "review_history": [
+    {
+      "at": "2026-11-14T09:15:35.080318Z",
+      "decision": "accepted",
+      "by_human": true,
+      "note": "calibration run: accepted without human reading"
+    }
+  ],
+  "verifier_version": "1.0.0"
+}

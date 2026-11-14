@@ -1,0 +1,233 @@
+{
+  "schema_version": "1.0.0",
+  "report_id": "rep-case-9582d8478d35",
+  "bundle_id": "bndl-09d0d60e11897238",
+  "system_id": "ALIBI",
+  "system_label": "Specialist review: lead + integrity-auditor + skeptic with deterministic checks (benchmark arm ALIBI)",
+  "inference_mode": "LIVE_MODEL",
+  "model_id": "anthropic:claude-haiku-5-5",
+  "findings": [
+    {
+      "id": "F-084662",
+      "claim_type": "collection_gap",
+      "category": "unresolved",
+      "attack_id": null,
+      "technique_family": null,
+      "host": "records",
+      "actor_claimed": null,
+      "account_used": null,
+      "t_start": "2026-11-10T06:13:00Z",
+      "t_end": "2026-11-10T15:13:00Z",
+      "object_or_session": "/srv/records/patients.db",
+      "evidence_ids": [
+        "ev_d166c2ae65fb"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [],
+      "confidence": 0.3,
+      "rationale": "Point-in-time host-writable fs_stat only; no confirmed transfer or staging. Open note; shell histories and metadata are not forwarded.",
+      "assumptions": [],
+      "alternative_explanations": [],
+      "status": "downgraded_by_skeptic",
+      "verification_status": "structurally_valid",
+      "verifier_notes": [
+        "references resolve; no allegation is made"
+      ],
+      "skeptic_note": "Cited snapshot predates capture start; no coverage gap shown. Not retained as a finding.",
+      "produced_by": "lead-investigator"
+    },
+    {
+      "id": "F-1d953e",
+      "claim_type": "retention_explained_absence",
+      "category": "benign_explanation",
+      "attack_id": null,
+      "technique_family": null,
+      "host": "workstation",
+      "actor_claimed": null,
+      "account_used": null,
+      "t_start": "2026-11-10T06:24:00Z",
+      "t_end": "2026-11-10T08:52:17Z",
+      "object_or_session": "/var/log/auth.log",
+      "evidence_ids": [
+        "ev_4bf470e12531",
+        "ev_3e38e717ee22",
+        "ev_4a0e85b515a9",
+        "ev_a549c22f4e7b",
+        "ev_920dcee0bd00",
+        "ev_62202515b778",
+        "ev_8bf2a7cb20ae"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [],
+      "confidence": 0.85,
+      "rationale": "Collector retains 16 auth.log lines absent locally; all predate the oldest kept rotation generation (keep=1 policy).",
+      "assumptions": [],
+      "alternative_explanations": [],
+      "status": "verified",
+      "verification_status": "supported_observation",
+      "verifier_notes": [
+        "a deterministic check supports this observation; it is not an incident allegation"
+      ],
+      "skeptic_note": "Rotation with keep=1 explains absence predating local coverage; no unexplained absence.",
+      "produced_by": "lead-investigator"
+    },
+    {
+      "id": "F-0624a5",
+      "claim_type": "retention_explained_absence",
+      "category": "benign_explanation",
+      "attack_id": null,
+      "technique_family": null,
+      "host": "records",
+      "actor_claimed": null,
+      "account_used": null,
+      "t_start": "2026-11-10T06:27:35Z",
+      "t_end": "2026-11-10T09:02:57Z",
+      "object_or_session": "/var/log/records-app/access.log",
+      "evidence_ids": [
+        "ev_767b1e148a5e",
+        "ev_23713506db01",
+        "ev_144f50e216eb",
+        "ev_23540c9e37bb",
+        "ev_56ea1b11f535",
+        "ev_287154f7b463",
+        "ev_15f3e901642b"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [],
+      "confidence": 0.85,
+      "rationale": "199 collector-retained access.log lines absent locally predate the 09:03 rotation whose segment is archived off-host (keep=0).",
+      "assumptions": [],
+      "alternative_explanations": [],
+      "status": "verified",
+      "verification_status": "supported_observation",
+      "verifier_notes": [
+        "a deterministic check supports this observation; it is not an incident allegation"
+      ],
+      "skeptic_note": "Off-host archived rotation explains absence; archive not inspected, so plausible but unverified.",
+      "produced_by": "lead-investigator"
+    },
+    {
+      "id": "F-0d734f",
+      "claim_type": "policy_consistent_transfer",
+      "category": "benign_explanation",
+      "attack_id": null,
+      "technique_family": null,
+      "host": "workstation",
+      "actor_claimed": null,
+      "account_used": "kcole, sdubois",
+      "t_start": "2026-11-10T07:50:23Z",
+      "t_end": "2026-11-10T11:59:37Z",
+      "object_or_session": "10.20.8.20:80",
+      "evidence_ids": [
+        "ev_fb5e99c46936",
+        "ev_28ead8e78033",
+        "ev_db4c70c8b90a",
+        "ev_eb9d24c6da64",
+        "ev_f6ab12973bb7",
+        "ev_75989ccd6b1b",
+        "ev_d70331230141",
+        "ev_57a32c48155f",
+        "ev_44876811f3be",
+        "ev_e1b198c8092e"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [],
+      "confidence": 0.75,
+      "rationale": "Ten curl uploads of lab PDFs to approved lab-gw-01 (10.20.8.20); each file created by clinic-labs just before upload. Approved destination, so not policy-violating.",
+      "assumptions": [],
+      "alternative_explanations": [],
+      "status": "proposed",
+      "verification_status": "structurally_valid",
+      "verifier_notes": [
+        "references resolve; no allegation is made"
+      ],
+      "skeptic_note": "Approved lab destination; benign reading plausible, history host-writable and unconfirmed by flow sizes.",
+      "produced_by": "lead-investigator"
+    },
+    {
+      "id": "F-a14946",
+      "claim_type": "policy_consistent_transfer",
+      "category": "benign_explanation",
+      "attack_id": null,
+      "technique_family": null,
+      "host": "records",
+      "actor_claimed": null,
+      "account_used": null,
+      "t_start": "2026-11-10T11:47:04Z",
+      "t_end": "2026-11-10T11:47:09Z",
+      "object_or_session": "10.20.0.45:873",
+      "evidence_ids": [
+        "ev_af3d54bea7b4"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [],
+      "confidence": 0.85,
+      "rationale": "17.5 MB transfer to approved backup destination stor-nas-01; no non-approved destination or staged object linked.",
+      "assumptions": [],
+      "alternative_explanations": [],
+      "status": "verified",
+      "verification_status": "supported_observation",
+      "verifier_notes": [
+        "a deterministic check supports this observation; it is not an incident allegation"
+      ],
+      "skeptic_note": "Approved backup NAS destination; no linked staged object. Byte counts only, content unverified.",
+      "produced_by": "lead-investigator"
+    }
+  ],
+  "attribution": {
+    "account_used": "kcole, sdubois, adm-tkim",
+    "session_ref": null,
+    "human_identity": "insufficient_evidence",
+    "named_person_accused": null,
+    "named_person_exonerated": null,
+    "supporting_evidence_ids": [
+      "ev_fb5e99c46936",
+      "ev_af3d54bea7b4"
+    ],
+    "contrary_evidence_ids": [],
+    "assumptions": [],
+    "limits": [
+      "Shell histories and fs_stat are host-writable and not forwarded",
+      "Flows show bytes, not content",
+      "Rotated access.log archive not inspected"
+    ],
+    "statement": "Account used; human operator not established. Accounts show activity but no person is identified; account names identify credentials only. Shared-station credentials have been found written down before, and remote VPN sessions are not covered by badge records.",
+    "review_status": "accepted",
+    "approved_by_human": true,
+    "approved_at": "2026-11-14T09:18:19.885393Z"
+  },
+  "summary": "Bundle bndl-09d0d60e11897238 (Northside Clinic, 2026-11-10 06:13-15:13 UTC). The evidence does not support an incident. No local log removal, data staging, or policy-violating transfer was established. Findings: (1) workstation /var/log/auth.log has 16 collector-retained lines absent locally, all before the 09:03 rotation; explained by keep=1 rotation policy (F-1d953e, verified). (2) records /var/log/records-app/access.log has 199 collector-retained lines absent locally, before the 09:03 rotation whose segment was archived off-host (F-0624a5, verified; archive not inspected). (3) records transferred 17.5 MB to 10.20.0.45:873 (stor-nas-01, approved backup) at 11:47 (F-a14946, verified). (4) workstation uploaded lab PDFs via curl to 10.20.8.20 (lab-gw-01, approved) between 07:50 and 11:59 under accounts kcole and sdubois (F-0d734f, verified as structurally valid; benign reading plausible, history is host-writable). The patients.db collection-gap note was downgraded: the cited snapshot predates capture start and shows no gap. Attribution: accounts kcole, sdubois, and adm-tkim show activity; no human operator is established. Account names identify credentials, not people, and no person is accused or cleared.",
+  "open_questions": [
+    "Contents of the 17.5 MB transfer to stor-nas-01 are not verified; flows show bytes only. Confirm it matches the scheduled backup job.",
+    "Confirm the off-host archive of the 09:03 access.log rotation on stor-nas-01 contains the 199 absent lines.",
+    "Shell histories and fs_stat are host-writable and not forwarded; the lab PDF uploads and the patients.db metadata are not independently confirmed.",
+    "Remote VPN sessions (vpn-gw-01) are not covered by badge records; who used the kcole, sdubois and adm-tkim credentials cannot be established from this bundle.",
+    "Shared-station credentials have been found written down before; consider credential hygiene review."
+  ],
+  "usage": {
+    "llm_calls": 13,
+    "tokens_in": 175631,
+    "tokens_out": 13453,
+    "tokens_cache_read": 117937,
+    "cost_estimate_usd": 0.015117,
+    "wall_seconds": 59.944,
+    "tool_calls": 27,
+    "scripted_turns": 0,
+    "retries": 0,
+    "errors": 0,
+    "timed_out": false
+  },
+  "created_at": "2026-11-14T09:18:16.447455Z",
+  "locked": true,
+  "locked_at": "2026-11-14T09:18:19.885393Z",
+  "report_sha256": "07e6cf50f0e6251523746b9bb9f6bc1756d2b2cc98566c416f32767eeb4cd26b",
+  "review_history": [
+    {
+      "at": "2026-11-14T09:18:19.885393Z",
+      "decision": "accepted",
+      "by_human": true,
+      "note": "calibration run: accepted without human reading"
+    }
+  ],
+  "verifier_version": "1.0.0"
+}

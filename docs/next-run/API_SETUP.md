@@ -35,8 +35,14 @@ LLM_PRICE_IN_PER_MTOK=0.10
 LLM_PRICE_OUT_PER_MTOK=0.50
 LLM_EFFORT=low
 LLM_MAX_TOKENS_PER_CALL=3000
+LLM_MAX_CALLS_PER_RUN=24
+LLM_MAX_INPUT_TOKENS_PER_RUN=300000
+LLM_MAX_OUTPUT_TOKENS_PER_RUN=20000
+LLM_MAX_SECONDS_PER_RUN=240
 LANGSMITH_TRACING=false
 ```
+
+The four per-investigation caps were raised for this profile after calibration (November 14): the specialist graph on Haiku 5.5 hit the earlier 10,000-token output cap before requesting review. At these prices the worst case for one investigation is under $0.05. Results: `benchmarks/calibration/`.
 
 Check availability and provider arguments once; avoid repeated probes. Keep every role on the same model/rates. Preserve historical spend on changes.
 

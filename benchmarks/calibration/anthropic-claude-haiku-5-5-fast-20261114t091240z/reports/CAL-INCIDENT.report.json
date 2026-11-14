@@ -1,0 +1,206 @@
+{
+  "schema_version": "1.0.0",
+  "report_id": "rep-case-77fb0caa084b",
+  "bundle_id": "bndl-38444a23e29d17aa",
+  "system_id": "B1+",
+  "system_label": "Fast investigation: one agent with deterministic checks, no delegation (same configuration as benchmark arm B1+)",
+  "inference_mode": "LIVE_MODEL",
+  "model_id": "anthropic:claude-haiku-5-5",
+  "findings": [
+    {
+      "id": "F-085d96",
+      "claim_type": "local_log_removal",
+      "category": "incident_allegation",
+      "attack_id": "T1070.002",
+      "technique_family": "defense-evasion",
+      "host": "workstation",
+      "actor_claimed": null,
+      "account_used": "aokafor",
+      "t_start": "2026-11-10T12:09:20Z",
+      "t_end": "2026-11-10T12:14:47Z",
+      "object_or_session": "/var/log/auth.log",
+      "evidence_ids": [
+        "ev_e62718d6aeb3",
+        "ev_62e39ecfad2e",
+        "ev_3d127607c87d",
+        "ev_b25215e817e2",
+        "ev_2ce1f673ccd1",
+        "ev_df139103e0dd"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [
+        "check_local_vs_collector"
+      ],
+      "confidence": 0.6,
+      "rationale": "The collector holds the session 48 login line (seq 31, 12:09:20) for ws-nurse-01, but the local workstation auth.log lacks it while lines from session 47 (before) and session 48 logout (after) are present. The 08:54 rotation predates the line and keep=1 still retains .1, so rotation does not explain the absence. The check classifies this as an unexplained local absence; the cause (deletion vs. other fault) is not established by the bundle.",
+      "assumptions": [],
+      "alternative_explanations": [],
+      "status": "verified",
+      "verification_status": "supported_observation",
+      "verifier_notes": [
+        "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+      ],
+      "skeptic_note": null,
+      "produced_by": "single-agent"
+    },
+    {
+      "id": "F-074c14",
+      "claim_type": "data_staging",
+      "category": "incident_allegation",
+      "attack_id": "T1074",
+      "technique_family": "collection/staging",
+      "host": "workstation",
+      "actor_claimed": null,
+      "account_used": "aokafor",
+      "t_start": "2026-11-10T12:10:48Z",
+      "t_end": "2026-11-10T12:10:53Z",
+      "object_or_session": "/home/aokafor/Downloads/rx-7f3.db",
+      "evidence_ids": [
+        "ev_bc105d097fa5",
+        "ev_7c317736cd5b",
+        "ev_a40a5b08f51d",
+        "ev_5d4380193d58",
+        "ev_bd76e992fe09"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [
+        "check_transfer_sessions"
+      ],
+      "confidence": 0.85,
+      "rationale": "A patients_full export (20.6 MB) was created by clinic-export under account aokafor at 12:10:48, recorded by records-app as export_bulk (client 10.20.1.21) and by the collector copy, and a 20,593,451-byte file appeared at /home/aokafor/Downloads/rx-7f3.db per fs_stat. Staging in a user Downloads directory is not an approved bulk path.",
+      "assumptions": [],
+      "alternative_explanations": [],
+      "status": "verified",
+      "verification_status": "supported_observation",
+      "verifier_notes": [
+        "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+      ],
+      "skeptic_note": null,
+      "produced_by": "single-agent"
+    },
+    {
+      "id": "F-06fde0",
+      "claim_type": "policy_violating_transfer",
+      "category": "incident_allegation",
+      "attack_id": "T1048",
+      "technique_family": "exfiltration",
+      "host": "workstation",
+      "actor_claimed": null,
+      "account_used": "aokafor",
+      "t_start": "2026-11-10T12:13:01Z",
+      "t_end": "2026-11-10T12:13:14Z",
+      "object_or_session": "10.20.9.39:8080",
+      "evidence_ids": [
+        "ev_e2d94b8f787d",
+        "ev_1974c6bfa594",
+        "ev_62e39ecfad2e",
+        "ev_3d127607c87d"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [
+        "check_transfer_sessions"
+      ],
+      "confidence": 0.85,
+      "rationale": "Shell history shows curl -T uploading rx-7f3.db to http://10.20.9.39:8080 at 12:13:01. The tap recorded 20,597,307 bytes out from 10.20.1.21 to 10.20.9.39:8080, which is not on the approved bulk-destination list. This overlaps console session workstation#48 (login 12:09:20, logout 12:14:47).",
+      "assumptions": [],
+      "alternative_explanations": [],
+      "status": "verified",
+      "verification_status": "supported_observation",
+      "verifier_notes": [
+        "bulk transfer to a destination not on the approved list, cited via the flow record"
+      ],
+      "skeptic_note": null,
+      "produced_by": "single-agent"
+    },
+    {
+      "id": "F-6d99af",
+      "claim_type": "policy_consistent_transfer",
+      "category": "benign_explanation",
+      "attack_id": null,
+      "technique_family": null,
+      "host": "records",
+      "actor_claimed": null,
+      "account_used": null,
+      "t_start": "2026-11-10T11:40:04Z",
+      "t_end": "2026-11-10T11:40:10Z",
+      "object_or_session": "10.20.0.45:873",
+      "evidence_ids": [
+        "ev_f818915baa9e"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [],
+      "confidence": 0.7,
+      "rationale": "A 20.6 MB outbound transfer from records to 10.20.0.45:873 (stor-nas-01, approved backup and log archive destination) with no overlapping interactive session or staged object. Consistent with scheduled backup; policy-consistent.",
+      "assumptions": [],
+      "alternative_explanations": [],
+      "status": "verified",
+      "verification_status": "supported_observation",
+      "verifier_notes": [
+        "a deterministic check supports this observation; it is not an incident allegation"
+      ],
+      "skeptic_note": null,
+      "produced_by": "single-agent"
+    }
+  ],
+  "attribution": {
+    "account_used": "aokafor",
+    "session_ref": null,
+    "human_identity": "insufficient_evidence",
+    "named_person_accused": null,
+    "named_person_exonerated": null,
+    "supporting_evidence_ids": [
+      "ev_bc105d097fa5",
+      "ev_7c317736cd5b",
+      "ev_e2d94b8f787d",
+      "ev_1974c6bfa594",
+      "ev_bd76e992fe09"
+    ],
+    "contrary_evidence_ids": [
+      "ev_62e39ecfad2e"
+    ],
+    "assumptions": [],
+    "limits": [
+      "An account name identifies a credential, not a person.",
+      "Badge records show taps, not who is at the console; tailgating and shared credentials are not excluded.",
+      "The local log removal is an unexplained absence; the bundle does not establish who removed it or why.",
+      "Remote session origin not established; console origin is per the session record."
+    ],
+    "statement": "Account aokafor was used for a console session (workstation#48, 12:09:20-12:14:47 UTC) that produced a patients_full export, staged it at /home/aokafor/Downloads/rx-7f3.db, and uploaded it to 10.20.9.39:8080, a destination not on the approved list. The account holder's badge had tapped out before the login, so the holder's presence at the console is not supported. The human operator is not established: the credential may have been used by someone else, via tailgating, or the badge event was missed.",
+    "review_status": "accepted",
+    "approved_by_human": true,
+    "approved_at": "2026-11-14T09:13:08.793789Z"
+  },
+  "summary": "Findings on bundle bndl-38444a23e29d17aa (Northside Clinic, 2026-11-10 shift):\n1) Data staging (incident allegation): at 12:10:48-12:10:53 UTC, a patients_full export (~20.6 MB) was created via clinic-export under account aokafor on workstation and staged at /home/aokafor/Downloads/rx-7f3.db. Records-app logged export_bulk; collector copy confirms it.\n2) Policy-violating transfer (incident allegation): at 12:13:01-12:13:14 UTC, curl uploaded that file to 10.20.9.39:8080 (~20.6 MB out). This destination is not on the approved bulk list (10.20.0.45, 10.20.8.20). It overlaps console session workstation#48 (12:09:20-12:14:47).\n3) Local log removal candidate (incident allegation, moderate confidence): the collector holds the session 48 login line for workstation's auth.log, but the local copy lacks it. Lines before and after are present, and the absence postdates the 08:54 rotation, which keeps one generation. The cause is not established.\nBenign: a 20.6 MB transfer from records to approved stor-nas-01 (10.20.0.45:873) at 11:40 is policy-consistent. Records access.log local gaps before 08:54 are explained by rotation with keep=0 (not an incident).\nAttribution: account aokafor was used. The badge for that account had tapped out at 11:55:42, before the 12:09:20 console login. The human operator is not established; tailgating, a shared credential, or a missed badge event remain possible. No person is named.\nLimits: the file reads for records auth.log, fs_stat and adm-vrao history failed with permission errors, so findings rely on the search and check tools. Remote sessions are not covered by badge records.",
+  "open_questions": [
+    "Who physically operated the console at 12:09-12:14 (badge tailgating or credential sharing)?",
+    "Why is the session 48 login line absent from the local workstation auth.log? Deletion or other fault is not established.",
+    "What is 10.20.9.39 and was the upload authorized?",
+    "Access to records auth.log, records fs_stat and adm-vrao bash_history failed with permission errors; their contents were not directly reviewed."
+  ],
+  "usage": {
+    "llm_calls": 6,
+    "tokens_in": 84271,
+    "tokens_out": 5406,
+    "tokens_cache_read": 63455,
+    "cost_estimate_usd": 0.005939,
+    "wall_seconds": 24.269,
+    "tool_calls": 12,
+    "scripted_turns": 0,
+    "retries": 0,
+    "errors": 0,
+    "timed_out": false
+  },
+  "created_at": "2026-11-14T09:13:04.865160Z",
+  "locked": true,
+  "locked_at": "2026-11-14T09:13:08.793789Z",
+  "report_sha256": "240f6aefb1162407cc644e63a137853f45086d84d96ce9317a582bc1348c9317",
+  "review_history": [
+    {
+      "at": "2026-11-14T09:13:08.793789Z",
+      "decision": "accepted",
+      "by_human": true,
+      "note": "calibration run: accepted without human reading"
+    }
+  ],
+  "verifier_version": "1.0.0"
+}

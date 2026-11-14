@@ -1,0 +1,163 @@
+{
+  "schema_version": "1.0.0",
+  "report_id": "rep-case-7359deba10fa",
+  "bundle_id": "bndl-38444a23e29d17aa",
+  "system_id": "ALIBI",
+  "system_label": "Specialist review: lead + integrity-auditor + skeptic with deterministic checks (benchmark arm ALIBI)",
+  "inference_mode": "LIVE_MODEL",
+  "model_id": "anthropic:claude-haiku-5-5",
+  "findings": [
+    {
+      "id": "F-048b75",
+      "claim_type": "local_log_removal",
+      "category": "incident_allegation",
+      "attack_id": "T1070.002",
+      "technique_family": "indicator_removal",
+      "host": "workstation",
+      "actor_claimed": null,
+      "account_used": "aokafor",
+      "t_start": "2026-11-10T12:09:20Z",
+      "t_end": "2026-11-10T12:09:20Z",
+      "object_or_session": "/var/log/auth.log",
+      "evidence_ids": [
+        "ev_e62718d6aeb3",
+        "ev_62e39ecfad2e",
+        "ev_3d127607c87d",
+        "ev_b25215e817e2",
+        "ev_2ce1f673ccd1",
+        "ev_df139103e0dd"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [],
+      "confidence": 0.8,
+      "rationale": "Collector witness has the 12:09:20 aokafor login (session 48) that is absent from the workstation local auth.log, bracketed by local session 47 and 48 entries. The 08:54 rotation predates the line.",
+      "assumptions": [],
+      "alternative_explanations": [
+        "Logging fault on ws-nurse-01 unrelated to deliberate removal",
+        "Local copy lost during rotation handling"
+      ],
+      "status": "verified",
+      "verification_status": "supported_observation",
+      "verifier_notes": [
+        "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+      ],
+      "skeptic_note": null,
+      "produced_by": "lead-investigator"
+    },
+    {
+      "id": "F-074c14",
+      "claim_type": "data_staging",
+      "category": "incident_allegation",
+      "attack_id": "T1074.001",
+      "technique_family": "data_staging",
+      "host": "workstation",
+      "actor_claimed": null,
+      "account_used": "aokafor",
+      "t_start": "2026-11-10T12:10:48Z",
+      "t_end": "2026-11-10T12:10:53Z",
+      "object_or_session": "/home/aokafor/Downloads/rx-7f3.db",
+      "evidence_ids": [
+        "ev_bc105d097fa5",
+        "ev_7c317736cd5b",
+        "ev_a40a5b08f51d",
+        "ev_5d4380193d58",
+        "ev_bd76e992fe09"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [],
+      "confidence": 0.85,
+      "rationale": "Shell history shows clinic-export of patients_full to rx-7f3.db. Records app logs export_bulk of 20,593,451 bytes; tap shows matching 20.6 MB retrieval; fs_stat shows the file at that size owned by aokafor.",
+      "assumptions": [],
+      "alternative_explanations": [
+        "Authorised bulk export for a legitimate task; no ticket in evidence"
+      ],
+      "status": "verified",
+      "verification_status": "supported_observation",
+      "verifier_notes": [
+        "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+      ],
+      "skeptic_note": null,
+      "produced_by": "lead-investigator"
+    },
+    {
+      "id": "F-06fde0",
+      "claim_type": "policy_violating_transfer",
+      "category": "incident_allegation",
+      "attack_id": "T1048",
+      "technique_family": "exfiltration",
+      "host": "workstation",
+      "actor_claimed": null,
+      "account_used": "aokafor",
+      "t_start": "2026-11-10T12:13:01Z",
+      "t_end": "2026-11-10T12:13:14Z",
+      "object_or_session": "10.20.9.39:8080",
+      "evidence_ids": [
+        "ev_1974c6bfa594",
+        "ev_e2d94b8f787d",
+        "ev_bc105d097fa5",
+        "ev_bd76e992fe09"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [],
+      "confidence": 0.85,
+      "rationale": "Tap flow shows 20,597,307 bytes out from the workstation to 10.20.9.39:8080, above the 5 MB threshold and not approved. Shell curl -T uploads rx-7f3.db to that host.",
+      "assumptions": [],
+      "alternative_explanations": [
+        "Flow shows bytes and endpoints, not content",
+        "Unrecorded approved relay (not on approved list)"
+      ],
+      "status": "verified",
+      "verification_status": "supported_observation",
+      "verifier_notes": [
+        "bulk transfer to a destination not on the approved list, cited via the flow record"
+      ],
+      "skeptic_note": null,
+      "produced_by": "lead-investigator"
+    }
+  ],
+  "attribution": {
+    "account_used": null,
+    "session_ref": null,
+    "human_identity": "not_assessed",
+    "named_person_accused": null,
+    "named_person_exonerated": null,
+    "supporting_evidence_ids": [],
+    "contrary_evidence_ids": [],
+    "assumptions": [],
+    "limits": [],
+    "statement": "The investigator did not submit an attribution assessment.",
+    "review_status": "accepted",
+    "approved_by_human": true,
+    "approved_at": "2026-11-14T09:14:43.289018Z"
+  },
+  "summary": "The investigator did not write a summary.",
+  "open_questions": [
+    "Incomplete run: stopped by the budget gateway: output token cap reached: 9981 used + 0 reserved leaves 19 of 10000, under the 256-token minimum."
+  ],
+  "usage": {
+    "llm_calls": 10,
+    "tokens_in": 113398,
+    "tokens_out": 9981,
+    "tokens_cache_read": 61506,
+    "cost_estimate_usd": 0.012091,
+    "wall_seconds": 50.55,
+    "tool_calls": 17,
+    "scripted_turns": 0,
+    "retries": 0,
+    "errors": 0,
+    "timed_out": false
+  },
+  "created_at": "2026-11-14T09:14:43.046903Z",
+  "locked": true,
+  "locked_at": "2026-11-14T09:14:43.289018Z",
+  "report_sha256": "1241fbb10a5c690d1b5b1c054680f234c0fc4a33e9e057fdea020dde3132bf32",
+  "review_history": [
+    {
+      "at": "2026-11-14T09:14:43.289018Z",
+      "decision": "accepted",
+      "by_human": true,
+      "note": "calibration run: accepted without human reading"
+    }
+  ],
+  "verifier_version": "1.0.0"
+}

@@ -1,0 +1,243 @@
+{
+  "schema_version": "1.0.0",
+  "report_id": "rep-case-140a66f1f7b8",
+  "bundle_id": "bndl-09d0d60e11897238",
+  "system_id": "B1+",
+  "system_label": "Fast investigation: one agent with deterministic checks, no delegation (same configuration as benchmark arm B1+)",
+  "inference_mode": "LIVE_MODEL",
+  "model_id": "anthropic:claude-haiku-5-5",
+  "findings": [
+    {
+      "id": "F-4f6d14",
+      "claim_type": "collection_gap",
+      "category": "unresolved",
+      "attack_id": null,
+      "technique_family": null,
+      "host": "workstation",
+      "actor_claimed": null,
+      "account_used": null,
+      "t_start": "2026-11-10T12:13:58Z",
+      "t_end": "2026-11-10T12:14:01Z",
+      "object_or_session": "/var/log/auth.log",
+      "evidence_ids": [
+        "ev_3db562449529",
+        "ev_87fdb8bb569f",
+        "ev_b2a907647162"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [
+        "check_local_vs_collector"
+      ],
+      "confidence": 0.5,
+      "rationale": "At 12:13:58 adm-tkim ran a forced logrotate on the workstation, and the rotation at 12:14:01 discarded an older auth.log generation. The check attributes the absence to rotation, so this is recorded as an open note, not an incident.",
+      "assumptions": [],
+      "alternative_explanations": [],
+      "status": "proposed",
+      "verification_status": "structurally_valid",
+      "verifier_notes": [
+        "references resolve; no allegation is made"
+      ],
+      "skeptic_note": null,
+      "produced_by": "single-agent"
+    },
+    {
+      "id": "F-f1607a",
+      "claim_type": "retention_explained_absence",
+      "category": "benign_explanation",
+      "attack_id": null,
+      "technique_family": null,
+      "host": "workstation",
+      "actor_claimed": null,
+      "account_used": null,
+      "t_start": "2026-11-10T06:24:00Z",
+      "t_end": "2026-11-10T09:03:01Z",
+      "object_or_session": "/var/log/auth.log",
+      "evidence_ids": [
+        "ev_4a0e85b515a9",
+        "ev_a549c22f4e7b",
+        "ev_920dcee0bd00",
+        "ev_62202515b778",
+        "ev_8bf2a7cb20ae",
+        "ev_4bf470e12531",
+        "ev_3e38e717ee22"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [
+        "check_local_vs_collector"
+      ],
+      "confidence": 0.8,
+      "rationale": "The local-vs-collector check found 16 collector lines absent locally, all predating the oldest kept log generation (rotation at 09:03:01 with keep=1). No unexplained local absence was reported. Rotation at 12:14:01 discarded an older generation, which accounts for the boundary. Benign retention.",
+      "assumptions": [],
+      "alternative_explanations": [],
+      "status": "verified",
+      "verification_status": "supported_observation",
+      "verifier_notes": [
+        "a deterministic check supports this observation; it is not an incident allegation"
+      ],
+      "skeptic_note": null,
+      "produced_by": "single-agent"
+    },
+    {
+      "id": "F-28b58f",
+      "claim_type": "retention_explained_absence",
+      "category": "benign_explanation",
+      "attack_id": null,
+      "technique_family": null,
+      "host": "records",
+      "actor_claimed": null,
+      "account_used": null,
+      "t_start": "2026-11-10T06:27:35Z",
+      "t_end": "2026-11-10T09:03:04Z",
+      "object_or_session": "/var/log/records-app/access.log",
+      "evidence_ids": [
+        "ev_767b1e148a5e",
+        "ev_23713506db01",
+        "ev_144f50e216eb",
+        "ev_23540c9e37bb",
+        "ev_56ea1b11f535",
+        "ev_287154f7b463",
+        "ev_15f3e901642b"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [
+        "check_local_vs_collector"
+      ],
+      "confidence": 0.75,
+      "rationale": "199 collector lines are absent locally, all before the 09:03:04 rotation boundary (keep=0, segment archived off-host). No unexplained local absence was reported. Benign retention; the archived segment is not in this capture.",
+      "assumptions": [],
+      "alternative_explanations": [],
+      "status": "verified",
+      "verification_status": "supported_observation",
+      "verifier_notes": [
+        "a deterministic check supports this observation; it is not an incident allegation"
+      ],
+      "skeptic_note": null,
+      "produced_by": "single-agent"
+    },
+    {
+      "id": "F-4f27d3",
+      "claim_type": "policy_consistent_transfer",
+      "category": "benign_explanation",
+      "attack_id": null,
+      "technique_family": null,
+      "host": "workstation",
+      "actor_claimed": null,
+      "account_used": null,
+      "t_start": "2026-11-10T07:50:17Z",
+      "t_end": "2026-11-10T10:10:48Z",
+      "object_or_session": "10.20.8.20:80",
+      "evidence_ids": [
+        "ev_fb5e99c46936",
+        "ev_28ead8e78033",
+        "ev_75989ccd6b1b",
+        "ev_1cd094b0ead2",
+        "ev_0b67c61d02c9",
+        "ev_5aa8f5953186"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [
+        "search_events shell_history curl"
+      ],
+      "confidence": 0.7,
+      "rationale": "Three curl uploads of lab request PDFs (about 370 KB, 574 KB, 482 KB) went to 10.20.8.20 (lab-gw-01), an approved laboratory and registry destination, and each is far below the 5 MB bulk threshold. Consistent with the lab workflow and policy. Account kcole.",
+      "assumptions": [],
+      "alternative_explanations": [],
+      "status": "proposed",
+      "verification_status": "structurally_valid",
+      "verifier_notes": [
+        "references resolve; no allegation is made"
+      ],
+      "skeptic_note": null,
+      "produced_by": "single-agent"
+    },
+    {
+      "id": "F-a14946",
+      "claim_type": "policy_consistent_transfer",
+      "category": "benign_explanation",
+      "attack_id": null,
+      "technique_family": null,
+      "host": "records",
+      "actor_claimed": null,
+      "account_used": null,
+      "t_start": "2026-11-10T11:47:04Z",
+      "t_end": "2026-11-10T11:47:09Z",
+      "object_or_session": "10.20.0.45:873",
+      "evidence_ids": [
+        "ev_af3d54bea7b4"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [
+        "check_transfer_sessions"
+      ],
+      "confidence": 0.8,
+      "rationale": "Bulk flow of about 17.5 MB from records to 10.20.0.45 (stor-nas-01, approved backup and log archive destination). Destination is on the approved list, so it is not a policy violation. No overlapping interactive session or staged object was linked by the transfer check.",
+      "assumptions": [],
+      "alternative_explanations": [],
+      "status": "verified",
+      "verification_status": "supported_observation",
+      "verifier_notes": [
+        "a deterministic check supports this observation; it is not an incident allegation"
+      ],
+      "skeptic_note": null,
+      "produced_by": "single-agent"
+    }
+  ],
+  "attribution": {
+    "account_used": "kcole",
+    "session_ref": null,
+    "human_identity": "insufficient_evidence",
+    "named_person_accused": null,
+    "named_person_exonerated": null,
+    "supporting_evidence_ids": [
+      "ev_fb5e99c46936",
+      "ev_6d94e4ecbf07",
+      "ev_4ddb90cb3de2"
+    ],
+    "contrary_evidence_ids": [
+      "ev_af3d54bea7b4"
+    ],
+    "assumptions": [],
+    "limits": [
+      "Account is a credential, not a person",
+      "Badge records do not establish who typed commands; tailgating and shared credentials are possible",
+      "No evidence of unexplained log removal or policy-violating bulk transfer in this window"
+    ],
+    "statement": "Account used; human operator not established. The shell activity on workstation (kcole) and records/workstation sessions (adm-tkim, sdubois) were attributable to credentials, not to identified people. The kcole console session at 12:05:36 occurred while the account holder's badge was inside, which is compatible with the holder and with anyone holding the credential.",
+    "review_status": "accepted",
+    "approved_by_human": true,
+    "approved_at": "2026-11-14T09:13:37.959933Z"
+  },
+  "summary": "Bundle bndl-09d0d60e11897238 (Northside Clinic, 2026-11-10 06:13-15:13 UTC). The tip asked about records access and transfers this shift. The evidence does not support an incident in this window.\n\nTransfers: One bulk outbound flow (~17.5 MB, records to 10.20.0.45 stor-nas-01, an approved backup destination) is policy-consistent (ev_af3d54bea7b4). Three kcole curl uploads of lab request PDFs went to 10.20.8.20 (lab-gw-01, approved), each well under the 5 MB threshold. No policy-violating bulk transfer was found.\n\nLog integrity: The local-vs-collector check found no unexplained local absence. Missing workstation auth.log lines (16) and records access.log lines (199) all predate the oldest retained generation after scheduled rotation. The workstation forced logrotate by adm-tkim at 12:13:58 is recorded as an open note only.\n\nAttribution: The kcole account was used for a console session at 12:05:36 while the badge for that account was inside the building. This is compatible with the holder or with anyone holding the credential. Account used; human operator not established. No person is named as responsible or cleared.\n\nNot assessed: Staged files in /var/tmp/xfer (imm-registry-100/101/102.db, Aug-Oct 2026) and census CSVs have metadata dated outside this shift and are not linked to any in-window transfer. Printing census-1109.csv via lpr (kcole, 07:01 and 07:10) is not a transfer and was not assessed further.",
+  "open_questions": [
+    "Who operated the kcole console session at 12:05 given the credential may be shared (written-down credentials noted in the brief)?",
+    "Why did adm-tkim force a logrotate on the workstation at 12:13:58? Obtain the change record.",
+    "What is the purpose of the /var/tmp/xfer imm-registry database copies dated Aug-Oct 2026, and were they transferred?",
+    "Remote sessions via vpn-gw-01 are not covered by badge records; no remote session was reviewed here."
+  ],
+  "usage": {
+    "llm_calls": 6,
+    "tokens_in": 132892,
+    "tokens_out": 6166,
+    "tokens_cache_read": 99037,
+    "cost_estimate_usd": 0.008305,
+    "wall_seconds": 26.266,
+    "tool_calls": 16,
+    "scripted_turns": 0,
+    "retries": 0,
+    "errors": 0,
+    "timed_out": false
+  },
+  "created_at": "2026-11-14T09:13:35.512354Z",
+  "locked": true,
+  "locked_at": "2026-11-14T09:13:37.959933Z",
+  "report_sha256": "e11c7948b079fa18d81e12f6432f4f9d127d1c9da98c8496bad777de65c99e5b",
+  "review_history": [
+    {
+      "at": "2026-11-14T09:13:37.959933Z",
+      "decision": "accepted",
+      "by_human": true,
+      "note": "calibration run: accepted without human reading"
+    }
+  ],
+  "verifier_version": "1.0.0"
+}

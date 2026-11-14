@@ -1,0 +1,189 @@
+{
+ "kind": "runtime-calibration",
+ "note": "Development cases only. An operational check, not a benchmark result.",
+ "run_id": "20261114T091240Z",
+ "generated_at": "2026-11-14T09:13:38.088260+00:00",
+ "mode": "fast",
+ "runner": "agent-live",
+ "model_requested": "anthropic:claude-haiku-5-5",
+ "effort": "low",
+ "max_tokens_per_call": 3000,
+ "price_in_per_mtok": 0.1,
+ "price_out_per_mtok": 0.5,
+ "caps": {
+  "max_calls": 16,
+  "max_input_tokens": 200000,
+  "max_output_tokens": 10000,
+  "max_seconds": 180.0,
+  "max_input_tokens_per_call": 40000
+ },
+ "cases": [
+  {
+   "ref": "CAL-INCIDENT",
+   "variant": "incident_coverup",
+   "seed": 17,
+   "kind": "incident",
+   "purpose": "development incident with a cover-up",
+   "status": "completed",
+   "error": null,
+   "checks": {
+    "full_report": true,
+    "citations_resolve": true,
+    "review_resume_locks": true,
+    "incident_effects_caught": true
+   },
+   "usage": {
+    "llm_calls": 6,
+    "tokens_in": 84271,
+    "tokens_out": 5406,
+    "tokens_cache_read": 63455,
+    "cost_estimate_usd": 0.005939,
+    "wall_seconds": 24.269,
+    "tool_calls": 12,
+    "scripted_turns": 0,
+    "retries": 0,
+    "errors": 0,
+    "timed_out": false
+   },
+   "stop_note": null,
+   "cited_ids": 14,
+   "unresolved_ids": [],
+   "findings": [
+    {
+     "claim_type": "local_log_removal",
+     "category": "incident_allegation",
+     "status": "verified",
+     "verification_status": "supported_observation"
+    },
+    {
+     "claim_type": "data_staging",
+     "category": "incident_allegation",
+     "status": "verified",
+     "verification_status": "supported_observation"
+    },
+    {
+     "claim_type": "policy_violating_transfer",
+     "category": "incident_allegation",
+     "status": "verified",
+     "verification_status": "supported_observation"
+    },
+    {
+     "claim_type": "policy_consistent_transfer",
+     "category": "benign_explanation",
+     "status": "verified",
+     "verification_status": "supported_observation"
+    }
+   ],
+   "effects": {
+    "caught": 3,
+    "missed": 0,
+    "total": 3
+   },
+   "false_claims_final": 0,
+   "attribution": {
+    "account_used": "aokafor",
+    "human_identity": "insufficient_evidence",
+    "named_person_accused": null,
+    "named_person_exonerated": null
+   },
+   "model_id": "anthropic:claude-haiku-5-5",
+   "inference_mode": "LIVE_MODEL",
+   "system_id": "B1+"
+  },
+  {
+   "ref": "CAL-BENIGN",
+   "variant": "benign_rotation",
+   "seed": 23,
+   "kind": "benign",
+   "purpose": "benign control: a log rotation that looks alarming in a naive diff",
+   "status": "completed",
+   "error": null,
+   "checks": {
+    "full_report": true,
+    "citations_resolve": true,
+    "review_resume_locks": true,
+    "benign_abstention": true
+   },
+   "usage": {
+    "llm_calls": 6,
+    "tokens_in": 132892,
+    "tokens_out": 6166,
+    "tokens_cache_read": 99037,
+    "cost_estimate_usd": 0.008305,
+    "wall_seconds": 26.266,
+    "tool_calls": 16,
+    "scripted_turns": 0,
+    "retries": 0,
+    "errors": 0,
+    "timed_out": false
+   },
+   "stop_note": null,
+   "cited_ids": 26,
+   "unresolved_ids": [],
+   "findings": [
+    {
+     "claim_type": "collection_gap",
+     "category": "unresolved",
+     "status": "proposed",
+     "verification_status": "structurally_valid"
+    },
+    {
+     "claim_type": "retention_explained_absence",
+     "category": "benign_explanation",
+     "status": "verified",
+     "verification_status": "supported_observation"
+    },
+    {
+     "claim_type": "retention_explained_absence",
+     "category": "benign_explanation",
+     "status": "verified",
+     "verification_status": "supported_observation"
+    },
+    {
+     "claim_type": "policy_consistent_transfer",
+     "category": "benign_explanation",
+     "status": "proposed",
+     "verification_status": "structurally_valid"
+    },
+    {
+     "claim_type": "policy_consistent_transfer",
+     "category": "benign_explanation",
+     "status": "verified",
+     "verification_status": "supported_observation"
+    }
+   ],
+   "effects": {
+    "caught": 0,
+    "missed": 0,
+    "total": 0
+   },
+   "false_claims_final": 0,
+   "attribution": {
+    "account_used": "kcole",
+    "human_identity": "insufficient_evidence",
+    "named_person_accused": null,
+    "named_person_exonerated": null
+   },
+   "model_id": "anthropic:claude-haiku-5-5",
+   "inference_mode": "LIVE_MODEL",
+   "system_id": "B1+"
+  }
+ ],
+ "criteria": {
+  "full_report": true,
+  "citations_resolve": true,
+  "review_resume_locks": true,
+  "benign_abstention": true,
+  "incident_effects_caught": true
+ },
+ "passed": true,
+ "estimated_cost_usd": 0.015625,
+ "category_ceiling_usd": 0.25,
+ "total_spend_after": {
+  "spent_usd": 2.93809,
+  "unreconciled_usd": 0.0,
+  "reserved_usd": 0,
+  "cap_usd": 20.0,
+  "limit_in_force_usd": 19.5
+ }
+}

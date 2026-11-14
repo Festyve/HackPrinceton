@@ -1,0 +1,233 @@
+{
+  "schema_version": "1.0.0",
+  "report_id": "rep-case-c9088f19ad27",
+  "bundle_id": "bndl-38444a23e29d17aa",
+  "system_id": "ALIBI",
+  "system_label": "Specialist review: lead + integrity-auditor + skeptic with deterministic checks (benchmark arm ALIBI)",
+  "inference_mode": "LIVE_MODEL",
+  "model_id": "anthropic:claude-haiku-5-5",
+  "findings": [
+    {
+      "id": "F-048b75",
+      "claim_type": "local_log_removal",
+      "category": "incident_allegation",
+      "attack_id": "T1070",
+      "technique_family": null,
+      "host": "workstation",
+      "actor_claimed": null,
+      "account_used": "aokafor",
+      "t_start": "2026-11-10T12:09:20Z",
+      "t_end": "2026-11-10T12:09:20Z",
+      "object_or_session": "/var/log/auth.log",
+      "evidence_ids": [
+        "ev_e62718d6aeb3",
+        "ev_62e39ecfad2e",
+        "ev_3d127607c87d",
+        "ev_b25215e817e2",
+        "ev_2ce1f673ccd1",
+        "ev_df139103e0dd"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [],
+      "confidence": 0.8,
+      "rationale": "Collector seq=31 records aokafor session 48 login absent from workstation auth.log, bracketed by local entries; the 08:54 rotation predates it and kept .1 on host, so rotation does not explain the gap. Tampering not confirmed; logging failure possible.",
+      "assumptions": [],
+      "alternative_explanations": [],
+      "status": "verified",
+      "verification_status": "supported_observation",
+      "verifier_notes": [
+        "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+      ],
+      "skeptic_note": "Absence established against collector witness; removal vs write failure unresolved.",
+      "produced_by": "lead-investigator"
+    },
+    {
+      "id": "F-074c14",
+      "claim_type": "data_staging",
+      "category": "incident_allegation",
+      "attack_id": "T1074",
+      "technique_family": null,
+      "host": "workstation",
+      "actor_claimed": null,
+      "account_used": "aokafor",
+      "t_start": "2026-11-10T12:10:48Z",
+      "t_end": "2026-11-10T12:10:53Z",
+      "object_or_session": "/home/aokafor/Downloads/rx-7f3.db",
+      "evidence_ids": [
+        "ev_bc105d097fa5",
+        "ev_7c317736cd5b",
+        "ev_a40a5b08f51d",
+        "ev_bd76e992fe09",
+        "ev_5d4380193d58"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [],
+      "confidence": 0.9,
+      "rationale": "Shell history shows a bulk export of patients_full to rx-7f3.db; records app logged export_bulk of 20,593,451 bytes to 10.20.1.21; fs_stat shows the file owned by aokafor; tap shows the matching retrieval flow.",
+      "assumptions": [],
+      "alternative_explanations": [],
+      "status": "verified",
+      "verification_status": "supported_observation",
+      "verifier_notes": [
+        "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+      ],
+      "skeptic_note": "Multi-source staging chain; authorization not excluded only by absence of approval record.",
+      "produced_by": "lead-investigator"
+    },
+    {
+      "id": "F-06fde0",
+      "claim_type": "policy_violating_transfer",
+      "category": "incident_allegation",
+      "attack_id": "T1048",
+      "technique_family": null,
+      "host": "workstation",
+      "actor_claimed": null,
+      "account_used": "aokafor",
+      "t_start": "2026-11-10T12:13:01Z",
+      "t_end": "2026-11-10T12:13:14Z",
+      "object_or_session": "10.20.9.39:8080",
+      "evidence_ids": [
+        "ev_1974c6bfa594",
+        "ev_e2d94b8f787d"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [],
+      "confidence": 0.9,
+      "rationale": "Tap flow shows 20,597,307 bytes outbound from workstation to 10.20.9.39:8080, above the 5,000,000-byte threshold and not an approved destination; shell history shows curl -T uploading rx-7f3.db.",
+      "assumptions": [],
+      "alternative_explanations": [],
+      "status": "verified",
+      "verification_status": "supported_observation",
+      "verifier_notes": [
+        "bulk transfer to a destination not on the approved list, cited via the flow record"
+      ],
+      "skeptic_note": "Unapproved destination, 20.6 MB above threshold, curl upload of staged file.",
+      "produced_by": "lead-investigator"
+    },
+    {
+      "id": "F-5a5829",
+      "claim_type": "retention_explained_absence",
+      "category": "benign_explanation",
+      "attack_id": null,
+      "technique_family": null,
+      "host": "records",
+      "actor_claimed": null,
+      "account_used": null,
+      "t_start": "2026-11-10T06:16:31Z",
+      "t_end": "2026-11-10T08:53:29Z",
+      "object_or_session": "/var/log/records-app/access.log",
+      "evidence_ids": [
+        "ev_44a70dde8512",
+        "ev_a60c4685c2fa",
+        "ev_09853b646592",
+        "ev_4a0532a2d423",
+        "ev_67596cad6e4d",
+        "ev_52eddc47b8f2",
+        "ev_d2b362d3a166"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [],
+      "confidence": 0.9,
+      "rationale": "Pre-08:54 access.log lines absent locally are explained by keep-0 rotation with the segment archived off-host; collector retains them.",
+      "assumptions": [],
+      "alternative_explanations": [],
+      "status": "verified",
+      "verification_status": "supported_observation",
+      "verifier_notes": [
+        "a deterministic check supports this observation; it is not an incident allegation"
+      ],
+      "skeptic_note": "Keep-0 rotation explains the absence; benign.",
+      "produced_by": "lead-investigator"
+    },
+    {
+      "id": "F-6d99af",
+      "claim_type": "policy_consistent_transfer",
+      "category": "benign_explanation",
+      "attack_id": null,
+      "technique_family": null,
+      "host": "records",
+      "actor_claimed": null,
+      "account_used": null,
+      "t_start": "2026-11-10T11:40:04Z",
+      "t_end": "2026-11-10T11:40:10Z",
+      "object_or_session": "10.20.0.45:873",
+      "evidence_ids": [
+        "ev_f818915baa9e"
+      ],
+      "counterevidence_ids": [],
+      "check_refs": [],
+      "confidence": 0.85,
+      "rationale": "About 20.6 MB transfer to approved backup destination stor-nas-01; no linked session or staging; consistent with scheduled backup.",
+      "assumptions": [],
+      "alternative_explanations": [],
+      "status": "verified",
+      "verification_status": "supported_observation",
+      "verifier_notes": [
+        "a deterministic check supports this observation; it is not an incident allegation"
+      ],
+      "skeptic_note": "Approved backup destination; no linked session.",
+      "produced_by": "lead-investigator"
+    }
+  ],
+  "attribution": {
+    "account_used": "aokafor",
+    "session_ref": null,
+    "human_identity": "unknown",
+    "named_person_accused": null,
+    "named_person_exonerated": null,
+    "supporting_evidence_ids": [
+      "ev_e62718d6aeb3",
+      "ev_bc105d097fa5",
+      "ev_7c317736cd5b",
+      "ev_bd76e992fe09",
+      "ev_1974c6bfa594",
+      "ev_e2d94b8f787d"
+    ],
+    "contrary_evidence_ids": [],
+    "assumptions": [],
+    "limits": [
+      "Account is a credential, not a person",
+      "Host-local logs are writable; collector is the independent witness",
+      "Flow records show volume, not content",
+      "No approval record retrieved"
+    ],
+    "statement": "Account aokafor was used for console session workstation#48 (12:09 to 12:14 UTC), which carries the log gap, staging, export and unapproved upload. The human operator is not established. Badge B-5315 was out during the session, but badge records are not conclusive (tailgating, remote access, shared credentials). This neither identifies nor clears any person.",
+    "review_status": "accepted",
+    "approved_by_human": true,
+    "approved_at": "2026-11-14T09:17:16.007413Z"
+  },
+  "summary": "Bundle bndl-38444a23e29d17aa (Northside Clinic, 2026-11-10 06:05-15:05 UTC). Supported incident chain on workstation under account aokafor, console session workstation#48 (12:09-12:14 UTC): (1) the session's login entry is absent from workstation /var/log/auth.log though the collector holds it (seq 31); the 08:54 rotation does not explain this, so it is a possible local log removal, not proven deliberate; (2) a bulk export of patients_full (20,593,451 bytes) to /home/aokafor/Downloads/rx-7f3.db, owned by aokafor; (3) an outbound transfer of 20,597,307 bytes to 10.20.9.39:8080, an unapproved destination above the 5 MB threshold, via curl upload of that file. Benign items: records access.log pre-08:54 absence is explained by keep-0 rotation; a 20.6 MB transfer to approved backup stor-nas-01 (10.20.0.45:873) at 11:40 is policy-consistent. Attribution: account aokafor used; human operator not established. Badge B-5315 was out during the session, but badge records do not clear or identify anyone.",
+  "open_questions": [
+    "Who used the aokafor credential during session workstation#48, and from where (console vs. VPN 10.20.0.250)? Shared console credentials have been found written down before.",
+    "Was the export of patients_full authorized? No approval record was retrieved.",
+    "What is 10.20.9.39 and was the upload received/used there?",
+    "Was the auth.log entry removed deliberately or lost through a local write failure?",
+    "Is the 11:40 transfer to stor-nas-01 the scheduled backup job? Not verified by a cited record."
+  ],
+  "usage": {
+    "llm_calls": 13,
+    "tokens_in": 144717,
+    "tokens_out": 12781,
+    "tokens_cache_read": 104486,
+    "cost_estimate_usd": 0.012463,
+    "wall_seconds": 63.578,
+    "tool_calls": 25,
+    "scripted_turns": 0,
+    "retries": 0,
+    "errors": 0,
+    "timed_out": false
+  },
+  "created_at": "2026-11-14T09:17:12.083497Z",
+  "locked": true,
+  "locked_at": "2026-11-14T09:17:16.007413Z",
+  "report_sha256": "78479d30157284524bf0096fc2ac5a5328f6655956c44ec133e72c36fb293a5a",
+  "review_history": [
+    {
+      "at": "2026-11-14T09:17:16.007413Z",
+      "decision": "accepted",
+      "by_human": true,
+      "note": "calibration run: accepted without human reading"
+    }
+  ],
+  "verifier_version": "1.0.0"
+}

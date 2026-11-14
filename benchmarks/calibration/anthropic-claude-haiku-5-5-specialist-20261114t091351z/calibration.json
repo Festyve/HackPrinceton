@@ -1,0 +1,171 @@
+{
+ "kind": "runtime-calibration",
+ "note": "Development cases only. An operational check, not a benchmark result.",
+ "run_id": "20261114T091351Z",
+ "generated_at": "2026-11-14T09:15:35.160426+00:00",
+ "mode": "specialist",
+ "runner": "agent-live",
+ "model_requested": "anthropic:claude-haiku-5-5",
+ "effort": "low",
+ "max_tokens_per_call": 3000,
+ "price_in_per_mtok": 0.1,
+ "price_out_per_mtok": 0.5,
+ "caps": {
+  "max_calls": 16,
+  "max_input_tokens": 200000,
+  "max_output_tokens": 10000,
+  "max_seconds": 180.0,
+  "max_input_tokens_per_call": 40000
+ },
+ "cases": [
+  {
+   "ref": "CAL-INCIDENT",
+   "variant": "incident_coverup",
+   "seed": 17,
+   "kind": "incident",
+   "purpose": "development incident with a cover-up",
+   "status": "completed",
+   "error": null,
+   "checks": {
+    "full_report": false,
+    "citations_resolve": true,
+    "review_resume_locks": false,
+    "incident_effects_caught": true
+   },
+   "usage": {
+    "llm_calls": 10,
+    "tokens_in": 113398,
+    "tokens_out": 9981,
+    "tokens_cache_read": 61506,
+    "cost_estimate_usd": 0.012091,
+    "wall_seconds": 50.55,
+    "tool_calls": 17,
+    "scripted_turns": 0,
+    "retries": 0,
+    "errors": 0,
+    "timed_out": false
+   },
+   "stop_note": "Incomplete run: stopped by the budget gateway: output token cap reached: 9981 used + 0 reserved leaves 19 of 10000, under the 256-token minimum.",
+   "cited_ids": 13,
+   "unresolved_ids": [],
+   "findings": [
+    {
+     "claim_type": "local_log_removal",
+     "category": "incident_allegation",
+     "status": "verified",
+     "verification_status": "supported_observation"
+    },
+    {
+     "claim_type": "data_staging",
+     "category": "incident_allegation",
+     "status": "verified",
+     "verification_status": "supported_observation"
+    },
+    {
+     "claim_type": "policy_violating_transfer",
+     "category": "incident_allegation",
+     "status": "verified",
+     "verification_status": "supported_observation"
+    }
+   ],
+   "effects": {
+    "caught": 3,
+    "missed": 0,
+    "total": 3
+   },
+   "false_claims_final": 0,
+   "attribution": {
+    "account_used": null,
+    "human_identity": "not_assessed",
+    "named_person_accused": null,
+    "named_person_exonerated": null
+   },
+   "model_id": "anthropic:claude-haiku-5-5",
+   "inference_mode": "LIVE_MODEL",
+   "system_id": "ALIBI"
+  },
+  {
+   "ref": "CAL-BENIGN",
+   "variant": "benign_rotation",
+   "seed": 23,
+   "kind": "benign",
+   "purpose": "benign control: a log rotation that looks alarming in a naive diff",
+   "status": "completed",
+   "error": null,
+   "checks": {
+    "full_report": false,
+    "citations_resolve": true,
+    "review_resume_locks": false,
+    "benign_abstention": true
+   },
+   "usage": {
+    "llm_calls": 12,
+    "tokens_in": 134675,
+    "tokens_out": 10000,
+    "tokens_cache_read": 81620,
+    "cost_estimate_usd": 0.012447,
+    "wall_seconds": 51.145,
+    "tool_calls": 28,
+    "scripted_turns": 0,
+    "retries": 0,
+    "errors": 0,
+    "timed_out": false
+   },
+   "stop_note": "Incomplete run: stopped by the budget gateway: output token cap reached: 10000 used + 0 reserved leaves 0 of 10000, under the 256-token minimum.",
+   "cited_ids": 17,
+   "unresolved_ids": [],
+   "findings": [
+    {
+     "claim_type": "retention_explained_absence",
+     "category": "benign_explanation",
+     "status": "verified",
+     "verification_status": "supported_observation"
+    },
+    {
+     "claim_type": "retention_explained_absence",
+     "category": "benign_explanation",
+     "status": "verified",
+     "verification_status": "supported_observation"
+    },
+    {
+     "claim_type": "policy_consistent_transfer",
+     "category": "benign_explanation",
+     "status": "verified",
+     "verification_status": "supported_observation"
+    }
+   ],
+   "effects": {
+    "caught": 0,
+    "missed": 0,
+    "total": 0
+   },
+   "false_claims_final": 0,
+   "attribution": {
+    "account_used": "adm-tkim, svc-backup, and workstation/records console accounts (kcole, sdubois)",
+    "human_identity": "insufficient_evidence",
+    "named_person_accused": null,
+    "named_person_exonerated": null
+   },
+   "model_id": "anthropic:claude-haiku-5-5",
+   "inference_mode": "LIVE_MODEL",
+   "system_id": "ALIBI"
+  }
+ ],
+ "criteria": {
+  "full_report": false,
+  "citations_resolve": true,
+  "review_resume_locks": false,
+  "benign_abstention": true,
+  "incident_effects_caught": true
+ },
+ "passed": false,
+ "estimated_cost_usd": 0.024538,
+ "category_ceiling_usd": 0.25,
+ "total_spend_after": {
+  "spent_usd": 2.962628,
+  "unreconciled_usd": 0.0,
+  "reserved_usd": 0,
+  "cap_usd": 20.0,
+  "limit_in_force_usd": 19.5
+ }
+}
