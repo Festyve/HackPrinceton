@@ -1,5 +1,5 @@
 {
-  "case_id": "case-cec0924bea79",
+  "case_id": "case-588b7fce9063",
   "state": "awaiting_review",
   "version": "worker-lab/1",
   "config": {
@@ -55,7 +55,7 @@
     "model_chose_fault_actions": false
   },
   "lineage": {
-    "root_case_id": "case-cec0924bea79",
+    "root_case_id": "case-588b7fce9063",
     "parent_case_id": null,
     "comparison": null,
     "changed": null

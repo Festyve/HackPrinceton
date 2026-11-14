@@ -195,6 +195,11 @@ def verify_report(report: InvestigationReport, store: EvidenceStore, manifest: E
     out = report.model_copy(deep=True)
     out.findings = [verify_finding(f, store, obs) for f in report.findings]
     out.verifier_version = VERIFIER_VERSION
+    if "lab" in manifest.operational_context:
+        # worker lab: a claimed link from the account to a worker stays only if the scheduler's records support it
+        from alibi.lab.assignments import verify_worker_link
+
+        out = verify_worker_link(out, store, manifest)
     return out
 
 

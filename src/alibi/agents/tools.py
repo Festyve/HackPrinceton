@@ -347,6 +347,14 @@ class CaseToolbox:
         res = checks.assess_presence(self.store, self.manifest, str(session_id))
         return res, res.get("observation", ""), list(res.get("badge_event_ids", []))
 
+    def job_assignments(self) -> tuple[dict[str, Any], str, list[str]]:
+        """Worker lab: the scheduler's records against the recorded activity (see alibi.lab.assignments)."""
+        from alibi.lab import assignments
+
+        res = assignments.job_assignments(self.store, self.manifest)
+        summary, ids = assignments.summary(res)
+        return res, summary, ids
+
     def family_check(self, key: str) -> tuple[dict[str, Any], str, list[str]]:
         """One of the checks for the remaining case families (see FAMILY_CHECK_TOOLS)."""
         from alibi.runners import summarize_family
@@ -412,6 +420,8 @@ class CaseToolbox:
 
     def submit_attribution(self, **kw: Any) -> tuple[dict[str, Any], str, list[str]]:
         att = AttributionAssessment(
+            worker_id=(str(kw["worker_id"])[:16] if kw.get("worker_id") else None),
+            worker_link_evidence_ids=list(kw.get("worker_link_evidence_ids") or [])[:12],
             account_used=kw.get("account_used"), session_ref=kw.get("session_ref"),
             human_identity=kw.get("human_identity") or "insufficient_evidence",
             named_person_accused=kw.get("named_person_accused"), named_person_exonerated=kw.get("named_person_exonerated"),
@@ -451,6 +461,9 @@ class CaseToolbox:
         holds_checks = any(n in CHECK_TOOLS for n in names)
         if self.family and holds_checks:
             names += tuple(FAMILY_CHECK_TOOLS)
+        lab = "lab" in self.manifest.operational_context
+        if lab and holds_checks:
+            names += ("check_job_assignments",)
         tb = self
 
         def get_case_brief() -> str:
@@ -554,6 +567,34 @@ class CaseToolbox:
             return tb._run(role, "submit_attribution", {"account_used": account_used, "human_identity": human_identity},
                            lambda: tb.submit_attribution(**args), key_args=args)
 
+        def submit_attribution_lab(
+            statement: str, account_used: str | None = None,
+            human_identity: Literal["supported_named_actor", "unknown", "insufficient_evidence", "not_assessed"] = "insufficient_evidence",
+            session_ref: str | None = None, supporting_evidence_ids: list[str] | None = None,
+            contrary_evidence_ids: list[str] | None = None, limits: list[str] | None = None,
+            assumptions: list[str] | None = None, named_person_accused: str | None = None,
+            named_person_exonerated: str | None = None, worker_id: str | None = None,
+            worker_link_evidence_ids: list[str] | None = None,
+        ) -> str:
+            """Record the attribution assessment. Keep three things apart: the account that was used, the worker
+            the scheduler's records assign that account to (worker_id, with those assignment records as
+            worker_link_evidence_ids), and whoever or whatever used the credential, which these records do not show.
+            A worker link that the scheduler's records do not support is removed."""
+            args = dict(statement=statement, account_used=account_used, human_identity=human_identity,
+                        session_ref=session_ref, supporting_evidence_ids=supporting_evidence_ids,
+                        contrary_evidence_ids=contrary_evidence_ids, limits=limits, assumptions=assumptions,
+                        named_person_accused=named_person_accused, named_person_exonerated=named_person_exonerated,
+                        worker_id=worker_id, worker_link_evidence_ids=worker_link_evidence_ids)
+            return tb._run(role, "submit_attribution", {"account_used": account_used, "worker_id": worker_id,
+                                                        "human_identity": human_identity},
+                           lambda: tb.submit_attribution(**args), key_args=args)
+
+        def check_job_assignments() -> str:
+            """Deterministic check. The scheduler's own records of which worker and account were given which job,
+            and each recorded action by a worker account that no assigned job explains. It ties an account to a
+            worker's assignments; it does not show which process used the credential."""
+            return tb._run(role, "check_job_assignments", {}, lambda: tb.job_assignments())
+
         def finalize_report(summary: str, open_questions: list[str] | None = None) -> str:
             """Submit the report for human review. Execution pauses until a reviewer accepts or rejects it."""
             return tb._run(role, "finalize_report", {}, lambda: tb.finalize_report(summary, open_questions or []))
@@ -597,7 +638,10 @@ class CaseToolbox:
                                              check_local_vs_collector, check_transfer_sessions, check_account_vs_person,
                                              check_record_exports, check_cross_host_sessions, check_forwarding,
                                              check_file_times, check_shell_history, check_sensor_streams,
-                                             submit_finding, record_skeptic_verdict, submit_attribution, finalize_report)}
+                                             submit_finding, record_skeptic_verdict, submit_attribution, finalize_report,
+                                             check_job_assignments)}
+        if lab:  # a worker-lab bundle: the attribution may carry a worker link. Every other bundle keeps its schema
+            available["submit_attribution"] = submit_attribution_lab
         out = [StructuredTool.from_function(available[n], name=n) for n in names]
         for t in out:
             if t.name == "submit_finding":

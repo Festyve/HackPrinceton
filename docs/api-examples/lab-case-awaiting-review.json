@@ -1,10 +1,10 @@
 {
   "case": {
-    "case_id": "case-cec0924bea79",
+    "case_id": "case-588b7fce9063",
     "state": "awaiting_review",
     "detail": "report drafted; waiting for a human to accept or reject it",
-    "created_at": "2026-11-14T20:38:35.921582+00:00",
-    "updated_at": "2026-11-14T20:38:36.110306+00:00",
+    "created_at": "2026-11-14T22:12:28.522382+00:00",
+    "updated_at": "2026-11-14T22:12:28.733787+00:00",
     "preset_id": null,
     "title": "Worker lab \u00b7 run 11",
     "card_id": "worker-lab",
@@ -23,8 +23,8 @@
     "review_decision": null,
     "review_note": "",
     "timings": {
-      "generate_s": 0.119,
-      "investigate_s": 0.033
+      "generate_s": 0.132,
+      "investigate_s": 0.036
     },
     "scored": true,
     "parent_case_id": null,
@@ -84,7 +84,7 @@
         "model_chose_fault_actions": false
       },
       "lineage": {
-        "root_case_id": "case-cec0924bea79",
+        "root_case_id": "case-588b7fce9063",
         "parent_case_id": null,
         "comparison": null,
         "changed": null
@@ -179,6 +179,15 @@
     "attribution": {
       "account_used": "wk-ingest",
       "session_ref": null,
+      "worker_id": "W1",
+      "worker_link_evidence_ids": [
+        "ev_56995c4d3ca7",
+        "ev_06ab40307296",
+        "ev_28466c598b67",
+        "ev_b4b5f8a1ae69",
+        "ev_33e195e84c77",
+        "ev_2812563536f7"
+      ],
       "human_identity": "insufficient_evidence",
       "named_person_accused": null,
       "named_person_exonerated": null,
@@ -186,9 +195,10 @@
       "contrary_evidence_ids": [],
       "assumptions": [],
       "limits": [
-        "an account identifies a credential, not the person typing"
+        "an account identifies a credential, not the person typing",
+        "The scheduler's records tie an account to a worker's assignments. They do not show which process used the credential, and they say nothing about a person."
       ],
-      "statement": "Account used: wk-ingest. Human operator not established.",
+      "statement": "Account used: wk-ingest. Human operator not established. The scheduler's records assign this account to worker W1 (ingest jobs). 2 of its recorded action(s) are explained by no assigned job. The records do not show which process used the credential.",
       "review_status": "pending",
       "approved_by_human": false,
       "approved_at": null

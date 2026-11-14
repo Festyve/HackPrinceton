@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any, Callable, Protocol
 
 from alibi import baselines, checks, checks_families
+from alibi.lab import assignments as lab_assignments
 from alibi.config import Settings
 from alibi.contracts import EvidenceManifest, InvestigationReport, Usage
 from alibi.evidence.store import EvidenceStore
@@ -205,6 +206,18 @@ class DeterministicRunner:
             ctx.pace()
         todo(3)
         body = baselines.compose(rec, xfer, presence, fam, "F")
+        if lab_assignments.applies(ctx.manifest):
+            # worker lab: what the scheduler's own records say about the account, added to the attribution
+            t = time.perf_counter()
+            assigned = lab_assignments.job_assignments(ctx.store, ctx.manifest)
+            summary, ids = lab_assignments.summary(assigned)
+            ctx.emit("tool", {"agent": "deterministic-checks", "tool": "check_job_assignments", "args": {},
+                              "result_summary": summary, "evidence_ids": ids, "ok": True,
+                              "ms": int((time.perf_counter() - t) * 1000)})
+            tool_calls += 1
+            before = body["attribution"]
+            body["attribution"] = lab_assignments.worker_link(before, assigned)
+            body["summary"] = body["summary"].replace(before.statement, body["attribution"].statement)
         findings = body["findings"]
         for f in findings:
             ctx.emit("finding", {"finding": f.model_dump(mode="json"), "phase": "proposed"})

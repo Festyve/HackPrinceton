@@ -195,8 +195,9 @@ def score_report(report: InvestigationReport, key: AnswerKey, store: EvidenceSto
 
     if benign:
         account_ok, account_na = None, "no incident occurred; account identification is not applicable"
-    elif not any(s.step_name in LOGIN_STEP_NAMES for s in key.steps):
-        # phase two: an incident whose executed steps involved no account at all (e.g. a stored sensor record)
+    elif not any(s.step_name in LOGIN_STEP_NAMES for s in key.steps) and not key.attribution.account_used:
+        # phase two: an incident whose executed steps involved no account at all (e.g. a stored sensor record).
+        # A worker-lab incident has no login step either, but its truth names the changed worker's account.
         account_ok, account_na = None, "no account was used in the executed steps; account identification is not applicable"
     else:
         account_ok = report.attribution.account_used is not None and \
@@ -205,6 +206,14 @@ def score_report(report: InvestigationReport, key: AnswerKey, store: EvidenceSto
 
     recall = Ratio.na("no-crime case: recall is not applicable") if benign else \
         Ratio.of(tp, len(observable), na_reason="no observable scorable effect")
+    # worker lab: the truth names a worker; the report may tie the account to one through the scheduler's records
+    truth_worker = key.attribution.operator_true if str(key.attribution.operator_true or "").startswith("worker:") else None
+    if truth_worker is None:
+        worker_ok, worker_na = None, "not a worker-lab incident"
+    elif not report.attribution.worker_id:
+        worker_ok, worker_na = None, "the report tied the account to no worker"
+    else:
+        worker_ok, worker_na = f"worker:{report.attribution.worker_id}" == truth_worker, None
     return Score(
         scorer_version=SCORER_VERSION, report_id=report.report_id, episode_id=key.episode_id,
         system_id=report.system_id, inference_mode=report.inference_mode, case_kind=key.case_kind,
@@ -219,6 +228,7 @@ def score_report(report: InvestigationReport, key: AnswerKey, store: EvidenceSto
         coverup_detected=coverup,
         coverup_detected_na_reason=None if anti else "no successful anti-forensic effect in this case",
         account_identification_correct=account_ok, account_identification_na_reason=account_na,
+        worker_link_correct=worker_ok, worker_link_na_reason=worker_na,
         attribution_abstained=abstained, unsupported_named_attribution=unsupported_named,
         false_accusation=false_accusation, named_attribution_correct=named_correct,
         benign_false_alert=(len(accepted) > 0) if benign else None,

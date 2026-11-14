@@ -12,6 +12,8 @@ export interface ArtifactRef {
 export interface AttributionAssessment {
   account_used?: string | null;
   session_ref?: string | null;
+  worker_id?: string | null;
+  worker_link_evidence_ids?: Array<string>;
   human_identity?: "supported_named_actor" | "unknown" | "insufficient_evidence" | "not_assessed";
   named_person_accused?: string | null;
   named_person_exonerated?: string | null;
@@ -212,6 +214,8 @@ export interface Score {
   coverup_detected_na_reason?: string | null;
   account_identification_correct?: boolean | null;
   account_identification_na_reason?: string | null;
+  worker_link_correct?: boolean | null;
+  worker_link_na_reason?: string | null;
   attribution_abstained: boolean;
   unsupported_named_attribution?: number;
   false_accusation?: boolean;

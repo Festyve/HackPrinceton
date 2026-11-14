@@ -11,13 +11,18 @@ from alibi.contracts import InvestigationReport, ReviewEvent
 
 def report_digest(report: InvestigationReport) -> str:
     """Hash of the substantive content (findings, attribution, summary), not lock metadata."""
+    attribution = report.attribution.model_dump(mode="json", exclude={"review_status", "approved_by_human", "approved_at"})
+    # Fields added after reports were first locked count toward the digest only when they carry something, so a
+    # report locked before they existed still verifies, and a report that does carry them is covered.
+    for added_later in ("worker_id", "worker_link_evidence_ids"):
+        if not attribution.get(added_later):
+            attribution.pop(added_later, None)
     body = {
         "bundle_id": report.bundle_id,
         "system_id": report.system_id,
         "inference_mode": report.inference_mode,
         "findings": [f.model_dump(mode="json") for f in report.findings],
-        "attribution": report.attribution.model_dump(
-            mode="json", exclude={"review_status", "approved_by_human", "approved_at"}),
+        "attribution": attribution,
         "summary": report.summary,
         "open_questions": report.open_questions,
     }

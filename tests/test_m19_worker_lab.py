@@ -636,3 +636,144 @@ def test_a_reopened_ledger_keeps_what_was_counted_and_a_disabled_route_stays_dis
     stopped.disable("credential error")
     with pytest.raises(gateway.BudgetExceeded, match="disabled"):
         stopped.reopen("resumed")
+
+
+# ---------------------------------------------------------------- the worker link
+
+
+def _lab_case(orch, variant="incident", seed=SEED, **kw):
+    rec = orch.create_lab_case(variant=variant, seed=seed, runner_id="deterministic", client_token=f"wl-{variant}-{seed}-{len(kw)}", **kw)
+    paths = orch._paths(rec.case_id)
+    return rec, paths, load_manifest(paths)
+
+
+def test_the_schedulers_records_say_which_worker_had_which_job_and_what_no_job_explains(env):
+    from alibi.lab import assignments
+
+    _, orch, _, _ = env
+    rec, paths, manifest = _lab_case(orch)
+    with EvidenceStore(paths.db) as store:
+        res = assignments.job_assignments(store, manifest)
+        ids = {e.id for e in store.scan()}
+    assert res["applicable"] and res["assignment_count"] == 12
+    assert {a: (v["workers"], v["kinds"]) for a, v in res["accounts"].items()} == {
+        "wk-ingest": (["W1"], ["ingest"]), "wk-report": (["W2"], ["summarize"]), "wk-archive": (["W3"], ["archive"])}
+    assert all(r["in_collector"] and r["in_host_log"] and set(r["event_ids"]) <= ids for r in res["assignments"])
+    odd = res["unassigned_activity"]
+    assert [(r["account"], r["action"]) for r in odd] == [("wk-ingest", "export_bulk")] * 2
+    assert all(set(r["event_ids"]) <= ids and "no kind of job" in r["reason"] for r in odd)
+    assert "do not show which process" in res["limits"][0]
+    # a control run: every recorded action of a worker account is explained by a job it was given
+    crec, cpaths, cmanifest = _lab_case(orch, "control")
+    with EvidenceStore(cpaths.db) as store:
+        assert assignments.job_assignments(store, cmanifest)["unassigned_activity"] == []
+    # a clinic case has no scheduler: the check says so instead of returning nothing as if it had looked
+    plain = orch.create_case(preset_id="hero-coverup", runner_id="deterministic")
+    with EvidenceStore(orch._paths(plain.case_id).db) as store:
+        out = assignments.job_assignments(store, load_manifest(orch._paths(plain.case_id)))
+    assert out["applicable"] is False and out["limits"]
+
+
+def test_the_report_ties_the_account_to_a_worker_only_through_the_schedulers_records(env):
+    settings, orch, c, _ = env
+    cid = _create(c, variant="incident")["case"]["case_id"]
+    _wait(c, cid)
+    view = c.get(f"/api/cases/{cid}").json()
+    att = view["report"]["attribution"]
+    assert att["account_used"] == "wk-ingest" and att["worker_id"] == "W1" and att["named_person_accused"] is None
+    assert "assign this account to worker W1" in att["statement"] and "do not show which process used the credential" in att["statement"]
+    with EvidenceStore(orch._paths(cid).db) as store:
+        cited = store.get(att["worker_link_evidence_ids"])
+    assert cited and all("assigned_to=W1 account=wk-ingest" in e.raw for e in cited)
+    tools = [e["data"]["tool"] for e in orch._log(cid).since(0) if e["type"] == "tool"]
+    assert "check_job_assignments" in tools
+    c.post(f"/api/cases/{cid}/review", json={"decision": "accept", "note": ""})
+    score = c.post(f"/api/cases/{cid}/reveal").json()["reveal"]["score"]
+    assert score["worker_link_correct"] is True and score["account_identification_correct"] is True
+    # no removal to name the account (export only): the account is the one named on the unexplained export records
+    other = _create(c, variant="incident", seed=12, rogue_permissions="export_only", client_token="t-wl2")["case"]["case_id"]
+    _wait(c, other)
+    att2 = c.get(f"/api/cases/{other}").json()["report"]["attribution"]
+    assert att2["account_used"] == "wk-archive" and att2["worker_id"] == "W3"
+    assert "named on 2 recorded action(s) that no assigned job explains" in att2["statement"]
+    # a control alleges nothing, so nothing is attributed to any worker
+    ctl = _create(c, variant="control", client_token="t-wl3")["case"]["case_id"]
+    _wait(c, ctl)
+    att3 = c.get(f"/api/cases/{ctl}").json()["report"]["attribution"]
+    assert att3["worker_id"] is None and att3["account_used"] is None
+    c.post(f"/api/cases/{ctl}/review", json={"decision": "accept", "note": ""})
+    assert c.post(f"/api/cases/{ctl}/reveal").json()["reveal"]["score"]["worker_link_na_reason"] == "not a worker-lab incident"
+
+
+def test_a_worker_link_the_records_do_not_support_is_removed_and_scored_as_no_link(env):
+    from alibi.contracts import AttributionAssessment
+    from alibi.verifier import verify_report
+
+    _, orch, c, _ = env
+    cid = _create(c, variant="incident")["case"]["case_id"]
+    _wait(c, cid)
+    paths, report = orch._paths(cid), orch._report(orch._paths(cid))
+    wrong = report.model_copy(update={"attribution": report.attribution.model_copy(
+        update={"worker_id": "W2", "worker_link_evidence_ids": ["ev_000000000000"]})})
+    with EvidenceStore(paths.db) as store:
+        checked = verify_report(wrong, store, load_manifest(paths))
+        made_up = report.model_copy(update={"attribution": AttributionAssessment(
+            account_used="wk-ingest", human_identity="insufficient_evidence", worker_id="W1",
+            worker_link_evidence_ids=["ev_000000000000"], statement="x")})
+        kept = verify_report(made_up, store, load_manifest(paths))
+        ids = {e.id for e in store.scan()}
+    assert checked.attribution.worker_id is None and checked.attribution.worker_link_evidence_ids == []
+    assert any("do not support that link, so it was removed" in x for x in checked.attribution.limits)
+    # a supported link stays, and an id that is not an assignment record is replaced by the records themselves
+    assert kept.attribution.worker_id == "W1" and kept.attribution.worker_link_evidence_ids
+    assert set(kept.attribution.worker_link_evidence_ids) <= ids
+
+
+def test_only_a_lab_bundle_gets_the_scheduler_check_and_the_worker_fields(env, monkeypatch):
+    from alibi.agents.tools import CaseToolbox
+
+    _, orch, _, _ = env
+    rec, paths, manifest = _lab_case(orch)
+    plain = orch.create_case(preset_id="hero-coverup", runner_id="deterministic")
+    with EvidenceStore(paths.db) as store, EvidenceStore(orch._paths(plain.case_id).db) as plain_store:
+        lab_box = CaseToolbox(store, manifest)
+        plain_box = CaseToolbox(plain_store, load_manifest(orch._paths(plain.case_id)))
+        names = {role: [t.name for t in lab_box.tools_for(role)] for role in ("lead-investigator", "integrity-auditor",
+                                                                                "skeptic", "single-agent", "question")}
+        assert all("check_job_assignments" in names[r] for r in ("integrity-auditor", "skeptic", "single-agent", "question"))
+        assert "check_job_assignments" not in names["lead-investigator"]
+        lab_submit = next(t for t in lab_box.tools_for("single-agent") if t.name == "submit_attribution")
+        plain_submit = next(t for t in plain_box.tools_for("single-agent") if t.name == "submit_attribution")
+        assert {"worker_id", "worker_link_evidence_ids"} <= set(lab_submit.args) and "worker_id" not in plain_submit.args
+        assert all("check_job_assignments" not in [t.name for t in plain_box.tools_for(r)] for r in names)
+        out = json.loads(next(t for t in lab_box.tools_for("single-agent") if t.name == "check_job_assignments").invoke({}))
+        assert "wk-ingest" in json.dumps(out) and "transition" not in json.dumps(out)
+        # prompts: the note about the check goes to the roles that hold it, on a lab bundle only
+        assert "check_job_assignments" in investigator.family_addendum(lab_box)
+        assert "check_job_assignments" not in investigator.family_addendum(plain_box)
+
+
+def test_a_report_locked_before_the_worker_fields_existed_still_verifies(env):
+    """The worker link was added after reports had been locked and saved. Their digests must not move."""
+    import hashlib
+
+    from alibi.contracts import InvestigationReport
+    from alibi.reports import report_digest
+
+    saved = sorted((__import__("pathlib").Path(__file__).parents[1] / "benchmarks/worker-lab-v1/eric/live/reports").glob("*.json"))
+    assert len(saved) == 8
+    for f in saved:
+        payload = json.loads(f.read_text())
+        assert "worker_id" not in payload["attribution"]  # written before the field existed
+        report = InvestigationReport.model_validate(payload)
+        assert report.locked and report_digest(report) == report.report_sha256
+    # a report that carries a link has it covered: changing the worker changes the digest
+    _, orch, c, _ = env
+    cid = _create(c, variant="incident")["case"]["case_id"]
+    _wait(c, cid)
+    report = orch._report(orch._paths(cid))
+    assert report.attribution.worker_id == "W1"
+    other = report.model_copy(update={"attribution": report.attribution.model_copy(update={"worker_id": "W2"})})
+    none = report.model_copy(update={"attribution": report.attribution.model_copy(update={"worker_id": None, "worker_link_evidence_ids": []})})
+    assert len({report_digest(report), report_digest(other), report_digest(none)}) == 3
+    assert len(hashlib.sha256(report_digest(report).encode()).hexdigest()) == 64

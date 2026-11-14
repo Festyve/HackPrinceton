@@ -249,6 +249,10 @@ class AttributionAssessment(Strict):
 
     account_used: str | None = None
     session_ref: str | None = None
+    # Worker lab: the automated worker whose assignments the scheduler's records tie this account to, with those
+    # records. A link between a credential and a worker's jobs. It is not who or what used the credential.
+    worker_id: str | None = None
+    worker_link_evidence_ids: list[str] = Field(default_factory=list)
     human_identity: HumanIdentity = "not_assessed"
     named_person_accused: str | None = None
     named_person_exonerated: str | None = None
@@ -559,6 +563,10 @@ class Score(Strict):
     coverup_detected_na_reason: str | None = None
     account_identification_correct: bool | None = None
     account_identification_na_reason: str | None = None
+    # Worker lab: did the report tie the account to the worker whose objective was changed. None when the report
+    # tied it to no worker, or when the case is not a worker-lab incident (the reason says which).
+    worker_link_correct: bool | None = None
+    worker_link_na_reason: str | None = None
     attribution_abstained: bool
     unsupported_named_attribution: int = 0
     false_accusation: bool = False

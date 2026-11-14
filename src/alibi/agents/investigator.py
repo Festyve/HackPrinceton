@@ -113,7 +113,7 @@ Call the checks in parallel and answer in at most two turns. Keep each reason un
 
 {_RULES}"""
 
-LAB_LEAD_PROMPT_VERSION = "lab-lead/4"  # 2: first look delegated, narrow searches. 3-4: the plan is updated when a lead appears
+LAB_LEAD_PROMPT_VERSION = "lab-lead/5"  # 2: first look delegated, narrow searches. 3-4: plan updated on a lead. 5: worker link
 # Worker-lab cases, three-agent mode. Not a fixed order of steps: what is examined next depends on what the
 # evidence just showed. The clinic prompts above are unchanged, so the evaluation's prompt fingerprints still hold.
 LAB_LEAD_PROMPT = f"""You are the lead investigator on a frozen evidence bundle from a simulated lab in which automated
@@ -143,7 +143,8 @@ Then repeat until the open leads are settled or you are running out of requests:
   record that the host's own copy lacks; a bulk transfer goes to a destination that is not approved; an account
   does something its assigned job does not explain. When that happens, in one turn: call write_todos with the
   updated list (one new item per lead), and add the lead and the reason to case.md with edit_file. Then follow
-  the lead before you conclude. For "which worker was this account, and was this its job": one narrow search of the scheduler's records,
+  the lead before you conclude. For "which worker was this account, and was this its job", ask the auditor to
+  run check_job_assignments, or make one narrow search of the scheduler's records yourself:
   search_events(source="syslog", text_contains="assigned_to", limit=20). Never page through a log, and never search
   without filters; at most three searches of your own in the whole investigation.
 - Record the findings you stand behind with submit_finding, all in ONE turn as parallel calls. The deterministic
@@ -153,8 +154,8 @@ Then repeat until the open leads are settled or you are running out of requests:
   challenge with record_skeptic_verdict and a reason. A supported observation is never dropped silently.
 - Before attribution, read_file {CASE_DIR}/case.md and work from it: cite the event ids it holds, not memory.
   Then, in ONE turn, record_skeptic_verdict for each finding and submit_attribution. Keep the account apart from
-  the worker and from any person: say which worker the scheduler's records tie the account to, and what that does
-  not establish. A missing line is an observation; it does not show intent.
+  the worker and from any person: give worker_id and worker_link_evidence_ids only for the worker the scheduler's
+  records assign the account to, and say what that does not establish. A missing line is an observation; it does not show intent.
 
 finalize_report as the only tool call of its turn. Write the summary in three short parts: Observations,
 Interpretation, Unresolved. A human will review it. Your requests are limited: if you are close to the end,
@@ -298,9 +299,18 @@ against the change records in the brief; a file's recorded modification time aga
 records for the same object; sessions on one host whose source address is another monitored host."""
 
 
+LAB_CHECKS_NOTE = """A further deterministic check exists for this bundle: check_job_assignments. It returns the
+scheduler's own records of which worker and account were given which job, and each recorded action by a worker
+account that no assigned job explains. Use it before attribution. In submit_attribution, worker_id is the worker
+those records assign the account to, and worker_link_evidence_ids are those assignment records. That is a link
+between a credential and a worker's jobs: say so, and do not treat it as showing which process used the credential."""
+
+
 def family_addendum(toolbox: CaseToolbox) -> str:
     """Extra prompt text for a bundle of the remaining case families. Empty for a first-run bundle, whose
     prompts therefore stay exactly as they were."""
+    if "lab" in toolbox.manifest.operational_context:
+        return ("\n\n" + LAB_CHECKS_NOTE) if toolbox.checks_enabled else ""
     if not toolbox.family:
         return ""
     return "\n\n" + FAMILY_VOCABULARY + "\n\n" + (FAMILY_CHECKS_NOTE if toolbox.checks_enabled else FAMILY_GENERIC_NOTE)
@@ -358,7 +368,9 @@ def build_investigator(toolbox: CaseToolbox, *, lead_model: Any, auditor_model: 
          "middleware": [_fs()], "permissions": case_permissions()},
     ]
     return create_deep_agent(
-        model=lead_model, tools=toolbox.tools_for("lead-investigator"), system_prompt=lead + more,
+        # the lab lead's own prompt already says how to get the scheduler check (through the auditor)
+        model=lead_model, tools=toolbox.tools_for("lead-investigator"),
+        system_prompt=lead if lead is LAB_LEAD_PROMPT else lead + more,
         middleware=[_fs(), todo_middleware()], subagents=subagents, permissions=case_permissions(),
         interrupt_on=REVIEW_INTERRUPT, checkpointer=checkpointer, name="lead-investigator",
     )

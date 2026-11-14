@@ -8,11 +8,11 @@
   },
   "response": {
     "case": {
-      "case_id": "case-c5183a140966",
+      "case_id": "case-bf9f6aa21b89",
       "state": "investigating",
       "detail": "investigator working on the frozen evidence",
-      "created_at": "2026-11-14T20:38:36.131004+00:00",
-      "updated_at": "2026-11-14T20:38:36.165979+00:00",
+      "created_at": "2026-11-14T22:12:28.808482+00:00",
+      "updated_at": "2026-11-14T22:12:28.845140+00:00",
       "preset_id": null,
       "title": "Worker lab \u00b7 run 11",
       "card_id": "worker-lab",
@@ -31,7 +31,7 @@
       "review_decision": null,
       "review_note": "",
       "timings": {
-        "generate_s": 0.034
+        "generate_s": 0.036
       },
       "scored": true,
       "parent_case_id": null,
@@ -91,8 +91,8 @@
           "model_chose_fault_actions": false
         },
         "lineage": {
-          "root_case_id": "case-cec0924bea79",
-          "parent_case_id": "case-cec0924bea79",
+          "root_case_id": "case-588b7fce9063",
+          "parent_case_id": "case-588b7fce9063",
           "comparison": "investigator_budget",
           "changed": {
             "investigator_requests": {
@@ -118,8 +118,8 @@
       }
     },
     "lineage": {
-      "root_case_id": "case-cec0924bea79",
-      "parent_case_id": "case-cec0924bea79",
+      "root_case_id": "case-588b7fce9063",
+      "parent_case_id": "case-588b7fce9063",
       "comparison": "investigator_budget",
       "changed": {
         "investigator_requests": {

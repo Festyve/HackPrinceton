@@ -1,8 +1,8 @@
 {
   "score": {
     "scorer_version": "1.1.0",
-    "report_id": "rep-case-cec0924bea79",
-    "episode_id": "case-cec0924bea79",
+    "report_id": "rep-case-588b7fce9063",
+    "episode_id": "case-588b7fce9063",
     "system_id": "BR",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "incident",
@@ -44,8 +44,10 @@
     },
     "coverup_detected": true,
     "coverup_detected_na_reason": null,
-    "account_identification_correct": null,
-    "account_identification_na_reason": "no account was used in the executed steps; account identification is not applicable",
+    "account_identification_correct": true,
+    "account_identification_na_reason": null,
+    "worker_link_correct": true,
+    "worker_link_na_reason": null,
     "attribution_abstained": true,
     "unsupported_named_attribution": 0,
     "false_accusation": false,
@@ -197,8 +199,8 @@
       "tokens_out": 0,
       "tokens_cache_read": 0,
       "cost_estimate_usd": 0.0,
-      "wall_seconds": 0.033,
-      "tool_calls": 2,
+      "wall_seconds": 0.036,
+      "tool_calls": 3,
       "scripted_turns": 0,
       "retries": 0,
       "errors": 0,
@@ -206,7 +208,7 @@
     },
     "review_status": "accepted",
     "approved_by_human": true,
-    "report_sha256": "152f21a7dd310cb36d8d2ab6098cc13c7ad9a2851799a7150165ee11f2570f58",
+    "report_sha256": "b1e41d06ff9d2decb26b17eeeee73ecf0da2b51ee7e4671d8144d4e96a248073",
     "notes": [
       "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
     ]
