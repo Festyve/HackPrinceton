@@ -1,0 +1,201 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-pilot-t01-20261114t071403z-alibi",
+ "bundle_id": "bndl-2ef68c85c7b51c20",
+ "system_id": "ALIBI",
+ "system_label": "ALIBI: lead + integrity-auditor + skeptic with deterministic checks",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-opus-5-5",
+ "findings": [
+  {
+   "id": "F-61b496",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "kcole",
+   "t_start": "2026-11-10T12:18:26Z",
+   "t_end": "2026-11-10T12:18:30Z",
+   "object_or_session": "/tmp/.font-unix/cache-0a91.bin",
+   "evidence_ids": [
+    "ev_f96aa6e28791",
+    "ev_5df30aa5b748",
+    "ev_5f876c31819e",
+    "ev_05179c2cc053",
+    "ev_8629f5ae3d53"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "A 22 MB file from a patients_full export was written to a hidden /tmp folder about a minute before the non-approved transfer. Its size closely matches the bytes sent.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": "The export file matches the transfer size and the tap corroborates the retrieval.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-fcf5fd",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "kcole",
+   "t_start": "2026-11-10T12:19:31Z",
+   "t_end": "2026-11-10T12:19:45Z",
+   "object_or_session": "10.20.9.27:8080",
+   "evidence_ids": [
+    "ev_ebaf1904b890",
+    "ev_191b593aa50c",
+    "ev_67992394ebc2",
+    "ev_19f75d73cd31",
+    "ev_e0d7622c363d",
+    "ev_7f98bcd5e966"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.9,
+   "rationale": "The tap recorded 22,158,181 bytes sent from the workstation to 10.20.9.27:8080. That is over the bulk threshold and the destination is not approved. The transfer overlaps console session workstation#91 on the kcole account.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "The flow record shows how many bytes moved, not what they contained.",
+    "Someone else who had the credential could have run the session."
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": "An independent tap witness shows a bulk transfer to a non-approved destination; no benign explanation fits.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-2c65e0",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:22:37Z",
+   "t_end": "2026-11-10T08:46:46Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_48902c756d00",
+    "ev_c916681dbe00",
+    "ev_7d7ed4569703",
+    "ev_7df66e73b5e2",
+    "ev_8cddea6113a6",
+    "ev_d2ffa1e24018",
+    "ev_2d57b498acaa"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.95,
+   "rationale": "The lines missing on the host all predate the 08:47 rotation. Under the keep-0 policy the rotated segment is archived off-host, which explains the absence.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": "The rotation with keep 0 explains the missing lines.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-7f28df",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:41:04Z",
+   "t_end": "2026-11-10T11:41:11Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_8d118da85748"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.9,
+   "rationale": "A bulk transfer went to the approved backup destination stor-nas-01.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": "Transfer to the approved backup destination.",
+   "produced_by": "lead-investigator"
+  }
+ ],
+ "attribution": {
+  "account_used": "kcole",
+  "session_ref": "workstation#91",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_67992394ebc2",
+   "ev_19f75d73cd31",
+   "ev_e46b086c1608",
+   "ev_6ef63b60dcd6"
+  ],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "An account identifies a credential, not a person.",
+   "Console credentials at the shared station have been found written down before.",
+   "Badge records cannot show tailgating; the adm-bsato and aokafor badges were also inside."
+  ],
+  "statement": "Account used: kcole (console session workstation#91). The human operator is not established.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Supported incidents: (1) Data staging. At 12:18 on the workstation, a 22 MB file from a patients_full export was written to the hidden path /tmp/.font-unix/cache-0a91.bin (F-61b496). (2) Policy-violating transfer. About 22.2 MB went from the workstation to the non-approved destination 10.20.9.27:8080 at 12:19, recorded by the tap (F-fcf5fd). Both happened during console session workstation#91 on the kcole account. Benign: a records backup went to the approved stor-nas-01 (10.20.0.45:873) (F-7f28df). Records access.log lines missing from before 08:47 are explained by rotation (keep 0, archived off-host) (F-2c65e0). There was no log removal and there were no collector gaps. Attribution: the kcole account was used; the human operator is not established.",
+ "open_questions": [
+  "What is 10.20.9.27 and who operates it?",
+  "What did the transferred file contain? The flow record shows bytes only.",
+  "Who was physically at the shared workstation console at 12:17-12:20? Credentials there have been found written down before."
+ ],
+ "usage": {
+  "llm_calls": 11,
+  "tokens_in": 104800,
+  "tokens_out": 6900,
+  "tokens_cache_read": 70806,
+  "cost_estimate_usd": 0.336264,
+  "wall_seconds": 64.031,
+  "tool_calls": 17,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T07:15:29.379050Z",
+ "report_sha256": "3d311a2527c2ebb32d9d4b6c715b3a95cad656bbc01ebc2649c49698f35130c5",
+ "review_history": [
+  {
+   "at": "2026-11-14T07:15:29.379050Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.0.0"
+}

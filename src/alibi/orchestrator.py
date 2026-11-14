@@ -236,9 +236,18 @@ class Orchestrator:
     # ------------------------------------------------------------------ presets / replays
     def presets(self) -> list[dict[str, Any]]:
         """Only presets that can actually run are offered (a model-planned case needs a live runtime)."""
-        live = self.settings.live_block_reason() is None and bool(self.settings.adversary_model)
         return [{k: v for k, v in p.items() if not k.startswith("_")} for p in PRESETS
-                if p.get("_planner") != "model" or live]
+                if p.get("_planner") != "model" or self._model_planner_enabled()]
+
+    def _model_planner_enabled(self) -> bool:
+        """The model-planned adversary preset is opt-in (ALIBI_ENABLE_MODEL_ADVERSARY=1) and needs a live runtime.
+
+        It is off by default because the one model it was tried with declined the planning request, so the
+        preset could only ever fall back to the scripted scenario. A control that cannot do what its
+        label says is not offered.
+        """
+        return (os.environ.get("ALIBI_ENABLE_MODEL_ADVERSARY") == "1"
+                and self.settings.live_block_reason() is None and bool(self.settings.adversary_model))
 
     def _plan_with_model(self, spec: dict[str, Any]) -> dict[str, Any]:
         """One bounded planning response (plus one repair) from the adversary model, through the gateway."""
@@ -267,9 +276,11 @@ class Orchestrator:
                 meta = json.loads(f.read_text(encoding="utf-8"))["meta"]
             except Exception:
                 continue
+            # A saved real run is offered as a RECORDED model run. It is never listed as live.
+            mode = "RECORDED_MODEL" if meta.get("inference_mode") == "LIVE_MODEL" else meta.get("inference_mode", "")
             out.append({"id": f.parent.name, **{k: meta.get(k) for k in (
-                "title", "inference_mode", "model_id", "recorded_at", "runner_id", "git_commit", "note")},
-                "inference_label": INFERENCE_LABELS.get(meta.get("inference_mode", ""), "")})
+                "title", "model_id", "recorded_at", "runner_id", "git_commit", "note")},
+                "inference_mode": mode, "inference_label": INFERENCE_LABELS.get(mode, "")})
         return out
 
     # ------------------------------------------------------------------ create
@@ -286,11 +297,11 @@ class Orchestrator:
             if preset is None:
                 raise NotFound("no such preset")
             variant, seed, title, diff = preset["_variant"], preset["seed"], preset["title"], preset["difficulty"]
-            if preset.get("_planner") == "model":
+            if preset.get("_planner") == "model" and not self._model_planner_enabled():
                 reason = self.settings.live_block_reason()
-                if reason is not None or not self.settings.adversary_model:
-                    raise RuntimeBlocked("a model-planned adversary needs a live runtime and ADVERSARY_MODEL: "
-                                         + (reason or "ADVERSARY_MODEL is not set"))
+                raise RuntimeBlocked("the model-planned adversary preset is not enabled: it needs a live runtime, "
+                                     "ADVERSARY_MODEL and ALIBI_ENABLE_MODEL_ADVERSARY=1"
+                                     + (f" ({reason})" if reason else ""))
         else:
             if difficulty not in _CUSTOM_VARIANT or seed is None:
                 raise ValueError("custom cases need a seed and difficulty L1 or L2")

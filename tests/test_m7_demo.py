@@ -107,8 +107,13 @@ def test_every_displayed_citation_opens_its_raw_record(client, preset):
 
 
 def test_all_presets_offered_to_the_audience_work_and_hide_their_variant(client):
-    listed = client.get("/api/presets").json()["presets"]
+    both = client.get("/api/presets").json()
+    listed = both["presets"]
     assert [p["id"] for p in listed] == ["hero-coverup", "hero-plain", "sealed-control"]
+    for rep in both["replays"]:  # a recording is never offered as a live run
+        assert rep["inference_mode"] in ("SCRIPTED_FIXTURE", "RECORDED_MODEL", "NO_MODEL_BASELINE")
+        assert rep["inference_label"] in ("Scripted fixture · no model inference", "Recorded AI run",
+                                          "Deterministic baseline · no model inference")
     assert all("_variant" not in p and "variant" not in p for p in listed)
     assert "benign" not in json.dumps(listed).lower()  # the control case does not announce what it is
 

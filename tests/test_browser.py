@@ -280,3 +280,39 @@ def test_recorded_fixture_replays_in_the_browser_with_replay_labels(server, page
     wait_state(page, "scored")
     assert page.inner_text(tid("score-recall")).startswith("3/3")
     shot(page, "08-replay-score")
+
+
+def test_recorded_real_run_replays_as_a_recorded_ai_run_never_as_live(server, page):
+    """The server here is OFFLINE (no key, no model): the recording must still play, with its provenance."""
+    import json as _json
+
+    from alibi.orchestrator import REPLAY_DIR
+
+    real = [p.parent.name for p in REPLAY_DIR.glob("*/recording.json")
+            if _json.loads(p.read_text())["meta"]["inference_mode"] == "LIVE_MODEL"]
+    if not real:
+        pytest.skip("no recording of a real model run is committed")
+    base, _ = server
+    page.goto(base + "/")
+    page.wait_for_selector(tid(f"replay-{real[0]}"))
+    card = page.inner_text(tid(f"replay-{real[0]}"))
+    assert "REPLAY" in card and "Recorded AI run" in card and "claude" in card
+    assert page.inner_text(tid("runtime-status")).strip().endswith("Live AI: BLOCKED")  # nothing live is available here
+    page.click(tid(f"replay-{real[0]}"))
+    page.click(tid("btn-run"))
+    wait_state(page, "awaiting_review", timeout=90_000)
+    assert "Recorded AI run" in page.inner_text(tid("badge-inference"))
+    assert "Live model" not in page.inner_text(tid("badge-inference"))
+    assert "REPLAY" in page.inner_text(tid("badge-playback"))
+    page.wait_for_selector(tid("compare-row-retained"))
+    assert "not established" in page.inner_text(tid("attribution-panel"))
+    shot(page, "09-recorded-ai-review")
+    page.click(tid("btn-accept"))
+    wait_state(page, "report_locked")
+    page.click(tid("btn-unseal"))
+    wait_state(page, "scored")
+    panel = page.inner_text(tid("score-panel"))
+    assert page.inner_text(tid("score-recall")).startswith("3/3")
+    assert "llm_calls" in panel and " 0 llm_calls" not in panel  # the recorded run's real usage is shown
+    shot(page, "10-recorded-ai-score")
+    assert page.errors == []

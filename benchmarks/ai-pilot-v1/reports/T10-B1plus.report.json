@@ -1,0 +1,155 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-pilot-t10-20261114t071403z-b1plus",
+ "bundle_id": "bndl-6b86c8203b2372ed",
+ "system_id": "B1+",
+ "system_label": "ALIBI: lead + integrity-auditor + skeptic with deterministic checks",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-opus-5-5",
+ "findings": [
+  {
+   "id": "F-b93141",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:19:12Z",
+   "t_end": "2026-11-10T08:53:04Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_49f32468d738",
+    "ev_40f6ab37dc11",
+    "ev_9cc22a98f5f6",
+    "ev_cbdbec6e5868"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.9,
+   "rationale": "195 lines absent locally all predate the 08:53:04 scheduled rotation (archived off-host, keep=0); collector retains them.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-8e841c",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "aokafor",
+   "t_start": "2026-11-10T10:07:49Z",
+   "t_end": "2026-11-10T10:07:56Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_52bbe36b2214",
+    "ev_76e6b3827ca4",
+    "ev_c283c5309055",
+    "ev_b0061a3e8f09",
+    "ev_798731e59cf0"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "11.6MB immunization registry export sent to approved lab-gw-01 during console session of account aokafor; consistent with registry submission policy.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-7b726a",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:58:04Z",
+   "t_end": "2026-11-10T11:58:11Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_1dec73d09acc"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "21MB rsync to approved backup NAS stor-nas-01; consistent with backup policy.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  }
+ ],
+ "attribution": {
+  "account_used": "aokafor",
+  "session_ref": "workstation#32",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_76e6b3827ca4"
+  ],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Shared console credentials; badge cannot prove operator"
+  ],
+  "statement": "Account aokafor was used at console for the approved registry transfer; human operator not established. No incident found.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "No incident supported. Both bulk transfers went to approved destinations: workstation→lab-gw-01 10.20.8.20:80 (immunization registry export, account aokafor console session) and records→stor-nas-01 10.20.0.45:873 (backup). Local logs match collector; access.log absence (195 lines before 08:53:04) is explained by scheduled off-host rotation. No heartbeat gaps. Account used: aokafor; human operator not established.",
+ "open_questions": [
+  "Confirm the 10:07 registry submission was a scheduled/expected task",
+  "Flow records do not show content"
+ ],
+ "usage": {
+  "llm_calls": 3,
+  "tokens_in": 30433,
+  "tokens_out": 1850,
+  "tokens_cache_read": 17273,
+  "cost_estimate_usd": 0.109701,
+  "wall_seconds": 15.816,
+  "tool_calls": 7,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T07:18:20.684500Z",
+ "report_sha256": "9ef33c6009427bfa6006d675f3709cbb6daeab83ed0b0774d3021b8040a9f3ed",
+ "review_history": [
+  {
+   "at": "2026-11-14T07:18:20.684500Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.0.0"
+}

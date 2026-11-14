@@ -397,7 +397,7 @@ def test_model_planned_preset_is_hidden_and_refused_while_live_is_blocked(env):
     _, orch, c = env
     assert "model-planned" not in [p["id"] for p in c.get("/api/presets").json()["presets"]]
     r = c.post("/api/cases", json={"preset_id": "model-planned"})
-    assert r.status_code == 409 and r.json()["live_inference"] == "BLOCKED"
+    assert r.status_code == 409 and r.json()["live_inference"] == "BLOCKED" and "not enabled" in r.json()["error"]
     assert c.get("/api/cases").json()["cases"] == []
 
 
@@ -406,6 +406,8 @@ def test_model_planned_adversary_is_validated_executed_and_labeled(tmp_path, mon
                                   "ADVERSARY_MODEL": "fake:planner"}),
                    runs_dir=tmp_path / "runs", sealed_dir=tmp_path / "sealed")
     orch = Orchestrator(live, pace_s=0.0)
+    assert "model-planned" not in [p["id"] for p in orch.presets()]  # opt-in even with a live runtime
+    monkeypatch.setenv("ALIBI_ENABLE_MODEL_ADVERSARY", "1")
     spec = build_spec(9027, "incident_coverup")
     planner = _FakePlanner(spec["accounts"]["nurse_b"], spec["dmz_ips"][1])
     monkeypatch.setattr(orch, "_adversary_model", lambda ledger: planner)

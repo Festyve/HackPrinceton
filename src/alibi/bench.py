@@ -564,7 +564,17 @@ def combined_results(offline_path: Path | None = None, pilot_path: Path | None =
     if pilot_path.exists():
         pilot = json.loads(pilot_path.read_text(encoding="utf-8"))
         ran = {s["id"]: s for s in pilot["systems"] if s["status"] == "RUN"}
-        doc["systems"] = [ran.get(s["id"], s) for s in doc["systems"]]
+        merged = []
+        for s in doc["systems"]:
+            if s["id"] in ran:
+                merged.append(ran[s["id"]])
+            elif s.get("kind") == "ai":
+                # a runtime now exists, so "runtime unavailable" would be wrong for the arms that still have no result
+                why = "no pilot run completed" if s["id"] in PILOT_SYSTEMS else "not part of the pilot"
+                merged.append({**s, "status_detail": f"NOT RUN — {why}", "blocker": why})
+            else:
+                merged.append(s)
+        doc["systems"] = merged
         doc["runs"] = doc["runs"] + pilot["runs"]
         doc["notes"] = [n for n in doc["notes"] if not (ran and n.startswith("AI arms were not run"))] + pilot["notes"]
         doc["ai_pilot"] = {k: pilot.get(k) for k in ("suite", "run_id", "generated_at", "git_commit", "git_dirty", "paired",

@@ -1,0 +1,234 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-pilot-t05-20261114t071403z-alibi",
+ "bundle_id": "bndl-8f72b187cf81b29a",
+ "system_id": "ALIBI",
+ "system_label": "ALIBI: lead + integrity-auditor + skeptic with deterministic checks",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-opus-5-5",
+ "findings": [
+  {
+   "id": "F-6dd395",
+   "claim_type": "local_log_removal",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:21:09Z",
+   "t_end": "2026-11-10T11:21:09Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_6d741cbf4f67",
+    "ev_b1a7f1da1490",
+    "ev_182fa7aa522f",
+    "ev_e23317d03148",
+    "ev_4613ed27ed6f"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "Collector holds the jpark session 34 login line; it is missing locally while neighboring lines remain; rotation at 09:02 retained .1 and does not explain it.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "single-line write failure (unlikely)"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+   ],
+   "skeptic_note": "Collector line absent locally after rotation boundary, bracketed; no gaps.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-32b94f",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:23:09Z",
+   "t_end": "2026-11-10T11:23:12Z",
+   "object_or_session": "/var/tmp/.pkg-cache/rx-7f3.db",
+   "evidence_ids": [
+    "ev_79b08729ba33",
+    "ev_643d6effbd5d",
+    "ev_788cb6e4f77a",
+    "ev_7ad9443e2abe",
+    "ev_972365bb5c98"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "patients_full export pulled from records into a hidden 17,351,921-byte file owned by jpark, matching later transfer size.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": "Export corroborated by collector and tap; same-size hidden file.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-b9c4da",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:26:27Z",
+   "t_end": "2026-11-10T11:26:38Z",
+   "object_or_session": "10.20.9.70:8080",
+   "evidence_ids": [
+    "ev_e08cdbed489b",
+    "ev_bd1d719bb513",
+    "ev_6d741cbf4f67",
+    "ev_182fa7aa522f",
+    "ev_574167396862"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "Tap shows 17,355,073 bytes from workstation to unapproved 10.20.9.70 during jpark session #34 only; matching command recorded.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": "Bulk flow to unapproved destination; content not shown.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-053227",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:29:44Z",
+   "t_end": "2026-11-10T09:01:59Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_3bf8e8339432",
+    "ev_1f24d8b04517",
+    "ev_fcde7f76683e",
+    "ev_b2516a149d4d",
+    "ev_f265e42ef1e7",
+    "ev_7700269dc87f",
+    "ev_f2d84c482208"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.9,
+   "rationale": "Pre-rotation lines absent locally; policy keeps 0 generations and archives off-host.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": "Policy rotation with off-host archive.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-b880ce",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T12:08:04Z",
+   "t_end": "2026-11-10T12:08:09Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_b91e92edd632"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.9,
+   "rationale": "Bulk rsync to approved backup NAS stor-nas-01.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": "Approved backup destination.",
+   "produced_by": "lead-investigator"
+  }
+ ],
+ "attribution": {
+  "account_used": "jpark",
+  "session_ref": "workstation#34",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_6d741cbf4f67",
+   "ev_182fa7aa522f",
+   "ev_574167396862",
+   "ev_ca9a76399702",
+   "ev_e4d63d12bd3a"
+  ],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Account identifies a credential, not a person",
+   "Badge taps miss tailgating; adm-bsato badge holder also present",
+   "Shared-station credentials have been written down before",
+   "Flow records show no content"
+  ],
+  "statement": "The jpark credential was used for console session workstation#34 (11:21:09-11:28:45), which covers the log-line removal, staging and unapproved transfer. Account used; human operator not established.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Evidence supports an incident in jpark console session workstation#34 (2026-11-10 11:21:09-11:28:45 UTC): (1) the session's login line was removed from workstation /var/log/auth.log (collector retains it; rotation does not explain it); (2) a patients_full export from records was staged as hidden /var/tmp/.pkg-cache/rx-7f3.db (17,351,921 bytes) at 11:23; (3) ~17.36 MB was sent to unapproved 10.20.9.70:8080 at 11:26. Benign: records rsync to approved NAS 10.20.0.45:873 at 12:08; missing pre-09:02 records-app access.log lines are explained by rotation policy (off-host archive). No collection gaps. Attribution: jpark account used; human operator not established.",
+ "open_questions": [
+  "What is 10.20.9.70 and was it ever authorized?",
+  "Who was physically at the workstation console at 11:21-11:28 (badge B-1911 and adm-bsato both present; tailgating/written credentials possible)?",
+  "Can the off-host archive and the 10.20.9.70 host confirm transferred content?"
+ ],
+ "usage": {
+  "llm_calls": 11,
+  "tokens_in": 109714,
+  "tokens_out": 7973,
+  "tokens_cache_read": 72375,
+  "cost_estimate_usd": 0.375077,
+  "wall_seconds": 75.022,
+  "tool_calls": 20,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T07:17:11.022331Z",
+ "report_sha256": "f8d96fd73f309ab8062d290717481d6a4360a47e3d740ece34fa5dea8ec04e59",
+ "review_history": [
+  {
+   "at": "2026-11-14T07:17:11.022331Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.0.0"
+}

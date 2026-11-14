@@ -15,8 +15,9 @@
 - BR's checks were developed against this simulator. Its score shows the checks work on the modeled world, not that they generalize.
 - B0's final precision benefits from the shared verifier, which filters its raw keyword hits. Its raw proposal counts are reported next to it for that reason.
 - In simulator v1 the adversary's staging and transfer commands stay in shell history, which favors the keyword baseline. Clearing history is a later difficulty level.
-- AI arms were not run: no zero-charge model runtime was available. They are not zero; they are unrun.
 - Run history: the first run on the declared seeds is preserved at commit 146a7a3 (BR 1.0.0). It was followed by a label-only correction of one ATT&CK id (T1070.002 now redirects to T1685.006 on attack.mitre.org; BR 1.0.1). No rule, predicate, threshold or scorer changed, and all 24 per-run scores were verified identical between the two runs, so the same declared split is reported.
+- AI pilot: 4 predeclared cases x 2 systems on the same model, effort and per-case budget. A smoke comparison with n = 4 per system, not a population estimate. One run per cell: model output varies between runs and that variance was not measured.
+- B1 and B2 (the arms without the contradiction checks) were not run.
 
 ## Systems
 
@@ -24,12 +25,12 @@
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | **B0** | Fixed keyword/regex recipe over the same evidence | run, no model | 12/12 | 16/20 | 4/8 | 16/16 | 16/172 | 0/4 | 0/8 | 0/4 | 4/4 (53 raw claims) | 0.016 s |
 | **BR** | Deterministic contradiction checks, templated findings, no model | run, no model | 12/12 | 20/20 | 8/8 | 20/20 | 20/20 | 4/4 | 8/8 | 0/4 | 0/4 (0 raw claims) | 0.083 s |
-| **B1** | Single agent, generic evidence tools only | **NOT RUN — runtime unavailable** | 0 | — | — | — | — | — | — | — | — | — |
-| **B1+** | Single agent with the same checks and evidence as ALIBI | **NOT RUN — runtime unavailable** | 0 | — | — | — | — | — | — | — | — | — |
-| **B2** | ALIBI architecture without contradiction checks | **NOT RUN — runtime unavailable** | 0 | — | — | — | — | — | — | — | — | — |
-| **ALIBI** | Lead + integrity-auditor + skeptic + checks | **NOT RUN — runtime unavailable** | 0 | — | — | — | — | — | — | — | — | — |
+| **B1** | Single agent, generic evidence tools only | **NOT RUN — not part of the pilot** | 0 | — | — | — | — | — | — | — | — | — |
+| **B1+** | Single agent with the same checks and evidence as ALIBI | **live model** `anthropic:claude-opus-5-5`, pilot | 4/4 | 5/5 | 2/2 | 5/5 | 5/5 | 1/1 | 2/2 | 0/2 | 0/2 (0 raw claims) | 19.232 s |
+| **B2** | ALIBI architecture without contradiction checks | **NOT RUN — not part of the pilot** | 0 | — | — | — | — | — | — | — | — | — |
+| **ALIBI** | Lead + integrity-auditor + skeptic + checks | **live model** `anthropic:claude-opus-5-5`, pilot | 4/4 | 5/5 | 2/2 | 5/5 | 5/5 | 1/1 | 2/2 | 0/2 | 0/2 (0 raw claims) | 58.606 s |
 
-Reading the table: *effects caught* pools scorable effects over the 8 incident cases; *final precision* counts accepted allegations after the shared verifier; *raw proposal precision* counts every allegation a system proposed, including those the verifier rejected. Attribution: unsupported named attributions were B0: 0, BR: 0; false accusations were B0: 0, BR: 0.
+Reading the table: *effects caught* pools scorable effects over the 8 incident cases; *final precision* counts accepted allegations after the shared verifier; *raw proposal precision* counts every allegation a system proposed, including those the verifier rejected. Attribution: unsupported named attributions were B0: 0, BR: 0, B1+: 0, ALIBI: 0; false accusations were B0: 0, BR: 0, B1+: 0, ALIBI: 0.
 
 ## Paired comparison: BR vs B0 (effects caught per incident case)
 
@@ -46,11 +47,33 @@ Reading the table: *effects caught* pools scorable effects over the 8 incident c
 
 BR caught more effects in 4 of 8 incident cases, the same number in 4, fewer in 0. With n = 8 this is a descriptive result.
 
+## AI pilot (real model)
+
+- Run `20261114T071403Z` at commit `3f0a80e` · 8 system-runs started · evidence regenerated from the declared seeds.
+- Model: `anthropic:claude-opus-5-5` for lead and specialists · effort `low` · caps per investigation: {'max_calls': 16, 'max_input_tokens': 200000, 'max_output_tokens': 10000, 'max_seconds': 180.0} · human review: skipped_for_benchmark · refusal fallback: off.
+- B1+ is one agent with the same checks and evidence tools. ALIBI is the lead plus integrity-auditor and skeptic. Same model, effort and budget. **n = 4 cases, one run each: descriptive only.**
+
+| System | Completed | Stopped by budget | Errors | Effects caught | Final precision | Cover-ups | Account identified | Benign false alerts | Unsupported named attributions | Model calls | Tokens in / out | Est. cost | Median time |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| **B1+** | 4/4 | 0 | 0 | 5/5 | 5/5 | 1/1 | 2/2 | 0/2 | 0 | 15 | 162,489 / 8,898 | $0.50 | 19.232 s |
+| **ALIBI** | 4/4 | 0 | 0 | 5/5 | 5/5 | 1/1 | 2/2 | 0/2 | 0 | 42 | 395,398 / 26,075 | $1.30 | 58.606 s |
+
+Paired, effects caught per incident case (ALIBI vs B1+):
+
+| Case | ALIBI | B1+ | ALIBI − B1+ |
+|---|---|---|---|
+| T01 | 2/2 | 2/2 | +0 |
+| T05 | 3/3 | 3/3 | +0 |
+
+ALIBI caught more effects in 0 of 2 incident cases, the same number in 2, fewer in 0. Cost and time are the measured differences to weigh against that. Estimated cost uses list prices with conservative cache multipliers; the provider's console is the authority on actual spend.
+
 ## Per case
 
 | Case | Group | Seed | Events | Scorable effects | System | Recall | Final precision | Raw proposals (incident) | Accepted | False final claims | Cover-up | Account | Benign false alert |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| T01 | straightforward incident | 101 | 12719 | 2 | ALIBI | 2/2 | 2/2 | 2 | 2 | 0 | n/a | yes | n/a |
 | T01 | straightforward incident | 101 | 12719 | 2 | B0 | 2/2 | 2/2 | 15 | 2 | 0 | n/a | no | n/a |
+| T01 | straightforward incident | 101 | 12719 | 2 | B1+ | 2/2 | 2/2 | 2 | 2 | 0 | n/a | yes | n/a |
 | T01 | straightforward incident | 101 | 12719 | 2 | BR | 2/2 | 2/2 | 2 | 2 | 0 | n/a | yes | n/a |
 | T02 | straightforward incident | 102 | 12711 | 2 | B0 | 2/2 | 2/2 | 12 | 2 | 0 | n/a | no | n/a |
 | T02 | straightforward incident | 102 | 12711 | 2 | BR | 2/2 | 2/2 | 2 | 2 | 0 | n/a | yes | n/a |
@@ -58,7 +81,9 @@ BR caught more effects in 4 of 8 incident cases, the same number in 4, fewer in 
 | T03 | straightforward incident | 103 | 12734 | 2 | BR | 2/2 | 2/2 | 2 | 2 | 0 | n/a | yes | n/a |
 | T04 | straightforward incident | 104 | 12704 | 2 | B0 | 2/2 | 2/2 | 13 | 2 | 0 | n/a | no | n/a |
 | T04 | straightforward incident | 104 | 12704 | 2 | BR | 2/2 | 2/2 | 2 | 2 | 0 | n/a | yes | n/a |
+| T05 | cover-up incident | 105 | 12753 | 3 | ALIBI | 3/3 | 3/3 | 3 | 3 | 0 | yes | yes | n/a |
 | T05 | cover-up incident | 105 | 12753 | 3 | B0 | 2/3 | 2/2 | 13 | 2 | 0 | no | no | n/a |
+| T05 | cover-up incident | 105 | 12753 | 3 | B1+ | 3/3 | 3/3 | 3 | 3 | 0 | yes | yes | n/a |
 | T05 | cover-up incident | 105 | 12753 | 3 | BR | 3/3 | 3/3 | 3 | 3 | 0 | yes | yes | n/a |
 | T06 | cover-up incident | 106 | 12704 | 3 | B0 | 2/3 | 2/2 | 18 | 2 | 0 | no | no | n/a |
 | T06 | cover-up incident | 106 | 12704 | 3 | BR | 3/3 | 3/3 | 3 | 3 | 0 | yes | yes | n/a |
@@ -68,11 +93,15 @@ BR caught more effects in 4 of 8 incident cases, the same number in 4, fewer in 
 | T08 | cover-up incident | 108 | 12721 | 3 | BR | 3/3 | 3/3 | 3 | 3 | 0 | yes | yes | n/a |
 | T09 | benign control: forced log rotation | 109 | 12749 | 0 | B0 | N/A | N/A | 15 | 0 | 0 | n/a | n/a | no |
 | T09 | benign control: forced log rotation | 109 | 12749 | 0 | BR | N/A | N/A | 0 | 0 | 0 | n/a | n/a | no |
+| T10 | benign control: approved bulk transfer | 110 | 12800 | 0 | ALIBI | N/A | N/A | 0 | 0 | 0 | n/a | n/a | no |
 | T10 | benign control: approved bulk transfer | 110 | 12800 | 0 | B0 | N/A | N/A | 16 | 0 | 0 | n/a | n/a | no |
+| T10 | benign control: approved bulk transfer | 110 | 12800 | 0 | B1+ | N/A | N/A | 0 | 0 | 0 | n/a | n/a | no |
 | T10 | benign control: approved bulk transfer | 110 | 12800 | 0 | BR | N/A | N/A | 0 | 0 | 0 | n/a | n/a | no |
 | T11 | benign control: legitimate remote login | 111 | 12799 | 0 | B0 | N/A | N/A | 12 | 0 | 0 | n/a | n/a | no |
 | T11 | benign control: legitimate remote login | 111 | 12799 | 0 | BR | N/A | N/A | 0 | 0 | 0 | n/a | n/a | no |
+| T12 | benign control: incomplete collection | 112 | 12829 | 0 | ALIBI | N/A | N/A | 0 | 0 | 0 | n/a | n/a | no |
 | T12 | benign control: incomplete collection | 112 | 12829 | 0 | B0 | N/A | N/A | 10 | 0 | 0 | n/a | n/a | no |
+| T12 | benign control: incomplete collection | 112 | 12829 | 0 | B1+ | N/A | N/A | 0 | 0 | 0 | n/a | n/a | no |
 | T12 | benign control: incomplete collection | 112 | 12829 | 0 | BR | N/A | N/A | 0 | 0 | 0 | n/a | n/a | no |
 
 N/A means not applicable (for example recall in a case where nothing happened), never zero.

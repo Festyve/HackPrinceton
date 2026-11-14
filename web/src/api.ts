@@ -102,6 +102,10 @@ export interface Benchmark {
   systems?: BenchSystem[];
   runs?: Array<{ system_id: string; case_ref: string; status?: string; score?: Score | null }>;
   notes?: string[]; reproduce?: string[];
+  ai_pilot?: {
+    suite?: string; run_id?: string; generated_at?: string; git_commit?: string; system_runs_started?: number;
+    model_settings?: { lead_model?: string; effort?: string; human_review?: string; refusal_fallback?: string } | null;
+  } | null;
 }
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {

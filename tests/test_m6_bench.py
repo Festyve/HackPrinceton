@@ -146,6 +146,9 @@ def test_ai_pilot_refuses_to_record_a_fixture_as_an_ai_run(tmp_path):
 
 def test_ai_pilot_plumbing_respects_the_system_run_budget(tmp_path):
     settings = replace(load_settings({}), bench_max_system_runs=3)
+    real = bench.PILOT_DIR / "results.json"
+    before = real.read_bytes() if real.exists() else None
+    reports_before = sorted(p.name for p in (bench.PILOT_DIR / "reports").glob("*")) if (bench.PILOT_DIR / "reports").exists() else []
     doc = bench.run_ai_pilot(settings, runner_factory=_LiveDouble, work_dir=tmp_path)
     assert doc["suite"] == "ai-pilot-v1" and len(doc["cases"]) == 4 and len(doc["runs"]) == 8
     assert doc["system_runs_started"] == 3
@@ -153,7 +156,10 @@ def test_ai_pilot_plumbing_respects_the_system_run_budget(tmp_path):
     assert sum(r["status"] == "unrun_budget" for r in doc["runs"]) == 5  # unrun is recorded, never silently dropped
     assert {s["id"] for s in doc["systems"]} == {"B1+", "ALIBI"}
     assert all(r["score"] is None for r in doc["runs"] if r["status"] != "completed")
-    assert not (bench.PILOT_DIR / "results.json").exists()  # nothing from a test double reaches the repository
+    # nothing from a test double reaches the repository: the real pilot results and reports are untouched
+    assert (real.read_bytes() if real.exists() else None) == before
+    reports_after = sorted(p.name for p in (bench.PILOT_DIR / "reports").glob("*")) if (bench.PILOT_DIR / "reports").exists() else []
+    assert reports_after == reports_before and all("report_file" not in r for r in doc["runs"])
 
 
 def test_benchmark_view_merges_pilot_rows_only_when_real_pilot_results_exist(tmp_path):
@@ -170,5 +176,40 @@ def test_benchmark_view_merges_pilot_rows_only_when_real_pilot_results_exist(tmp
     merged = bench.combined_results(pilot_path=f)
     status = {s["id"]: s["status"] for s in merged["systems"]}
     assert status["ALIBI"] == "RUN" and status["B1+"] == "NOT_RUN" and status["B2"] == "NOT_RUN"
-    assert next(s for s in merged["systems"] if s["id"] == "B1+")["status_detail"] == "NOT RUN — runtime unavailable"
+    detail = {s["id"]: s.get("status_detail") for s in merged["systems"]}
+    assert detail["B1+"] == "NOT RUN — no pilot run completed" and detail["B2"] == "NOT RUN — not part of the pilot"
+    assert {s["id"]: s["status_detail"] for s in base["systems"]}["B2"] == "NOT RUN — runtime unavailable"
     assert merged["ai_pilot"]["run_id"] == "r" and "pilot note" in merged["notes"]
+
+
+def test_committed_ai_pilot_results_are_real_runs_and_consistent():
+    path = bench.PILOT_DIR / "results.json"
+    if not path.exists():
+        pytest.skip("the AI pilot has not been run")
+    from alibi.contracts import InvestigationReport, Score
+
+    doc = json.loads(path.read_text())
+    assert doc["suite"] == "ai-pilot-v1" and doc["git_dirty"] is False
+    assert sorted(c["case_ref"] for c in doc["cases"]) == sorted(bench.PILOT_CASE_REFS)
+    offline = {c["case_ref"]: c for c in json.loads(bench.RESULTS_PATH.read_text())["cases"]}
+    for c in doc["cases"]:  # the pilot used the same evidence bytes as the offline suite
+        assert c["raw_bundle_sha256"] == offline[c["case_ref"]]["raw_bundle_sha256"]
+    for r in doc["runs"]:
+        if r["status"] != "completed":
+            continue
+        s = Score.model_validate(r["score"])
+        assert s.inference_mode == "LIVE_MODEL" and s.usage.llm_calls > 0 and s.usage.tokens_in > 0
+        assert s.review_status == "skipped_for_benchmark" and s.approved_by_human is False
+        rep = InvestigationReport.model_validate_json((bench.REPO_ROOT / r["report_file"]).read_text())
+        assert rep.inference_mode == "LIVE_MODEL" and rep.model_id and rep.locked
+        assert rep.report_sha256 == s.report_sha256 and "sk-ant" not in rep.model_dump_json()
+    for sysrow in doc["systems"]:
+        mine = [Score.model_validate(r["score"]) for r in doc["runs"]
+                if r["system_id"] == sysrow["id"] and r["status"] == "completed"]
+        assert json.loads(json.dumps(bench.aggregate(mine))) == sysrow["aggregate"], sysrow["id"]
+    merged = bench.combined_results()
+    status = {s["id"]: s["status"] for s in merged["systems"]}
+    assert status["B1+"] == status["ALIBI"] == "RUN" and status["B1"] == status["B2"] == "NOT_RUN"
+    md = bench.render_markdown(merged)
+    assert "## AI pilot (real model)" in md and "n = 4 cases, one run each" in md
+    assert "NOT RUN — not part of the pilot" in md and "runtime unavailable" not in md

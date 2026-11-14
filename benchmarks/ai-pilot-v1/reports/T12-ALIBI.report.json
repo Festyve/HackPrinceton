@@ -1,0 +1,159 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-pilot-t12-20261114t071403z-alibi",
+ "bundle_id": "bndl-2cd6c099234d468b",
+ "system_id": "ALIBI",
+ "system_label": "ALIBI: lead + integrity-auditor + skeptic with deterministic checks",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-opus-5-5",
+ "findings": [
+  {
+   "id": "F-3a4bc7",
+   "claim_type": "collection_gap",
+   "category": "unresolved",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:54:52Z",
+   "t_end": "2026-11-10T11:58:22Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_24996cf5d732",
+    "ev_137773a88dc4",
+    "ev_7f8939732ac0"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.6,
+   "rationale": "210s heartbeat gap with counter reset; one local auth line not forwarded. Host has more than collector, so not removal. Cause unknown.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": "Real collector-side gap, cause unknown; not removal.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-9683cd",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:18:44Z",
+   "t_end": "2026-11-10T08:47:50Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_eb96313ce762",
+    "ev_0db2b6e4283d",
+    "ev_271537d81501",
+    "ev_b09dba63fe84",
+    "ev_fc39ab7d1a59",
+    "ev_4b8b2bc809bc",
+    "ev_a0f9fa121e20"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.9,
+   "rationale": "All lines absent locally predate the 08:48:04 rotation; policy archives the rotated segment off-host.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": "Absence fully explained by off-host rotation policy.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-36e3c7",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:46:04Z",
+   "t_end": "2026-11-10T11:46:11Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_f2c7ce0f5524"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.9,
+   "rationale": "Only >5MB outbound flow (21.8MB) went to approved backup NAS stor-nas-01.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": "Approved NAS destination; content unconfirmed.",
+   "produced_by": "lead-investigator"
+  }
+ ],
+ "attribution": {
+  "account_used": null,
+  "session_ref": null,
+  "human_identity": "not_assessed",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_f2c7ce0f5524"
+  ],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Account names identify credentials, not people",
+   "Badge records do not cover remote sessions",
+   "Flow records do not show content"
+  ],
+  "statement": "No incident established; no account tied to any incident effect. Account used: none; human operator not established.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "The evidence does not support any incident during the 06:05–15:05 UTC shift. (1) Transfers: only one outbound transfer was over 5 MB. It moved 21.8 MB from records to 10.20.0.45:873 (stor-nas-01, the approved backup NAS) at 11:46 (ev_f2c7ce0f5524). That is consistent with policy. (2) The records-app access.log on the host is missing 183 lines that the collector kept. All of them come before the 08:48:04 rotation, and policy archives the rotated part off the host, so retention explains the absence. All other forwarded logs match the collector. The workstation auth.log rotation at 08:48 left its .1 copy on the host. (3) The workstation heartbeat stopped for 210 s (11:54:52–11:58:22) and its counter reset. One local auth line never reached the collector. The host holds more than the collector, so this is not log removal, but the cause is unknown. A skeptic review kept all three findings. Attribution: no account is tied to any incident, and no human operator was established.",
+ "open_questions": [
+  "What caused the workstation heartbeat gap and counter reset at 11:54–11:58 (forwarder or host restart, or a network problem)?",
+  "Was the 11:46 rsync to stor-nas-01 the scheduled backup? Flow records don't show the contents.",
+  "File-metadata snapshots and shell histories were reviewed only through the transfer check, not searched directly for staged files."
+ ],
+ "usage": {
+  "llm_calls": 10,
+  "tokens_in": 90243,
+  "tokens_out": 5513,
+  "tokens_cache_read": 58426,
+  "cost_estimate_usd": 0.292689,
+  "wall_seconds": 52.568,
+  "tool_calls": 14,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T07:19:13.654723Z",
+ "report_sha256": "4133ddb46487cfaa1cfd04bdafcaf9abfaa598ee39a6c5a74f8cd2dba7a8a28a",
+ "review_history": [
+  {
+   "at": "2026-11-14T07:19:13.654723Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.0.0"
+}

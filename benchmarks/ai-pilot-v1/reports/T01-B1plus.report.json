@@ -1,0 +1,190 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-pilot-t01-20261114t071403z-b1plus",
+ "bundle_id": "bndl-2ef68c85c7b51c20",
+ "system_id": "B1+",
+ "system_label": "ALIBI: lead + integrity-auditor + skeptic with deterministic checks",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-opus-5-5",
+ "findings": [
+  {
+   "id": "F-61b496",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "kcole",
+   "t_start": "2026-11-10T12:18:26Z",
+   "t_end": "2026-11-10T12:18:30Z",
+   "object_or_session": "/tmp/.font-unix/cache-0a91.bin",
+   "evidence_ids": [
+    "ev_f96aa6e28791",
+    "ev_5f876c31819e",
+    "ev_05179c2cc053",
+    "ev_8629f5ae3d53",
+    "ev_5df30aa5b748"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "patients_full export retrieved and staged to a hidden-looking /tmp path (22,154,908 bytes) just before the unapproved transfer of matching size.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-fcf5fd",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "kcole",
+   "t_start": "2026-11-10T12:19:31Z",
+   "t_end": "2026-11-10T12:19:45Z",
+   "object_or_session": "10.20.9.27:8080",
+   "evidence_ids": [
+    "ev_ebaf1904b890",
+    "ev_191b593aa50c",
+    "ev_67992394ebc2",
+    "ev_19f75d73cd31"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "Tap flow shows ~22.2MB outbound from workstation to unapproved 10.20.9.27:8080 during kcole console session workstation#91; flow does not show content.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-2c65e0",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:22:37Z",
+   "t_end": "2026-11-10T08:46:46Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_48902c756d00",
+    "ev_c916681dbe00",
+    "ev_7d7ed4569703",
+    "ev_7df66e73b5e2"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.9,
+   "rationale": "160 collector lines absent locally all predate the scheduled 08:47:04 rotation (keep=0, archived off-host). Not log removal.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-7f28df",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:41:04Z",
+   "t_end": "2026-11-10T11:41:11Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_8d118da85748"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "Bulk rsync to approved backup NAS stor-nas-01.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  }
+ ],
+ "attribution": {
+  "account_used": "kcole",
+  "session_ref": "workstation#91",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_67992394ebc2",
+   "ev_e46b086c1608",
+   "ev_6ef63b60dcd6"
+  ],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Account identifies credential not person",
+   "Badge taps miss tailgating/sharing"
+  ],
+  "statement": "Account kcole used (console session workstation#91); human operator not established. Badge B-2089 was in building, as were other account holders; shared-station credentials have been written down before.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Supported: during kcole console session workstation#91 (12:17:29–12:20:26Z), a patients_full export was staged to /tmp/.font-unix/cache-0a91.bin (22,154,908 B), then ~22.2 MB went to unapproved 10.20.9.27:8080 (12:19:31–12:19:45Z). Benign: records→stor-nas-01 rsync at 11:41Z is approved; 160 access.log lines missing locally are explained by the scheduled 08:47:04 rotation (archived off-host). No log tampering or collection gaps. Attribution: account kcole used; human operator not established.",
+ "open_questions": [
+  "Who physically operated the tty1 console at 12:17Z (CCTV/interview)?",
+  "What is 10.20.9.27 and what content was sent?"
+ ],
+ "usage": {
+  "llm_calls": 4,
+  "tokens_in": 43587,
+  "tokens_out": 2441,
+  "tokens_cache_read": 29279,
+  "cost_estimate_usd": 0.132062,
+  "wall_seconds": 21.264,
+  "tool_calls": 9,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T07:14:25.140641Z",
+ "report_sha256": "92d3e2d649b099136e67754de6762a08faff4ceade0302860b4ada91614819f0",
+ "review_history": [
+  {
+   "at": "2026-11-14T07:14:25.140641Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.0.0"
+}

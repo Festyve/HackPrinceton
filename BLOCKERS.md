@@ -2,15 +2,13 @@
 
 Anything needing a human, with exact steps. Nothing here was worked around by spending money or weakening a safeguard.
 
-## B-1 · Live AI inference is BLOCKED (no zero-charge runtime verified) — owner: Eric
-**Observed 00:20 ET:** no `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GOOGLE_API_KEY` / `GEMINI_API_KEY` / `GROQ_API_KEY` / `OPENROUTER_API_KEY` in the environment, no `.env`, `ollama` not installed, nothing listening on 11434 or 1234.
-**Effect:** every AI acceptance check (PLAN §14 items 7–9) is **BLOCKED, not passed**. AI benchmark arms read `NOT RUN — runtime unavailable`.
-**To unblock (pick one, spend $0):**
-1. *Local model:* install and start a tool-calling local model yourself (15-minute box), then in `.env`: `RUNTIME_MODE=live`, `LIVE_PROVIDER_KIND=local`, `LEAD_MODEL=<provider:model>` (for Ollama: `ollama:<model>`). A local provider package (e.g. `langchain-ollama`) needs `uv add`. Unverified pointers from another agent's field note on deepagents 0.7.38 + Ollama: the default 4096-token context silently truncates the harness prompt (this code therefore passes `num_ctx`, default 16384, override with `LLM_NUM_CTX`), and some local models reject tool calling outright, which `uv run alibi smoke` will show in one call.
-2. *Verified included/sponsor credits with no paid fallback:* confirm the balance and that auto-reload/overage is off in the provider console, then in `.env`: the provider key, `RUNTIME_MODE=live`, `LIVE_PROVIDER_KIND=included_credits`, `LLM_MAX_USD=<credit cap>`, `LLM_PRICE_IN_PER_MTOK`, `LLM_PRICE_OUT_PER_MTOK`, `LEAD_MODEL=<provider:model>`.
-Then follow "After the runtime is unblocked" in the Morning Handoff (PROGRESS.md). Do not paste keys into chat, logs or the frontend.
+## B-1 · Live AI inference — RESOLVED at ~01:55 ET (kept for the record)
+Overnight there was no key and no local model, so the build shipped offline. Eric then supplied an Anthropic API key and the Console billing state (auto-reload off). Live inference now runs on `anthropic:claude-opus-5-5` through the budget gateway with a hard total cap of $5. See DECISIONS.md "Live runtime" and the Morning Handoff for what ran and what it cost.
 
-**What is ready for the moment a runtime exists:** the graph, tools, prompts, budget ledger and review interrupt (`src/alibi/agents/`), selected automatically when `uv run alibi runtime` shows `"live_block_reason": null`; `uv run alibi smoke` (one tiny tool-calling call); `uv run alibi pilot` (the predeclared 4 cases × B1+/ALIBI, capped by `BENCH_MAX_SYSTEM_RUNS`). Both commands refuse to run while blocked. The pilot plumbing is tested with a test double only. **Expect prompt and tool-schema fixes on first contact with a real model:** none of the prompts has ever been read by one, and B1 and B2 (the arms without checks) have no builder yet.
+**Still open from this:**
+- **Rotate the key.** It was pasted into the coding session's chat, so it is in that session's transcript. It is stored only in the gitignored `.env` (mode 600) and is in no commit, log or recording, but treat it as exposed and rotate it after the event (owner: Eric).
+- **The $5 cap is nearly the whole purchased balance.** I cannot tell from the key whether spend is drawn from the promotional credit or the purchased $5.01. Check Console > Billing after the event; raise `LLM_MAX_USD` in `.env` deliberately if the team wants more live runs (each full investigation costs about $0.40, a single-agent one about $0.15).
+- B1 and B2 (the benchmark arms without the contradiction checks) have no builder and were not run.
 
 ## B-2 · GitHub repository is PRIVATE — owner: Rayan / Eric
 `owly1/HackPrinceton` was created 2026-11-13 20:42 ET (inside the event window) and is private. The packet requires a public repo. Before flipping it public: decide which planning-pack files to publish (see DECISIONS.md), and run a real secret scanner (`gitleaks detect`), which is not installed on this machine.
@@ -23,3 +21,7 @@ The case board was checked in headless Chrome at 1280×720 on Eric's MacBook onl
 
 ## B-5 · Pushed branch is `codex/alibi-build`; `main` does not exist on the remote — owner: Eric
 Nothing was committed to `main` (PLAN §0). After review: `git checkout -b main codex/alibi-build && git push -u origin main`, then set `main` as the default branch on GitHub.
+
+## B-6 · The model declines to plan the adversary — owner: Rayan / Eric (product decision)
+With a real model, the bounded adversary planner's single request ("choose steps from this fixed library") came back as a refusal (`stop_reason: refusal`, category `cyber`). The system recorded it, used the scripted scenario and labeled the case "Scripted scenario · no model chose these steps". So **"an AI adversary stages the incident" is not demonstrated and must not be claimed**; the adversary in every demo and benchmark case is scripted.
+I began to reword the request and to enable the provider's refusal-fallback option for that one call. The coding session's permission system blocked that change as working around a safety mechanism, and I did not retry it. Options for the team, none of which I took: (1) keep the adversary scripted and say so (the product does not need a model here: the step library, validation and sealed key are what matter); (2) decide, as humans, whether the provider's documented fallback or a different description of the task is appropriate, and make that change yourselves. The planner code path, its validation and the labeled fallback are tested with fakes (`tests/test_m4_api_isolation.py`).

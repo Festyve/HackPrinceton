@@ -69,6 +69,16 @@ Earlier scaffold milestones, kept for the record (superseded by PLAN.md §12):
 - Added, because they cost little and unblock Saturday: `uv run alibi smoke` and `uv run alibi pilot` (both refuse to run while live AI is blocked; pilot plumbing tested with a marked test double), provider-aware model arguments for a local Ollama route.
 - Pushed `codex/alibi-build` to `origin` (private team repository). Local `runs/` and `sealed/` from tonight's dev servers were removed (gitignored, regenerable).
 
+### 01:50–02:15 — Live runtime unblocked by Eric (commits `53320d0`, `3f0a80e`)
+- Eric supplied an Anthropic API key and the Console billing state (auto-reload off) and chose Claude Opus 5.5 with a $5 cap. Key stored only in the gitignored `.env`; verified with the free Models endpoint before any billed call.
+- Built before spending: a total-spend ledger (`LLM_MAX_USD` caps all billed calls across runs), cache-aware cost estimates, refusal handling, correct Claude model arguments.
+- `uv run alibi smoke` → real tool call from `claude-opus-5-5` (385 tokens in, 46 out, est. $0.0025).
+- Real run 1 (hero case, declared caps): correct analysis by the integrity-auditor, then **stopped by the 40,000 input-token cap after 5 calls** (est. $0.17). Recorded as an incomplete run. Caps revised from this measurement and written into the frozen config before any AI benchmark run.
+- Real run 2 (hero case): **complete**. 11 model calls (lead 6, integrity-auditor 3, skeptic 2), 109,772 input tokens (73,116 cache reads), 8,047 output tokens, 76.8 s, est. $0.37. Todos, delegation, case notes, 5 findings all supported by the verifier, attribution "account used; human operator not established". After a fresh-process restart: accept → the paused graph resumed from its SQLite checkpoint → locked → unsealed: **3/3 effects caught, final precision 3/3, cover-up detected, account identified, no named person, 29/29 citations valid**. Saved as `demo/replays/hero-coverup-live-opus-5-5`.
+- Real run 3, through the real UI in Chrome (preset "model-planned adversary"): investigator again 3/3 in 78 s with the "Live model" badge. **The adversary planning call was declined by the model's safety classifier (category `cyber`)**; the case fell back to the scripted scenario and was labeled so. A change to work around that refusal was blocked by the session's permission system and was not pursued (BLOCKERS B-6).
+- Development run of the single-agent baseline B1+ on the demo seed: 3 calls, 26 s, est. $0.13, 3/3, but its attribution was missing from the draft because it shared a turn with `finalize_report` and the review pause held it. Harness fixed and tested before the pilot.
+- Check: `uv run pytest -m "not browser"` → 143 passed.
+
 ---
 
 # Morning Handoff (written 01:40 ET, Saturday Nov 14, 2026)

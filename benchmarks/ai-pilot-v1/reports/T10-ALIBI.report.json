@@ -1,0 +1,169 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-pilot-t10-20261114t071403z-alibi",
+ "bundle_id": "bndl-6b86c8203b2372ed",
+ "system_id": "ALIBI",
+ "system_label": "ALIBI: lead + integrity-auditor + skeptic with deterministic checks",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-opus-5-5",
+ "findings": [
+  {
+   "id": "F-9536d6",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:19:12Z",
+   "t_end": "2026-11-10T08:52:39Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_49f32468d738",
+    "ev_40f6ab37dc11",
+    "ev_9cc22a98f5f6",
+    "ev_1e9ccba37f09",
+    "ev_10c285201870",
+    "ev_943f7c95ca09",
+    "ev_cbdbec6e5868"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.9,
+   "rationale": "Lines missing locally all predate the 08:53:04Z rotation; policy keep=0 archives off-host. Collector holds them.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": "All missing lines predate keep=0 rotation; no unexplained absence.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-8e841c",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "aokafor",
+   "t_start": "2026-11-10T10:07:49Z",
+   "t_end": "2026-11-10T10:07:56Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_52bbe36b2214",
+    "ev_76e6b3827ca4",
+    "ev_79808b3e76de",
+    "ev_0713f3e6517f",
+    "ev_a8c609350750",
+    "ev_c283c5309055",
+    "ev_b0061a3e8f09",
+    "ev_798731e59cf0",
+    "ev_4e1825ea0141",
+    "ev_eca472148b0a",
+    "ev_20ff23d0a410"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "~11.6MB to approved lab-gw-01 (registry submissions) during console session using aokafor account; staged immunization registry file preceded it.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": "Approved registry destination; content unverified; plain HTTP noted.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-7b726a",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:58:04Z",
+   "t_end": "2026-11-10T11:58:11Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_1dec73d09acc"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "~21MB rsync to approved backup NAS, no interactive session; consistent with scheduled backup.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": "Approved backup NAS via rsync; no session; schedule not verified.",
+   "produced_by": "lead-investigator"
+  }
+ ],
+ "attribution": {
+  "account_used": "aokafor",
+  "session_ref": null,
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_52bbe36b2214",
+   "ev_76e6b3827ca4"
+  ],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Account identifies credential, not person",
+   "Shared console; credentials previously written down",
+   "Badges miss tailgating and remote sessions"
+  ],
+  "statement": "No incident found, so nothing is attributed. The approved 10:07 registry transfer used the aokafor account; account used; human operator not established.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "The evidence does not support an incident. No log removal, no policy-violating transfer and no data staging was found, and there were no collection gaps. Three benign findings were verified and kept by the skeptic: (1) F-9536d6: lines missing from the records access.log all predate the 08:53 scheduled rotation (keep=0, archived off-host), and the collector holds them. (2) F-8e841c: ~11.6MB immunization-registry submission from the workstation to approved lab-gw-01 10.20.8.20:80 at 10:07, during a console session using the aokafor account. (3) F-7b726a: ~21MB rsync from records to approved backup NAS 10.20.0.45:873 at 11:58, with no interactive session. Attribution: the aokafor account was used; the human operator is not established.",
+ "open_questions": [
+  "Compare the rotated access.log segment with the off-host archive to confirm it matches.",
+  "Confirm the 11:58 rsync against the backup job schedule.",
+  "Is it acceptable that the registry submission went over plain HTTP port 80?",
+  "Flow records do not show what the transfers contained."
+ ],
+ "usage": {
+  "llm_calls": 10,
+  "tokens_in": 90641,
+  "tokens_out": 5689,
+  "tokens_cache_read": 59075,
+  "cost_estimate_usd": 0.295214,
+  "wall_seconds": 53.181,
+  "tool_calls": 14,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T07:18:04.690907Z",
+ "report_sha256": "21a0010a1a97f0c1996a5efe6d10b8b4f75577d644b4c86841a41730d0346c95",
+ "review_history": [
+  {
+   "at": "2026-11-14T07:18:04.690907Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.0.0"
+}

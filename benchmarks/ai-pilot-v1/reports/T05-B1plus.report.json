@@ -1,0 +1,224 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-pilot-t05-20261114t071403z-b1plus",
+ "bundle_id": "bndl-8f72b187cf81b29a",
+ "system_id": "B1+",
+ "system_label": "ALIBI: lead + integrity-auditor + skeptic with deterministic checks",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-opus-5-5",
+ "findings": [
+  {
+   "id": "F-d9a740",
+   "claim_type": "local_log_removal",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:21:09Z",
+   "t_end": "2026-11-10T11:28:45Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_6d741cbf4f67",
+    "ev_b1a7f1da1490",
+    "ev_182fa7aa522f"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "local_vs_collector"
+   ],
+   "confidence": 0.8,
+   "rationale": "Collector retained the session-34 login line for jpark; it is absent from local auth.log though bracketed by later local records and postdates rotation; not explained by retention.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-32b94f",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:23:09Z",
+   "t_end": "2026-11-10T11:23:12Z",
+   "object_or_session": "/var/tmp/.pkg-cache/rx-7f3.db",
+   "evidence_ids": [
+    "ev_79b08729ba33",
+    "ev_643d6effbd5d",
+    "ev_788cb6e4f77a",
+    "ev_7ad9443e2abe",
+    "ev_972365bb5c98"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.8,
+   "rationale": "patients_full export retrieved from records and staged as hidden file owned by jpark, size matching later outbound transfer.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-b9c4da",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:26:27Z",
+   "t_end": "2026-11-10T11:26:38Z",
+   "object_or_session": "10.20.9.70:8080",
+   "evidence_ids": [
+    "ev_e08cdbed489b",
+    "ev_bd1d719bb513",
+    "ev_6d741cbf4f67"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.85,
+   "rationale": "17.3 MB outbound to unapproved 10.20.9.70 during the only overlapping session (jpark console #34). Flow shows bytes, not content.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-750ce6",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:29:44Z",
+   "t_end": "2026-11-10T09:02:04Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_3bf8e8339432",
+    "ev_1f24d8b04517",
+    "ev_fcde7f76683e"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.9,
+   "rationale": "179 lines absent locally predate scheduled rotation (archived off-host, keep=0).",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-b880ce",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T12:08:04Z",
+   "t_end": "2026-11-10T12:08:09Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_b91e92edd632"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "Bulk rsync to approved backup NAS stor-nas-01.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  }
+ ],
+ "attribution": {
+  "account_used": "jpark",
+  "session_ref": "workstation#34",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_6d741cbf4f67",
+   "ev_ca9a76399702",
+   "ev_e4d63d12bd3a"
+  ],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Badge B-1911 was in, but adm-bsato's holder also badged in; credentials at shared station have been written down before; tailgating invisible."
+  ],
+  "statement": "Account jpark used (console session workstation#34); human operator not established.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Supported: during jpark console session workstation#34 (11:21:09–11:28:45Z), a patients_full export was staged to /var/tmp/.pkg-cache/rx-7f3.db (11:23Z) and ~17.3MB sent to unapproved 10.20.9.70:8080 (11:26Z); the session's login line is missing from local workstation auth.log though retained by the collector (unexplained removal). Benign: records→stor-nas-01 rsync at 12:08Z is approved; 179 missing records-app lines are explained by rotation. Attribution: account jpark used; human operator not established.",
+ "open_questions": [
+  "Who physically operated tty1 at 11:21–11:28Z?",
+  "What is host 10.20.9.70?"
+ ],
+ "usage": {
+  "llm_calls": 5,
+  "tokens_in": 59244,
+  "tokens_out": 2868,
+  "tokens_cache_read": 44254,
+  "cost_estimate_usd": 0.15,
+  "wall_seconds": 25.991,
+  "tool_calls": 10,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T07:15:55.816658Z",
+ "report_sha256": "6b305d97c06004807d533c77e29855c5332885ab0dedec8e185292987635fbc9",
+ "review_history": [
+  {
+   "at": "2026-11-14T07:15:55.816658Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.0.0"
+}

@@ -1,0 +1,157 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-pilot-t12-20261114t071403z-b1plus",
+ "bundle_id": "bndl-2cd6c099234d468b",
+ "system_id": "B1+",
+ "system_label": "ALIBI: lead + integrity-auditor + skeptic with deterministic checks",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-opus-5-5",
+ "findings": [
+  {
+   "id": "F-3a4bc7",
+   "claim_type": "collection_gap",
+   "category": "unresolved",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:54:52Z",
+   "t_end": "2026-11-10T11:58:22Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_24996cf5d732",
+    "ev_137773a88dc4",
+    "ev_7f8939732ac0"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "local_vs_collector"
+   ],
+   "confidence": 0.8,
+   "rationale": "210s heartbeat gap with sender counter reset; one local auth line (present on host) not received by collector. Cause unknown; no log removal indicated.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-c8fa0a",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:18:44Z",
+   "t_end": "2026-11-10T08:48:04Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_4b8b2bc809bc",
+    "ev_a0f9fa121e20",
+    "ev_eb96313ce762",
+    "ev_0db2b6e4283d"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "local_vs_collector"
+   ],
+   "confidence": 0.9,
+   "rationale": "183 collector lines absent locally all predate the scheduled 08:48:04 rotation; policy archives rotated segment off-host (keep 0).",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-36e3c7",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:46:04Z",
+   "t_end": "2026-11-10T11:46:11Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_f2c7ce0f5524"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.9,
+   "rationale": "Only bulk transfer went to approved backup NAS stor-nas-01; no session link or staging.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  }
+ ],
+ "attribution": {
+  "account_used": null,
+  "session_ref": null,
+  "human_identity": "not_assessed",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Flow records show volume, not content",
+   "Badge data does not cover remote sessions"
+  ],
+  "statement": "No incident effect established; no account or person is implicated. Account used; human operator not established.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Evidence does not support an incident. The only bulk transfer (records -> 10.20.0.45:873, 21.8 MB, 11:46) went to the approved backup NAS (F-36e3c7). Records access.log lines missing locally predate the scheduled 08:48:04 off-host rotation (F-c8fa0a). Workstation had a 210s collection gap 11:54:52-11:58:22 with sender counter reset; the one unforwarded auth line still exists on the host, so no log removal (F-3a4bc7, unresolved cause). No person implicated or cleared.",
+ "open_questions": [
+  "Cause of the workstation forwarder interruption/counter reset at 11:54-11:58?"
+ ],
+ "usage": {
+  "llm_calls": 3,
+  "tokens_in": 29225,
+  "tokens_out": 1739,
+  "tokens_cache_read": 16691,
+  "cost_estimate_usd": 0.104118,
+  "wall_seconds": 17.2,
+  "tool_calls": 7,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T07:19:31.032650Z",
+ "report_sha256": "ea372f7ee388d93af6965e0ee988c0a7d50a99a63ab29a31e7b6f9c3260c7571",
+ "review_history": [
+  {
+   "at": "2026-11-14T07:19:31.032650Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.0.0"
+}
