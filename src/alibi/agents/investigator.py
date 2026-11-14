@@ -225,6 +225,35 @@ submit_attribution, then finalize_report as the only tool call of its own turn. 
 {_RULES}"""
 
 
+FAMILY_VOCABULARY = """Additional vocabulary for this bundle:
+- incident claim types (category incident_allegation): timestamp_alteration (object: the file path),
+  forwarding_stopped (object: log-forwarder), second_host_session (object: the session id on the target host, e.g.
+  records#12), sensor_stream_discrepancy (object: the device id, e.g. fridge-01; host: iot-hub).
+- notes: shell_history_gap and metadata_change (unresolved); temperature_excursion (neutral_reconstruction);
+  sensor_maintenance and policy_consistent_access (benign_explanation).
+- A reading outside its permitted range is not an incident by itself: a real excursion that every source records
+  is a neutral fact. What matters is a disagreement between the hub's stored readings and the independent reference.
+  Never infer intent from temperature.
+- An approved change record in the brief can make an export, a cross-host session or a forwarding stop legitimate."""
+
+FAMILY_CHECKS_NOTE = """Further deterministic checks exist for this bundle: check_record_exports,
+check_cross_host_sessions, check_forwarding, check_file_times, check_shell_history and check_sensor_streams.
+Whoever runs the checks should run these too, in the same parallel turn."""
+
+FAMILY_GENERIC_NOTE = """On this bundle these comparisons can matter as well: the hub's stored temperature readings
+(source=sensor) against the independent reference logger (source=reference); the records application's export records
+against the change records in the brief; a file's recorded modification time against the export and transfer
+records for the same object; sessions on one host whose source address is another monitored host."""
+
+
+def family_addendum(toolbox: CaseToolbox) -> str:
+    """Extra prompt text for a bundle of the remaining case families. Empty for a first-run bundle, whose
+    prompts therefore stay exactly as they were."""
+    if not toolbox.family:
+        return ""
+    return "\n\n" + FAMILY_VOCABULARY + "\n\n" + (FAMILY_CHECKS_NOTE if toolbox.checks_enabled else FAMILY_GENERIC_NOTE)
+
+
 def todo_middleware() -> TodoListMiddleware:
     return TodoListMiddleware(system_prompt=TODO_PROMPT, tool_description=TODO_TOOL)
 
@@ -257,22 +286,23 @@ def build_investigator(toolbox: CaseToolbox, *, lead_model: Any, auditor_model: 
     so the tools an agent holds and the prompt it is given can never disagree.
     """
     checks, oracle = toolbox.checks_enabled, toolbox.verify_on_submit
+    more = family_addendum(toolbox)
     subagents = [
         {"name": "integrity-auditor",
          "description": ("Runs the deterministic contradiction checks over the evidence and returns candidate findings "
                          "with event ids as JSON. Delegate the checks to it once." if checks else
                          "Examines the evidence with the search tools and returns candidate findings with event ids "
                          "as JSON. Delegate the examination to it once."),
-         "system_prompt": auditor_prompt(checks), "tools": toolbox.tools_for("integrity-auditor"), "model": auditor_model,
+         "system_prompt": auditor_prompt(checks) + more, "tools": toolbox.tools_for("integrity-auditor"), "model": auditor_model,
          "middleware": [_fs()], "permissions": case_permissions()},
         {"name": "skeptic",
          "description": "Tests each finding for a benign explanation and returns keep/downgrade verdicts as JSON. "
                         "Use it after findings exist.",
-         "system_prompt": skeptic_prompt(checks), "tools": toolbox.tools_for("skeptic"), "model": skeptic_model,
+         "system_prompt": skeptic_prompt(checks) + more, "tools": toolbox.tools_for("skeptic"), "model": skeptic_model,
          "middleware": [_fs()], "permissions": case_permissions()},
     ]
     return create_deep_agent(
-        model=lead_model, tools=toolbox.tools_for("lead-investigator"), system_prompt=lead_prompt(checks, oracle),
+        model=lead_model, tools=toolbox.tools_for("lead-investigator"), system_prompt=lead_prompt(checks, oracle) + more,
         middleware=[_fs(), todo_middleware()], subagents=subagents, permissions=case_permissions(),
         interrupt_on=REVIEW_INTERRUPT, checkpointer=checkpointer, name="lead-investigator",
     )
@@ -282,7 +312,7 @@ def build_single_agent(toolbox: CaseToolbox, *, model: Any, checkpointer: Any) -
     """One agent, no delegation. With the check tools this is arm B1+ (the product's fast mode); without, B1."""
     return create_deep_agent(
         model=model, tools=toolbox.tools_for("single-agent"),
-        system_prompt=single_prompt(toolbox.checks_enabled, toolbox.verify_on_submit),
+        system_prompt=single_prompt(toolbox.checks_enabled, toolbox.verify_on_submit) + family_addendum(toolbox),
         middleware=[_fs(), todo_middleware()], permissions=case_permissions(),
         interrupt_on=REVIEW_INTERRUPT, checkpointer=checkpointer, name="single-agent",
     )

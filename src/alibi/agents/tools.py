@@ -23,7 +23,7 @@ from typing import Any, Callable, Literal
 
 from langchain_core.tools import StructuredTool
 
-from alibi import checks, verifier
+from alibi import checks, checks_families, verifier
 from alibi.contracts import AttributionAssessment, EvidenceManifest, Finding, iso
 from alibi.evidence.store import GROUPABLE, EvidenceStore
 
@@ -33,6 +33,17 @@ RAW_PREVIEW = 220
 
 EVIDENCE_TOOLS = ("get_case_brief", "search_events", "count_events", "get_events")
 CHECK_TOOLS = ("check_local_vs_collector", "check_transfer_sessions", "check_account_vs_person")
+# Checks for the remaining case families. They are offered, to roles that hold checks at all, only on a
+# bundle that carries the phase-two operating context. A first-run bundle's tool list is exactly as it was.
+FAMILY_CHECK_TOOLS = {"check_record_exports": "exports", "check_cross_host_sessions": "cross_host",
+                      "check_forwarding": "forwarding", "check_file_times": "file_times",
+                      "check_shell_history": "shell_history", "check_sensor_streams": "sensors"}
+FIRST_RUN_CLAIMS = ("local_log_removal", "policy_violating_transfer", "data_staging", "collection_gap",
+                    "retention_explained_absence", "policy_consistent_transfer", "account_use", "other")
+FAMILY_CLAIMS = checks_families.INCIDENT_CLAIMS + checks_families.NOTE_CLAIMS
+FAMILY_OBJECT_NOTE = (" On this bundle also: timestamp_alteration (object: the file path), forwarding_stopped (object: "
+                      "log-forwarder), second_host_session (object: the session id, e.g. records#12) and "
+                      "sensor_stream_discrepancy (object: the device id, e.g. fridge-01).")
 REPORT_TOOLS = ("submit_finding", "record_skeptic_verdict", "submit_attribution", "finalize_report")
 
 ROLE_TOOLS: dict[str, tuple[str, ...]] = {
@@ -68,6 +79,7 @@ def _parse_ts(value: str | None) -> datetime | None:
 _PATH = re.compile(r"^/[^\s]+$")
 _DEST = re.compile(r"^\d{1,3}(?:\.\d{1,3}){3}(?::\d{1,5})?$")
 _SESSION = re.compile(r"^[a-z-]+#\d+$")
+_DEVICE = re.compile(r"^[a-z][a-z0-9-]{1,40}$")
 
 
 def check_object_format(claim_type: str, category: str, obj: str | None) -> None:
@@ -75,6 +87,24 @@ def check_object_format(claim_type: str, category: str, obj: str | None) -> None
     if category != "incident_allegation":
         return
     value = (obj or "").strip()
+    if claim_type == "second_host_session":
+        if not _SESSION.match(value):
+            raise ValueError(f"object_or_session for second_host_session must be exactly the session id, for example "
+                             f"records#12; got {value!r}")
+        return
+    if claim_type == "forwarding_stopped":
+        if value != "log-forwarder":
+            raise ValueError(f"object_or_session for forwarding_stopped must be exactly log-forwarder; got {value!r}")
+        return
+    if claim_type == "timestamp_alteration":
+        if not _PATH.match(value):
+            raise ValueError(f"object_or_session for timestamp_alteration must be exactly the file path; got {value!r}")
+        return
+    if claim_type == "sensor_stream_discrepancy":
+        if not _DEVICE.match(value):
+            raise ValueError("object_or_session for sensor_stream_discrepancy must be exactly the device id, for "
+                             f"example fridge-01; got {value!r}")
+        return
     if _SESSION.match(value):
         return
     if claim_type in ("local_log_removal", "data_staging") and not _PATH.match(value):
@@ -133,6 +163,8 @@ class CaseToolbox:
         self._on_tool_call = on_tool_call or (lambda: None)
         self._lock = threading.Lock()
         self._obs: verifier.Observations | None = None
+        self._fam: dict[str, Any] | None = None
+        self.family = checks_families.applies(manifest)  # does this bundle carry the phase-two context?
         self.findings: dict[str, Finding] = {}
         self.attribution: AttributionAssessment | None = None
         self.final: dict[str, Any] | None = None
@@ -315,6 +347,17 @@ class CaseToolbox:
         res = checks.assess_presence(self.store, self.manifest, str(session_id))
         return res, res.get("observation", ""), list(res.get("badge_event_ids", []))
 
+    def family_check(self, key: str) -> tuple[dict[str, Any], str, list[str]]:
+        """One of the checks for the remaining case families (see FAMILY_CHECK_TOOLS)."""
+        from alibi.runners import summarize_family
+
+        with self._lock:
+            if self._fam is None:
+                self._fam = checks_families.observations(self.store, self.manifest)
+            res = self._fam[key]
+        summary, ids = summarize_family(key, res)
+        return res, summary, ids
+
     def submit_finding(self, role: str, **kw: Any) -> tuple[dict[str, Any], str, list[str]]:
         t_start, t_end = _parse_ts(kw["t_start"]), _parse_ts(kw["t_end"])
         if t_start is None or t_end is None:
@@ -405,6 +448,9 @@ class CaseToolbox:
     # ------------------------------------------------------------------ LangChain tools for one role
     def tools_for(self, role: str) -> list[StructuredTool]:
         names = tuple(n for n in ROLE_TOOLS[role] if self.checks_enabled or n not in CHECK_TOOLS)
+        holds_checks = any(n in CHECK_TOOLS for n in names)
+        if self.family and holds_checks:
+            names += tuple(FAMILY_CHECK_TOOLS)
         tb = self
 
         def get_case_brief() -> str:
@@ -461,8 +507,7 @@ class CaseToolbox:
                            lambda: tb.check_account_vs_person(session_id))
 
         def submit_finding(
-            claim_type: Literal["local_log_removal", "policy_violating_transfer", "data_staging", "collection_gap",
-                                "retention_explained_absence", "policy_consistent_transfer", "account_use", "other"],
+            claim_type: str,
             category: Literal["incident_allegation", "neutral_reconstruction", "benign_explanation", "unresolved"],
             host: str, t_start: str, t_end: str, evidence_ids: list[str], rationale: str,
             object_or_session: str | None = None, confidence: float = 0.5, account_used: str | None = None,
@@ -513,12 +558,51 @@ class CaseToolbox:
             """Submit the report for human review. Execution pauses until a reviewer accepts or rejects it."""
             return tb._run(role, "finalize_report", {}, lambda: tb.finalize_report(summary, open_questions or []))
 
+        def check_record_exports() -> str:
+            """Deterministic check. List bulk exports recorded by the records application (its own log and the
+            collector's copy), whether each is the scheduled job, covered by an approved change record or a client
+            request, or has no covering record, and the transfers linked to it."""
+            return tb._run(role, "check_record_exports", {}, lambda: tb.family_check("exports"))
+
+        def check_cross_host_sessions() -> str:
+            """Deterministic check. List sessions on one monitored host that were opened from another monitored
+            host, the sessions open on the source host at that time, and whether access policy or an approved
+            change record covers each."""
+            return tb._run(role, "check_cross_host_sessions", {}, lambda: tb.family_check("cross_host"))
+
+        def check_forwarding() -> str:
+            """Deterministic check. List interruptions of log forwarding, any recorded command that stopped the
+            forwarder and the account that ran it, and whether an approved change record covers it."""
+            return tb._run(role, "check_forwarding", {}, lambda: tb.family_check("forwarding"))
+
+        def check_file_times() -> str:
+            """Deterministic check. List files whose recorded modification time disagrees with independent records
+            of when they arrived (export and transfer records) or with their own metadata change time."""
+            return tb._run(role, "check_file_times", {}, lambda: tb.family_check("file_times"))
+
+        def check_shell_history() -> str:
+            """Deterministic check. List sessions with recorded activity but no matching shell-history commands.
+            Shell history has no independent copy, so a gap is a note for the report, never proof of removal."""
+            return tb._run(role, "check_shell_history", {}, lambda: tb.family_check("shell_history"))
+
+        def check_sensor_streams() -> str:
+            """Deterministic check. Compare the temperature readings stored on the hub with the independent
+            reference logger: where they disagree, real excursions that both record, sequence gaps, and stated
+            maintenance or clock conditions. Temperature alone never shows intent."""
+            return tb._run(role, "check_sensor_streams", {}, lambda: tb.family_check("sensors"))
+
+        # the claim vocabulary of the bundle's own family: a first-run bundle keeps the first-run schema
+        submit_finding.__annotations__["claim_type"] = Literal[FIRST_RUN_CLAIMS + (FAMILY_CLAIMS if tb.family else ())]  # type: ignore[valid-type]
         available = {f.__name__: f for f in (get_case_brief, search_events, count_events, get_events,
                                              check_local_vs_collector, check_transfer_sessions, check_account_vs_person,
+                                             check_record_exports, check_cross_host_sessions, check_forwarding,
+                                             check_file_times, check_shell_history, check_sensor_streams,
                                              submit_finding, record_skeptic_verdict, submit_attribution, finalize_report)}
         out = [StructuredTool.from_function(available[n], name=n) for n in names]
-        if not self.verify_on_submit:
-            for t in out:
-                if t.name == "submit_finding":  # the description must not promise a verdict that will not come
+        for t in out:
+            if t.name == "submit_finding":
+                if not self.verify_on_submit:  # the description must not promise a verdict that will not come
                     t.description = SUBMIT_FINDING_NO_VERDICT
+                if self.family:
+                    t.description += FAMILY_OBJECT_NOTE
         return out

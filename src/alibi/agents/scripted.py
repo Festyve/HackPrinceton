@@ -17,8 +17,8 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 
-from alibi import baselines
-from alibi.agents.tools import finding_id_for
+from alibi import baselines, checks_families
+from alibi.agents.tools import FAMILY_CHECK_TOOLS, finding_id_for
 from alibi.contracts import Finding
 
 SCRIPTED_MODEL_ID = "scripted-fixture-policy-v1 (no model)"
@@ -50,10 +50,33 @@ def _usable(res: Any, key: str) -> bool:
     return isinstance(res, dict) and key in res and "error" not in res
 
 
+def _family_calls(role: str, messages: list[BaseMessage], bound: tuple[str, ...]) -> AIMessage | None:
+    """On a bundle of the remaining case families, run its extra checks once, in one turn."""
+    wanted = [t for t in FAMILY_CHECK_TOOLS if t in bound]
+    if wanted and wanted[0] not in _calls(messages):
+        return _ai(role, messages, [(t, {}) for t in wanted])
+    return None
+
+
+def _family_obs(messages: list[BaseMessage], bound: tuple[str, ...]) -> tuple[dict[str, Any], list[str]]:
+    """The family check results as the baseline templating expects them, plus any that could not be read."""
+    obs: dict[str, Any] = {}
+    problems: list[str] = []
+    for tool, key in FAMILY_CHECK_TOOLS.items():
+        if tool not in bound:
+            continue
+        res = (_results(messages, tool) or [None])[0]
+        if isinstance(res, dict) and "check" in res and "error" not in res:
+            obs[key] = res
+        else:
+            problems.append(f"{tool} result unavailable")
+    return (obs if len(obs) == len([t for t in FAMILY_CHECK_TOOLS if t in bound]) else {}), problems
+
+
 # --------------------------------------------------------------------------- integrity-auditor
 
 
-def auditor_policy(messages: list[BaseMessage]) -> AIMessage:
+def auditor_policy(messages: list[BaseMessage], bound: tuple[str, ...] = ()) -> AIMessage:
     called = _calls(messages)
     if "check_local_vs_collector" not in called:
         return _ai("integrity-auditor", messages, [("check_local_vs_collector", {})])
@@ -66,9 +89,13 @@ def auditor_policy(messages: list[BaseMessage]) -> AIMessage:
     if linked and "check_account_vs_person" not in called:
         return _ai("integrity-auditor", messages,
                    [("check_account_vs_person", {"session_id": linked[0]["sessions"][0]["session_id"]})])
+    more = _family_calls("integrity-auditor", messages, bound)
+    if more is not None:
+        return more
     presence = (_results(messages, "check_account_vs_person") or [None])[0]
+    fam, fam_problems = _family_obs(messages, bound)
     candidates: list[Finding] = []
-    problems = []
+    problems = list(fam_problems)
     if _usable(rec, "files"):
         candidates += baselines.findings_from_reconcile(rec, produced_by="integrity-auditor")
     else:
@@ -77,19 +104,22 @@ def auditor_policy(messages: list[BaseMessage]) -> AIMessage:
         candidates += baselines.findings_from_transfers(xfer, produced_by="integrity-auditor")
     else:
         problems.append("transfer correlation result unavailable")
-    attribution = baselines.attribution_from(xfer if _usable(xfer, "transfers") else {"transfers": []}, presence, candidates)
+    candidates += checks_families.findings(fam, produced_by="integrity-auditor") if fam else []
+    attribution = baselines.with_family_attribution(
+        baselines.attribution_from(xfer if _usable(xfer, "transfers") else {"transfers": []}, presence, candidates), candidates)
     return AIMessage(content=json.dumps({
         "candidates": [c.model_dump(mode="json") for c in candidates],
         "attribution": attribution.model_dump(mode="json"),
         "problems": problems,
-        "coverage_limits": _limits(rec, xfer),
+        "coverage_limits": _limits(rec, xfer, fam),
     }))
 
 
-def _limits(rec: Any, xfer: Any) -> list[str]:
+def _limits(rec: Any, xfer: Any, fam: dict[str, Any] | None = None) -> list[str]:
     """What the checks could not assess on this bundle. Empty when every needed source is present."""
-    return baselines.coverage_limits(rec if _usable(rec, "files") else {"files": []},
-                                     xfer if isinstance(xfer, dict) else {})
+    out = baselines.coverage_limits(rec if _usable(rec, "files") else {"files": []},
+                                    xfer if isinstance(xfer, dict) else {})
+    return out + [x for x in checks_families.coverage_limits(fam or {}) if x not in out]
 
 
 _UNKNOWN = " Some checks could not be run on this bundle; what they would have shown is unknown."
@@ -98,12 +128,16 @@ _UNKNOWN = " Some checks could not be run on this bundle; what they would have s
 # --------------------------------------------------------------------------- skeptic
 
 
-def skeptic_policy(messages: list[BaseMessage]) -> AIMessage:
+def skeptic_policy(messages: list[BaseMessage], bound: tuple[str, ...] = ()) -> AIMessage:
     called = _calls(messages)
     if "check_local_vs_collector" not in called:
         return _ai("skeptic", messages, [("check_local_vs_collector", {})])
     if "check_transfer_sessions" not in called:
         return _ai("skeptic", messages, [("check_transfer_sessions", {})])
+    more = _family_calls("skeptic", messages, bound)
+    if more is not None:
+        return more
+    fam, _ = _family_obs(messages, bound)
     rec = (_results(messages, "check_local_vs_collector") or [{}])[0]
     xfer = (_results(messages, "check_transfer_sessions") or [{}])[0]
     task = next((m.content for m in messages if isinstance(m, HumanMessage)), "")
@@ -154,6 +188,19 @@ def skeptic_policy(messages: list[BaseMessage]) -> AIMessage:
             else:
                 verdicts.append({"finding_id": f["id"], "verdict": "downgrade",
                                  "reason": "The cited object is not linked to a non-approved transfer."})
+        elif claim in checks_families.INCIDENT_CLAIMS and fam:
+            try:
+                probe = Finding.model_validate({k: f.get(k) for k in ("claim_type", "category", "host", "object_or_session",
+                                                                      "t_start", "t_end", "evidence_ids")} | {"id": "tmp"})
+                verdict, note = checks_families.predicate(probe, cited, fam)
+            except Exception:  # noqa: BLE001 - a malformed brief is simply not supported
+                verdict, note = "unresolved", "the finding could not be re-checked"
+            if verdict == "supported":
+                verdicts.append({"finding_id": f["id"], "verdict": "keep", "reason": (
+                    "Tried the approved change records, stated maintenance and policy exceptions in the brief: none "
+                    f"covers it. The check still reports: {note}. That shows what the records say, not who did it.")[:400]})
+            else:
+                verdicts.append({"finding_id": f["id"], "verdict": "downgrade", "reason": str(note)[:300]})
         else:
             verdicts.append({"finding_id": f["id"], "verdict": "downgrade", "reason": "No benign test applies; unsupported."})
     return AIMessage(content=json.dumps({
@@ -186,7 +233,7 @@ def _candidate_id(c: dict[str, Any]) -> str:
     return finding_id_for(f.claim_type, f.category, f.host, f.object_or_session, f.t_start, f.t_end)
 
 
-def lead_policy(messages: list[BaseMessage]) -> AIMessage:
+def lead_policy(messages: list[BaseMessage], bound: tuple[str, ...] = ()) -> AIMessage:
     role = "lead-investigator"
     called = _calls(messages)
     if not called:
@@ -264,7 +311,7 @@ _SINGLE_TODOS = ["Read the brief and source inventory", "Run the contradiction c
                  "Submit the report for human review"]
 
 
-def single_policy(messages: list[BaseMessage]) -> AIMessage:
+def single_policy(messages: list[BaseMessage], bound: tuple[str, ...] = ()) -> AIMessage:
     """One agent, no delegation: runs the checks itself, then reports. Same templating as the BR baseline."""
     role = "single-agent"
     called = _calls(messages)
@@ -280,13 +327,19 @@ def single_policy(messages: list[BaseMessage]) -> AIMessage:
               if t["policy_status"] == "not_approved" and t["session_link"] == "single_overlapping_session"]
     if linked and "check_account_vs_person" not in called:
         return _ai(role, messages, [("check_account_vs_person", {"session_id": linked[0]["sessions"][0]["session_id"]})])
+    more = _family_calls(role, messages, bound)
+    if more is not None:
+        return more
     presence = (_results(messages, "check_account_vs_person") or [None])[0]
+    fam, _ = _family_obs(messages, bound)
     found: list[Finding] = []
     if _usable(rec, "files"):
         found += baselines.findings_from_reconcile(rec, produced_by=role)
     if _usable(xfer, "transfers"):
         found += baselines.findings_from_transfers(xfer, produced_by=role)
-    attribution = baselines.attribution_from(xfer if _usable(xfer, "transfers") else {"transfers": []}, presence, found)
+    found += checks_families.findings(fam, produced_by=role) if fam else []
+    attribution = baselines.with_family_attribution(
+        baselines.attribution_from(xfer if _usable(xfer, "transfers") else {"transfers": []}, presence, found), found)
     candidates = [c.model_dump(mode="json") for c in found]
     n_inc = sum(c["category"] == "incident_allegation" for c in candidates)
     if "write_file" not in called:
@@ -303,7 +356,7 @@ def single_policy(messages: list[BaseMessage]) -> AIMessage:
                         "contrary_evidence_ids", "limits", "assumptions") and v not in (None, [], "")}
         return _ai(role, messages, [("write_todos", _todos(3, 3, _SINGLE_TODOS)), ("submit_attribution", att)])
     if "finalize_report" not in called:
-        limits = _limits(rec, xfer)
+        limits = _limits(rec, xfer, fam)
         summary = (f"{n_inc} incident allegation(s), {len(candidates) - n_inc} benign explanation(s)/open note(s). "
                    + attribution.statement + (_UNKNOWN if limits else ""))
         questions = ["Who had access to the credential used in the linked session?",
@@ -337,7 +390,7 @@ class ScriptedPolicyModel(BaseChatModel):
 
     def _generate(self, messages: list[BaseMessage], stop: list[str] | None = None, run_manager: Any = None,
                   **kwargs: Any) -> ChatResult:
-        ai = POLICIES[self.role](messages)
+        ai = POLICIES[self.role](messages, self.bound_tools)
         unbound = [tc["name"] for tc in ai.tool_calls if self.bound_tools and tc["name"] not in self.bound_tools]
         if unbound:  # a script bug must fail loudly, not silently skip a step
             raise RuntimeError(f"scripted {self.role} policy called tools that are not bound: {unbound}")

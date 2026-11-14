@@ -149,9 +149,13 @@ def tree_digest(paths: EpisodePaths) -> str:
 def _coverage(store: EvidenceStore, manifest: EvidenceManifest) -> dict[str, Any]:
     from alibi.runners import summarize_reconcile, summarize_transfers
 
+    from alibi import checks_families
+
     rec, xfer = checks.reconcile_logs(store, manifest), checks.correlate_transfers(store, manifest)
+    limits = list(rec.get("coverage_limits", [])) + list(xfer.get("coverage_limits", []))
+    limits += [x for x in checks_families.coverage_limits(checks_families.observations(store, manifest)) if x not in limits]
     return {"local_vs_collector": summarize_reconcile(rec)[0], "transfers": summarize_transfers(xfer)[0],
-            "limits": list(rec.get("coverage_limits", [])) + list(xfer.get("coverage_limits", [])),
+            "limits": limits,
             "files_not_assessable": rec.get("coverage", {}).get("files_not_assessable", [])}
 
 

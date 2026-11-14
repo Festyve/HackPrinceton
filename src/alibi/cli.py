@@ -293,9 +293,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("generate", help="simulate, freeze, normalize and seal one episode")
     p.add_argument("--seed", type=int, required=True)
-    p.add_argument("--variant", default="incident_coverup",
-                   help="incident_plain | incident_coverup | benign_rotation | benign_approved_transfer | "
-                        "benign_remote_login | benign_collection_gap")
+    from alibi.sim.scenario import ALL_VARIANTS
+
+    p.add_argument("--variant", default="incident_coverup", choices=list(ALL_VARIANTS),
+                   help="scenario variant (inside job, records heist, cold chain and their benign controls)")
     p.add_argument("--episode-id", default=None)
     p.set_defaults(func=_cmd_generate)
 

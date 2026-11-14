@@ -84,7 +84,7 @@ export interface EvidenceManifest {
 /** A claim produced by an investigator system. `verified` only ever means "a deterministic predicate supports this modeled observation". It never means a person is proven responsible. */
 export interface Finding {
   id: string;
-  claim_type: "local_log_removal" | "policy_violating_transfer" | "data_staging" | "collection_gap" | "retention_explained_absence" | "policy_consistent_transfer" | "account_use" | "other";
+  claim_type: "local_log_removal" | "policy_violating_transfer" | "data_staging" | "collection_gap" | "retention_explained_absence" | "policy_consistent_transfer" | "account_use" | "other" | "timestamp_alteration" | "forwarding_stopped" | "second_host_session" | "sensor_stream_discrepancy" | "shell_history_gap" | "metadata_change" | "temperature_excursion" | "sensor_maintenance" | "policy_consistent_access";
   category: "incident_allegation" | "neutral_reconstruction" | "benign_explanation" | "unresolved";
   attack_id?: string | null;
   technique_family?: string | null;

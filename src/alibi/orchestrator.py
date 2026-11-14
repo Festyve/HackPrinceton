@@ -42,7 +42,7 @@ from alibi.evidence.store import EvidenceStore
 from alibi.reports import lock_report
 from alibi.runners import MODE_LABELS, Cancelled, RunContext, RuntimeBlocked, default_runner_id, get_runner, resolve_mode
 from alibi.scoring import score_report
-from alibi.sim.scenario import CARDS, build_spec
+from alibi.sim.scenario import CARDS, VARIANT_CARD, build_spec
 from alibi.verifier import verify_report
 
 STATES = ("created", "generating", "frozen", "investigating", "awaiting_review", "report_locked", "scored",
@@ -63,6 +63,31 @@ PRESETS: list[dict[str, Any]] = [
     {"id": "sealed-control", "title": "Sealed control case", "difficulty": "sealed", "card_id": "inside-job", "seed": 9003,
      "blurb": "May or may not contain an incident. The investigator gets the same tip. Unseal to find out.",
      "_variant": "benign_approved_transfer"},
+    # --- the remaining case families (phase two). Scripted scenarios on simulated evidence, like the others.
+    {"id": "evasion", "title": "Inside job · covering tracks", "difficulty": "L3", "card_id": "inside-job", "seed": 9041,
+     "blurb": "The same crime, then four attempts to cover it: cleared shell history, a backdated file, log "
+              "forwarding stopped and a hop to a second host. One of them leaves nothing an investigator can see.",
+     "_variant": "incident_evasion"},
+    {"id": "maintenance-control", "title": "Sealed control case · maintenance window", "difficulty": "sealed",
+     "card_id": "inside-job", "seed": 9042,
+     "blurb": "May or may not contain an incident. The same kinds of activity can be legitimate maintenance. Unseal to find out.",
+     "_variant": "benign_maintenance"},
+    {"id": "records-heist", "title": "Records heist · cover-up", "difficulty": "H2", "card_id": "records-heist", "seed": 9041,
+     "blurb": "Someone signs in to the records server with an administrator's credential, exports the synthetic "
+              "patient database there, sends it out and edits the application's own log.",
+     "_variant": "heist_coverup"},
+    {"id": "records-control", "title": "Sealed control case · records export", "difficulty": "sealed",
+     "card_id": "records-heist", "seed": 9043,
+     "blurb": "May or may not contain an incident. An export from the records server can be approved work. Unseal to find out.",
+     "_variant": "heist_approved_export"},
+    {"id": "cold-chain", "title": "Cold chain · altered readings", "difficulty": "C1", "card_id": "cold-chain", "seed": 9041,
+     "blurb": "The vaccine refrigerator warms past its range and the stored readings are overwritten to look normal. "
+              "An independent reference logger kept recording.",
+     "_variant": "coldchain_falsified"},
+    {"id": "cold-chain-control", "title": "Sealed control case · cold chain", "difficulty": "sealed",
+     "card_id": "cold-chain", "seed": 9044,
+     "blurb": "May or may not contain an incident. A real excursion with honest records is not falsification. Unseal to find out.",
+     "_variant": "coldchain_real_excursion"},
     {"id": "model-planned", "title": "Inside job · model-planned adversary", "difficulty": "L2", "card_id": "inside-job",
      "seed": 9027,
      "blurb": "A model chooses the adversary's steps from the bounded library (one planning response). "
@@ -376,6 +401,7 @@ class Orchestrator:
         runner = get_runner(runner_id, self.settings, mode)
         case_id = f"case-{uuid.uuid4().hex[:12]}"
         rec = CaseRecord(case_id=case_id, preset_id=preset_id, title=title, difficulty=diff, seed=seed,
+                         card_id=VARIANT_CARD.get(variant, "inside-job"),
                          runner_id=runner_id, investigation_mode=mode, inference_mode=runner.inference_mode,
                          model_id=runner.model_id, client_token=client_token)
         spec = None
@@ -392,8 +418,8 @@ class Orchestrator:
         mode = resolve_mode(runner_id, investigation_mode)
         runner = get_runner(runner_id, self.settings, mode)
         rec = CaseRecord(case_id=f"case-{uuid.uuid4().hex[:12]}", title=title, difficulty=str(spec.get("difficulty", "")),
-                         seed=spec.get("seed"), runner_id=runner_id, investigation_mode=mode,
-                         inference_mode=runner.inference_mode, model_id=runner.model_id)
+                         seed=spec.get("seed"), card_id=str(spec.get("card_id") or "inside-job"), runner_id=runner_id,
+                         investigation_mode=mode, inference_mode=runner.inference_mode, model_id=runner.model_id)
         return self._generate(rec, seed=None, variant=None, spec=spec)
 
     def _generate(self, rec: CaseRecord, *, seed: int | None, variant: str | None, spec: dict | None) -> CaseRecord:
@@ -961,6 +987,7 @@ class Orchestrator:
         meta = data["meta"]
         rec = CaseRecord(case_id=f"case-{uuid.uuid4().hex[:12]}", preset_id=meta.get("preset_id"),
                          title=meta.get("title", replay_id), difficulty=meta.get("difficulty", ""),
+                         card_id=str(data["spec"].get("card_id") or "inside-job"),
                          seed=data["spec"].get("seed"), runner_id=meta.get("runner_id", "deterministic"),
                          investigation_mode=_recorded_mode(meta),
                          inference_mode=("RECORDED_MODEL" if meta["inference_mode"] == "LIVE_MODEL" else meta["inference_mode"]),

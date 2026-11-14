@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Protocol
 
-from alibi import baselines, checks
+from alibi import baselines, checks, checks_families
 from alibi.config import Settings
 from alibi.contracts import EvidenceManifest, InvestigationReport, Usage
 from alibi.evidence.store import EvidenceStore
@@ -110,6 +110,33 @@ def summarize_transfers(xfer: dict[str, Any]) -> tuple[str, list[str]]:
             f"{len(rows) - len(bad)} consistent with policy"), [t["flow_event_id"] for t in rows]
 
 
+# check result key -> the investigator tool that returns it (phase-two case families)
+FAMILY_TOOLS = {"exports": "check_record_exports", "cross_host": "check_cross_host_sessions",
+                "forwarding": "check_forwarding", "file_times": "check_file_times",
+                "shell_history": "check_shell_history", "sensors": "check_sensor_streams"}
+_FAMILY_ROWS = {"exports": "exports", "cross_host": "sessions", "forwarding": "gaps", "file_times": "files",
+                "shell_history": "sessions", "sensors": "discrepancies"}
+
+
+def summarize_family(key: str, res: dict[str, Any]) -> tuple[str, list[str]]:
+    """One line for the activity trace. 'Not assessable' is said, never shown as zero."""
+    if res.get("status") in ("not_assessable", "not_applicable"):
+        return f"{res['status'].replace('_', ' ')}: {str(res.get('status_reason', ''))[:140]}", []
+    rows = res.get(_FAMILY_ROWS[key]) or []
+    ids: list[str] = []
+    for row in rows:
+        for k, v in row.items():
+            if k.endswith("event_ids") and isinstance(v, list):
+                ids += [str(i) for i in v]
+            elif k.endswith("event_id") and v:
+                ids.append(str(v))
+    flagged = [r for r in rows if r.get("classification") in ("unexplained", "backdated", "unexplained_gap")
+               or r.get("policy_status") in ("not_approved", "outside_policy")
+               or (r.get("approval") or {}).get("status") == "no_covering_change_record"]
+    extra = f", {len(res.get('excursions') or [])} excursion(s)" if key == "sensors" else ""
+    return f"{len(rows)} {_FAMILY_ROWS[key]} reviewed, {len(flagged)} outside policy or unexplained{extra}", list(dict.fromkeys(ids))
+
+
 class DeterministicRunner:
     """BR: contradiction checks with templated findings. No model, no DeepAgents graph."""
 
@@ -147,41 +174,45 @@ class DeterministicRunner:
                           "ms": int((time.perf_counter() - t) * 1000)})
         todo(2)
         ctx.pace()
-        linked = [x for x in xfer["transfers"] if x["policy_status"] == "not_approved"
-                  and x["session_link"] == "single_overlapping_session"]
         presence = None
-        if linked:
-            sid = linked[0]["sessions"][0]["session_id"]
+        sid = baselines.linked_session(xfer)
+        tool_calls = 2
+        if sid:
             t = time.perf_counter()
             presence = checks.assess_presence(ctx.store, ctx.manifest, sid)
             ctx.emit("tool", {"agent": "deterministic-checks", "tool": "check_account_vs_person",
                               "args": {"session_id": sid}, "result_summary": presence.get("observation", ""),
                               "evidence_ids": presence.get("badge_event_ids", []), "ok": True,
                               "ms": int((time.perf_counter() - t) * 1000)})
+            tool_calls += 1
+            ctx.pace()
+        # the remaining case families (records exports, cross-host sessions, forwarding, file times, shell
+        # history, temperature streams): only for a bundle that carries that operating context
+        fam: dict[str, Any] = {}
+        if checks_families.applies(ctx.manifest):
+            t = time.perf_counter()
+            fam = checks_families.observations(ctx.store, ctx.manifest)
+            for key, tool in FAMILY_TOOLS.items():
+                summary, ids = summarize_family(key, fam[key])
+                ctx.emit("tool", {"agent": "deterministic-checks", "tool": tool, "args": {}, "result_summary": summary,
+                                  "evidence_ids": ids[:8], "ok": True, "ms": int((time.perf_counter() - t) * 1000)})
+                tool_calls += 1
             ctx.pace()
         todo(3)
-        findings = baselines.number_findings(
-            baselines.findings_from_reconcile(rec) + baselines.findings_from_transfers(xfer), "F")
-        attribution = baselines.attribution_from(xfer, presence, findings)
+        body = baselines.compose(rec, xfer, presence, fam, "F")
+        findings = body["findings"]
         for f in findings:
             ctx.emit("finding", {"finding": f.model_dump(mode="json"), "phase": "proposed"})
             ctx.pace(0.6)
         ctx.emit("agent", {"agent": "deterministic-checks", "status": "finished",
                            "summary": f"{len(findings)} templated finding(s)"})
-        n_inc = sum(f.category == "incident_allegation" for f in findings)
         wall = max(0.0, time.perf_counter() - t0 - ctx.paced_seconds)
-        limits = baselines.coverage_limits(rec, xfer)  # what this bundle could not show
         return InvestigationReport(
             report_id=f"rep-{ctx.case_id}", bundle_id=ctx.manifest.bundle_id, system_id=self.system_id,
             system_label="Deterministic contradiction checks with templated findings",
-            inference_mode="NO_MODEL_BASELINE", findings=findings, attribution=attribution,
-            summary=(f"{n_inc} incident allegation(s), {len(findings) - n_inc} benign explanation(s)/open note(s). "
-                     + attribution.statement
-                     + (" Some checks could not be run on this bundle; what they would have shown is unknown." if limits else "")),
-            open_questions=([] if not n_inc else ["Who had access to the credential used in the linked session?",
-                                                  "Was the destination known to anyone at the clinic?"])
-            + [f"Coverage limit: {x}" for x in limits],
-            usage=Usage(wall_seconds=round(wall, 3), tool_calls=3 if linked else 2),
+            inference_mode="NO_MODEL_BASELINE", findings=findings, attribution=body["attribution"],
+            summary=body["summary"], open_questions=body["open_questions"],
+            usage=Usage(wall_seconds=round(wall, 3), tool_calls=tool_calls),
         )
 
     def resume(self, ctx: RunContext, decision: str) -> None:

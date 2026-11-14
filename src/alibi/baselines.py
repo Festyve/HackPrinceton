@@ -287,51 +287,73 @@ def number_findings(findings: list[Finding], prefix: str = "F") -> list[Finding]
     return [f.model_copy(update={"id": f"{prefix}-{i:02d}"}) for i, f in enumerate(ranked, start=1)]
 
 
+def compose(rec: dict[str, Any], xfer: dict[str, Any], presence: dict[str, Any] | None, fam: dict[str, Any],
+            prefix: str, produced_by: str = "BR") -> dict[str, Any]:
+    """Turn check observations into a report body: findings, attribution, summary, open questions.
+
+    The single place this is done, so the BR baseline, the deterministic runner and the scripted fixture
+    cannot drift apart. `fam` is empty for a first-run bundle, which then gets exactly what it always did.
+    """
+    findings = findings_from_reconcile(rec, produced_by) + findings_from_transfers(xfer, produced_by)
+    findings += checks_families.findings(fam, produced_by) if fam else []
+    findings = number_findings(findings, prefix)
+    attribution = with_family_attribution(attribution_from(xfer, presence, findings), findings)
+    fam_inc = [f for f in findings if f.category == "incident_allegation" and f.claim_type in checks_families.INCIDENT_CLAIMS]
+    n_inc = sum(f.category == "incident_allegation" for f in findings)
+    # what this bundle could not show: stated in the report so that "nothing found" is never read as "nothing there"
+    limits = coverage_limits(rec, xfer)
+    limits += [x for x in checks_families.coverage_limits(fam) if x not in limits]
+    return {
+        "findings": findings, "attribution": attribution, "limits": limits,
+        "summary": (f"{n_inc} incident allegation(s), {len(findings) - n_inc} benign explanation(s)/open note(s). "
+                    + attribution.statement
+                    + (" Some checks could not be run on this bundle; what they would have shown is unknown." if limits else "")),
+        "open_questions": ([] if n_inc == len(fam_inc) else ["Who had access to the credential used in the linked session?",
+                                                             "Was the destination known to anyone at the clinic?"])
+        + (["Which of the two temperature records was changed, when, and who could write to the hub's stored readings?"]
+           if any(f.claim_type == "sensor_stream_discrepancy" for f in fam_inc) else [])
+        + [f"Coverage limit: {x}" for x in limits],
+    }
+
+
+def with_family_attribution(attribution: AttributionAssessment, findings: list[Finding]) -> AttributionAssessment:
+    """An allegation from the phase-two checks with no linked transfer session still gets an explicit
+    account-versus-person statement (e.g. a changed temperature record names no account at all)."""
+    fam_inc = [f for f in findings if f.category == "incident_allegation" and f.claim_type in checks_families.INCIDENT_CLAIMS]
+    if not fam_inc or attribution.human_identity != "not_assessed":
+        return attribution
+    accounts = sorted({f.account_used for f in fam_inc if f.account_used})
+    account = accounts[0] if len(accounts) == 1 else None
+    return AttributionAssessment(
+        account_used=account, human_identity="insufficient_evidence",
+        limits=["an account identifies a credential, not the person typing",
+                "a record that was changed does not show who changed it"],
+        statement=(f"Account used: {account}. Human operator not established." if account else
+                   "No account or session is tied to this observation by the evidence. Human operator not established."))
+
+
+def linked_session(xfer: dict[str, Any]) -> str | None:
+    """The one session tied to a non-approved transfer, if there is exactly such a link."""
+    linked = [t for t in xfer.get("transfers", [])
+              if t["policy_status"] == "not_approved" and t["session_link"] == "single_overlapping_session"]
+    return linked[0]["sessions"][0]["session_id"] if linked else None
+
+
 def run_br(store: EvidenceStore, manifest: EvidenceManifest) -> InvestigationReport:
     """Deterministic checks + templated findings. No model inference."""
     started = datetime.now(timezone.utc)
     rec = checks.reconcile_logs(store, manifest)
     xfer = checks.correlate_transfers(store, manifest)
-    findings = findings_from_reconcile(rec) + findings_from_transfers(xfer)
-    # phase-two case families: empty for a first-run bundle, so its findings are exactly as before
-    fam = checks_families.observations(store, manifest)
-    findings += checks_families.findings(fam)
-    presence = None
-    linked = [t for t in xfer["transfers"]
-              if t["policy_status"] == "not_approved" and t["session_link"] == "single_overlapping_session"]
-    if linked:
-        presence = checks.assess_presence(store, manifest, linked[0]["sessions"][0]["session_id"])
-    findings = number_findings(findings, "BR")
-    attribution = attribution_from(xfer, presence, findings)
-    fam_inc = [f for f in findings if f.category == "incident_allegation" and f.claim_type in checks_families.INCIDENT_CLAIMS]
-    if fam_inc and attribution.human_identity == "not_assessed":
-        # an allegation from the phase-two checks with no linked transfer session (e.g. a temperature record)
-        accounts = sorted({f.account_used for f in fam_inc if f.account_used})
-        account = accounts[0] if len(accounts) == 1 else None
-        attribution = AttributionAssessment(
-            account_used=account, human_identity="insufficient_evidence",
-            limits=["an account identifies a credential, not the person typing",
-                    "a record that was changed does not show who changed it"],
-            statement=(f"Account used: {account}. Human operator not established." if account else
-                       "No account or session is tied to this observation by the evidence. Human operator not established."))
-    n_inc = sum(f.category == "incident_allegation" for f in findings)
+    fam = checks_families.observations(store, manifest)  # empty for a first-run bundle
+    sid = linked_session(xfer)
+    presence = checks.assess_presence(store, manifest, sid) if sid else None
+    body = compose(rec, xfer, presence, fam, "BR")
     wall = (datetime.now(timezone.utc) - started).total_seconds()
-    # what this bundle could not show: stated in the report so that "nothing found" is never read as "nothing there"
-    limits = coverage_limits(rec, xfer) + [x for x in checks_families.coverage_limits(fam)
-                                           if x not in coverage_limits(rec, xfer)]
     return InvestigationReport(
         report_id=f"rep-BR-{manifest.bundle_id}", bundle_id=manifest.bundle_id, system_id="BR",
         system_label="BR · deterministic contradiction checks, templated findings", inference_mode="NO_MODEL_BASELINE",
-        findings=findings, attribution=attribution,
-        summary=(f"{n_inc} incident allegation(s), {len(findings) - n_inc} benign explanation(s)/open note(s). "
-                 + attribution.statement
-                 + (" Some checks could not be run on this bundle; what they would have shown is unknown." if limits else "")),
-        open_questions=([] if n_inc == len(fam_inc) else ["Who had access to the credential used in the linked session?",
-                                                          "Was the destination known to anyone at the clinic?"])
-        + (["Which of the two temperature records was changed, when, and who could write to the hub's stored readings?"]
-           if any(f.claim_type == "sensor_stream_discrepancy" for f in fam_inc) else [])
-        + [f"Coverage limit: {x}" for x in limits],
-        usage=Usage(wall_seconds=wall), created_at=started,
+        findings=body["findings"], attribution=body["attribution"], summary=body["summary"],
+        open_questions=body["open_questions"], usage=Usage(wall_seconds=wall), created_at=started,
     )
 
 
