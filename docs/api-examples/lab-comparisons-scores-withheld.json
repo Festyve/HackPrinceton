@@ -1,0 +1,5 @@
+{
+  "note": "one run of the experiment still has an open report",
+  "scores_withheld": true,
+  "table_note": "Runs with the same bundle id investigated identical evidence. A run with a different bundle id is a separate execution. One run per row: nothing here is an average or a rate. Scores are withheld while a run of this experiment has a report that is not locked."
+}

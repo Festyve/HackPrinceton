@@ -401,6 +401,14 @@ def _cmd_lab(args: argparse.Namespace) -> int:
         return _investigate_to_review(orch, rec.case_id) if args.investigate else 0
     # run
     settings = load_settings()
+    if args.save_as:  # checked before anything is run or billed
+        from alibi.episode import validate_episode_id
+        from alibi.orchestrator import REPLAY_DIR
+
+        validate_episode_id(args.save_as)
+        if (REPLAY_DIR / args.save_as).exists():
+            print(f"error: a recording named {args.save_as} already exists; choose another name", file=sys.stderr)
+            return 1
     holder = tempfile.TemporaryDirectory(prefix="alibi-lab-record-") if args.save_as else None
     try:
         if holder:  # a recording is made beside the real case list, not in it
@@ -414,8 +422,7 @@ def _cmd_lab(args: argparse.Namespace) -> int:
         cond, prov = rec.lab["conditions"], rec.lab["provenance"]
         print(f"case {rec.case_id}: {rec.title} · {cond['preset_label']} · changed worker {cond['rogue_requests']} request(s), "
               f"investigator {cond['investigator_requests']} · permissions {cond['rogue_permissions']} · context {cond['context_load']}")
-        print(f"  {prov['ordinary_work_label']}" + (f" · {prov['worker_usage']['llm_calls']} request(s), est. "
-                                                     f"${prov['worker_usage']['cost_estimate_usd']:.4f}" if prov["worker_usage"] else ""))
+        print(f"  {prov['ordinary_work_label']}")  # how many requests they made is shown once the report is locked
         print(f"  {prov['changed_objective_label']}")
         if not (args.investigate or args.save_as):
             print(f"next: alibi investigate {rec.case_id}")
@@ -447,14 +454,18 @@ def _cmd_trace(args: argparse.Namespace) -> int:
         return 0
     b = tr["behaviors"]
     print(f"case {args.case_id} · {tr['labels']['inference_label']} · {tr['labels']['investigation_mode_label']}")
-    print(f"planned before examining: {'yes' if b['planned_before_examining'] else 'no'} · plan written by {tr['plan_written_by']}")
+    first = {True: "yes", False: "no", None: "not applicable (no plan, or nothing examined)"}[b["plan_recorded_before_first_examination"]]
+    print(f"plan recorded before the first examination: {first} · plan written by {tr['plan_written_by']}")
     for d in b["delegations"]:
-        print(f"delegated to {d['to']}: {d['tool_calls']} tool call(s), {d['status']} · {str(d['result_summary'] or '')[:80]}")
+        how = " (closed by a finish event that names no agent)" if d.get("closed_by") else ""
+        print(f"delegated to {d['to']}: {d['tool_calls']} tool call(s), {d['status']}{how} · {str(d['result_summary'] or '')[:80]}")
     for r in b["plan_revisions"]:
         after = r["after"] or {}
         print(f"plan changed at event {r['seq']} (after event {after.get('seq')}: {after.get('what')}):")
-        for item in r["added"]:
+        for item in r["added_new"]:
             print(f"    + {item}")
+        for pair in r["reworded"]:
+            print(f"    ~ reworded: {pair['to']}")
     cf = b["case_file"]
     print(f"case file: {cf['writes']} write(s), {cf['reads_after_a_write']} read(s) after a write · {', '.join(cf['paths']) or 'none'}")
     print(f"resumed: {b['resumed']['times']} time(s), {b['resumed']['tool_calls_after_resume']} tool call(s) afterwards")
@@ -772,7 +783,8 @@ def build_parser() -> argparse.ArgumentParser:
     q.add_argument("--investigator-requests", type=int, default=None)
     q.add_argument("--context-load", default=None, choices=["light", "standard", "heavy"])
     q.add_argument("--work", default=None, choices=["model", "scripted"], help="who chooses the workers' ordinary actions")
-    q.add_argument("--runner", default=None, help="deterministic | agent-fixture | agent-live (default: runtime default)")
+    q.add_argument("--runner", default=None, choices=["deterministic", "agent-fixture", "agent-live"],
+                   help="default: the runtime's default")
     q.add_argument("--mode", default=None, choices=["fast", "specialist"])
     q.add_argument("--investigate", action="store_true", help="investigate it straight away and stop at human review")
     q.add_argument("--save-as", default=None, help="investigate, then save under demo/replays/<name> for offline replay")
@@ -782,7 +794,7 @@ def build_parser() -> argparse.ArgumentParser:
     q.add_argument("case_id")
     q = lsub.add_parser("compare", help="a second run that changes one thing")
     q.add_argument("case_id")
-    q.add_argument("--kind", required=True, choices=["investigator_budget", "rogue_permissions", "workflow"])
+    q.add_argument("--kind", required=True, choices=["investigator_budget", "runner", "rogue_permissions", "workflow"])
     q.add_argument("--investigator-requests", type=int, default=None)
     q.add_argument("--permissions", default=None, choices=["export_only", "export_log", "export_log_artifact"])
     q.add_argument("--runner", default=None)

@@ -51,7 +51,7 @@ SYSTEM_LABELS = {
 _CATEGORY_ORDER = {"incident_allegation": 0, "unresolved": 1, "benign_explanation": 2, "neutral_reconstruction": 3}
 
 
-RESUME_NOTE = ("This investigation was interrupted and has been resumed from its saved state in a new process. Your "
+RESUME_NOTE = ("This investigation was interrupted and has been resumed from its saved state. Your "
                "case notes and the findings you already recorded are still there. Read your case file first, then "
                "continue from where you stopped and finish: record what is supported, then finalize_report.")
 
@@ -197,6 +197,11 @@ class AgentRunner:
         ctx.emit("agent", {"agent": self.lead_role, "status": "finished",
                            "summary": stop_reason or f"{len(toolbox.findings)} finding(s) submitted for review"})
         wall = max(0.0, time.perf_counter() - t0 - ctx.paced_seconds)
+        if ctx.resume:  # a resumed run's time is the time of all its legs
+            wall += float(ledger.state.get("wall_seconds_total", 0.0))
+        with ledger._lock:
+            ledger.state["wall_seconds_total"] = wall
+            ledger._persist_quietly()
         return self._report(ctx, toolbox, ledger, wall, stop_reason)
 
     def _apply_calls_held_by_review(self, ctx: RunContext, toolbox: CaseToolbox, messages: list[Any]) -> None:

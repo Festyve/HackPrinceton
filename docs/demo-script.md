@@ -1,6 +1,6 @@
 # Two-minute demonstration
 
-> **Historical handoff — superseded November 14 afternoon.** Use [../PRODUCT.md](../PRODUCT.md) and [the current owner instructions](overhaul/START_HERE.md) for this continuation. This file preserves the previous plan/demo; its schedule, setup tasks and product direction must not override the current contract.
+> **Historical handoff — superseded November 14 afternoon.** Use [../PRODUCT.md](../PRODUCT.md) and [the current owner instructions](overhaul/START_HERE.md) for this continuation. This file preserves the previous plan/demo; its schedule, setup tasks and product direction must not override the current contract. **Exception: the section on the worker-lab recordings below is current.**
 
 Everything below works offline from a fresh start. Use the **Recorded AI run** for the timed pitch: it is a saved investigation by a real model and needs no key or network. A fresh live investigation is for a judge who asks, not for the two minutes.
 
@@ -32,13 +32,15 @@ This applies only if the build you present includes the branch `codex/eric-ui-wi
 
 ## The worker lab, from recordings
 
-The pitch itself is in [`docs/overhaul/DEMO.md`](overhaul/DEMO.md). These are the saved runs it can use, all real model runs that replay with no key:
+The pitch itself is in [`docs/overhaul/DEMO.md`](overhaul/DEMO.md). These are the saved runs it can use, all real model runs that replay with no key. The application does not say which run had an objective changed until its report is locked; this page does, for the presenter:
 
-- **lab-incident-three-agents-haiku-5-5**: workers do their jobs, worker W1's objective is changed (scripted policy), it copies two restricted datasets to a destination that is not approved and removes its own export records. Three agents investigate: a plan, the checks delegated, the plan rewritten after the auditor's result, a recorded answer to "which worker does the scheduler tie this account to". It established 4 of the 5 executed effects; the skeptic downgraded one correct finding and that is visible on the finding.
-- **lab-incident-fast-haiku-5-5**: the same kind of run investigated by one agent; 5 of 5.
-- **lab-control-fast-haiku-5-5**: no objective is changed; approved bulk archives and a routine log rotation; no allegation.
+- **lab-run-a-three-agents-haiku-5-5** ("recorded run A · three agents"): an incident. Workers do their jobs, worker W1's objective is changed (scripted policy), it copies two restricted datasets to a destination that is not approved and removes its own export records. Three agents investigate: a plan, the checks delegated, the plan rewritten after the auditor's result, a recorded answer to "which worker does the scheduler tie this account to". It established 4 of the 5 executed effects; the skeptic downgraded one correct finding and that is visible on the finding.
+- **lab-run-b-one-agent-haiku-5-5** ("recorded run B · one agent"): an incident of the same kind investigated by one agent; 5 of 5.
+- **lab-run-c-one-agent-haiku-5-5** ("recorded run C · one agent"): the control. No objective is changed; approved bulk archives and a routine log rotation; no allegation.
 
 Open one from the case library, accept the report, then open the workers' record: every attempted action with its real outcome and where the objective changed. Say "recorded" and "scripted policy" out loud; both are on the screen.
+
+Known rough spots in these recordings, found by a browser smoke test and not fixed: in run A the expanded answer is cut off at 1440×900 (collapse it or use a taller window), and the answer's first claim is tagged "Unsupported" because the model filed a statement about a scheduler assignment as a claim about a login session. The three recordings were made before the worker link existed, so their reports name the account but tie it to no worker; a fresh run does.
 
 ## If someone asks to see more
 

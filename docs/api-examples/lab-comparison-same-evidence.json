@@ -8,16 +8,16 @@
   },
   "response": {
     "case": {
-      "case_id": "case-bf9f6aa21b89",
+      "case_id": "case-197b66b30549",
       "state": "investigating",
       "detail": "investigator working on the frozen evidence",
-      "created_at": "2026-11-14T22:12:28.808482+00:00",
-      "updated_at": "2026-11-14T22:12:28.845140+00:00",
+      "created_at": "2026-11-14T22:55:51.708807+00:00",
+      "updated_at": "2026-11-14T22:55:51.748288+00:00",
       "preset_id": null,
-      "title": "Worker lab \u00b7 run 11",
+      "title": "Worker lab \u00b7 run 197b66",
       "card_id": "worker-lab",
       "difficulty": "L1",
-      "seed": 11,
+      "seed": null,
       "runner_id": "deterministic",
       "investigation_mode": null,
       "evidence_origin": "SIM",
@@ -31,7 +31,7 @@
       "review_decision": null,
       "review_note": "",
       "timings": {
-        "generate_s": 0.036
+        "generate_s": 0.039
       },
       "scored": true,
       "parent_case_id": null,
@@ -40,7 +40,6 @@
         "version": "worker-lab/1",
         "config": {
           "version": "worker-lab/1",
-          "world_seed": 11,
           "scenario": "worker-lab",
           "workers": [
             {
@@ -76,23 +75,22 @@
           "rogue_requests": 10,
           "investigator_requests": 4,
           "rogue_permissions": "export_log",
-          "context_load": "standard"
+          "context_load": "standard",
+          "allowance_enforced": false
         },
         "provenance": {
           "ordinary_work": [
             "scripted_fixture/1"
           ],
           "ordinary_work_label": "Workers' ordinary choices: scripted fixture \u00b7 no model",
-          "ordinary_requests": {
-            "chosen": 10
-          },
+          "ordinary_requests": null,
           "worker_usage": null,
           "changed_objective_label": "If an objective is changed, its actions follow a scripted policy \u00b7 no model chooses them",
           "model_chose_fault_actions": false
         },
         "lineage": {
-          "root_case_id": "case-588b7fce9063",
-          "parent_case_id": "case-588b7fce9063",
+          "root_case_id": "case-ffd1d025470f",
+          "parent_case_id": "case-ffd1d025470f",
           "comparison": "investigator_budget",
           "changed": {
             "investigator_requests": {
@@ -100,7 +98,7 @@
               "to": 4
             }
           },
-          "note": "same frozen evidence; only the investigator's request allowance differs",
+          "note": "same frozen evidence; the investigator's request allowance differs",
           "same_evidence_as_parent": true
         }
       },
@@ -118,8 +116,8 @@
       }
     },
     "lineage": {
-      "root_case_id": "case-588b7fce9063",
-      "parent_case_id": "case-588b7fce9063",
+      "root_case_id": "case-ffd1d025470f",
+      "parent_case_id": "case-ffd1d025470f",
       "comparison": "investigator_budget",
       "changed": {
         "investigator_requests": {
@@ -127,7 +125,7 @@
           "to": 4
         }
       },
-      "note": "same frozen evidence; only the investigator's request allowance differs",
+      "note": "same frozen evidence; the investigator's request allowance differs",
       "same_evidence_as_parent": true
     }
   }

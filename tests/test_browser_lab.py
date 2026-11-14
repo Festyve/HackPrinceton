@@ -93,6 +93,12 @@ def test_lab_budget_and_permission_comparisons_preserve_actual_lineage(server, p
     panel.get_by_label("Variable to change", exact=True).select_option("rogue_permissions")
     panel.get_by_label("New permission profile", exact=True).select_option("export_only")
     expect(panel.locator(".comparison-variable")).to_contain_text("new execution")
+    # Backend rule (Eric, Nov 14): whether a new execution's evidence differs says whether anything was changed,
+    # so it is refused until every report of this experiment is locked. The panel shows the server's reason.
+    page.click(tid("btn-lab-compare"))
+    expect(panel.get_by_role("alert")).to_contain_text("once this run's report is locked")
+    for cid in (child, original):
+        assert page.request.post(f"{base}/api/cases/{cid}/review", data={"decision": "accept", "note": ""}).ok
     page.click(tid("btn-lab-compare"))
     page.wait_for_function("old => !location.hash.endsWith(old)", arg=child)
     wait_state(page, "awaiting_review")
@@ -103,7 +109,8 @@ def test_lab_budget_and_permission_comparisons_preserve_actual_lineage(server, p
     expect(panel.locator(tid("lab-comparison-table"))).to_contain_text("New execution")
     assert len(panel.locator(tid("lab-comparison-table")).locator("tbody tr").all()) == 3
     assert all(r["scored"] is None for r in page.request.get(f"{base}/api/cases/{original}/lab/comparisons").json()["runs"])
-    assert page.errors == []
+    # the one refused request above is the only thing the browser logged
+    assert page.errors == ["Failed to load resource: the server responded with a status of 409 (Conflict)"]
 
 
 def test_worker_control_is_sealed_and_report_reveals_without_false_incident(server, page):

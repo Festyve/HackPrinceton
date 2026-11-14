@@ -76,7 +76,7 @@ class ResumeIn(BaseModel):
 
 
 class LabComparisonIn(BaseModel):
-    kind: Literal["investigator_budget", "rogue_permissions", "workflow"]
+    kind: Literal["investigator_budget", "runner", "rogue_permissions", "workflow"]
     investigator_requests: int | None = Field(default=None, ge=1, le=40)
     rogue_permissions: Literal["export_only", "export_log", "export_log_artifact"] | None = None
     runner: Literal["deterministic", "agent-fixture", "agent-live"] | None = None

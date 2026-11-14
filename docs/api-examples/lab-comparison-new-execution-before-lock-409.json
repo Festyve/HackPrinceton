@@ -1,0 +1,14 @@
+{
+  "request": {
+    "kind": "rogue_permissions",
+    "rogue_permissions": "export_log_artifact",
+    "runner": "deterministic",
+    "client_token": "example-cmp-2",
+    "autostart": true
+  },
+  "status": 409,
+  "body": {
+    "error": "a run with other permissions is a new execution, and whether its evidence differs says whether anything was changed. It can be made once this run's report is locked and no other run of this experiment has an open report (open: case-ffd1d025470f, case-197b66b30549)",
+    "state": "awaiting_review"
+  }
+}

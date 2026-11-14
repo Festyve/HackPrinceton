@@ -1,6 +1,6 @@
 {
  "meta": {
-  "title": "Worker lab \u00b7 run 11",
+  "title": "Worker lab \u00b7 recorded run B \u00b7 one agent",
   "preset_id": null,
   "difficulty": "L1",
   "inference_mode": "LIVE_MODEL",
@@ -82,7 +82,7 @@
   },
   "recorded_at": "2026-11-14T21:36:05.992683+00:00",
   "git_commit": "ad21f1e",
-  "note": "Worker lab, incident run on development seed 11. Workers' ordinary work chosen by Claude Haiku 5.5; the changed objective follows a scripted policy (no model chose a fault action). One-agent investigation with a 10-request allowance. A single recorded run, kept as it came out.",
+  "note": "Worker lab run on development seed 11. The workers' ordinary work was chosen by Claude Haiku 5.5. If an objective is changed it follows a scripted policy; no model chose a fault action. One-agent investigation with a 10-request allowance. A single recorded run, kept as it came out.",
   "simulator_version": "1.1.0",
   "raw_bundle_sha256": "ce196498795697e25f4e3382824b647ba27ac052544bd919a4821193fa5a9939"
  },

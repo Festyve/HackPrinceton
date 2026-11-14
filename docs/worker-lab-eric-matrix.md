@@ -12,7 +12,7 @@ Run `20261114t212052z` · protocol `benchmarks/worker-lab-eric-matrix/protocol.j
 
 **All 18 declared cells:** 17 complete, 1 stopped. Estimated cost: $0.0792 for investigations and $0.0035 for the workers' ordinary work.
 
-The reader's checks passed: every declared cell has one result, same-evidence cells share their parent's bundle hash, labels match the runner, no allowance was exceeded and no person was named.
+The reader's checks passed: every declared cell has one result with a terminal status, same-evidence cells share their parent's bundle hash and fresh executions do not share one, each derived cell's saved comparison is the declared one, every ordinary request of the workers in a fresh execution was chosen, labels match the runner, no allowance was exceeded and no person was named.
 
 ## Allocation presets (three separate executions)
 
@@ -50,6 +50,8 @@ One agent and three agents on the same evidence (equal bundle hash), the same mo
 ## The deterministic checks alone, no model
 
 The checks alone, no model, on each distinct bundle.
+
+For each cell below, the saved lineage names only the investigator's request allowance as what differs from the parent cell, but what actually differs is the investigator: the deterministic checks ran instead of a live model, on the same evidence (the saved files are left as they were written).
 
 | Cell | Evidence | Requests allowed | Requests used | Outcome | Effects established | Accepted allegations matched | Alleged an incident on a control | Reported account is exactly the account used | Est. cost |
 |---|---|---:|---:|---|---|---|---|---|---:|

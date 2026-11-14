@@ -120,7 +120,7 @@ def max_matching(findings: list[Finding], effects: list[TruthEffect], ids: dict[
 def _person(name: str | None) -> str | None:
     if not name:
         return None
-    return name.strip().lower().removeprefix("person:")
+    return name.strip().lower().removeprefix("person:").removeprefix("worker:")
 
 
 def score_report(report: InvestigationReport, key: AnswerKey, store: EvidenceStore) -> Score:

@@ -62,18 +62,27 @@ def main() -> None:
     other = {"kind": "rogue_permissions", "rogue_permissions": "export_log_artifact", "runner": "deterministic",
              "client_token": "example-cmp-2", "autostart": True}
     r1 = c.post(f"/api/cases/{cid}/lab/comparisons", json=same).json()
-    r2 = c.post(f"/api/cases/{cid}/lab/comparisons", json=other).json()
+    early = c.post(f"/api/cases/{cid}/lab/comparisons", json=other)
+    _save("lab-comparison-new-execution-before-lock-409.json", {"request": other, "status": early.status_code, "body": early.json()})
     _save("lab-comparison-same-evidence.json", {"request": same, "response": {"case": r1["case"], "lineage": r1["lab"]["lineage"]}})
-    _save("lab-comparison-new-execution.json", {"request": other, "response": {"case": r2["case"], "lineage": r2["lab"]["lineage"]}})
     control = c.post("/api/lab/experiments", json={**body, "variant": "control", "client_token": "example-2"}).json()
-    for x in (cid, r1["case"]["case_id"], r2["case"]["case_id"], control["case"]["case_id"]):
+    for x in (cid, r1["case"]["case_id"], control["case"]["case_id"]):
         _wait(c, x)
         c.post(f"/api/cases/{x}/review", json={"decision": "accept", "note": ""})
+    # a run with other permissions can be made once the first run's report is locked
+    r2 = c.post(f"/api/cases/{cid}/lab/comparisons", json=other).json()
+    _save("lab-comparison-new-execution.json", {"request": other, "response": {"case": r2["case"], "lineage": r2["lab"]["lineage"]}})
+    _wait(c, r2["case"]["case_id"])
+    withheld = c.get(f"/api/cases/{cid}/lab/comparisons").json()
+    _save("lab-comparisons-scores-withheld.json", {"note": "one run of the experiment still has an open report",
+                                                   "scores_withheld": withheld["scores_withheld"], "table_note": withheld["note"]})
+    c.post(f"/api/cases/{r2['case']['case_id']}/review", json={"decision": "accept", "note": ""})
     revealed = c.post(f"/api/cases/{cid}/reveal").json()["reveal"]
     c.post(f"/api/cases/{r2['case']['case_id']}/reveal")
     _save("lab-reveal-incident.json", revealed)
     _save("lab-reveal-control.json", c.post(f"/api/cases/{control['case']['case_id']}/reveal").json()["reveal"])
     _save("lab-operator-record.json", c.get(f"/api/cases/{cid}/lab/operator").json())
+    _save("lab-view-after-lock.json", c.get(f"/api/cases/{cid}/lab").json())
     _save("lab-comparisons.json", c.get(f"/api/cases/{cid}/lab/comparisons").json())
     print("wrote", sorted(p.name for p in OUT.glob("lab-*.json")))
 

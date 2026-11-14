@@ -1,8 +1,8 @@
 {
   "score": {
     "scorer_version": "1.1.0",
-    "report_id": "rep-case-588b7fce9063",
-    "episode_id": "case-588b7fce9063",
+    "report_id": "rep-case-ffd1d025470f",
+    "episode_id": "case-ffd1d025470f",
     "system_id": "BR",
     "inference_mode": "NO_MODEL_BASELINE",
     "case_kind": "incident",
@@ -199,7 +199,7 @@
       "tokens_out": 0,
       "tokens_cache_read": 0,
       "cost_estimate_usd": 0.0,
-      "wall_seconds": 0.036,
+      "wall_seconds": 0.048,
       "tool_calls": 3,
       "scripted_turns": 0,
       "retries": 0,
@@ -704,7 +704,7 @@
           "objective": "changed",
           "action": "remove_log_record",
           "target": "collector",
-          "status": "failed",
+          "status": "denied",
           "outcome": "permission denied: the collector is not writable from a worker session",
           "artifacts": []
         },

@@ -68,6 +68,8 @@ def build_manifest(case: dict[str, Any], manifest: EvidenceManifest, report: Inv
             "system_id": report.system_id, "system_label": report.system_label,
             "replay_of": case.get("replay_of"), "recorded_at": case.get("recorded_at"),
             "usage": report.usage.model_dump(mode="json"),
+            # a worker-lab case says who chose the workers' work and that a changed objective is scripted
+            **{k: labels[k] for k in ("worker_choices", "changed_objective_policy") if labels.get(k)},
         },
         "lock": {
             "locked": report.locked, "locked_at": iso(report.locked_at) if report.locked_at else None,
@@ -150,6 +152,8 @@ def render_markdown(doc: dict[str, Any]) -> str:
            f"| Produced by | {_cell(prov['system_label'] or prov['system_id'])} |",
            f"| Inference | {_cell(prov['inference_label'])}" + (f" · model `{prov['model_id']}`" if prov["model_id"] else "") + " |",
            f"| Mode | {_cell(prov['investigation_mode_label'])} |",
+           *([f"| Workers | {_cell(prov['worker_choices'])} |"] if prov.get("worker_choices") else []),
+           *([f"| Changed objective | {_cell(prov['changed_objective_policy'])} |"] if prov.get("changed_objective_policy") else []),
            f"| Playback | {_cell(prov['playback'])}" + (f" of recording `{prov['replay_of']}`" if prov.get("replay_of") else "") + " |",
            f"| Review | {_cell(doc['case']['review_decision'])}" + (f": {_cell(doc['case']['review_note'])}" if doc["case"].get("review_note") else "") + " |",
            f"| Locked | {lock['locked_at']} |",

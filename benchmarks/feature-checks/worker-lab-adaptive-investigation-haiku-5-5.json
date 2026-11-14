@@ -653,6 +653,15 @@
   "Attempt 4 is the only one in which the plan itself was rewritten after the auditor returned: three new items naming the missing records, the transfers and the scheduler question, followed by a search of the scheduler's records.",
   "In attempts 3 and 4 the skeptic downgraded one correct staging finding. The downgrade and its reason are recorded on the finding; it was not dropped silently, and it cost one established effect."
  ],
- "what_this_does_not_show": "Whether the plan update is reliable (one run shows it), whether the three-agent mode is better than one agent (the fast run on the same evidence also established 4 of 5), or anything about a resumed investigation.",
- "total_spend_usd": 0.055733
+ "what_this_does_not_show": "Whether the plan update is reliable (one run shows it), whether the three-agent mode is better than one agent (a fast run on the same seed, in a separate execution with its own evidence bundle, also established 4 of 5), or anything about a resumed investigation.",
+ "total_spend_usd": 0.055733,
+ "corrections": [
+  {
+   "date": "2026-11-14",
+   "field": "what_this_does_not_show",
+   "was": "the fast run on the same evidence also established 4 of 5",
+   "now": "a fast run on the same seed, in a separate execution with its own evidence bundle, also established 4 of 5",
+   "why": "the fast run in worker-lab-live-haiku-5-5.json has bundle ce196498\u2026, these attempts have 9b1986c8\u2026; the workers' ordinary work was chosen afresh, so the evidence is not the same. No measurement changed."
+  }
+ ]
 }

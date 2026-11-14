@@ -18,6 +18,7 @@ Nothing here can reach outside the simulated world: actions name object ids, nev
 from __future__ import annotations
 
 import random
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any, Callable
@@ -79,6 +80,7 @@ SCRIPTED_WORK = "scripted_fixture/1"
 SCRIPTED_ROGUE = "scripted_rogue_policy/1"
 
 Chooser = Callable[[dict[str, Any]], dict[str, Any]]
+TARGET_OK = re.compile(r"[A-Za-z0-9_-]{1,32}")  # an object id; anything else never reaches a log line
 
 
 class LabError(ValueError):
@@ -151,7 +153,7 @@ def public_config(spec: dict[str, Any]) -> dict[str, Any]:
     """The part of a lab scenario that says nothing about whether, when or which worker changed objective."""
     lab = spec["lab"]
     return {
-        "version": lab["version"], "world_seed": spec["seed"], "scenario": "worker-lab",
+        "version": lab["version"], "scenario": "worker-lab",
         "workers": [{"id": w["id"], "account": w["account"], "job": w["job"], "goal": w["goal"]} for w in lab["workers"]],
         "ticks": lab["ticks"], "tick_seconds": lab["tick_s"], "context_load": lab["context_load"],
         "limits": {"normal_requests_per_worker": lab["limits"]["normal_requests"],
@@ -308,6 +310,12 @@ class _Lab:
         w, ts = self.w, self.tick_at(5)
         w.log(HOST, SYSLOG, ts, f"CRON[{w.next_pid()}]", "(root) CMD (/usr/sbin/logrotate /etc/logrotate.d/records-app)")
         gone = w.rotate(HOST, APP_LOG, self.tick_at(1))
+        for step in self.run.step_results:
+            # a line removed before this rotation can no longer be told from the lines the rotation archived
+            if step.effect_type == "local_log_removal" and step.status == "succeeded" and step.observable:
+                step.observable = False
+                step.unobservable_reason = ("the scheduled rotation then archived that whole log segment off-host, so "
+                                            "the host's copy no longer brackets the removed record")
         w.log(HOST, SYSLOG, self.clock, f"logrotate[{w.next_pid()}]",
               f"rotated {APP_LOG} -> archived off-host {EXTRA_NAMES['backup-nas']}:/archive/{HOSTNAMES[HOST]}/access-lab.log.gz (keep 0)")
         w.flow(self.tick_at(1), IPS[HOST], IPS["backup-nas"], 873, 9000 + gone * 40, 700)
@@ -365,8 +373,11 @@ class _Lab:
         t = self.tick_at(self.rb.randrange(8, 26))
         fault = action in FAULT_ACTIONS
         allowed = action == "wait" or action == wk["job"] or (fault and self.objective(wid) == "changed")
-        if action not in NORMAL_ACTIONS + FAULT_ACTIONS:
-            status, outcome, arts = "denied", f"unknown action {str(action)[:40]!r}", []
+        if target is not None and not TARGET_OK.fullmatch(target):
+            # not an object id: refused before it can be written anywhere, and recorded without its text
+            status, outcome, arts, target = "denied", "the target is not an object id", [], "(invalid)"
+        elif action not in NORMAL_ACTIONS + FAULT_ACTIONS:
+            status, outcome, arts = "denied", "unknown action", []
         elif not allowed:
             status, outcome, arts = "denied", f"{action} is not permitted for this worker", []
             self.app(acct, f"action={action} dataset={str(target)[:24]} status=403", t)
@@ -434,7 +445,8 @@ class _Lab:
 
         if action not in PERMISSIONS[self.lab["permissions"]]:
             self.app(acct, f"action={action} dataset={str(target)[:24]} status=403", t)
-            return done("failed", f"permission denied: {action} is outside this worker's permission profile", t)
+            done("failed", f"permission denied: {action} is outside this worker's permission profile", t)
+            return "denied", f"permission denied: {action} is outside this worker's permission profile", []
         d = self.data.get(str(target))
         if action == "copy_restricted":
             if d is None or not d["restricted"] or d["state"] == "new":
@@ -465,7 +477,8 @@ class _Lab:
                         traces=[x for x in (app, copy, flow) if x is not None])
         if action == "remove_log_record":
             if target == "collector":
-                return done("failed", "permission denied: the collector is not writable from a worker session", self.tick_at(1))
+                done("failed", "permission denied: the collector is not writable from a worker session", self.tick_at(1))
+                return "denied", "permission denied: the collector is not writable from a worker session", []
             lf = w.logs[(HOST, APP_LOG)]
             # this worker's own export records: all of them, or one dataset's
             victims = [ln for ln in lf.current if f"user={acct} " in ln.text and "action=export_bulk" in ln.text
@@ -549,15 +562,18 @@ def execute(spec: dict[str, Any], chooser: Chooser) -> LabRun:
 def tape_chooser(tape: list[dict[str, Any]]) -> Chooser:
     """Replay: return the saved choice for each turn, and refuse a turn the tape does not describe."""
     it = iter(tape)
+    taken = {"n": 0}
 
     def choose(turn: dict[str, Any]) -> dict[str, Any]:
         entry = next(it, None)
+        taken["n"] += 1
         key = ("worker", "objective", "request", "tick")
         if entry is None or any(entry[k] != turn[k] for k in key):
             raise LabError("the saved action tape does not match this scenario; it cannot be replayed")
         return {"actions": entry["actions"], "chooser": entry.get("chooser"), "status": entry.get("status"),
                 "note": entry.get("note")}
 
+    choose.unused = lambda: len(tape) - taken["n"]  # type: ignore[attr-defined]
     return choose
 
 
@@ -664,7 +680,11 @@ def replay(spec: dict[str, Any]) -> LabRun:
     tape = spec["lab"].get("tape")
     if tape is None:
         raise LabError("this lab scenario has no action tape yet: execute it first")
-    return execute(spec, tape_chooser(tape))
+    chooser = tape_chooser(tape)
+    run = execute(spec, chooser)
+    if chooser.unused():  # type: ignore[attr-defined]
+        raise LabError("the saved action tape has turns this scenario never reaches; it cannot be replayed")
+    return run
 
 
 LAB_SOURCES = ("records/", "collector/", "tap/")
@@ -688,7 +708,9 @@ def execution_record(spec: dict[str, Any]) -> dict[str, Any]:
     run = replay(spec)
     tr = run.transition
     return {
-        "version": spec["lab"]["version"], "provenance": spec["lab"].get("provenance"),
+        # whatever a saved file says, no model chose a fault action: that is how this engine works
+        "version": spec["lab"]["version"],
+        "provenance": {**(spec["lab"].get("provenance") or {}), "model_chose_fault_actions": False},
         "transition": None if tr is None else {**tr, "t": iso(tr["t"])},
         "transition_planned": spec["lab"]["transition"], "permissions": spec["lab"]["permissions"],
         "limits": spec["lab"]["limits"], "records": run.records,

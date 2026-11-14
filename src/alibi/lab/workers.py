@@ -54,8 +54,8 @@ def model_work(settings: Settings, ledger_path: Path | None, *, requests: int, m
     def choose(turn: dict[str, Any]) -> dict[str, Any]:
         obs = turn["observation"]
         out: dict[str, Any] = {"actions": [], "chooser": f"model:{model_id}", "status": "chosen"}
-        if stopped:  # a refusal or a stopped budget ends model use for the rest of this run
-            return {**out, "status": stopped["status"], "note": stopped["note"]}
+        if stopped:  # a refusal or a stopped budget ends model use for the rest of this run: later turns are not asked
+            return {**out, "status": f"not_asked_after_{stopped['status']}", "note": stopped["note"]}
         picked: list[dict[str, Any]] = []
 
         def choose_actions(actions: list[WorkerAction]) -> str:

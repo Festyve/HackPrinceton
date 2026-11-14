@@ -2,14 +2,23 @@
 
     uv run python scripts/read_lab_matrix.py                 # the latest run directory
     uv run python scripts/read_lab_matrix.py <run-id> --write docs/worker-lab-eric-matrix.md
+    uv run python scripts/read_lab_matrix.py --strict        # also fail if the matrix has more than one run
 
 Checks, each of which fails the read:
-  * every declared cell has exactly one result, and nothing undeclared is present;
-  * a cell derived for the same evidence has its parent's bundle hash, and separate executions do not share one
-    unless the protocol says they replay the same tape;
+  * every declared cell has exactly one result, and nothing undeclared is present (an attachment file counts as
+    present: each one must be named by a result, and each one a result names must exist);
+  * a cell derived for the same evidence has its parent's bundle hash, a cell derived as a new execution does
+    not, and two fresh executions do not share one;
+  * a derived cell's saved lineage names the comparison the protocol declared for it;
+  * in every fresh execution, each of the workers' ordinary requests has the status `chosen`: none was refused,
+    stopped by the budget or unusable;
   * a live cell is labeled as a live model and a deterministic cell as the deterministic baseline;
   * a cell that did not complete is still present, with its status.
 Nothing is averaged. A cell that stopped, failed or was not run stays in every count of cells.
+
+Only one run is read and rendered. Every run directory is listed, though, and when there is more than one the
+report says so at its top: which exist and which one is rendered. A repeated run is a separate run, never a
+replacement. More than one run does not by itself fail the read; with --strict it does.
 
 Written by the same session that wrote the code under test. It is a consistency check, not an independent audit.
 """
@@ -25,19 +34,30 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SUITE = ROOT / "benchmarks" / "worker-lab-eric-matrix"
 SAME_EVIDENCE = ("investigator_budget", "workflow")
+# written beside a cell's result by run_lab_matrix.py; they are not results
+ATTACHMENTS = (".report.json", ".trace.json", ".scenario.json")
+
+
+def run_dirs() -> list[Path]:
+    """Every run directory of the suite, oldest first (their names are UTC timestamps)."""
+    return sorted(p for p in SUITE.iterdir() if p.is_dir())
 
 
 def load(run_id: str | None) -> tuple[dict, dict[str, dict], Path]:
     proto = json.loads((SUITE / "protocol.json").read_text())
-    runs = sorted(p for p in SUITE.iterdir() if p.is_dir())
+    runs = run_dirs()
     if not runs:
         raise SystemExit("no run directory yet")
     run_dir = SUITE / run_id if run_id else runs[-1]
-    results = {p.stem: json.loads(p.read_text()) for p in sorted(run_dir.glob("*.json"))}
+    if run_dir not in runs:
+        raise SystemExit(f"no run directory named {run_id}; there is {', '.join(p.name for p in runs)}")
+    results = {p.stem: json.loads(p.read_text()) for p in sorted(run_dir.glob("*.json"))
+               if not p.name.endswith(ATTACHMENTS)}
     return proto, results, run_dir
 
 
-def check(proto: dict, results: dict[str, dict]) -> list[str]:
+def check(proto: dict, results: dict[str, dict], run_dir: Path | None = None) -> list[str]:
+    """The problems of one run. With `run_dir`, the attachment files in it are checked against the results too."""
     problems: list[str] = []
     declared = {c["id"]: c for c in proto["cells"]}
     for cid in declared:
@@ -46,7 +66,13 @@ def check(proto: dict, results: dict[str, dict]) -> list[str]:
     for cid in results:
         if cid not in declared:
             problems.append(f"{cid}: has a result but was not declared")
+    if run_dir is not None:
+        named = {str(name) for r in results.values() for name in (r.get("attachments") or {}).values() if name}
+        present = {p.name for p in run_dir.glob("*.json") if p.name.endswith(ATTACHMENTS)}
+        problems += [f"{name}: named as an attachment by a result but missing" for name in sorted(named - present)]
+        problems += [f"{name}: an attachment file that no result names" for name in sorted(present - named)]
     seen_cases: dict[str, str] = {}
+    fresh_bundles: dict[str, str] = {}
     for cid, r in results.items():
         cell = declared.get(cid)
         if cell is None:
@@ -58,6 +84,8 @@ def check(proto: dict, results: dict[str, dict]) -> list[str]:
             if case in seen_cases:
                 problems.append(f"{cid}: shares a case id with {seen_cases[case]}")
             seen_cases[case] = cid
+        if r.get("terminal_status") is None:
+            problems.append(f"{cid}: the result has no terminal status")
         if r.get("terminal_status") in ("error", None):
             continue
         labels = r.get("labels") or {}
@@ -67,6 +95,25 @@ def check(proto: dict, results: dict[str, dict]) -> list[str]:
         if "no model chooses" not in str(labels.get("changed_objective_policy")):
             problems.append(f"{cid}: the changed-objective label is missing")
         parent = cell.get("derive_from")
+        if parent:
+            saved = (r.get("lineage") or {}).get("comparison")
+            if saved != cell["comparison"]:
+                problems.append(f"{cid}: the saved lineage names the comparison {saved}, the protocol declared {cell['comparison']}")
+        else:
+            # a fresh execution: the workers' ordinary work was done in it, and its evidence is its own
+            requests = r.get("ordinary_requests")
+            if not isinstance(requests, dict) or not requests:
+                problems.append(f"{cid}: the statuses of the workers' ordinary requests were not recorded")
+            else:
+                other = {status: n for status, n in requests.items() if status != "chosen"}
+                if other:
+                    problems.append(f"{cid}: not every ordinary request of the workers was chosen: "
+                                    + ", ".join(f"{n} {status}" for status, n in sorted(other.items())))
+            bundle = r.get("raw_bundle_sha256")
+            if bundle and bundle in fresh_bundles:
+                problems.append(f"{cid}: a separate execution with the same bundle hash as {fresh_bundles[bundle]}")
+            elif bundle:
+                fresh_bundles[bundle] = cid
         if parent and parent in results and results[parent].get("raw_bundle_sha256"):
             same = r.get("raw_bundle_sha256") == results[parent]["raw_bundle_sha256"]
             if cell["comparison"] in SAME_EVIDENCE and not same:
@@ -79,6 +126,24 @@ def check(proto: dict, results: dict[str, dict]) -> list[str]:
         if r.get("person_named"):
             problems.append(f"{cid}: a person was named")
     return problems
+
+
+def lineage_omits_investigator(proto: dict, results: dict[str, dict]) -> list[str]:
+    """Cells where the deterministic checks ran on a live cell's evidence, while the saved lineage does not say so.
+
+    The orchestrator writes a derived case's lineage from the kind of comparison it was asked for, and the matrix
+    asked for these as a request-allowance comparison, so the lineage names only the allowance. The saved files
+    are not altered; the report states it.
+    """
+    declared = {c["id"]: c for c in proto["cells"]}
+    found = []
+    for c in proto["cells"]:
+        parent = declared.get(c.get("derive_from"))
+        changed = ((results.get(c["id"]) or {}).get("lineage") or {}).get("changed") or {}
+        if (parent and c["runner"] == "deterministic" and parent["runner"] == "agent-live"
+                and set(changed) == {"investigator_requests"}):
+            found.append(c["id"])
+    return found
 
 
 def _ratio(x: dict | None) -> str:
@@ -108,7 +173,8 @@ def _row(cid: str, r: dict) -> str:
             f"{'-' if cost is None else f'${cost:.4f}'} |")
 
 
-def render(proto: dict, results: dict[str, dict], run_dir: Path, problems: list[str]) -> str:
+def render(proto: dict, results: dict[str, dict], run_dir: Path, problems: list[str], runs: list[str] | None = None) -> str:
+    """The report of one run. `runs` names every run directory of the suite; more than one is said at the top."""
     cells = proto["cells"]
     proto_hash = hashlib.sha256((SUITE / "protocol.json").read_bytes()).hexdigest()[:16]
     commits = sorted({r.get("git_commit") for r in results.values() if r.get("git_commit")})
@@ -119,8 +185,13 @@ def render(proto: dict, results: dict[str, dict], run_dir: Path, problems: list[
     inv_cost = sum(((r.get("used") or {}).get("cost_estimate_usd") or 0) for r in results.values())
     wk_cost = sum(((r.get("worker_usage") or {}).get("cost_estimate_usd") or 0) for r in results.values()
                   if not (r.get("declared") or {}).get("derive_from"))
-    out = [
-        "# Worker lab: the integration owner's declared matrix", "",
+    out = ["# Worker lab: the integration owner's declared matrix", ""]
+    if runs and len(runs) > 1:
+        out += [f"**This matrix has been run {len(runs)} times.** The run directories are "
+                + ", ".join(f"`{name}`" for name in runs) + f". Only `{run_dir.name}` is rendered here. Each run is a "
+                "separate run and none replaces another; the others are not shown or counted below, and their cells "
+                "may have come out differently.", ""]
+    out += [
         f"Run `{run_dir.name}` · protocol `benchmarks/worker-lab-eric-matrix/protocol.json` (sha256 `{proto_hash}…`, declared "
         f"{proto['declared_at']}) · code at `{', '.join(commits)}` · results in `benchmarks/worker-lab-eric-matrix/{run_dir.name}/`.", "",
         f"**Who wrote this.** {proto['written_by']}", "",
@@ -140,16 +211,27 @@ def render(proto: dict, results: dict[str, dict], run_dir: Path, problems: list[
     if problems:
         out += ["**The reader found problems with this run:**", ""] + [f"- {p}" for p in problems] + [""]
     else:
-        out += ["The reader's checks passed: every declared cell has one result, same-evidence cells share their parent's "
-                "bundle hash, labels match the runner, no allowance was exceeded and no person was named.", ""]
+        out += ["The reader's checks passed: every declared cell has one result with a terminal status, same-evidence "
+                "cells share their parent's bundle hash and fresh executions do not share one, each derived cell's saved "
+                "comparison is the declared one, every ordinary request of the workers in a fresh execution was chosen, "
+                "labels match the runner, no allowance was exceeded and no person was named.", ""]
     head = ("| Cell | Evidence | Requests allowed | Requests used | Outcome | Effects established | Accepted allegations matched "
             "| Alleged an incident on a control | Reported account is exactly the account used | Est. cost |\n|---|---|---:|---:|---|---|---|---|---|---:|")
+    omitted = set(lineage_omits_investigator(proto, results))
     for group, title in (("presets", "Allocation presets (three separate executions)"),
                          ("investigator_allowance", "The investigator's allowance on the same evidence"),
                          ("workflow", "One agent and three agents on the same evidence, heavier context"),
                          ("deterministic_checks", "The deterministic checks alone, no model")):
-        out += [f"## {title}", "", proto["comparisons"][group], "", head]
-        out += [_row(c["id"], results.get(c["id"]) or {}) for c in cells if c["group"] == group]
+        out += [f"## {title}", "", proto["comparisons"][group], ""]
+        in_group = [c["id"] for c in cells if c["group"] == group]
+        unsaid = [cid for cid in in_group if cid in omitted]
+        if unsaid:
+            which = "each cell below" if len(unsaid) == len(in_group) else ", ".join(f"`{cid}`" for cid in unsaid)
+            out += [f"For {which}, the saved lineage names only the investigator's request allowance as what differs from "
+                    "the parent cell, but what actually differs is the investigator: the deterministic checks ran "
+                    "instead of a live model, on the same evidence (the saved files are left as they were written).", ""]
+        out += [head]
+        out += [_row(cid, results.get(cid) or {}) for cid in in_group]
         out.append("")
     out += ["## What this does not show", "",
             "One run per cell on one seed. It is not a detection rate and not evidence that one configuration is better "
@@ -158,14 +240,16 @@ def render(proto: dict, results: dict[str, dict], run_dir: Path, problems: list[
     return "\n".join(out)
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("run_id", nargs="?")
     ap.add_argument("--write", default=None)
-    args = ap.parse_args()
+    ap.add_argument("--strict", action="store_true", help="also fail when the matrix has more than one run directory")
+    args = ap.parse_args(argv)
     proto, results, run_dir = load(args.run_id)
-    problems = check(proto, results)
-    text = render(proto, results, run_dir, problems)
+    runs = [p.name for p in run_dirs()]
+    problems = check(proto, results, run_dir)
+    text = render(proto, results, run_dir, problems, runs)
     if args.write:
         Path(args.write).write_text(text)
         print(f"wrote {args.write}")
@@ -173,7 +257,10 @@ def main() -> int:
         print(text)
     for p in problems:
         print("PROBLEM:", p, file=sys.stderr)
-    return 1 if problems else 0
+    if len(runs) > 1:
+        print(f"NOTE: this matrix has {len(runs)} run directories ({', '.join(runs)}); {run_dir.name} was rendered"
+              + (", and --strict makes that a failure" if args.strict else ""), file=sys.stderr)
+    return 1 if problems or (args.strict and len(runs) > 1) else 0
 
 
 if __name__ == "__main__":

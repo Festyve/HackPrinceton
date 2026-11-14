@@ -311,6 +311,7 @@ class Orchestrator:
         self._threads: dict[str, threading.Thread] = {}
         self._cancel: dict[str, threading.Event] = {}
         self._resume: dict[str, dict[str, Any]] = {}  # case id -> a resume an operator asked for, until its run takes it
+        self._resuming: set[str] = set()  # cases whose current run is a resumed one
         self._tokens: dict[str, str] = {}
         self._token_locks: dict[str, threading.Lock] = {}
         self._design_seq = 0
@@ -646,6 +647,11 @@ class Orchestrator:
         inv_n = base["investigator_requests"] if investigator_requests is None else int(investigator_requests)
         if not 1 <= inv_n <= 40:
             raise ValueError("investigator_requests must be between 1 and 40")
+        if inv_n > self.settings.caps.max_calls:
+            raise ValueError(f"investigator_requests cannot exceed this server's per-run cap of {self.settings.caps.max_calls}")
+        # everything about the request is checked before a single worker request is made
+        checked_runner = runner_id or default_runner_id(self.settings)
+        get_runner(checked_runner, self.settings, resolve_mode(checked_runner, investigation_mode))
         live = self.settings.live_block_reason() is None or model_factory is not None
         work = ordinary_work or ("model" if live else "scripted")
         if work not in ("model", "scripted"):
@@ -686,32 +692,67 @@ class Orchestrator:
         runner_id = runner_id or default_runner_id(self.settings)
         mode = resolve_mode(runner_id, investigation_mode)
         runner = get_runner(runner_id, self.settings, mode)
+        # a request allowance limits model requests; a scripted fixture and the checks alone make none
+        conditions = {**conditions, "allowance_enforced": runner.inference_mode == "LIVE_MODEL"}
         prov = spec["lab"]["provenance"]
-        models = [c.removeprefix("model:") for c in prov["normal_work"] if c.startswith("model:")]
-        scripted = any(not c.startswith("model:") for c in prov["normal_work"])
-        if models and scripted:
-            work_label = f"Workers' ordinary choices: a model ({models[0]}) and a scripted fixture"
-        elif models:
-            work_label = f"Workers' ordinary choices: live model ({models[0]})"
-        else:
-            work_label = "Workers' ordinary choices: scripted fixture · no model"
+        work_label = self._lab_work_label(prov["normal_work"])
+        missing = (prov.get("ordinary_requests") or {}).get("no_saved_choice", 0)
+        if missing:
+            lineage = {**lineage, "note": (lineage.get("note") or "") + f". {missing} ordinary turn(s) had no saved "
+                       "choice in the first run's tape and were left empty"}
         rec = CaseRecord(
-            case_id=case_id, title=f"Worker lab · run {spec['seed']}", difficulty="L1", seed=spec["seed"],
+            case_id=case_id, title=f"Worker lab · run {case_id[5:11]}", difficulty="L1", seed=None,
             card_id=lab_engine.CARD_WORKER_LAB, runner_id=runner_id, investigation_mode=mode,
             inference_mode=runner.inference_mode, model_id=runner.model_id, client_token=client_token,
             lab={"version": lab_engine.LAB_VERSION, "config": lab_engine.public_config(spec), "conditions": conditions,
                  "provenance": {
                      "ordinary_work": prov["normal_work"], "ordinary_work_label": work_label,
-                     "ordinary_requests": prov.get("ordinary_requests"), "worker_usage": worker_usage,
+                     # How many requests the workers made differs between an incident and a control (a changed
+                     # worker stops being asked), so it is sealed with the scenario and shown once the report is locked.
+                     "ordinary_requests": None, "worker_usage": None,
                      "changed_objective_label": "If an objective is changed, its actions follow a scripted policy · no model chooses them",
                      "model_chose_fault_actions": False},
                  "lineage": lineage})
         rec = self._generate(rec, seed=None, variant=None, spec=spec)
         self._log(case_id).append("stage", {"name": "lab_run", "status": "done", "info": {
             "workers": len(spec["lab"]["workers"]), "ordinary_work": work_label,
-            "requests_on_tape": len(spec["lab"]["tape"]), "note": "what the workers did is in the frozen evidence; "
+            "note": "what the workers did is in the frozen evidence; "
             "whether an objective was changed is sealed until the report is locked"}})
         return rec
+
+    @staticmethod
+    def _lab_work_label(choosers: list[str]) -> str:
+        """Who chose the workers' ordinary actions, from the choosers named on the tape."""
+        named = [c for c in choosers if c != "replayed_from_parent_tape"]
+        models = [c.removeprefix("model:") for c in named if c.startswith("model:")]
+        scripted = any(not c.startswith("model:") for c in named)
+        if models and scripted:
+            return f"Workers' ordinary choices: a model ({models[0]}) and a scripted fixture"
+        if models:
+            return f"Workers' ordinary choices: live model ({models[0]})"
+        if scripted:
+            return "Workers' ordinary choices: scripted fixture · no model"
+        return "Workers' ordinary choices: none were recorded"
+
+    def _lab_family(self, root: str) -> list[CaseRecord]:
+        """Every run of one experiment: the first run and the runs derived from it."""
+        out = []
+        for status in sorted(self.runs_dir.glob("case-*/status.json"), key=lambda p: p.stat().st_mtime):
+            try:
+                rec = CaseRecord(**json.loads(status.read_text(encoding="utf-8")))
+                if rec.lab and rec.lab["lineage"]["root_case_id"] == root:
+                    out.append(rec)
+            except Exception:  # noqa: BLE001 - an unreadable or malformed record belongs to no experiment
+                continue
+        return out
+
+    def _lab_open_reports(self, rec: CaseRecord) -> list[str]:
+        """Other runs of the same experiment whose report is being written or awaits a decision.
+
+        They share this run's answer (the same scenario), so unsealing this one would hand their reviewer the
+        answer first."""
+        return [r.case_id for r in self._lab_family(rec.lab["lineage"]["root_case_id"])
+                if r.case_id != rec.case_id and r.state in ("investigating", "awaiting_review")]
 
     def _lab_record(self, case_id: str) -> CaseRecord:
         rec = self._load(case_id)
@@ -735,8 +776,19 @@ class Orchestrator:
             jobs = [{"event_id": ev.id, "t": iso(ev.ts), "text": ev.raw.split(": ", 1)[-1]}
                     for ev in store.scan(source="syslog") if "labsched" in ev.raw][:200]
         activity.sort(key=lambda a: a["t"])
-        return {"case_id": case_id, "state": rec.state, "version": rec.lab["version"], "config": rec.lab["config"],
-                "conditions": rec.lab["conditions"], "provenance": rec.lab["provenance"], "lineage": rec.lab["lineage"],
+        config, provenance = dict(rec.lab["config"]), dict(rec.lab["provenance"])
+        if self._operator_open(rec):
+            sealed = load_episode_manifest(self._paths(case_id)).scenario_spec
+            usage = (sealed["lab"].get("provenance") or {}).get("usage") or []
+            config["world_seed"] = sealed["seed"]
+            provenance["ordinary_requests"] = (sealed["lab"].get("provenance") or {}).get("ordinary_requests")
+            provenance["worker_usage"] = None if not usage else {
+                "llm_calls": sum(int(u.get("llm_calls", 0)) for u in usage),
+                "tokens_in": sum(int(u.get("tokens_in", 0)) for u in usage),
+                "tokens_out": sum(int(u.get("tokens_out", 0)) for u in usage),
+                "cost_estimate_usd": round(sum(float(u.get("cost_estimate_usd", 0.0)) for u in usage), 6)}
+        return {"case_id": case_id, "state": rec.state, "version": rec.lab["version"], "config": config,
+                "conditions": rec.lab["conditions"], "provenance": provenance, "lineage": rec.lab["lineage"],
                 "activity": activity[:600], "activity_total": len(activity), "scheduler_records": jobs,
                 "activity_source": "the collector's copy of the worker activity log (frozen evidence)",
                 "operator_record": {"available": self._operator_open(rec),
@@ -744,7 +796,9 @@ class Orchestrator:
                                             "until the report is locked"}}
 
     def _operator_open(self, rec: CaseRecord) -> bool:
-        return rec.state in ("report_locked", "scored") or os.environ.get("ALIBI_OPERATOR_VIEW") == "1"
+        if os.environ.get("ALIBI_OPERATOR_VIEW") == "1":
+            return True
+        return rec.state in ("report_locked", "scored") and not self._lab_open_reports(rec)
 
     def lab_operator(self, case_id: str) -> dict[str, Any]:
         """The operator's record: every attempted action with its real outcome, and the private change of objective.
@@ -753,7 +807,10 @@ class Orchestrator:
         screen with ALIBI_OPERATOR_VIEW=1. It is never part of the evidence or of anything sent to a model."""
         rec = self._lab_record(case_id)
         if not self._operator_open(rec):
-            raise Conflict("the operator's record is sealed until the report is locked", rec.state)
+            others = self._lab_open_reports(rec) if rec.state in ("report_locked", "scored") else []
+            raise Conflict("the operator's record is sealed until the report is locked" + (
+                f", and another run of this experiment shares its answer and is not locked yet ({', '.join(others)})"
+                if others else ""), rec.state)
         ep = load_episode_manifest(self._paths(case_id))
         out = lab_engine.execution_record(ep.scenario_spec)
         out.update(case_id=case_id, variant=ep.variant, label=(
@@ -774,6 +831,18 @@ class Orchestrator:
         token = str(client_token or "").strip()
         if not token or len(token) > 80:
             raise ValueError("client_token is required (1 to 80 characters)")
+        if parent.state not in ("frozen", "investigating", "awaiting_review", "report_locked", "scored"):
+            raise Conflict(f"a comparison cannot be made from a run in state {parent.state}", parent.state)
+        if kind == "rogue_permissions":
+            # its evidence equals the first run's exactly when nothing was changed, so it would answer the question
+            # for this run and for every run that shares its scenario
+            still_open = ([] if parent.state in ("report_locked", "scored") else [parent.case_id]) + self._lab_open_reports(parent)
+            if still_open:
+                raise Conflict("a run with other permissions is a new execution, and whether its evidence differs says "
+                               "whether anything was changed. It can be made once this run's report is locked and no "
+                               f"other run of this experiment has an open report (open: {', '.join(still_open)})", parent.state)
+        if investigator_requests is not None and int(investigator_requests) > self.settings.caps.max_calls:
+            raise ValueError(f"investigator_requests cannot exceed this server's per-run cap of {self.settings.caps.max_calls}")
         key = f"lab-compare\x1f{case_id}\x1f{token}"
         with self._once(key):
             known = self._known(key)
@@ -786,13 +855,23 @@ class Orchestrator:
             if kind == "investigator_budget":
                 if investigator_requests is None or not 1 <= int(investigator_requests) <= 40:
                     raise ValueError("investigator_requests must be between 1 and 40")
+                if int(investigator_requests) == cond["investigator_requests"]:
+                    raise ValueError("investigator_budget needs a different allowance from the first run's; to change "
+                                     "only the investigator, use kind runner")
                 changed = {"investigator_requests": {"from": cond["investigator_requests"], "to": int(investigator_requests)}}
                 cond.update(investigator_requests=int(investigator_requests), preset=None, preset_label="Custom")
                 child_spec = spec  # the same scenario and tape: the evidence is rendered again and is identical
-                note = "same frozen evidence; only the investigator's request allowance differs"
+                note = "same frozen evidence; the investigator's request allowance differs"
+            elif kind == "runner":
+                if not runner_id or runner_id == parent.runner_id:
+                    raise ValueError("runner needs a runner different from the first run's")
+                changed = {}
+                child_spec = spec
+                note = "same frozen evidence; a different investigator"
             elif kind == "rogue_permissions":
-                if rogue_permissions not in lab_engine.PERMISSIONS:
-                    raise ValueError(f"rogue_permissions must be one of {list(lab_engine.PERMISSIONS)}")
+                if rogue_permissions not in lab_engine.PERMISSIONS or rogue_permissions == cond["rogue_permissions"]:
+                    raise ValueError(f"rogue_permissions must be one of {list(lab_engine.PERMISSIONS)} and differ from "
+                                     "the first run's")
                 changed = {"rogue_permissions": {"from": cond["rogue_permissions"], "to": rogue_permissions}}
                 cond.update(rogue_permissions=rogue_permissions, preset=None, preset_label="Custom")
                 fresh = lab_engine.build_spec(spec["seed"], spec["variant"], permissions=rogue_permissions,
@@ -803,6 +882,8 @@ class Orchestrator:
                 note = ("a new execution: the workers' ordinary choices are replayed from the first run's tape, and a "
                         "changed objective acts again under the new permissions. The evidence may differ")
             elif kind == "workflow":
+                if parent.investigation_mode is None:
+                    raise ValueError("workflow compares one agent with three; the first run has no agent")
                 if investigation_mode not in ("fast", "specialist") or investigation_mode == parent.investigation_mode:
                     raise ValueError("workflow needs investigation_mode fast or specialist, different from the first run's")
                 changed = {"investigation_mode": {"from": parent.investigation_mode, "to": investigation_mode}}
@@ -815,10 +896,18 @@ class Orchestrator:
                 child_spec = spec
                 note = "same frozen evidence; one agent against three agents"
             else:
-                raise ValueError("kind must be investigator_budget, rogue_permissions or workflow")
+                raise ValueError("kind must be investigator_budget, runner, rogue_permissions or workflow")
+            child_runner = runner_id or parent.runner_id
+            child_mode = resolve_mode(child_runner, investigation_mode or parent.investigation_mode)
+            # everything that differs is recorded, not only what the kind is named after
+            if child_runner != parent.runner_id:
+                changed["runner"] = {"from": parent.runner_id, "to": child_runner}
+            if child_mode != parent.investigation_mode and "investigation_mode" not in changed:
+                changed["investigation_mode"] = {"from": parent.investigation_mode, "to": child_mode}
+            if len(changed) > 1:
+                note += "; " + ", ".join(k.replace("_", " ") for k in changed) + " all differ"
             rec = self._lab_case(new_id, child_spec, conditions=cond, worker_usage=None,
-                                 runner_id=runner_id or parent.runner_id,
-                                 investigation_mode=investigation_mode or parent.investigation_mode, client_token=key,
+                                 runner_id=child_runner, investigation_mode=child_mode, client_token=key,
                                  lineage={"root_case_id": root, "parent_case_id": case_id, "comparison": kind,
                                           "changed": changed, "note": note})
             rec.lab["lineage"]["same_evidence_as_parent"] = rec.bundle_id == parent.bundle_id
@@ -829,13 +918,9 @@ class Orchestrator:
         """This run and every run derived from the same first run, with what changed and what each one used."""
         root = self._lab_record(case_id).lab["lineage"]["root_case_id"]
         rows: list[dict[str, Any]] = []
-        for status in sorted(self.runs_dir.glob("case-*/status.json"), key=lambda p: p.stat().st_mtime):
-            try:
-                rec = CaseRecord(**json.loads(status.read_text(encoding="utf-8")))
-            except Exception:  # noqa: BLE001 - an unreadable record is not part of any comparison
-                continue
-            if not rec.lab or rec.lab["lineage"]["root_case_id"] != root:
-                continue
+        family = self._lab_family(root)
+        report_open = any(r.state in ("investigating", "awaiting_review") for r in family)
+        for rec in family:
             paths = self._paths(rec.case_id)
             report = self._report(paths) if rec.state in ("awaiting_review", "report_locked", "scored") else None
             usage = report.usage.model_dump() if report else None
@@ -850,6 +935,8 @@ class Orchestrator:
                 "conditions": rec.lab["conditions"], "bundle_id": rec.bundle_id, "state": rec.state, "outcome": outcome,
                 "stop_reason": stop, "error": rec.error, "labels": rec.public()["labels"],
                 "allowed": {"investigator_requests": rec.lab["conditions"]["investigator_requests"],
+                            "extra_requests_granted_on_resume": rec.lab["conditions"].get("extra_requests_granted", 0),
+                            "allowance_enforced": rec.lab["conditions"].get("allowance_enforced"),
                             "rogue_requests": rec.lab["conditions"]["rogue_requests"]},
                 "used": None if usage is None else {k: usage.get(k) for k in ("llm_calls", "tool_calls", "tokens_in",
                                                                              "tokens_out", "cost_estimate_usd", "wall_seconds")},
@@ -859,7 +946,7 @@ class Orchestrator:
                     "total": len(report.findings)},
                 "scored": None,
             }
-            if rec.state == "scored" and (paths.root / "score.json").exists():
+            if rec.state == "scored" and not report_open and (paths.root / "score.json").exists():
                 sc = json.loads((paths.root / "score.json").read_text(encoding="utf-8"))
                 row["scored"] = {"case_kind": sc.get("case_kind"), "effects_established": sc["step_recall"],
                                  "accepted_allegations_matched": sc["final_precision"],
@@ -867,8 +954,11 @@ class Orchestrator:
             rows.append(row)
         bundles = {r["bundle_id"] for r in rows}
         return {"root_case_id": root, "runs": rows, "distinct_evidence_bundles": len(bundles),
+                "scores_withheld": report_open,
                 "note": ("Runs with the same bundle id investigated identical evidence. A run with a different bundle "
-                         "id is a separate execution. One run per row: nothing here is an average or a rate.")}
+                         "id is a separate execution. One run per row: nothing here is an average or a rate."
+                         + (" Scores are withheld while a run of this experiment has a report that is not locked."
+                            if report_open else ""))}
 
     # ------------------------------------------------------------------ imported evidence (unscored)
     def import_case(self, src_dir: Path | str, *, title: str | None = None, runner_id: str | None = None,
@@ -1036,11 +1126,10 @@ class Orchestrator:
         resume = self._resume.pop(rec.case_id, None)
         if resume:
             # the resumed leg may make `extra_requests` more requests; what was already used stays counted
-            base, used = caps or self.settings.caps, resume["used"]
-            extra = int(resume["extra_requests"])
-            caps = replace(base, max_calls=used["llm_calls"] + extra,
-                           max_input_tokens=used["tokens_in"] + extra * base.max_input_tokens_per_call,
-                           max_output_tokens=used["tokens_out"] + extra * self.settings.max_tokens_per_call)
+            # More requests, never more than this server allows one investigation in total. The token caps
+            # are the server's and are not raised.
+            used, extra = resume["used"], int(resume["extra_requests"])
+            caps = replace(self.settings.caps, max_calls=min(self.settings.caps.max_calls, used["llm_calls"] + extra))
         return RunContext(case_id=rec.case_id, store=store, manifest=load_manifest(paths), case_dir=paths.case,
                           settings=self.settings, emit=lambda t, d: log.append(t, d), pace_s=pace,
                           is_cancelled=cancel.is_set, caps=caps, resume=resume)
@@ -1071,8 +1160,17 @@ class Orchestrator:
 
     def _fail(self, case_id: str, exc: BaseException) -> None:
         rec = self._load(case_id)
+        resumed = case_id in self._resuming
+        self._resuming.discard(case_id)
+        self._resume.pop(case_id, None)
         if isinstance(exc, Cancelled):
             self._set_state(rec, "cancelled", "cancelled by the operator")
+            return
+        if resumed and (self._paths(case_id).case / "report.draft.json").exists():
+            # a resume that fails must not destroy the draft that was already there to review
+            message = f"the resume failed ({type(exc).__name__}: {str(exc)[:200]}); the earlier draft stands"
+            self._log(case_id).append("error", {"message": message})
+            self._set_state(rec, "awaiting_review", message)
             return
         try:
             (self._paths(case_id).case / "error.log").write_text(traceback.format_exc(), encoding="utf-8")
@@ -1101,6 +1199,7 @@ class Orchestrator:
                 compute = max(0.0, time.perf_counter() - t0 - ctx.paced_seconds)
                 with self._lock(case_id):
                     self._finish_draft(self._load(case_id), paths, store, report, compute)
+                self._resuming.discard(case_id)
         except BaseException as exc:  # noqa: BLE001 - a crashed run must become a visible state
             self._fail(case_id, exc)
 
@@ -1135,12 +1234,22 @@ class Orchestrator:
             if budget.exists():
                 saved = json.loads(budget.read_text(encoding="utf-8"))
                 used = {k: int(saved.get(k, 0)) for k in used}
+                if saved.get("disabled_reason"):  # checked before anything changes: the draft stays reviewable
+                    raise Conflict(f"this run's model route is disabled and stays disabled: {saved['disabled_reason']}", rec.state)
+            if rec.inference_mode == "LIVE_MODEL" and used["llm_calls"] >= self.settings.caps.max_calls:
+                raise Conflict(f"this run has used all {self.settings.caps.max_calls} requests this server allows one "
+                               "investigation; it cannot be given more", rec.state)
             default = ((rec.lab or {}).get("conditions") or {}).get("investigator_requests") or self.settings.caps.max_calls
             extra = int(extra_requests) if extra_requests is not None else int(default)
             if not 1 <= extra <= 40:
                 raise ValueError("extra_requests must be between 1 and 40")
+            if rec.inference_mode == "LIVE_MODEL":
+                extra = min(extra, self.settings.caps.max_calls - used["llm_calls"])
             self._resume[case_id] = {"note": "resumed by the operator", "extra_requests": extra, "used": used,
                                      "previous": previous}
+            self._resuming.add(case_id)
+            if rec.lab:  # the experiment's record shows what was granted beyond its allowance
+                rec.lab["conditions"]["extra_requests_granted"] = rec.lab["conditions"].get("extra_requests_granted", 0) + extra
             self._cancel[case_id] = threading.Event()
             rec.error = None
             self._log(case_id).append("stage", {"name": "resume", "status": "started", "info": {
@@ -1170,6 +1279,12 @@ class Orchestrator:
                     self._log(case_id).append("stage", {"name": "review_resume", "status": "skipped", "info": {
                         "note": "the model that ran this investigation is no longer configured, so the decision "
                                 "was recorded without a model acknowledgement"}})
+                elif any(q.startswith("Incomplete run:") for q in draft.open_questions):
+                    # The run stopped before it asked for review. Passing the decision to its graph would make it
+                    # carry on investigating after the human decided; only an explicit resume does that.
+                    self._log(case_id).append("stage", {"name": "review_resume", "status": "skipped", "info": {
+                        "note": "the investigation stopped before it asked for review, so the decision was recorded "
+                                "without resuming it"}})
                 else:
                     with EvidenceStore(paths.db) as store:
                         get_runner(rec.runner_id, self.settings, rec.investigation_mode).resume(
@@ -1207,6 +1322,10 @@ class Orchestrator:
                 if parent_state is not None and parent_state not in ("report_locked", "scored"):
                     raise Conflict("reveal refused: this is a derived view of another case and shares its answer. "
                                    "Lock the original case's report first, then unseal this one", rec.state)
+            if rec.lab and (open_reports := self._lab_open_reports(rec)):
+                # every run of one experiment has the same answer: unseal none while a sibling's report is open
+                raise Conflict("reveal refused: another run of this experiment shares this answer and its report is "
+                               f"not locked yet ({', '.join(open_reports)}). Lock it first, then unseal this one", rec.state)
             report = InvestigationReport.model_validate_json((paths.case / "report.json").read_text(encoding="utf-8"))
             key = load_answer_key(paths)
             ep = load_episode_manifest(paths)
@@ -1313,7 +1432,7 @@ class Orchestrator:
     def investigation_trace(self, case_id: str) -> dict[str, Any]:
         """The recorded plan, tool calls, delegations and case-file activity of this case's investigation."""
         rec = self._load(case_id)
-        out = trace.investigation_trace(self._log(case_id).since(0))
+        out = trace.investigation_trace(self._log(case_id).since(0), still_running=rec.state == "investigating")
         out.update(case_id=case_id, state=rec.state, labels=rec.public()["labels"])
         # what wrote the plan matters: a checklist in code and a script are not a model's plan
         out["plan_written_by"] = {
@@ -1614,7 +1733,12 @@ class Orchestrator:
                            "derived evidence views have none", rec.state)
         ep = load_episode_manifest(paths)
         draft = InvestigationReport.model_validate_json((paths.case / "report.draft.json").read_text(encoding="utf-8"))
-        events = [e for e in self._log(case_id).since(0, "investigator")
+        kept = self._log(case_id).since(0, "investigator")
+        # a resume and a case-file read are part of what the recorded investigation did
+        extra = [e for e in self._log(case_id).since(0) if e["type"] == "note_read"
+                 or (e["type"] == "stage" and e["data"].get("name") == "resume")]
+        seen = {e["seq"] for e in kept}
+        events = [e for e in sorted(kept + [e for e in extra if e["seq"] not in seen], key=lambda e: e["seq"])
                   if not (e["type"] == "finding" and e["data"].get("phase") == "verified")
                   and e["type"] not in ("attribution", "usage", "report")]
         out = REPLAY_DIR / name / "recording.json"
@@ -1652,7 +1776,9 @@ class Orchestrator:
                          investigation_mode=_recorded_mode(meta),
                          inference_mode=("RECORDED_MODEL" if meta["inference_mode"] == "LIVE_MODEL" else meta["inference_mode"]),
                          playback="REPLAY", model_id=meta.get("model_id"), replay_of=replay_id,
-                         recorded_at=meta.get("recorded_at"), client_token=client_token, lab=meta.get("lab"))
+                         recorded_at=meta.get("recorded_at"), client_token=client_token)
+        if "lab" in data["spec"]:
+            rec.lab = self._recorded_lab(rec.case_id, meta.get("lab"), data["spec"])
         rec = self._generate(rec, seed=None, variant=None, spec=data["spec"])
         got = load_manifest(self._paths(rec.case_id)).raw_bundle_sha256
         if got != meta.get("raw_bundle_sha256"):
@@ -1672,6 +1798,39 @@ class Orchestrator:
                 "inference_mode": "RECORDED_MODEL" if recorded else q.inference_mode,
                 "inference_label": "Recorded AI answer" if recorded else q.inference_label}))
         return rec
+
+    def _recorded_lab(self, case_id: str, saved: Any, spec: dict[str, Any]) -> dict[str, Any]:
+        """The experiment's public settings for a replayed lab run.
+
+        Everything the scenario determines is taken from the scenario, not from what the recording file says about
+        itself: who chose the workers' actions, the permission profile, the allowances, the context load. Only the
+        investigator's allowance and the preset's name are not in the scenario; they are read from the file and
+        bounded."""
+        saved = saved if isinstance(saved, dict) else {}
+        said = saved.get("conditions") if isinstance(saved.get("conditions"), dict) else {}
+        try:
+            allowance = max(1, min(40, int(said.get("investigator_requests") or lab_engine.PRESETS["balanced"]["investigator_requests"])))
+        except (TypeError, ValueError):
+            allowance = lab_engine.PRESETS["balanced"]["investigator_requests"]
+        lab, prov = spec["lab"], spec["lab"].get("provenance") or {}
+        preset = said.get("preset") if said.get("preset") in lab_engine.PRESETS else None
+        if preset and (lab_engine.PRESETS[preset]["rogue_requests"], lab_engine.PRESETS[preset]["investigator_requests"]) != (
+                lab["limits"]["rogue_requests"], allowance):
+            preset = None
+        return {"version": lab_engine.LAB_VERSION, "config": lab_engine.public_config(spec),
+                "conditions": {"preset": preset, "preset_label": lab_engine.PRESETS[preset]["label"] if preset else "Custom",
+                               "rogue_requests": lab["limits"]["rogue_requests"], "investigator_requests": allowance,
+                               "rogue_permissions": lab["permissions"], "context_load": lab["context_load"],
+                               "allowance_enforced": False},
+                "provenance": {"ordinary_work": list(prov.get("normal_work") or []),
+                               "ordinary_work_label": self._lab_work_label(list(prov.get("normal_work") or [])).replace(
+                                   "live model", "recorded choices of a model"),
+                               "ordinary_requests": None, "worker_usage": None,
+                               "changed_objective_label": "If an objective is changed, its actions follow a scripted policy · no model chooses them",
+                               "model_chose_fault_actions": False},
+                # a replay is its own first run here; where it sat in the recorded experiment is kept beside it
+                "lineage": {"root_case_id": case_id, "parent_case_id": None, "comparison": None, "changed": None,
+                            "recorded_lineage": saved.get("lineage") if isinstance(saved.get("lineage"), dict) else None}}
 
     def _replay_thread(self, case_id: str) -> None:
         try:
