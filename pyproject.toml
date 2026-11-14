@@ -33,3 +33,6 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+markers = [
+    "browser: drives the built case board in the installed Google Chrome (skipped when Chrome or web/dist is missing)",
+]

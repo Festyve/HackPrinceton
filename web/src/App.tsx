@@ -144,6 +144,16 @@ export default function App() {
     return closeStream;
   }, [attach, closeStream]);
 
+  // A case link pasted into an already open tab changes only the hash: follow it.
+  useEffect(() => {
+    const onHash = () => {
+      const id = hashId();
+      if (id && id !== caseIdRef.current) void attach(id);
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, [attach]);
+
   const guard = async (label: string, fn: () => Promise<void>) => {
     setBusy(label); setErr(null);
     try { await fn(); } catch (e) { setErr(e instanceof Error ? e.message : String(e)); } finally { setBusy(null); }
