@@ -115,6 +115,18 @@ Examples: `manifest-sources.json`, `source-experiment-created.json`, `source-exp
 - Reports from the deterministic and scripted runners add `Coverage limit: …` entries to `open_questions` when a check could not be run.
 - `SourceInfo` adds `coverage_declared` and `known_gaps` for captures that state when they were recording.
 
+## Exports
+
+All three are downloads (`Content-Disposition: attachment`).
+
+`GET /api/cases/{id}/report-export?format=markdown|json` — available once the report is locked (`report_locked` or `scored`), otherwise **409**. `markdown` is the readable report; `json` is the machine-readable manifest it is rendered from: the locked report as stored, `lock.report_sha256` (and a recomputed value to compare), model, mode and playback labels, every source with its hash, and every cited record with its artifact, line number and exact text. It never contains the sealed answer, the score or the reveal, before or after unsealing.
+
+`GET /api/cases/{id}/questions-export` — the case's questions and answers, separate from the report.
+
+`GET /api/cases/{id}/reveal-export` — the unsealed answer and score. Only after the reveal (**409** before), and only through this explicit request.
+
+`capabilities.report_export` in `GET /api/runtime` announces the endpoint.
+
 ## Not built yet
 
-Report export (`GET /api/cases/{id}/report-export`) and capture import. Do not show controls for them until they are listed here.
+Capture import. Do not show a control for it until it is listed here.

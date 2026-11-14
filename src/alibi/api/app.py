@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from fastapi import FastAPI, Query, Request
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
 from alibi import __version__
@@ -249,6 +249,34 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
     @app.get("/api/cases/{case_id}/explanations")
     def explanations(case_id: str) -> dict:
         return {"explanations": orch.explanations(case_id)}
+
+    # ------------------------------------------------------------------ exports (downloads)
+    def _download(body: str, media: str, name: str) -> Response:
+        return Response(body, media_type=media, headers={"Content-Disposition": f'attachment; filename="{name}"',
+                                                         "X-Content-Type-Options": "nosniff", "Cache-Control": "no-store"})
+
+    @app.get("/api/cases/{case_id}/report-export")
+    def report_export(case_id: str, format: Literal["markdown", "json"] = "markdown") -> Response:
+        """The locked report with provenance, hashes and the exact cited lines. Never includes sealed truth."""
+        from alibi import export
+
+        doc = orch.report_export(case_id)
+        if format == "json":
+            return _download(json.dumps(doc, indent=2), "application/json", f"alibi-report-{case_id}.json")
+        return _download(export.render_markdown(doc), "text/markdown; charset=utf-8", f"alibi-report-{case_id}.md")
+
+    @app.get("/api/cases/{case_id}/questions-export")
+    def questions_export(case_id: str) -> Response:
+        """Questions and their answers for this case, separate from the report."""
+        body = {"case_id": case_id, "note": "Answers to questions are not part of the report and did not change it.",
+                "questions": [q.model_dump(mode="json") for q in orch.list_questions(case_id)]}
+        return _download(json.dumps(body, indent=2), "application/json", f"alibi-questions-{case_id}.json")
+
+    @app.get("/api/cases/{case_id}/reveal-export")
+    def reveal_export(case_id: str) -> Response:
+        """The unsealed answer and score: only after the reveal, and only by this explicit request."""
+        return _download(json.dumps(orch.reveal_export(case_id), indent=2), "application/json",
+                         f"alibi-answer-{case_id}.json")
 
     # ------------------------------------------------------------------ source-removal experiment
     @app.post("/api/cases/{case_id}/source-experiments")

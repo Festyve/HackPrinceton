@@ -25,7 +25,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from alibi import explain, evidence_views, questions, source_experiment
+from alibi import explain, evidence_views, export, questions, source_experiment
 from alibi.config import REPO_ROOT, Settings
 from alibi.contracts import INFERENCE_LABELS, InvestigationReport, QuestionAnswer
 from alibi.episode import (
@@ -284,6 +284,8 @@ class Orchestrator:
             },
             "live_model": {"configured": live, "model_id": self.settings.lead_model if live else None,
                            "note": "configured does not mean a successful model call has been observed"},
+            "report_export": {"endpoint": True, "formats": ["markdown", "json"],
+                              "note": "available once a report is locked; never contains the sealed answer"},
             "source_experiments": {
                 "endpoint": True, "max_excluded_sources": source_experiment.MAX_EXCLUDED,
                 "note": "derives a new evidence view with chosen sources withheld; the comparison of the original "
@@ -681,6 +683,26 @@ class Orchestrator:
         store, paths = self._store(case_id)
         with store:
             return explain.explanations(store, load_manifest(paths), self._report(paths))
+
+    # ------------------------------------------------------------------ export
+    def report_export(self, case_id: str) -> dict[str, Any]:
+        """The locked report with its provenance, hashes and cited lines. Never contains sealed truth."""
+        rec, paths = self._load(case_id), self._paths(case_id)
+        final = paths.case / "report.json"
+        if rec.state not in ("report_locked", "scored") or not final.exists():
+            raise Conflict("the report can be exported once it has been reviewed and locked", rec.state)
+        report = InvestigationReport.model_validate_json(final.read_text(encoding="utf-8"))
+        with EvidenceStore(paths.db) as store:
+            return export.build_manifest(rec.public(), load_manifest(paths), report, store)
+
+    def reveal_export(self, case_id: str) -> dict[str, Any]:
+        """The unsealed answer and score, exported only on this explicit request and only after the reveal."""
+        rec, paths = self._load(case_id), self._paths(case_id)
+        f = paths.root / "reveal.json"
+        if rec.state != "scored" or not f.exists():
+            raise Conflict("the answer can be exported only after the case has been unsealed", rec.state)
+        return {"case_id": case_id, "note": "Unsealed answer and score. This is not part of the report export.",
+                **json.loads(f.read_text(encoding="utf-8"))}
 
     # ------------------------------------------------------------------ source-removal experiment
     _PARENT_STATES = ("frozen", "awaiting_review", "report_locked", "scored")
