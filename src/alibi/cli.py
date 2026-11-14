@@ -138,9 +138,10 @@ def _cmd_record(args: argparse.Namespace) -> int:
     settings = load_settings()
     with tempfile.TemporaryDirectory(prefix="alibi-record-") as tmp:
         orch = Orchestrator(replace(settings, runs_dir=Path(tmp) / "runs", sealed_dir=Path(tmp) / "sealed"), pace_s=0.0)
-        rec = orch.create_case(preset_id=args.preset, runner_id=args.runner)
+        rec = orch.create_case(preset_id=args.preset, runner_id=args.runner, investigation_mode=args.mode)
         orch.start_investigation(rec.case_id)
-        for _ in range(1200):
+        deadline = time.time() + max(60.0, settings.caps.max_seconds + 60.0)  # a real model sets its own pace
+        while time.time() < deadline:
             state = orch.record(rec.case_id).state
             if state in ("awaiting_review", "failed", "cancelled"):
                 break
@@ -149,8 +150,10 @@ def _cmd_record(args: argparse.Namespace) -> int:
             print(f"error: the run ended in state {state}: {orch.record(rec.case_id).error}", file=sys.stderr)
             return 1
         out = orch.save_recording(rec.case_id, args.name, note=args.note)
-        mode = orch.record(rec.case_id).inference_mode
-    print(f"saved {out}  (inference: {mode}; replay it from the case board start screen or POST /api/replays/{args.name}/open)")
+        done = orch.record(rec.case_id)
+        mode, how = done.inference_mode, done.investigation_mode or "no agent"
+    print(f"saved {out}  (inference: {mode}; mode: {how}; replay it from the case board start screen or "
+          f"POST /api/replays/{args.name}/open)")
     return 0
 
 
@@ -239,6 +242,27 @@ def _cmd_spend(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_calibrate(args: argparse.Namespace) -> int:
+    """Run the configured model on a development incident and a benign control (see alibi/calibration.py)."""
+    from alibi import calibration
+    from alibi.runners import RuntimeBlocked
+
+    settings = load_settings()
+    try:
+        doc = calibration.run_calibration(settings, mode=args.mode, runner_id=args.runner)
+    except RuntimeBlocked as exc:
+        print(f"{exc}\nNo model call was made.", file=sys.stderr)
+        return 2
+    for row in doc["cases"]:
+        u = row.get("usage") or {}
+        print(f"{row['ref']:13} {row['status']:10} checks={row['checks']} calls={u.get('llm_calls')} "
+              f"in={u.get('tokens_in')} out={u.get('tokens_out')} cost=${u.get('cost_estimate_usd')} "
+              f"wall={u.get('wall_seconds')}s" + (f"  error: {row['error']}" if row.get("error") else ""))
+    print(f"model {doc['model_requested']} · mode {doc['mode']} · passed: {doc['passed']} · "
+          f"estimated cost ${doc['estimated_cost_usd']} · results in {doc['result_dir']}")
+    return 0 if doc["passed"] else 1
+
+
 def _cmd_pilot(args: argparse.Namespace) -> int:
     from alibi import bench
     from alibi.runners import RuntimeBlocked
@@ -287,6 +311,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--preset", default="hero-coverup")
     p.add_argument("--name", required=True, help="recording id, e.g. hero-coverup-fixture")
     p.add_argument("--runner", default=None, help="deterministic | agent-fixture | agent-live (default: runtime default)")
+    p.add_argument("--mode", default=None, choices=["fast", "specialist"],
+                   help="fast = one agent, specialist = lead + auditor + skeptic (default: fast for a live model)")
     p.add_argument("--note", default="")
     p.set_defaults(func=_cmd_record)
 
@@ -306,6 +332,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--actual", type=float, default=None, help="with --reconcile: the real cost in USD (0 if not billed)")
     p.add_argument("--note", default="", help="with --reconcile: why (kept in the ledger log)")
     p.set_defaults(func=_cmd_spend)
+
+    p = sub.add_parser("calibrate", help="check the configured model on a development incident and a benign control")
+    p.add_argument("--mode", default="fast", choices=["fast", "specialist"])
+    p.add_argument("--runner", default="agent-live", choices=["agent-live", "agent-fixture"],
+                   help="agent-fixture exercises the harness offline with the scripted policy (no model)")
+    p.set_defaults(func=_cmd_calibrate)
 
     p = sub.add_parser("pilot", help="the predeclared 8-system-run AI pilot (refused without a zero-charge runtime)")
     p.set_defaults(func=_cmd_pilot)

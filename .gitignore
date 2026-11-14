@@ -35,3 +35,5 @@ playwright-report/
 
 # raw model tool traces from benchmark runs stay local
 benchmarks/*/transcripts/
+# model tool traces are kept locally, never published
+benchmarks/**/transcripts/

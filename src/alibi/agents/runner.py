@@ -32,11 +32,24 @@ from alibi.runners import Cancelled, RunContext
 
 _SAFE_NOTE = re.compile(r"[^A-Za-z0-9._-]+")
 ROLES = ("lead-investigator", "integrity-auditor", "skeptic")
+# investigation mode (product) -> graph architecture
+MODE_ARCHITECTURE = {"fast": "single-agent", "specialist": "alibi"}
+ARCHITECTURE_ROLES = {"alibi": ROLES, "single-agent": ("single-agent",)}
+SYSTEM_LABELS = {
+    ("alibi", False): "Specialist review: lead + integrity-auditor + skeptic with deterministic checks (benchmark arm ALIBI)",
+    ("alibi", True): "DeepAgents graph (lead + integrity-auditor + skeptic) driven by a scripted fixture policy; "
+                     "no model inference",
+    ("single-agent", False): "Fast investigation: one agent with deterministic checks, no delegation "
+                             "(same configuration as benchmark arm B1+)",
+    ("single-agent", True): "DeepAgents single-agent graph driven by a scripted fixture policy; no model inference",
+}
 _CATEGORY_ORDER = {"incident_allegation": 0, "unresolved": 1, "benign_explanation": 2, "neutral_reconstruction": 3}
 
 
 class AgentRunner:
     def __init__(self, runner_id: str, settings: Settings, *, architecture: str = "alibi"):
+        if architecture not in ARCHITECTURE_ROLES:
+            raise ValueError(f"unknown architecture {architecture!r}")
         self.runner_id = runner_id
         self.settings = settings
         self.architecture = architecture  # alibi | single-agent
@@ -46,12 +59,19 @@ class AgentRunner:
         self.bound_tools: dict[str, list[str]] = {}
 
     @classmethod
-    def create(cls, runner_id: str, settings: Settings) -> "AgentRunner":
+    def create(cls, runner_id: str, settings: Settings, mode: str | None = None) -> "AgentRunner":
+        """mode: fast (one agent) or specialist (lead + auditor + skeptic). None keeps the specialist graph."""
+        if mode is not None and mode not in MODE_ARCHITECTURE:
+            raise ValueError(f"investigation_mode must be fast or specialist, got {mode!r}")
         if runner_id == "agent-live":
             reason = settings.live_block_reason()
             if reason is not None:
                 raise gateway.RuntimeBlocked(f"live inference is BLOCKED: {reason}")
-        return cls(runner_id, settings)
+        return cls(runner_id, settings, architecture=MODE_ARCHITECTURE.get(mode or "specialist", "alibi"))
+
+    @property
+    def lead_role(self) -> str:
+        return ARCHITECTURE_ROLES[self.architecture][0]
 
     # ------------------------------------------------------------------ construction
     def _record_bind(self, role: str, names: list[str]) -> None:
@@ -59,11 +79,11 @@ class AgentRunner:
 
     def _models(self, ledger: gateway.BudgetLedger) -> dict[str, Any]:
         models: dict[str, Any] = {}
-        for role in ROLES:
+        for role in ARCHITECTURE_ROLES[self.architecture]:  # only the models this mode uses are constructed
             if self.scripted:
                 inner: Any = ScriptedPolicyModel(role=role)
             else:
-                spec = self.settings.lead_model if role == "lead-investigator" else \
+                spec = self.settings.lead_model if role in ("lead-investigator", "single-agent") else \
                     (self.settings.subagent_model or self.settings.lead_model)
                 inner = gateway.live_chat_model(self.settings, spec or "")
             models[role] = gateway.wrap(inner, ledger, role, on_bind=self._record_bind)
@@ -73,7 +93,7 @@ class AgentRunner:
         models = self._models(ledger)
         saver = SqliteSaver(conn)
         if self.architecture == "single-agent":
-            return build_single_agent(toolbox, model=models["lead-investigator"], checkpointer=saver)
+            return build_single_agent(toolbox, model=models["single-agent"], checkpointer=saver)
         return build_investigator(toolbox, lead_model=models["lead-investigator"],
                                   auditor_model=models["integrity-auditor"], skeptic_model=models["skeptic"],
                                   checkpointer=saver)
@@ -100,7 +120,7 @@ class AgentRunner:
             tip = ctx.manifest.operational_context.get("tip", "")
             brief = (f"Evidence bundle {ctx.manifest.bundle_id} is frozen and ready. Tip from the clinic: \"{tip}\" "
                      "Establish what the evidence supports, then submit a report for human review.")
-            ctx.emit("agent", {"agent": "lead-investigator", "status": "started", "task": "investigate the frozen bundle"})
+            ctx.emit("agent", {"agent": self.lead_role, "status": "started", "task": "investigate the frozen bundle"})
             pending_tasks: dict[str, str] = {}
             already_ran = bool((graph.get_state(self._config(ctx)).values or {}).get("messages"))
             cancelled = False
@@ -144,7 +164,7 @@ class AgentRunner:
             self._save_transcript(ctx, state.values.get("messages") or [])
         finally:
             conn.close()
-        ctx.emit("agent", {"agent": "lead-investigator", "status": "finished",
+        ctx.emit("agent", {"agent": self.lead_role, "status": "finished",
                            "summary": stop_reason or f"{len(toolbox.findings)} finding(s) submitted for review"})
         wall = max(0.0, time.perf_counter() - t0 - ctx.paced_seconds)
         return self._report(ctx, toolbox, ledger, wall, stop_reason)
@@ -154,7 +174,7 @@ class AgentRunner:
         last = next((m for m in reversed(messages) if isinstance(m, AIMessage)), None)
         if last is None or not any(tc["name"] == "finalize_report" for tc in last.tool_calls):
             return
-        role = "lead-investigator" if self.architecture == "alibi" else "single-agent"
+        role = self.lead_role
         for tc in last.tool_calls:
             if tc["name"] != "finalize_report":
                 toolbox.apply_pending(role, tc["name"], dict(tc.get("args") or {}))
@@ -209,9 +229,7 @@ class AgentRunner:
             report_id=f"rep-{ctx.case_id}", bundle_id=ctx.manifest.bundle_id,
             system_id=("ALIBI-FIXTURE" if fixture else "ALIBI") if self.architecture == "alibi" else
                       ("B1+-FIXTURE" if fixture else "B1+"),
-            system_label=("DeepAgents graph (lead + integrity-auditor + skeptic) driven by a scripted fixture policy; "
-                          "no model inference" if fixture else
-                          "ALIBI: lead + integrity-auditor + skeptic with deterministic checks"),
+            system_label=SYSTEM_LABELS[(self.architecture, fixture)],
             inference_mode=self.inference_mode, model_id=self.model_id, findings=findings,
             attribution=toolbox.attribution or AttributionAssessment(
                 human_identity="not_assessed", statement="The investigator did not submit an attribution assessment."),

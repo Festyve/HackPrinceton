@@ -521,7 +521,7 @@ def test_report_tools_batched_with_finalize_are_in_the_draft_and_not_run_twice(c
              [("submit_finding", finding_args), ("submit_attribution", attribution_args),
               ("finalize_report", {"summary": "one supported allegation", "open_questions": []})]]
     runner = AgentRunner("agent-fixture", SETTINGS, architecture="single-agent")
-    runner._models = lambda ledger: {"lead-investigator": gateway.wrap(_Batcher(turns=turns), ledger, "lead-investigator")}  # type: ignore[method-assign]
+    runner._models = lambda ledger: {"single-agent": gateway.wrap(_Batcher(turns=turns), ledger, "single-agent")}  # type: ignore[method-assign]
     ctx = _ctx(coverup, st, events, case_id=f"t-batch-{uuid.uuid4().hex[:6]}")
     report = runner.run(ctx)
     # the review pause held the whole turn, yet the draft a human reviews is complete

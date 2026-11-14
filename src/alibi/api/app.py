@@ -40,6 +40,9 @@ class CreateCase(BaseModel):
     seed: int | None = Field(default=None, ge=0, le=10_000_000)
     difficulty: Literal["L1", "L2"] | None = None
     runner: Literal["deterministic", "agent-fixture", "agent-live"] | None = None
+    # fast = one agent; specialist = lead + integrity-auditor + skeptic. Default: fast for a live model,
+    # specialist for the scripted fixture. Ignored by the deterministic runner (it has no agent).
+    investigation_mode: Literal["fast", "specialist"] | None = None
     client_token: str | None = Field(default=None, max_length=80)
     autostart: bool = True
 
@@ -100,6 +103,7 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
             "default_inference_mode": "SCRIPTED_FIXTURE" if blocked else "LIVE_MODEL",
             "inference_labels": INFERENCE_LABELS,
             "frontend_built": (WEB_DIST / "index.html").exists(),
+            "capabilities": orch.capabilities(),
         }
 
     @app.get("/api/presets")
@@ -124,7 +128,8 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
     @app.post("/api/cases")
     def create_case(body: CreateCase) -> dict:
         rec = orch.create_case(preset_id=body.preset_id, seed=body.seed, difficulty=body.difficulty,
-                               runner_id=body.runner, client_token=body.client_token)
+                               runner_id=body.runner, client_token=body.client_token,
+                               investigation_mode=body.investigation_mode)
         if body.autostart:
             orch.start_investigation(rec.case_id)
         return orch.view(rec.case_id)

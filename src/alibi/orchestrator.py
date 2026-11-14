@@ -40,7 +40,7 @@ from alibi.episode import (
 )
 from alibi.evidence.store import EvidenceStore
 from alibi.reports import lock_report
-from alibi.runners import Cancelled, RunContext, RuntimeBlocked, default_runner_id, get_runner
+from alibi.runners import MODE_LABELS, Cancelled, RunContext, RuntimeBlocked, default_runner_id, get_runner, resolve_mode
 from alibi.scoring import score_report
 from alibi.sim.scenario import CARDS, build_spec
 from alibi.verifier import verify_report
@@ -70,6 +70,13 @@ PRESETS: list[dict[str, Any]] = [
      "_variant": "incident_coverup", "_planner": "model"},
 ]
 _CUSTOM_VARIANT = {"L1": "incident_plain", "L2": "incident_coverup"}
+
+
+def _recorded_mode(meta: dict[str, Any]) -> str | None:
+    """The mode a recording was made in. Recordings from before modes existed all used the specialist graph."""
+    if meta.get("runner_id", "deterministic") == "deterministic":
+        return None
+    return meta.get("investigation_mode") or "specialist"
 
 
 class NotFound(LookupError):
@@ -105,6 +112,9 @@ class CaseRecord:
     difficulty: str = ""
     seed: int | None = None
     runner_id: str = "deterministic"
+    # fast (one agent) | specialist (lead + auditor + skeptic) | None for the deterministic runner. Saved with
+    # the case, so a refresh, a restart or the review resume can never switch it.
+    investigation_mode: str | None = None
     evidence_origin: str = "SIM"
     inference_mode: str = "NO_MODEL_BASELINE"
     playback: str = "LIVE"
@@ -127,6 +137,8 @@ class CaseRecord:
             "inference_label": INFERENCE_LABELS.get(self.inference_mode, self.inference_mode),
             "playback": self.playback,
             "model_id": self.model_id,
+            "investigation_mode": self.investigation_mode,
+            "investigation_mode_label": MODE_LABELS.get(self.investigation_mode or "", "Deterministic checks · no agent"),
         }
         return d
 
@@ -239,6 +251,19 @@ class Orchestrator:
         return [{k: v for k, v in p.items() if not k.startswith("_")} for p in PRESETS
                 if p.get("_planner") != "model" or self._model_planner_enabled()]
 
+    def capabilities(self) -> dict[str, Any]:
+        """What this server can do. "configured" means settings allow it, not that a model call has succeeded."""
+        live = self.settings.live_block_reason() is None
+        return {
+            "investigation_modes": {
+                "available": list(MODE_LABELS), "labels": MODE_LABELS,
+                "default": resolve_mode(default_runner_id(self.settings), None),
+                "note": "fast is the default for a live model; the scripted fixture defaults to specialist",
+            },
+            "live_model": {"configured": live, "model_id": self.settings.lead_model if live else None,
+                           "note": "configured does not mean a successful model call has been observed"},
+        }
+
     def _model_planner_enabled(self) -> bool:
         """The model-planned adversary preset is opt-in (ALIBI_ENABLE_MODEL_ADVERSARY=1) and needs a live runtime.
 
@@ -278,14 +303,17 @@ class Orchestrator:
                 continue
             # A saved real run is offered as a RECORDED model run. It is never listed as live.
             mode = "RECORDED_MODEL" if meta.get("inference_mode") == "LIVE_MODEL" else meta.get("inference_mode", "")
+            run_mode = _recorded_mode(meta)
             out.append({"id": f.parent.name, **{k: meta.get(k) for k in (
                 "title", "model_id", "recorded_at", "runner_id", "git_commit", "note")},
-                "inference_mode": mode, "inference_label": INFERENCE_LABELS.get(mode, "")})
+                "inference_mode": mode, "inference_label": INFERENCE_LABELS.get(mode, ""),
+                "investigation_mode": run_mode, "investigation_mode_label": MODE_LABELS.get(run_mode or "", "")})
         return out
 
     # ------------------------------------------------------------------ create
     def create_case(self, *, preset_id: str | None = None, seed: int | None = None, difficulty: str | None = None,
-                    runner_id: str | None = None, client_token: str | None = None) -> CaseRecord:
+                    runner_id: str | None = None, client_token: str | None = None,
+                    investigation_mode: str | None = None) -> CaseRecord:
         with self._guard:
             if client_token and client_token in self._tokens:
                 try:
@@ -307,11 +335,12 @@ class Orchestrator:
                 raise ValueError("custom cases need a seed and difficulty L1 or L2")
             variant, title, diff = _CUSTOM_VARIANT[difficulty], f"Inside job · seed {seed}", difficulty
         runner_id = runner_id or default_runner_id(self.settings)
-        runner = get_runner(runner_id, self.settings)
+        mode = resolve_mode(runner_id, investigation_mode)
+        runner = get_runner(runner_id, self.settings, mode)
         case_id = f"case-{uuid.uuid4().hex[:12]}"
         rec = CaseRecord(case_id=case_id, preset_id=preset_id, title=title, difficulty=diff, seed=seed,
-                         runner_id=runner_id, inference_mode=runner.inference_mode, model_id=runner.model_id,
-                         client_token=client_token)
+                         runner_id=runner_id, investigation_mode=mode, inference_mode=runner.inference_mode,
+                         model_id=runner.model_id, client_token=client_token)
         spec = None
         if preset_id is not None and preset.get("_planner") == "model":
             t0 = time.perf_counter()
@@ -320,13 +349,14 @@ class Orchestrator:
         return self._generate(rec, seed=seed, variant=variant, spec=spec)
 
     def create_case_from_spec(self, spec: dict[str, Any], *, title: str = "Custom scenario",
-                              runner_id: str | None = None) -> CaseRecord:
+                              runner_id: str | None = None, investigation_mode: str | None = None) -> CaseRecord:
         """Operator/test entry point: run a saved scenario specification. Not exposed over HTTP."""
         runner_id = runner_id or default_runner_id(self.settings)
-        runner = get_runner(runner_id, self.settings)
+        mode = resolve_mode(runner_id, investigation_mode)
+        runner = get_runner(runner_id, self.settings, mode)
         rec = CaseRecord(case_id=f"case-{uuid.uuid4().hex[:12]}", title=title, difficulty=str(spec.get("difficulty", "")),
-                         seed=spec.get("seed"), runner_id=runner_id, inference_mode=runner.inference_mode,
-                         model_id=runner.model_id)
+                         seed=spec.get("seed"), runner_id=runner_id, investigation_mode=mode,
+                         inference_mode=runner.inference_mode, model_id=runner.model_id)
         return self._generate(rec, seed=None, variant=None, spec=spec)
 
     def _generate(self, rec: CaseRecord, *, seed: int | None, variant: str | None, spec: dict | None) -> CaseRecord:
@@ -402,6 +432,15 @@ class Orchestrator:
         rec.timings["investigate_s"] = round(compute_s, 3)
         self._set_state(rec, "awaiting_review", "report drafted; waiting for a human to accept or reject it")
 
+    def _model_changed(self, rec: CaseRecord) -> bool:
+        return rec.runner_id == "agent-live" and rec.model_id != self.settings.lead_model
+
+    def _same_model_or_refuse(self, rec: CaseRecord) -> None:
+        """A case is investigated by the model it was created with, or not at all."""
+        if self._model_changed(rec):
+            raise RuntimeBlocked(f"this case was created for {rec.model_id}, but the runtime is now configured for "
+                                 f"{self.settings.lead_model}. Create a new case instead of switching models mid-case.")
+
     def _fail(self, case_id: str, exc: BaseException) -> None:
         rec = self._load(case_id)
         if isinstance(exc, Cancelled):
@@ -418,11 +457,14 @@ class Orchestrator:
     def _investigate_thread(self, case_id: str) -> None:
         try:
             rec, paths = self._load(case_id), self._paths(case_id)
-            runner = get_runner(rec.runner_id, self.settings)
+            self._same_model_or_refuse(rec)
+            runner = get_runner(rec.runner_id, self.settings, rec.investigation_mode)
             with EvidenceStore(paths.db) as store:
                 ctx = self._context(rec, paths, store)
                 self._log(case_id).append("stage", {"name": "investigate", "status": "started",
-                                                    "info": {"runner": rec.runner_id, "inference": rec.inference_mode}})
+                                                    "info": {"runner": rec.runner_id, "inference": rec.inference_mode,
+                                                             "investigation_mode": rec.investigation_mode,
+                                                             "model_id": rec.model_id}})
                 t0 = time.perf_counter()
                 report = runner.run(ctx)
                 compute = max(0.0, time.perf_counter() - t0 - ctx.paced_seconds)
@@ -443,8 +485,16 @@ class Orchestrator:
                 raise Conflict(f"there is no report awaiting review (state: {rec.state})", rec.state)
             draft = InvestigationReport.model_validate_json((paths.case / "report.draft.json").read_text(encoding="utf-8"))
             if rec.playback != "REPLAY":
-                with EvidenceStore(paths.db) as store:
-                    get_runner(rec.runner_id, self.settings).resume(self._context(rec, paths, store), decision)
+                if self._model_changed(rec):
+                    # The model that investigated is no longer the configured one. The decision is recorded
+                    # and the report locks; a different model is never asked to finish another model's run.
+                    self._log(case_id).append("stage", {"name": "review_resume", "status": "skipped", "info": {
+                        "note": "the model that ran this investigation is no longer configured, so the decision "
+                                "was recorded without a model acknowledgement"}})
+                else:
+                    with EvidenceStore(paths.db) as store:
+                        get_runner(rec.runner_id, self.settings, rec.investigation_mode).resume(
+                            self._context(rec, paths, store), decision)
             status = "accepted" if decision == "accept" else "rejected"
             locked = lock_report(draft, status, by_human=True, note=note[:500])
             final = paths.case / "report.json"
@@ -612,6 +662,7 @@ class Orchestrator:
         out.write_text(json.dumps({
             "meta": {"title": rec.title, "preset_id": rec.preset_id, "difficulty": rec.difficulty,
                      "inference_mode": rec.inference_mode, "model_id": rec.model_id, "runner_id": rec.runner_id,
+                     "investigation_mode": rec.investigation_mode,
                      "recorded_at": _iso_now(), "git_commit": ep.git_commit, "note": note,
                      "simulator_version": ep.simulator_version, "raw_bundle_sha256": ep.raw_bundle_sha256},
             "spec": ep.scenario_spec,
@@ -636,6 +687,7 @@ class Orchestrator:
         rec = CaseRecord(case_id=f"case-{uuid.uuid4().hex[:12]}", preset_id=meta.get("preset_id"),
                          title=meta.get("title", replay_id), difficulty=meta.get("difficulty", ""),
                          seed=data["spec"].get("seed"), runner_id=meta.get("runner_id", "deterministic"),
+                         investigation_mode=_recorded_mode(meta),
                          inference_mode=("RECORDED_MODEL" if meta["inference_mode"] == "LIVE_MODEL" else meta["inference_mode"]),
                          playback="REPLAY", model_id=meta.get("model_id"), replay_of=replay_id,
                          recorded_at=meta.get("recorded_at"), client_token=client_token)

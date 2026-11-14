@@ -185,13 +185,34 @@ class DeterministicRunner:
         return None
 
 
-def get_runner(runner_id: str, settings: Settings) -> Runner:
+INVESTIGATION_MODES = ("fast", "specialist")
+MODE_LABELS = {"fast": "Fast investigation · one agent", "specialist": "Specialist review · lead, auditor and skeptic"}
+
+
+def resolve_mode(runner_id: str, requested: str | None) -> str | None:
+    """The investigation mode a new case will run in.
+
+    A fresh live investigation defaults to fast (one agent): in the measured pilot it matched the
+    specialist graph's accuracy at about a third of the cost and time. The scripted fixture keeps the
+    specialist graph as its default so existing recordings and demos are unchanged. The deterministic
+    runner has no agent graph, so it has no mode.
+    """
+    if requested is not None and requested not in INVESTIGATION_MODES:
+        raise ValueError(f"investigation_mode must be one of {list(INVESTIGATION_MODES)}")
+    if runner_id == "deterministic":
+        return None
+    if requested:
+        return requested
+    return "fast" if runner_id == "agent-live" else "specialist"
+
+
+def get_runner(runner_id: str, settings: Settings, mode: str | None = None) -> Runner:
     if runner_id == "deterministic":
         return DeterministicRunner()
     if runner_id in ("agent-fixture", "agent-live"):
         from alibi.agents.runner import AgentRunner  # imported lazily: heavy dependency tree
 
-        return AgentRunner.create(runner_id, settings)
+        return AgentRunner.create(runner_id, settings, mode)
     raise ValueError(f"unknown runner {runner_id!r}")
 
 

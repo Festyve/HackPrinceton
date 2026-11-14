@@ -159,9 +159,9 @@ _TODOS = ["Read the brief and source inventory", "Delegate contradiction checks 
           "Assess account use vs. human identity", "Submit the report for human review"]
 
 
-def _todos(done: int, active: int | None) -> dict[str, Any]:
+def _todos(done: int, active: int | None, items: list[str] | None = None) -> dict[str, Any]:
     return {"todos": [{"content": t, "status": "completed" if i < done else ("in_progress" if i == active else "pending")}
-                      for i, t in enumerate(_TODOS)]}
+                      for i, t in enumerate(items or _TODOS)]}
 
 
 def _finding_args(c: dict[str, Any]) -> dict[str, Any]:
@@ -245,7 +245,65 @@ def lead_policy(messages: list[BaseMessage]) -> AIMessage:
                      "The reviewer did not accept the report. The original proposal is kept unchanged with the review history.")
 
 
-POLICIES = {"lead-investigator": lead_policy, "integrity-auditor": auditor_policy, "skeptic": skeptic_policy}
+# --------------------------------------------------------------------------- single agent (fast investigation)
+
+_SINGLE_TODOS = ["Read the brief and source inventory", "Run the contradiction checks",
+                 "Record findings with cited evidence", "Assess account use vs. human identity",
+                 "Submit the report for human review"]
+
+
+def single_policy(messages: list[BaseMessage]) -> AIMessage:
+    """One agent, no delegation: runs the checks itself, then reports. Same templating as the BR baseline."""
+    role = "single-agent"
+    called = _calls(messages)
+    if not called:
+        return _ai(role, messages, [("write_todos", _todos(0, 0, _SINGLE_TODOS))])
+    if "get_case_brief" not in called:
+        return _ai(role, messages, [("get_case_brief", {})])
+    if "check_local_vs_collector" not in called:
+        return _ai(role, messages, [("check_local_vs_collector", {}), ("check_transfer_sessions", {})])
+    rec = (_results(messages, "check_local_vs_collector") or [{}])[0]
+    xfer = (_results(messages, "check_transfer_sessions") or [{}])[0]
+    linked = [t for t in (xfer.get("transfers", []) if _usable(xfer, "transfers") else [])
+              if t["policy_status"] == "not_approved" and t["session_link"] == "single_overlapping_session"]
+    if linked and "check_account_vs_person" not in called:
+        return _ai(role, messages, [("check_account_vs_person", {"session_id": linked[0]["sessions"][0]["session_id"]})])
+    presence = (_results(messages, "check_account_vs_person") or [None])[0]
+    found: list[Finding] = []
+    if _usable(rec, "files"):
+        found += baselines.findings_from_reconcile(rec, produced_by=role)
+    if _usable(xfer, "transfers"):
+        found += baselines.findings_from_transfers(xfer, produced_by=role)
+    attribution = baselines.attribution_from(xfer if _usable(xfer, "transfers") else {"transfers": []}, presence, found)
+    candidates = [c.model_dump(mode="json") for c in found]
+    n_inc = sum(c["category"] == "incident_allegation" for c in candidates)
+    if "write_file" not in called:
+        lines = ["# Case notes (scripted fixture, single agent)", "",
+                 f"The checks produced {len(candidates)} candidate(s); {n_inc} incident allegation(s).", ""]
+        lines += [f"- [{c['category']}] {c['claim_type']} on {c['host']} ({c.get('object_or_session')}): "
+                  f"{len(c['evidence_ids'])} cited record(s)" for c in candidates]
+        return _ai(role, messages, [("write_file", {"file_path": "/case/notes.md", "content": "\n".join(lines) + "\n"})])
+    if candidates and "submit_finding" not in called:
+        return _ai(role, messages, [("submit_finding", _finding_args(c)) for c in candidates])
+    if "submit_attribution" not in called:
+        att = {k: v for k, v in attribution.model_dump(mode="json").items()
+               if k in ("statement", "account_used", "human_identity", "session_ref", "supporting_evidence_ids",
+                        "contrary_evidence_ids", "limits", "assumptions") and v not in (None, [], "")}
+        return _ai(role, messages, [("write_todos", _todos(3, 3, _SINGLE_TODOS)), ("submit_attribution", att)])
+    if "finalize_report" not in called:
+        summary = (f"{n_inc} incident allegation(s), {len(candidates) - n_inc} benign explanation(s)/open note(s). "
+                   + attribution.statement)
+        questions = ["Who had access to the credential used in the linked session?",
+                     "Was the destination known to anyone at the clinic?"] if n_inc else []
+        return _ai(role, messages, [("finalize_report", {"summary": summary, "open_questions": questions})])
+    last = messages[-1]
+    approved = isinstance(last, ToolMessage) and "finalized" in str(last.content)
+    return AIMessage(content="The reviewer accepted the report; it is frozen for scoring." if approved else
+                     "The reviewer did not accept the report. The original proposal is kept unchanged with the review history.")
+
+
+POLICIES = {"lead-investigator": lead_policy, "integrity-auditor": auditor_policy, "skeptic": skeptic_policy,
+            "single-agent": single_policy}
 
 
 class ScriptedPolicyModel(BaseChatModel):
