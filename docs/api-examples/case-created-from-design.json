@@ -1,10 +1,10 @@
 {
   "case": {
-    "case_id": "case-c81ff9e3d4a2",
+    "case_id": "case-851a030347d1",
     "state": "frozen",
     "detail": "evidence frozen and hashed; answer key sealed",
-    "created_at": "2026-11-14T10:30:14.045401+00:00",
-    "updated_at": "2026-11-14T10:30:14.262915+00:00",
+    "created_at": "2026-11-14T11:10:10.823509+00:00",
+    "updated_at": "2026-11-14T11:10:11.044874+00:00",
     "preset_id": null,
     "title": "Designed environment \u00b7 exercise 12",
     "card_id": "inside-job",
@@ -23,8 +23,9 @@
     "review_decision": null,
     "review_note": "",
     "timings": {
-      "generate_s": 0.217
+      "generate_s": 0.221
     },
+    "scored": true,
     "parent_case_id": null,
     "excluded_sources": [],
     "labels": {
@@ -34,7 +35,8 @@
       "playback": "LIVE",
       "model_id": null,
       "investigation_mode": null,
-      "investigation_mode_label": "Deterministic checks \u00b7 no agent"
+      "investigation_mode_label": "Deterministic checks \u00b7 no agent",
+      "ground_truth": "sealed answer key"
     }
   }
 }

@@ -10,15 +10,15 @@ No. We asked a model once to plan an adversary's steps from a bounded list and i
 
 **What does it find that keyword search misses?**
 
-A line that is no longer in the local log, because an independent collector kept a copy. Across both runs our fixed keyword recipe established 0 of 6 cover-ups; the comparison checks established 6 of 6. That is a comparison with that recipe, not a claim that existing forensic tools cannot compare logs.
+A line that is no longer in the local log, because an independent collector kept a copy. Across both runs our fixed keyword recipe established 0 of 8 cover-ups; the comparison checks established 8 of 8. That is a comparison with that recipe, not a claim that existing forensic tools cannot compare logs.
 
 **Does the model discover the missing line itself, or do the checks do it?**
 
-We measured both. In the second run, a single agent with only generic search tools established 5 of 8 incident effects on two new incident cases, and half of those runs ran out of budget. The same agent with the deterministic checks established 7 of 8 at about half the cost. The checks with no model at all established 8 of 8. So on these cases the checks carry most of the detection, and the model's contribution is investigation, explanation, alternatives and answering questions. One run per cell: this is how the systems differed here, not an accuracy estimate.
+We measured both. In the second run, on four new incident cases, a single agent with only generic search tools established 10 of 16 incident effects, and half of its runs ran out of budget. The same agent with the deterministic checks established 15 of 16 at about half the cost. The checks with no model at all established 16 of 16. So on these cases the checks carry the detection, and the model's contribution is investigation, explanation, alternatives and answering questions. One run per cell: this is how the systems differed here, not an accuracy estimate.
 
 **Why multiple agents?**
 
-They separate integrity work from skeptical review and leave an inspectable trail. They did not improve accuracy in either run: equal in the first pilot at 2.6 times the cost, and lower in the second (5 of 8 against 7 of 8 for one agent with the same checks). That is why fast mode, one agent, is the default for a live investigation. Specialist mode stays available and its results stay published.
+They separate integrity work from skeptical review and leave an inspectable trail. They did not improve accuracy in either run: equal in the first pilot at 2.6 times the cost, and lower in the second (12 of 16 against 15 of 16 for one agent with the same checks, at twice the cost). We can say why: three times the skeptic agent withdrew a correct finding that the deterministic check supported, reasoning that an unexplained absence is not proven removal. That caution is defensible and it cost recall. Fast mode, one agent, is therefore the default for a live investigation. Specialist mode stays available and its results stay published.
 
 **How do you know a finding is correct?**
 
@@ -50,4 +50,4 @@ Training teams can see how an investigator reached a conclusion and check every 
 
 **How much does it cost?**
 
-Replaying a recording costs nothing. A fresh fast investigation on Claude Haiku 5.5 took about 25 seconds and under one cent; a question took two or three model calls and about a quarter of a cent. The whole second-run evaluation, sixteen investigations, was an estimated $0.22. The team authorized $20 in total and an estimated $3.34 has been used. A ledger reserves before each call and keeps unknown outcomes at their worst case; the provider console is the billing authority.
+Replaying a recording costs nothing. A fresh fast investigation on Claude Haiku 5.5 took about 25 seconds and under one cent; a question took two or three model calls and about a quarter of a cent. The whole second-run evaluation, twenty-four investigations, was an estimated $0.33. The team authorized $20 in total and an estimated $3.47 has been used. A ledger reserves before each call and keeps unknown outcomes at their worst case; the provider console is the billing authority.

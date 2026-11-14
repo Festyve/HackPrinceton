@@ -51,6 +51,12 @@
       "model_id": null,
       "note": "configured does not mean a successful model call has been observed"
     },
+    "capture_import": {
+      "cli": "uv run alibi import <capture directory>",
+      "http": false,
+      "scored": false,
+      "note": "imports a directory with capture.json and its raw files as an unscored case; not offered over HTTP because it reads a local path. No captured evidence ships with this build"
+    },
     "scenario_designer": {
       "endpoint": true,
       "model": "BLOCKED",

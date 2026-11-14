@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
-  "question_id": "q-2509d5fcfc",
-  "case_id": "case-cb5ce3e5c339",
+  "question_id": "q-36db321c1b",
+  "case_id": "case-c88d2ea48872",
   "bundle_id": "bndl-646e90a648ad486f",
   "question": "What links the missing log line to the transfer?",
   "status": "unavailable",
@@ -30,6 +30,6 @@
     "timed_out": false
   },
   "error": null,
-  "asked_at": "2026-11-14T10:30:14.609936Z",
-  "answered_at": "2026-11-14T10:30:14.624539Z"
+  "asked_at": "2026-11-14T11:10:11.378390Z",
+  "answered_at": "2026-11-14T11:10:11.391282Z"
 }

@@ -1,11 +1,11 @@
 {
   "role": "original",
-  "case_id": "case-cb5ce3e5c339",
+  "case_id": "case-c88d2ea48872",
   "bundle_id": "bndl-646e90a648ad486f",
   "children": [
     {
-      "child_case_id": "case-7c87ff2faf70",
-      "title": "Inside job \u00b7 cover-up \u00b7 without collector collector",
+      "child_case_id": "case-01a71335ee2b",
+      "title": "Inside job \u00b7 cover-up \u00b7 without collector",
       "state": "frozen",
       "excluded_sources": [
         {

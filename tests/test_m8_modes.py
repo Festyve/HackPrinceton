@@ -118,6 +118,12 @@ def test_mode_is_validated_and_ignored_by_the_runner_without_an_agent(env):
     replays = {r["id"]: r for r in c.get("/api/presets").json()["replays"]}
     assert replays["hero-coverup-live-opus-5-5"]["investigation_mode"] == "specialist"
     assert replays["hero-coverup-live-opus-5-5"]["inference_mode"] == "RECORDED_MODEL"
+    # the proven specialist recording is listed first and marked, so it is the one a presentation opens
+    listed = c.get("/api/presets").json()["replays"]
+    assert listed[0]["id"] == "hero-coverup-live-opus-5-5" and listed[0]["presentation_default"] is True
+    assert [r["presentation_default"] for r in listed].count(True) == 1
+    kinds = [r["inference_mode"] for r in listed]
+    assert kinds == sorted(kinds, key=lambda k: k != "RECORDED_MODEL")  # recorded model runs before scripted fixtures
 
 
 LIVE = {"RUNTIME_MODE": "live", "LIVE_PROVIDER_KIND": "included_credits", "LEAD_MODEL": "anthropic:test-model",

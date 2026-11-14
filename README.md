@@ -6,7 +6,7 @@ ALIBI is a practice range for digital investigations. It runs a scripted inciden
 
 Built at HackPrinceton Fall 2026 by Eric Chen, Rayan, Daniel, and Terry.
 
-![A missing host-log entry beside the copy retained by the collector](docs/screenshots/case-board-recorded-ai.png)
+![A missing host-log entry beside the copy retained by the collector](docs/screenshots/terry-ui/03-review-1440x900.png)
 
 ## Try it
 
@@ -57,7 +57,16 @@ Python checks establish observations. A LangChain DeepAgent investigates, consid
 - **Export** the locked report with its hash, the model and mode that produced it, and the exact cited lines.
 - **Design an environment.** A model picks an ordinary working day from fixed options; an operator may place a scripted incident in it.
 
-All of this is in the backend API ([reference](docs/api.md)) and tested. The case board in `web/` covers the investigation, evidence, review and reveal flow; controls for the newer features are being added by the UI owner.
+All of this is in the backend API ([reference](docs/api.md)) and tested. The case board in `web/` covers the investigation, evidence, review and reveal flow; controls for the newer features are being added by the UI owner. Until then the same features run from a terminal, against the same cases the case board shows:
+
+```sh
+uv run alibi run --preset hero-coverup          # investigate; stops at human review and prints the case id
+uv run alibi experiment <case-id> --without collector
+uv run alibi ask <case-id> "Who did it?"         # needs a configured model; offline it says so
+uv run alibi review <case-id> accept
+uv run alibi export <case-id> > report.md
+uv run alibi import <capture-directory>          # captured evidence, as an unscored case
+```
 
 ## What is real and what is not
 
@@ -77,22 +86,22 @@ First run, simulated cases ([details](docs/benchmark.md)):
 | One agent with checks, four-case pilot on Claude Opus 5.5 | 5/5 effects; est. $0.50; median 19 s |
 | Three agents with checks, same pilot | 5/5 effects; est. $1.30; median 59 s |
 
-Second run, four new cases, Claude Haiku 5.5, one run per cell ([details](docs/evaluation-v2.md)). Here no AI system was told whether a finding was supported while it investigated; support was decided after each report was locked.
+Second run: six new cases (four incidents, two benign controls), Claude Haiku 5.5, one run per cell ([summary](docs/evaluation-summary.md); per case: [first four](docs/evaluation-v2.md), [replication of the incident kinds](docs/evaluation-v2-rep1.md)). Here no AI system was told whether a finding was supported while it investigated; support was decided after each report was locked.
 
-| System | Incident effects established | Stopped by a budget cap | Est. cost for four cases |
-|---|---|---|---|
-| Keyword recipe | 2/8 | – | – |
-| Deterministic checks, no model | 8/8 | – | – |
-| One agent, generic search tools only | 5/8 | 2 of 4 runs | $0.054 |
-| One agent with the checks | 7/8 | 0 | $0.029 |
-| Three agents, generic search tools only | 5/8 | 2 of 4 runs | $0.081 |
-| Three agents with the checks | 5/8 | 0 | $0.057 |
+| System | Incident effects established | Cover-ups found | Runs stopped by a budget cap | Est. cost for six cases |
+|---|---|---|---|---|
+| Keyword recipe | 4/16 | 0/4 | – | – |
+| Deterministic checks, no model | 16/16 | 4/4 | – | – |
+| One agent, generic search tools only | 10/16 | 3/4 | 3 of 6 | $0.08 |
+| One agent with the checks | 15/16 | 4/4 | 0 | $0.04 |
+| Three agents, generic search tools only | 7/16 | 1/4 | 3 of 6 | $0.12 |
+| Three agents with the checks | 12/16 | 2/4 | 0 | $0.08 |
 
-No system made an accepted false allegation on the two benign controls, and none named a person. On these cases the checks helped a single agent, three agents did no better than one, and the deterministic checks by themselves established the most. With one run per cell and two incident cases, this shows how the systems differed here. It is not an accuracy estimate.
+No system made an accepted false allegation on the two benign controls, and none named a person. On these cases the checks helped the model in both configurations, one agent did better than three at half the cost, and the deterministic checks by themselves established everything. Three times the three-agent system lost a correct finding because its skeptic agent withdrew it although the check supported it. With one run per cell and four incident cases, this shows how the systems differed here. It is not an accuracy estimate.
 
 ## Live AI and budget
 
-Live inference uses a server-side Anthropic key in a gitignored `.env`. **The total API allowance is $20 across both runs.** About $3.34 has been used. Follow [API setup](docs/next-run/API_SETUP.md) and never delete the spend ledger.
+Live inference uses a server-side Anthropic key in a gitignored `.env`. **The total API allowance is $20 across both runs.** About $3.47 has been used. Follow [API setup](docs/next-run/API_SETUP.md) and never delete the spend ledger.
 
 Every model call goes through one budget gateway. It counts the outgoing request before sending it, refuses one that is too large or cannot be counted, reserves tokens and money so parallel agents cannot jointly pass a cap, and keeps the worst-case cost of any call whose billing outcome is unknown until someone reconciles it. Automatic calls stop $0.50 short of the cap. The totals are a conservative estimate at list prices, not a bill; the provider console is the billing authority.
 

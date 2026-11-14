@@ -1,7 +1,7 @@
 {
   "role": "derived",
-  "case_id": "case-7c87ff2faf70",
-  "parent_case_id": "case-cb5ce3e5c339",
+  "case_id": "case-01a71335ee2b",
+  "parent_case_id": "case-c88d2ea48872",
   "child_state": "frozen",
   "excluded_sources": [
     {
@@ -22,7 +22,7 @@
   "events_original": 12802,
   "parent_state": "awaiting_review",
   "parent_report": {
-    "report_id": "rep-case-cb5ce3e5c339",
+    "report_id": "rep-case-c88d2ea48872",
     "locked": false,
     "report_sha256": null,
     "system_id": "BR",
@@ -172,7 +172,7 @@
           "state": "cannot_be_established_here"
         },
         "change": "loses_support",
-        "reason": "references resolve; no allegation is made",
+        "reason": "6 of the 7 record(s) cited for this are in a withheld source, and the deterministic check does not support it from what remains",
         "evidence_ids_remaining": [
           "ev_4358af94bbef"
         ],

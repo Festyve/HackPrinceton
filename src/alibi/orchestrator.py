@@ -51,6 +51,8 @@ TRANSIENT = ("generating", "investigating")
 # Event types an investigator-side consumer may see. Orchestrator and reveal events are audience-only.
 INVESTIGATOR_EVENT_TYPES = ("todo", "agent", "tool", "finding", "note", "attribution", "report", "usage")
 REPLAY_DIR = REPO_ROOT / "demo" / "replays"
+# The proven specialist run on Claude Opus 5.5 stays the recording a presentation opens first.
+PRESENTATION_DEFAULT_REPLAY = "hero-coverup-live-opus-5-5"
 
 # Demo presets. Seeds here are disjoint from development seeds and declared benchmark seeds.
 # `_variant` is private: it is never serialized to any client before reveal.
@@ -402,7 +404,12 @@ class Orchestrator:
             out.append({"id": f.parent.name, **{k: meta.get(k) for k in (
                 "title", "model_id", "recorded_at", "runner_id", "git_commit", "note")},
                 "inference_mode": mode, "inference_label": INFERENCE_LABELS.get(mode, ""),
-                "investigation_mode": run_mode, "investigation_mode_label": MODE_LABELS.get(run_mode or "", "")})
+                "investigation_mode": run_mode, "investigation_mode_label": MODE_LABELS.get(run_mode or "", ""),
+                "presentation_default": f.parent.name == PRESENTATION_DEFAULT_REPLAY})
+        # The presentation default comes first, then the other recorded model runs, then scripted fixtures.
+        # A client that features "the first recorded run" therefore features the intended one.
+        out.sort(key=lambda r: (not r["presentation_default"], r["inference_mode"] != "RECORDED_MODEL",
+                                r["title"] or "", r["id"]))
         return out
 
     # ------------------------------------------------------------------ create

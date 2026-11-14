@@ -527,6 +527,29 @@ def combined(docs: list[dict[str, Any]]) -> dict[str, Any]:
             "note": "Sums over completed cells of separately declared suites, one run per cell. Not an accuracy estimate."}
 
 
+def true_findings_not_accepted(doc: dict[str, Any]) -> list[dict[str, Any]]:
+    """Findings that matched an executed effect but did not count, and what stopped them.
+
+    Read from the saved, locked reports. The usual causes are a skeptic agent downgrading a finding the
+    deterministic check supported, or the verifier not finding support for the records that were cited.
+    """
+    out = []
+    for r in doc["runs"]:
+        if r["kind"] != "ai" or not r["score"] or not r["report_file"]:
+            continue
+        wanted = {o["finding_id"] for o in r["score"]["finding_outcomes"] if o["outcome"] == "matched_but_not_accepted"}
+        f = REPO_ROOT / r["report_file"]
+        if not wanted or not f.exists():
+            continue
+        for finding in json.loads(f.read_text(encoding="utf-8"))["findings"]:
+            if finding["id"] in wanted:
+                out.append({"suite": doc["suite"], "case_ref": r["case_ref"], "system_id": r["system_id"],
+                            "claim_type": finding["claim_type"], "status": finding["status"],
+                            "check_result": finding["verification_status"],
+                            "skeptic_note": (finding.get("skeptic_note") or "")[:240]})
+    return out
+
+
 def render_combined(docs: list[dict[str, Any]]) -> str:
     c = combined(docs)
     out = ["# Evaluation summary", "",
@@ -545,6 +568,15 @@ def render_combined(docs: list[dict[str, Any]]) -> str:
         out.append(f"| {x['id']}: {x['label']} | {x['cells']} | {_r(g['step_recall'])} | {_r(g['coverup_detected'])} | "
                    f"{_r(g['benign_false_alert'])} | {g['false_claims_final']} | {g['unsupported_named_attribution']} | "
                    f"{x['censored']} | ${g['cost_estimate_usd']:.4f} |")
+    lost = [x for d in docs for x in true_findings_not_accepted(d)]
+    if lost:
+        out += ["", "## Correct findings that did not count", "",
+                "These findings matched an executed effect, but were not accepted in the locked report, so they earned "
+                "nothing. \"Downgraded by skeptic\" means the skeptic agent withdrew a finding; the check result column "
+                "shows what the deterministic check said about the same finding.", "",
+                "| Suite | Case | System | Finding | Why it did not count | Check result |", "|---|---|---|---|---|---|"]
+        out += [f"| {x['suite']} | {x['case_ref']} | {x['system_id']} | {x['claim_type'].replace('_', ' ')} | "
+                f"{x['status'].replace('_', ' ')} | {x['check_result'].replace('_', ' ')} |" for x in lost]
     out += ["", "Per-case tables: " + ", ".join(
         f"[{d['suite']}]({'evaluation-v2.md' if d['suite'] == SUITE else 'evaluation-' + d['suite'].replace('paired-', '') + '.md'})"
         for d in docs) + ".", ""]

@@ -177,6 +177,26 @@ def test_harness_keeps_every_cell_scores_after_lock_and_never_overwrites(tmp_pat
     assert {f["status"] for f in rep["findings"] if f["category"] == "incident_allegation"} == {"verified"}
     md = evaluation.render_markdown({**doc, "model": "test-double"})
     assert "| D01 |" in md and "3/3" in md and "0/3" in md and "not an accuracy estimate" in md
+    # totals over several separately declared suites are a plain sum, and say so
+    both = evaluation.combined([doc, doc])
+    by = {x["id"]: x for x in both["systems"]}
+    assert by["B1+"]["cells"] == 4 and by["B1+"]["aggregate"]["step_recall"] == {"num": 6, "den": 6, "value": 1.0}
+    assert by["B1"]["aggregate"]["step_recall"]["num"] == 0 and "Not an accuracy estimate" in both["note"]
+    assert evaluation.true_findings_not_accepted(doc) == []  # nothing correct was withdrawn in this stand-in run
+    # a correct finding that a skeptic withdrew is found again from the saved report
+    rep_file = out / "reports" / "D01-ALIBI.report.json"
+    rep = json.loads(rep_file.read_text())
+    victim = next(f for f in rep["findings"] if f["claim_type"] == "local_log_removal")
+    victim["status"] = "downgraded_by_skeptic"
+    rep_file.write_text(json.dumps(rep))
+    edited = json.loads(json.dumps(doc))
+    cell = next(r for r in edited["runs"] if r["system_id"] == "ALIBI" and r["case_ref"] == "D01")
+    cell["score"]["finding_outcomes"] = [{"finding_id": victim["id"], "outcome": "matched_but_not_accepted"}]
+    lost = evaluation.true_findings_not_accepted(edited)
+    assert lost == [{"suite": "unit-test", "case_ref": "D01", "system_id": "ALIBI", "claim_type": "local_log_removal",
+                     "status": "downgraded_by_skeptic", "check_result": "supported_observation", "skeptic_note": lost[0]["skeptic_note"]}]
+    summary = evaluation.render_combined([edited])
+    assert "Correct findings that did not count" in summary and "downgraded by skeptic" in summary
     (tmp_path / "frozen").mkdir()
     (tmp_path / "frozen" / "x").mkdir()
     assert evaluation.latest(tmp_path)["run_id"] == doc["run_id"]

@@ -1,10 +1,10 @@
 {
   "case": {
-    "case_id": "case-1ad09f4807bf",
+    "case_id": "case-6fbe32bcee56",
     "state": "investigating",
     "detail": "investigator working on the frozen evidence",
-    "created_at": "2026-11-14T10:30:14.402855+00:00",
-    "updated_at": "2026-11-14T10:30:14.606089+00:00",
+    "created_at": "2026-11-14T11:10:11.171763+00:00",
+    "updated_at": "2026-11-14T11:10:11.374861+00:00",
     "preset_id": "hero-coverup",
     "title": "Inside job \u00b7 cover-up",
     "card_id": "inside-job",
@@ -25,6 +25,7 @@
     "timings": {
       "generate_s": 0.202
     },
+    "scored": true,
     "parent_case_id": null,
     "excluded_sources": [],
     "labels": {
@@ -34,7 +35,8 @@
       "playback": "LIVE",
       "model_id": "scripted-fixture-policy-v1 (no model)",
       "investigation_mode": "fast",
-      "investigation_mode_label": "Fast investigation \u00b7 one agent"
+      "investigation_mode_label": "Fast investigation \u00b7 one agent",
+      "ground_truth": "sealed answer key"
     }
   }
 }

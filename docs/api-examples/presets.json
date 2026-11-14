@@ -75,6 +75,32 @@
   ],
   "replays": [
     {
+      "id": "cold-chain-fast-haiku-5-5",
+      "title": "Cold chain \u00b7 altered readings",
+      "model_id": "anthropic:claude-haiku-5-5",
+      "recorded_at": "2026-11-14T10:37:22.321759+00:00",
+      "runner_id": "agent-live",
+      "git_commit": "e1676bd",
+      "note": "Real model run (claude-haiku-5-5, fast mode: one agent) through the budget gateway. The incident is a scripted scenario.",
+      "inference_mode": "RECORDED_MODEL",
+      "inference_label": "Recorded AI run",
+      "investigation_mode": "fast",
+      "investigation_mode_label": "Fast investigation \u00b7 one agent"
+    },
+    {
+      "id": "hero-coverup-fast-haiku-5-5",
+      "title": "Inside job \u00b7 cover-up",
+      "model_id": "anthropic:claude-haiku-5-5",
+      "recorded_at": "2026-11-14T10:36:22.689783+00:00",
+      "runner_id": "agent-live",
+      "git_commit": "e1676bd",
+      "note": "Real model run (claude-haiku-5-5, fast mode: one agent) through the budget gateway, with two recorded question answers. The incident is a scripted scenario.",
+      "inference_mode": "RECORDED_MODEL",
+      "inference_label": "Recorded AI run",
+      "investigation_mode": "fast",
+      "investigation_mode_label": "Fast investigation \u00b7 one agent"
+    },
+    {
       "id": "hero-coverup-fixture",
       "title": "Inside job \u00b7 cover-up",
       "model_id": "scripted-fixture-policy-v1 (no model)",
@@ -99,6 +125,19 @@
       "inference_label": "Recorded AI run",
       "investigation_mode": "specialist",
       "investigation_mode_label": "Specialist review \u00b7 lead, auditor and skeptic"
+    },
+    {
+      "id": "records-heist-fast-haiku-5-5",
+      "title": "Records heist \u00b7 cover-up",
+      "model_id": "anthropic:claude-haiku-5-5",
+      "recorded_at": "2026-11-14T10:36:59.449720+00:00",
+      "runner_id": "agent-live",
+      "git_commit": "e1676bd",
+      "note": "Real model run (claude-haiku-5-5, fast mode: one agent) through the budget gateway. The incident is a scripted scenario.",
+      "inference_mode": "RECORDED_MODEL",
+      "inference_label": "Recorded AI run",
+      "investigation_mode": "fast",
+      "investigation_mode_label": "Fast investigation \u00b7 one agent"
     },
     {
       "id": "sealed-control-fixture",

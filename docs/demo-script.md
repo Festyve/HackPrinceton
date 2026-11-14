@@ -23,6 +23,20 @@ Only show a feature on stage if you have just seen it work in the build you are 
 - **A live run.** Fast mode takes about 25 seconds on Claude Haiku 5.5 and costs under a cent. If it stalls, switch to the recording. Do not wait out inference in a timed pitch.
 - **Export.** Download the locked report: its hash, the model and mode that produced it, and the exact cited lines.
 
+## From a terminal
+
+Every feature above also runs from a terminal against the same cases, which is the fallback if a control is not in the UI yet:
+
+```sh
+uv run alibi run --preset hero-coverup          # prints the case id and the findings
+uv run alibi experiment <case-id> --without collector
+uv run alibi ask <case-id> "What links the missing line to the transfer?"
+uv run alibi review <case-id> accept
+uv run alibi export <case-id>
+```
+
+Offline, `run` uses the scripted fixture and says so, and `ask` reports that no model is configured. `experiment` and `export` need no model.
+
 ## Sponsor questions
 
 - **Arlequin (forensics):** open the missing record's source and a cited answer. Say which observations come from deterministic checks and which interpretation comes from the model. Show the source-removal comparison.

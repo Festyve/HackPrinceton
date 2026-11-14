@@ -148,6 +148,7 @@ A model chooses an ordinary operating environment from fixed options. It plans n
 
 ## More cases and results
 
+- `GET /api/presets` lists recordings with the presentation default first (`replays[].presentation_default: true`, the specialist run on Claude Opus 5.5), then the other recorded model runs, then scripted fixtures. Feature the marked one; do not rely on the title.
 - `GET /api/presets` lists six more presets: `evasion`, `maintenance-control`, `records-heist`, `records-control`, `cold-chain`, `cold-chain-control`. `card.id` is `inside-job`, `records-heist` or `cold-chain`. Their evidence has two more source kinds, `sensor` and `reference`.
 - Reports on those cases can carry more claim types: `timestamp_alteration`, `forwarding_stopped`, `second_host_session`, `sensor_stream_discrepancy` (allegations) and `shell_history_gap`, `metadata_change`, `temperature_excursion`, `sensor_maintenance`, `policy_consistent_access` (notes). An effect that no captured source can show has outcome `unobservable` in the reveal.
 - `GET /api/benchmark` adds `paired_v2`: the latest result of the phase-two evaluation (six systems, four new cases), or `null`. It is a separate suite and is not merged into the first-run tables.
