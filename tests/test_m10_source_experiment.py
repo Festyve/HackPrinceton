@@ -162,6 +162,8 @@ def test_withheld_records_cannot_be_fetched_searched_or_cited_in_the_derived_vie
 
     # research scoring of the child: what happened is unchanged, what is observable is recomputed, both rates shown
     c.post(f"/api/cases/{child}/review", json={"decision": "accept"})
+    assert c.post(f"/api/cases/{child}/reveal").status_code == 409  # the original's report is not locked yet
+    c.post(f"/api/cases/{cid}/review", json={"decision": "accept"})
     revealed = c.post(f"/api/cases/{child}/reveal").json()["reveal"]
     sc = revealed["source_experiment"]["scoring"]
     assert sc["effects_total_original"] == 3 and sc["effects_with_no_record_in_this_view"] == 1 and sc["caught"] == 2

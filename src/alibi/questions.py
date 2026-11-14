@@ -192,8 +192,49 @@ def _staged_ids(t: dict[str, Any]) -> set[str]:
             *so["staging_command_event_ids"]}
 
 
-def check_claim(kind: str, ids: set[str], obs: verifier.Observations, store: EvidenceStore) -> tuple[str, str]:
-    """(support, basis) for one claim, from the deterministic checks. `ids` are already known to exist."""
+def _session_number(value: Any) -> str | None:
+    m = re.search(r"(\d+)$", str(value or ""))
+    return m.group(1) if m else None
+
+
+def _check_session_account(text: str, ids: set[str], store: EvidenceStore) -> tuple[str, str]:
+    """A claim about which account a session belongs to, against the cited login records AND the claim's words.
+
+    A cited login record proves something only about the account and session it records. The claim is `checked`
+    when every account it names is the account of a cited login record, and any session number it names is one
+    of theirs. Naming a different account or session is `contradicted`; naming none is merely `cited`.
+    """
+    logins = [e for e in store.get(sorted(ids)) if e.action in ("login", "logout") and e.attrs.get("session_id")]
+    if not logins:
+        return "unsupported", "no cited record is a login or logout record"
+    pairs = sorted({(str(e.actor or ""), str(e.attrs.get("session_id"))) for e in logins})
+    cited_accounts = {a for a, _ in pairs if a}
+    cited_sessions = {n for _, s in pairs if (n := _session_number(s))}
+    recorded = "; ".join(f"session {s} of account {a or 'unknown'}" for a, s in pairs[:4])
+    note = f"the cited login record(s) show {recorded}. An account is a credential, not a person"
+    known_accounts = {str(e.actor) for e in store.scan(action="login") if e.actor}
+    named_accounts = {a for a in known_accounts
+                      if re.search(rf"(?<![\w.@-]){re.escape(a)}(?![\w@-])", text)}
+    named_sessions = set(re.findall(r"(?:\bsession\s+(?:id\s+)?|#)(\d+)\b", text, flags=re.I))
+    if named_accounts and not named_accounts & cited_accounts:
+        return "contradicted", f"the claim names account {', '.join(sorted(named_accounts))}, but {note}"
+    if named_sessions and cited_sessions and not named_sessions & cited_sessions:
+        return "contradicted", f"the claim names session {', '.join(sorted(named_sessions))}, but {note}"
+    if not named_accounts:
+        return "cited", f"{note}. The claim names no account of this bundle, so it was not checked against one"
+    if named_accounts - cited_accounts:
+        return "cited", (f"{note}. The claim also names {', '.join(sorted(named_accounts - cited_accounts))}, which "
+                         "no cited login record shows, so the claim as a whole was not machine-checked")
+    return "checked", note
+
+
+def check_claim(kind: str, ids: set[str], obs: verifier.Observations, store: EvidenceStore,
+                text: str = "") -> tuple[str, str]:
+    """(support, basis) for one claim, from the deterministic checks. `ids` are already known to exist.
+
+    `text` is the claim's own sentence. Only the session-account check reads it: there the cited record cannot
+    support a sentence that names a different account or session than the record does.
+    """
     if kind == "interpretation":
         return "interpretation", "the model's reading of the evidence; not machine-checked"
     if not ids:
@@ -238,12 +279,7 @@ def check_claim(kind: str, ids: set[str], obs: verifier.Observations, store: Evi
             return "checked", "the cited heartbeats are the edges of a collection gap found by the heartbeat check"
         return "unsupported", "the heartbeat check reports no gap at the cited records"
     if kind == "session_account":
-        logins = [e for e in store.get(sorted(ids)) if e.action in ("login", "logout") and e.attrs.get("session_id")]
-        if logins:
-            e = logins[0]
-            return "checked", (f"the cited login record belongs to session {e.attrs.get('session_id')} of account "
-                               f"{e.actor}. An account is a credential, not a person")
-        return "unsupported", "no cited record is a login or logout record"
+        return _check_session_account(text, ids, store)
     return "cited", "the cited records exist in this bundle; that they say this was not machine-checked"
 
 
@@ -285,9 +321,9 @@ def validate_answer(raw: dict[str, Any], question: str, store: EvidenceStore, ma
     for c in raw_claims:
         kind = c.get("kind") if c.get("kind") in CLAIM_KINDS + FAMILY_CLAIM_KINDS else "record"
         ids = [str(i) for i in (c.get("evidence_ids") or []) if str(i) in known][:20]
-        support, basis = check_claim(kind, set(ids), obs, store)
-        claims.append(QuestionClaim(text=str(c.get("text") or "")[:500], evidence_ids=ids, support=support, kind=kind,
-                                    basis=basis))
+        text = str(c.get("text") or "")[:500]
+        support, basis = check_claim(kind, set(ids), obs, store, text)
+        claims.append(QuestionClaim(text=text, evidence_ids=ids, support=support, kind=kind, basis=basis))
     limits = [str(x)[:300] for x in (raw.get("limitations") or [])][:6]
     status = raw.get("status") if raw.get("status") in ("answered", "insufficient_evidence") else "insufficient_evidence"
     if status == "answered" and not any(c.support in ("checked", "cited") for c in claims):

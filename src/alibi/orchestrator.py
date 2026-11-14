@@ -20,6 +20,8 @@ import threading
 import time
 import traceback
 import uuid
+import weakref
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -48,6 +50,59 @@ from alibi.verifier import verify_report
 STATES = ("created", "generating", "frozen", "investigating", "awaiting_review", "report_locked", "scored",
           "failed", "cancelled")
 TRANSIENT = ("generating", "investigating")
+
+try:  # advisory file locks; absent on Windows, where every process behaves as the owner as before
+    import fcntl
+except ImportError:  # pragma: no cover
+    fcntl = None  # type: ignore[assignment]
+
+# runs directory -> [open lock file, number of orchestrators in this process using it]
+_OWNED: dict[str, list[Any]] = {}
+_OWNED_GUARD = threading.Lock()
+
+
+def _own_runs_dir(runs_dir: Path) -> tuple[bool, str]:
+    """Whether this process is the one that may clean up interrupted work in `runs_dir`.
+
+    The first process to open a runs directory holds an exclusive advisory lock on it for as long as it
+    lives. A second process (a CLI command run beside a server) does not get it, so it must not declare the
+    server's in-flight work "interrupted". A second orchestrator in the SAME process shares the lock: that is
+    a restart, and recovery is right. The lock is released by the kernel when the process ends, however it ends.
+    """
+    key = str(runs_dir.resolve())
+    with _OWNED_GUARD:
+        held = _OWNED.get(key)
+        if held is not None:
+            held[1] += 1
+            return True, key
+        if fcntl is None:
+            return True, ""
+        try:
+            # beside the runs directory, not in it: the directory holds cases and nothing else
+            f = open(runs_dir.parent / f"{runs_dir.name}.owner.lock", "a+")  # noqa: SIM115 - held while the process lives
+        except OSError:
+            return True, ""  # cannot tell: keep the old behavior
+        try:
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            f.close()
+            return False, ""
+        _OWNED[key] = [f, 1]
+        return True, key
+
+
+def _release_runs_dir(key: str) -> None:
+    with _OWNED_GUARD:
+        held = _OWNED.get(key)
+        if held is None:
+            return
+        held[1] -= 1
+        if held[1] <= 0:
+            _OWNED.pop(key, None)
+            try:
+                held[0].close()
+            except OSError:
+                pass
 # Event types an investigator-side consumer may see. Orchestrator and reveal events are audience-only.
 INVESTIGATOR_EVENT_TYPES = ("todo", "agent", "tool", "finding", "note", "attribution", "report", "usage")
 REPLAY_DIR = REPO_ROOT / "demo" / "replays"
@@ -246,9 +301,14 @@ class Orchestrator:
         self._threads: dict[str, threading.Thread] = {}
         self._cancel: dict[str, threading.Event] = {}
         self._tokens: dict[str, str] = {}
+        self._token_locks: dict[str, threading.Lock] = {}
+        self._design_seq = 0
         self._qa_active: dict[str, str] = {}  # case id -> the one question being answered for it
         self._qa_threads: dict[str, threading.Thread] = {}
         self.qa_model_factory: Any = None  # tests only: a stand-in model; production builds the real one
+        self.owns_runs, own_key = _own_runs_dir(self.runs_dir)
+        if own_key:
+            weakref.finalize(self, _release_runs_dir, own_key)
         self._recover()
 
     # ------------------------------------------------------------------ plumbing
@@ -291,15 +351,55 @@ class Orchestrator:
         self._save(rec)
         self._log(rec.case_id).append("state", {"state": state, "detail": detail})
 
+    @staticmethod
+    def _experiment_token(parent_case_id: str, token: str) -> str:
+        """A source-experiment token is only ever matched against experiments of the same original case."""
+        return f"experiment\x1f{parent_case_id}\x1f{token}"
+
+    @contextmanager
+    def _once(self, key: str | None):
+        """Serialize creations that carry the same idempotency token: a retry that arrives while the first
+        request is still generating waits for it and then finds its case, instead of making a second one."""
+        if not key:
+            yield
+            return
+        with self._guard:
+            lock = self._token_locks.setdefault(key, threading.Lock())
+        with lock:
+            yield
+
+    def _known(self, key: str | None) -> CaseRecord | None:
+        """The case an idempotency token already produced, if it still exists."""
+        if not key:
+            return None
+        with self._guard:
+            case_id = self._tokens.get(key)
+        if case_id is None:
+            return None
+        try:
+            return self._load(case_id)
+        except NotFound:
+            with self._guard:
+                self._tokens.pop(key, None)
+            return None
+
     def _recover(self) -> None:
-        """After a restart, a case that was mid-run is a visible failure, not an endless spinner."""
+        """After a restart, a case that was mid-run is a visible failure, not an endless spinner.
+
+        Only the process that owns the runs directory does this. A command-line call made while a server is
+        running reads the same directory, and the server's running investigations are not interrupted work.
+        """
         for status in self.runs_dir.glob("*/status.json"):
             try:
                 rec = CaseRecord(**json.loads(status.read_text(encoding="utf-8")))
             except Exception:
                 continue
             if rec.client_token:
-                self._tokens[rec.client_token] = rec.case_id
+                key = (self._experiment_token(rec.parent_case_id, rec.client_token) if rec.parent_case_id
+                       else rec.client_token)
+                self._tokens[key] = rec.case_id
+            if not self.owns_runs:
+                continue
             if rec.state in TRANSIENT:
                 rec.error = "interrupted by a server restart; reset the case and run it again"
                 self._set_state(rec, "failed", rec.error)
@@ -421,12 +521,14 @@ class Orchestrator:
     def create_case(self, *, preset_id: str | None = None, seed: int | None = None, difficulty: str | None = None,
                     runner_id: str | None = None, client_token: str | None = None,
                     investigation_mode: str | None = None) -> CaseRecord:
-        with self._guard:
-            if client_token and client_token in self._tokens:
-                try:
-                    return self._load(self._tokens[client_token])  # duplicate Run request: same case
-                except NotFound:
-                    self._tokens.pop(client_token, None)
+        with self._once(client_token):
+            # a duplicate Run request returns the same case, also when it arrives before the first has finished
+            return self._known(client_token) or self._create_case(
+                preset_id=preset_id, seed=seed, difficulty=difficulty, runner_id=runner_id,
+                client_token=client_token, investigation_mode=investigation_mode)
+
+    def _create_case(self, *, preset_id: str | None, seed: int | None, difficulty: str | None,
+                     runner_id: str | None, client_token: str | None, investigation_mode: str | None) -> CaseRecord:
         if preset_id is not None:
             preset = next((p for p in PRESETS if p["id"] == preset_id), None)
             if preset is None:
@@ -458,14 +560,21 @@ class Orchestrator:
 
     def create_case_from_spec(self, spec: dict[str, Any], *, title: str = "Custom scenario",
                               runner_id: str | None = None, investigation_mode: str | None = None,
-                              difficulty: str | None = None, client_token: str | None = None) -> CaseRecord:
-        """Operator/test entry point: run a saved scenario specification. Not exposed over HTTP."""
+                              difficulty: str | None = None, client_token: str | None = None,
+                              public_seed: int | None = None) -> CaseRecord:
+        """Operator/test entry point: run a saved scenario specification. Not exposed over HTTP.
+
+        `public_seed` replaces the specification's own seed in the public case record. A designed case uses it:
+        the realization seed differs between an ordinary day and a placed incident, so showing it would tell the
+        audience which one they were given before the reveal.
+        """
         runner_id = runner_id or default_runner_id(self.settings)
         mode = resolve_mode(runner_id, investigation_mode)
         runner = get_runner(runner_id, self.settings, mode)
         rec = CaseRecord(case_id=f"case-{uuid.uuid4().hex[:12]}", title=title,
                          difficulty=difficulty if difficulty is not None else str(spec.get("difficulty", "")),
-                         seed=spec.get("seed"), card_id=str(spec.get("card_id") or "inside-job"), runner_id=runner_id,
+                         seed=public_seed if public_seed is not None else spec.get("seed"),
+                         card_id=str(spec.get("card_id") or "inside-job"), runner_id=runner_id,
                          investigation_mode=mode, inference_mode=runner.inference_mode, model_id=runner.model_id,
                          client_token=client_token)
         return self._generate(rec, seed=None, variant=None, spec=spec)
@@ -519,19 +628,29 @@ class Orchestrator:
             raise ValueError("client_token is required (at most 80 characters); it makes a retried request safe")
         ddir = self._design_dir()
         ddir.mkdir(parents=True, exist_ok=True)
-        with self._guard:
-            index_file = ddir / "index.json"
-            index = json.loads(index_file.read_text(encoding="utf-8")) if index_file.exists() else {}
-            if token in index:
-                return json.loads((ddir / f"{index[token]}.json").read_text(encoding="utf-8"))  # a retry: no second call
-            seed = int(design_seed) if design_seed is not None else (len(index) + 1)
+        index_file = ddir / "index.json"
+
+        def read_index() -> dict[str, str]:
+            return json.loads(index_file.read_text(encoding="utf-8")) if index_file.exists() else {}
+
+        # The same token waits for the first request; the orchestrator-wide guard is held only around the small
+        # index file, never across the model call, so event streams and other cases keep moving meanwhile.
+        with self._once(f"design\x1f{token}"):
+            with self._guard:
+                index = read_index()
+                if token in index:  # a retry: no second call
+                    return json.loads((ddir / f"{index[token]}.json").read_text(encoding="utf-8"))
+                self._design_seq = max(self._design_seq, len(index)) + 1
+                seed = int(design_seed) if design_seed is not None else self._design_seq
             design_id = f"design-{uuid.uuid4().hex[:10]}"
             doc = designer.design_environment(self.settings, seed, model_factory=self.qa_model_factory,
                                               ledger_path=ddir / f"{design_id}.budget.json")
             doc.update(design_id=design_id, created_at=_iso_now(), fixtures=list(designer.FIXTURES))
-            (ddir / f"{design_id}.json").write_text(json.dumps(doc, indent=1), encoding="utf-8")
-            index[token] = design_id
-            index_file.write_text(json.dumps(index), encoding="utf-8")
+            with self._guard:
+                (ddir / f"{design_id}.json").write_text(json.dumps(doc, indent=1), encoding="utf-8")
+                index = read_index()
+                index[token] = design_id
+                index_file.write_text(json.dumps(index), encoding="utf-8")
             return doc
 
     def get_design(self, design_id: str) -> dict[str, Any]:
@@ -548,21 +667,20 @@ class Orchestrator:
         scenario in it; that choice is the operator's, never the model's, and is not shown before the reveal."""
         from alibi.agents import designer
 
-        with self._guard:
-            if client_token and client_token in self._tokens:
-                try:
-                    return self._load(self._tokens[client_token])
-                except NotFound:
-                    self._tokens.pop(client_token, None)
-        doc = self.get_design(design_id)
-        if not doc.get("design"):
-            raise Conflict(f"this design request ended without a design ({doc['status']}); no case can be made from it")
-        design = designer.EnvironmentDesign.model_validate(doc["design"])
-        spec, realized = designer.realize(design, doc["design_seed"], fixture)
-        spec["environment_provenance"] = designer.provenance(doc, realized, fixture)
-        return self.create_case_from_spec(
-            spec, title=f"Designed environment · exercise {doc['design_seed']}", runner_id=runner_id,
-            investigation_mode=investigation_mode, difficulty="sealed", client_token=client_token)
+        with self._once(client_token):
+            known = self._known(client_token)
+            if known is not None:
+                return known
+            doc = self.get_design(design_id)
+            if not doc.get("design"):
+                raise Conflict(f"this design request ended without a design ({doc['status']}); no case can be made from it")
+            design = designer.EnvironmentDesign.model_validate(doc["design"])
+            spec, realized = designer.realize(design, doc["design_seed"], fixture)
+            spec["environment_provenance"] = designer.provenance(doc, realized, fixture)
+            return self.create_case_from_spec(
+                spec, title=f"Designed environment · exercise {doc['design_seed']}", runner_id=runner_id,
+                investigation_mode=investigation_mode, difficulty="sealed", client_token=client_token,
+                public_seed=int(doc["design_seed"]))
 
     def _generate(self, rec: CaseRecord, *, seed: int | None, variant: str | None, spec: dict | None) -> CaseRecord:
         case_id = rec.case_id
@@ -727,6 +845,16 @@ class Orchestrator:
                                "unseal. The locked report can be exported", rec.state)
             if rec.state != "report_locked":
                 raise Conflict("reveal refused: the report must be locked before truth is unsealed", rec.state)
+            if rec.parent_case_id:
+                # A derived view shares the original's answer. Unsealing it while the original's report can still
+                # be changed would hand that reviewer the answer first.
+                try:
+                    parent_state: str | None = self._load(rec.parent_case_id).state
+                except NotFound:
+                    parent_state = None  # the original was reset: no unlocked report is left to protect
+                if parent_state is not None and parent_state not in ("report_locked", "scored"):
+                    raise Conflict("reveal refused: this is a derived view of another case and shares its answer. "
+                                   "Lock the original case's report first, then unseal this one", rec.state)
             report = InvestigationReport.model_validate_json((paths.case / "report.json").read_text(encoding="utf-8"))
             key = load_answer_key(paths)
             ep = load_episode_manifest(paths)
@@ -791,14 +919,14 @@ class Orchestrator:
     def record(self, case_id: str) -> CaseRecord:
         return self._load(case_id)
 
-    def list_cases(self) -> list[dict[str, Any]]:
+    def list_cases(self, limit: int | None = 50) -> list[dict[str, Any]]:
         out = []
         for status in sorted(self.runs_dir.glob("case-*/status.json"), key=lambda p: p.stat().st_mtime, reverse=True):
             try:
                 out.append(CaseRecord(**json.loads(status.read_text(encoding="utf-8"))).public())
             except Exception:
                 continue
-        return out[:50]
+        return out if limit is None else out[:limit]
 
     def _report(self, paths: EpisodePaths) -> InvestigationReport | None:
         for name in ("report.json", "report.draft.json"):
@@ -899,12 +1027,14 @@ class Orchestrator:
         token = str(client_token or "").strip()
         if not token or len(token) > 80:
             raise ValueError("client_token is required (at most 80 characters); it makes a retried request safe")
-        with self._guard:
-            if token in self._tokens:
-                try:
-                    return self._load(self._tokens[token])  # a retry: the same derived case
-                except NotFound:
-                    self._tokens.pop(token, None)
+        self._load(case_id)  # an unknown case is "not found" whatever token came with the request
+        key = self._experiment_token(case_id, token)
+        with self._once(key):
+            known = self._known(key)  # a retry: the same derived case of this same original
+            return known or self._derive_case(case_id, excluded_source_ids, token, key, runner_id, investigation_mode)
+
+    def _derive_case(self, case_id: str, excluded_source_ids: list[str], token: str, key: str,
+                     runner_id: str | None, investigation_mode: str | None) -> CaseRecord:
         with self._lock(case_id):
             parent, ppaths = self._load(case_id), self._paths(case_id)
             if parent.parent_case_id:
@@ -937,7 +1067,7 @@ class Orchestrator:
             rec.timings["derive_s"] = round(time.perf_counter() - t0, 3)
             self._save(rec)
             with self._guard:
-                self._tokens[token] = child_id
+                self._tokens[key] = child_id
             log = self._log(child_id)
             pm = load_manifest(ppaths)
             log.append("state", {"state": "generating", "detail": "deriving an evidence view with sources withheld"})
@@ -961,7 +1091,7 @@ class Orchestrator:
         """
         rec = self._load(case_id)
         if rec.parent_case_id is None:
-            kids = [c for c in self.list_cases() if c.get("parent_case_id") == case_id]
+            kids = [c for c in self.list_cases(limit=None) if c.get("parent_case_id") == case_id]
             return {"role": "original", "case_id": case_id, "bundle_id": rec.bundle_id,
                     "children": [{"child_case_id": k["case_id"], "title": k["title"], "state": k["state"],
                                   "excluded_sources": k["excluded_sources"], "bundle_id": k["bundle_id"]} for k in kids],
@@ -1016,7 +1146,7 @@ class Orchestrator:
 
     def _write_question(self, q: QuestionAnswer) -> None:
         qdir = self._qdir(q.case_id)
-        qdir.mkdir(parents=True, exist_ok=True)
+        qdir.mkdir(exist_ok=True)  # no parents: a case that was reset meanwhile must not be re-created by a late answer
         tmp = qdir / f"{q.question_id}.json.tmp"
         tmp.write_text(q.model_dump_json(indent=1), encoding="utf-8")
         os.replace(tmp, qdir / f"{q.question_id}.json")
@@ -1139,12 +1269,10 @@ class Orchestrator:
         f = REPLAY_DIR / replay_id / "recording.json"
         if not f.exists():
             raise NotFound("no such recording")
-        with self._guard:
-            if client_token and client_token in self._tokens:
-                try:
-                    return self._load(self._tokens[client_token])
-                except NotFound:
-                    self._tokens.pop(client_token, None)
+        with self._once(client_token):
+            return self._known(client_token) or self._open_replay(replay_id, f, client_token)
+
+    def _open_replay(self, replay_id: str, f: Path, client_token: str | None) -> CaseRecord:
         data = json.loads(f.read_text(encoding="utf-8"))
         meta = data["meta"]
         rec = CaseRecord(case_id=f"case-{uuid.uuid4().hex[:12]}", preset_id=meta.get("preset_id"),
@@ -1165,6 +1293,8 @@ class Orchestrator:
             try:
                 q = QuestionAnswer.model_validate(saved)
             except Exception:
+                continue
+            if not questions_id_ok(q.question_id):  # the id becomes a file name: never take one that is not an id
                 continue
             recorded = q.inference_mode == "LIVE_MODEL"
             self._write_question(q.model_copy(update={

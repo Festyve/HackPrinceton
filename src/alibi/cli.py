@@ -249,7 +249,8 @@ def _cmd_spend(args: argparse.Namespace) -> int:
         print(f"not reconciled: {exc}", file=sys.stderr)
         return 2
     except gateway.LedgerError as exc:
-        print(f"the spend ledger cannot be used, so no model call will be made: {exc}", file=sys.stderr)
+        print(f"the spend ledger cannot be used, so no model call will be made: {exc}"
+              + (f"\n  file: {exc.path}" if exc.path else ""), file=sys.stderr)
         return 1
     return 0
 

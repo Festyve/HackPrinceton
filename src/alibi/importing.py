@@ -19,6 +19,7 @@ new parsing supplies it with its own importer and reuses the checks and the unsc
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import stat
 from datetime import datetime
@@ -81,21 +82,41 @@ class CaptureManifest(_Strict):
     notes: list[str] = Field(default_factory=list)
 
 
-_TRUTH_KEYS = ("answer", "truth", "ground_truth", "label", "labels", "attacker", "adversary", "operator_true", "steps",
-               "plan", "effects", "malicious", "is_incident", "case_kind", "variant", "seed")
+# Keys are compared after lowering them and dropping everything but letters and digits, so "groundTruth",
+# "Answer_Key" and "ground-truth" are the same key. A key is refused when it IS one of the exact names or
+# CONTAINS one of the parts.
+_TRUTH_KEYS = {"seed", "steps", "plan", "effects"}
+_TRUTH_KEY_PARTS = ("truth", "answer", "label", "scenario", "variant", "adversar", "attacker", "malicious", "culprit",
+                    "verdict", "isincident", "casekind", "operatortrue")
+# Free text cannot be understood here. Only wording that announces an answer is refused.
+_TRUTH_TEXT = re.compile(r"ground[\s_-]*truth|answer[\s_-]*key|\banswer\s*:|\bthe\s+answer\s+is\b|"
+                         r"\b(scenario|variant|verdict|culprit)\s*[:=]", re.I)
+_SAFE_PATH = re.compile(r"[A-Za-z0-9._@+=,~ -]+(/[A-Za-z0-9._@+=,~ -]+)*")
+
+
+def _key(name: Any) -> str:
+    return re.sub(r"[^a-z0-9]", "", str(name).lower())
 
 
 def _no_truth(obj: Any, where: str = "operational_context") -> None:
-    """Refuse a context that carries ground truth. Public evidence and private labels are kept apart."""
+    """Refuse a context that carries ground truth. Public evidence and private labels are kept apart.
+
+    This is a filter for honest mistakes, not a proof: it refuses keys that are named like an answer and text
+    that announces one. What a capture author writes in ordinary prose remains their responsibility.
+    """
     if isinstance(obj, dict):
         for k, v in obj.items():
-            if str(k).lower() in _TRUTH_KEYS:
+            norm = _key(k)
+            if norm in _TRUTH_KEYS or any(part in norm for part in _TRUTH_KEY_PARTS):
                 raise ImportError_(f"{where} contains the key {k!r}, which looks like ground truth. Keep labels out of "
                                    "the capture manifest; an imported bundle is unscored")
             _no_truth(v, f"{where}.{k}")
     elif isinstance(obj, list):
         for i, v in enumerate(obj):
             _no_truth(v, f"{where}[{i}]")
+    elif isinstance(obj, str) and _TRUTH_TEXT.search(obj):
+        raise ImportError_(f"{where} contains text that looks like ground truth ({_TRUTH_TEXT.search(obj).group(0)!r}). "
+                           "Keep labels out of the capture manifest; an imported bundle is unscored")
 
 
 def load_capture(src_dir: Path) -> tuple[CaptureManifest, dict[str, Path]]:
@@ -108,7 +129,12 @@ def load_capture(src_dir: Path) -> tuple[CaptureManifest, dict[str, Path]]:
         manifest = CaptureManifest.model_validate_json(mf.read_text(encoding="utf-8"))
     except Exception as exc:  # noqa: BLE001
         raise ImportError_(f"{MANIFEST_NAME} is not a valid {CAPTURE_FORMAT} manifest: {str(exc)[:400]}") from exc
+    if "tip" in manifest.operational_context:
+        # the tip is the first thing an investigating model reads, so a capture does not get to write it
+        raise ImportError_("operational_context.tip is not accepted: every imported case starts from the same neutral "
+                           "tip, so a capture cannot tell the investigator what to find")
     _no_truth(manifest.operational_context)
+    _no_truth(manifest.notes, "notes")
     if manifest.capture_end < manifest.capture_start:
         raise ImportError_("capture_end is before capture_start")
     root = src_dir.resolve()
@@ -118,6 +144,10 @@ def load_capture(src_dir: Path) -> tuple[CaptureManifest, dict[str, Path]]:
         rel = Path(art.path)
         if rel.is_absolute() or ".." in rel.parts or art.path != rel.as_posix() or art.path in files:
             raise ImportError_(f"artifact path {art.path!r} must be a unique relative path inside the capture directory")
+        if not _SAFE_PATH.fullmatch(art.path):
+            # the name is printed in reports and exports: no line breaks, control characters or markup in it
+            raise ImportError_(f"artifact path {art.path!r} may contain only letters, digits, spaces and . _ @ + = , ~ - "
+                               "between slashes")
         f = src_dir / rel
         if f.is_symlink() or not f.is_file() or root not in f.resolve().parents:
             raise ImportError_(f"artifact {art.path!r} is missing, is a link, or leaves the capture directory")
@@ -188,7 +218,7 @@ def import_bundle(src_dir: Path, paths: EpisodePaths) -> EvidenceManifest:
                 coverage_declared=stated, known_gaps=art.known_gaps, coverage_note=note,
                 forwarded_to_collector=art.forwarded_to_collector))
         context = dict(capture.operational_context)
-        context.setdefault("tip", "Review this evidence; establish what it supports.")
+        context["tip"] = "Review this evidence; establish what it supports."
         context["capture"] = {"capture_id": capture.capture_id, "captured_by": capture.captured_by.model_dump(),
                               "ground_truth": "none: this evidence was imported and has no answer key"}
         manifest = EvidenceManifest(
