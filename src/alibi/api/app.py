@@ -22,6 +22,7 @@ from alibi.contracts import INFERENCE_LABELS
 from alibi.episode import EpisodeError
 from alibi.evidence_views import ViewError
 from alibi.orchestrator import Conflict, NotFound, Orchestrator
+from alibi.runners import RuntimeBlocked
 
 WEB_DIST = REPO_ROOT / "web" / "dist"
 BENCH_RESULTS = REPO_ROOT / "benchmarks" / "offline-v1" / "results.json"
@@ -67,6 +68,10 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
     @app.exception_handler(Conflict)
     async def _cf(_: Request, exc: Conflict) -> JSONResponse:
         return JSONResponse({"error": str(exc), "state": exc.state}, status_code=409)
+
+    @app.exception_handler(RuntimeBlocked)
+    async def _rb(_: Request, exc: RuntimeBlocked) -> JSONResponse:
+        return JSONResponse({"error": str(exc), "live_inference": "BLOCKED"}, status_code=409)
 
     @app.exception_handler(ViewError)
     async def _ve(_: Request, exc: ViewError) -> JSONResponse:

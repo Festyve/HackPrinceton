@@ -605,6 +605,15 @@ def simulate(spec: dict[str, Any]) -> SimOutput:
                                         f"Synchronized to time server {IPS['gateway']}:123."))
         tt += timedelta(seconds=rb.randrange(900, 1900))
 
+    # ---------------- optional hostile evidence text (PLAN 2.11: evidence is untrusted input)
+    # Used by tests to plant prompt-injection / markup strings in a log line. It is evidence text
+    # only; nothing in the simulator, the tools or the UI interprets it.
+    for item in spec.get("injected_evidence", []):
+        at = _parse(item["at"])
+        w.schedule(at, lambda ts, text=item["text"]: w.log(
+            "workstation", AUTH_LOG, ts, f"login[{w.next_pid()}]",
+            f"pam_unix(login:auth): authentication failure; user={text} tty=tty1"))
+
     # ---------------- the adversary (executes the saved plan; nothing else)
     executor: S.StepExecutor | None = None
     if crime and spec["plan"]:

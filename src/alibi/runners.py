@@ -11,6 +11,7 @@ episode id's sealed directory, the seed, the crime card or the scenario.
 
 from __future__ import annotations
 
+import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -26,6 +27,10 @@ class Cancelled(RuntimeError):
     pass
 
 
+class RuntimeBlocked(RuntimeError):
+    """Live inference is not available under the current zero-charge configuration."""
+
+
 @dataclass
 class RunContext:
     case_id: str
@@ -37,15 +42,34 @@ class RunContext:
     pace_s: float = 0.0
     is_cancelled: Callable[[], bool] = lambda: False
     paced_seconds: float = field(default=0.0)
+    _pace_lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     def pace(self, factor: float = 1.0) -> None:
-        """Display pacing only. Never counted as compute time."""
+        """Display pacing only. Never counted as compute time.
+
+        Serialized, so tool calls that ran in parallel are still displayed one after another and
+        the paced time equals real wall time (it is subtracted from the reported compute time).
+        """
         if self.is_cancelled():
             raise Cancelled()
         if self.pace_s > 0:
-            delay = self.pace_s * factor
-            time.sleep(delay)
-            self.paced_seconds += delay
+            with self._pace_lock:
+                delay = self.pace_s * factor
+                time.sleep(delay)
+                self.paced_seconds += delay
+
+
+    def pace_quiet(self, factor: float = 1.0) -> None:
+        """Pacing for code running inside graph worker threads: never raises.
+
+        Cancellation is noticed by the runner between graph steps, so that the graph and its
+        checkpoint writer are shut down in order instead of being torn down mid-write.
+        """
+        if self.pace_s > 0 and not self.is_cancelled():
+            with self._pace_lock:
+                delay = self.pace_s * factor
+                time.sleep(delay)
+                self.paced_seconds += delay
 
 
 class Runner(Protocol):
@@ -133,7 +157,7 @@ class DeterministicRunner:
         ctx.emit("agent", {"agent": "deterministic-checks", "status": "finished",
                            "summary": f"{len(findings)} templated finding(s)"})
         n_inc = sum(f.category == "incident_allegation" for f in findings)
-        wall = time.perf_counter() - t0 - ctx.paced_seconds
+        wall = max(0.0, time.perf_counter() - t0 - ctx.paced_seconds)
         return InvestigationReport(
             report_id=f"rep-{ctx.case_id}", bundle_id=ctx.manifest.bundle_id, system_id=self.system_id,
             system_label="Deterministic contradiction checks with templated findings",

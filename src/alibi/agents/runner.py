@@ -82,7 +82,7 @@ class AgentRunner:
         ctx.case_dir.mkdir(parents=True, exist_ok=True)
         ledger = gateway.make_ledger(self.settings, ctx.case_dir / "budget.json", scripted=self.scripted)
         toolbox = CaseToolbox(ctx.store, ctx.manifest, ctx.case_dir / "draft_state.json", emit=ctx.emit,
-                              pace=ctx.pace, on_tool_call=ledger.count_tool_call)
+                              pace=ctx.pace_quiet, on_tool_call=ledger.count_tool_call)
         conn = sqlite3.connect(str(ctx.case_dir / "checkpoints.sqlite"), check_same_thread=False)
         return toolbox, ledger, conn
 
@@ -103,21 +103,21 @@ class AgentRunner:
             ctx.emit("agent", {"agent": "lead-investigator", "status": "started", "task": "investigate the frozen bundle"})
             pending_tasks: dict[str, str] = {}
             already_ran = bool((graph.get_state(self._config(ctx)).values or {}).get("messages"))
+            cancelled = False
+            # Idempotent: a case that already has a checkpointed run is never investigated twice
+            # (no duplicate tool work, no double-billed model calls). Its saved draft is returned.
+            stream = None if already_ran else graph.stream(
+                {"messages": [HumanMessage(brief)]}, self._config(ctx), stream_mode="updates")
             try:
-                # Idempotent: a case that already has a checkpointed run is never investigated twice
-                # (no duplicate tool work, no double-billed model calls). Its saved draft is returned.
-                stream = [] if already_ran else graph.stream(
-                    {"messages": [HumanMessage(brief)]}, self._config(ctx), stream_mode="updates")
-                for chunk in stream:
+                for chunk in stream or []:
                     if ctx.is_cancelled():
-                        raise Cancelled()
+                        cancelled = True
+                        break
                     for node, update in chunk.items():
                         if node == "__interrupt__" or not isinstance(update, dict):
                             continue
                         for msg in update.get("messages") or []:
                             self._observe(ctx, toolbox, msg, pending_tasks)
-            except Cancelled:
-                raise
             except gateway.BudgetExceeded as exc:
                 stop_reason = f"stopped by the budget gateway: {exc}"
             except Exception as exc:  # noqa: BLE001 - keep the partial draft; the failure is reported, not hidden
@@ -125,6 +125,13 @@ class AgentRunner:
                     stop_reason = "stopped at the turn limit before requesting review"
                 else:
                     raise
+            finally:
+                # Close the graph stream BEFORE the SQLite connection: its background checkpoint
+                # writer must finish first, or it would write through a closed connection.
+                if stream is not None:
+                    stream.close()
+            if cancelled or ctx.is_cancelled():
+                raise Cancelled()
             state = graph.get_state(self._config(ctx))
             awaiting = bool(state.next)
             if not awaiting and stop_reason is None and not toolbox.finalized:
@@ -135,7 +142,7 @@ class AgentRunner:
             conn.close()
         ctx.emit("agent", {"agent": "lead-investigator", "status": "finished",
                            "summary": stop_reason or f"{len(toolbox.findings)} finding(s) submitted for review"})
-        wall = time.perf_counter() - t0 - ctx.paced_seconds
+        wall = max(0.0, time.perf_counter() - t0 - ctx.paced_seconds)
         return self._report(ctx, toolbox, ledger, wall, stop_reason)
 
     def _observe(self, ctx: RunContext, toolbox: CaseToolbox, msg: Any, pending_tasks: dict[str, str]) -> None:
@@ -147,11 +154,11 @@ class AgentRunner:
                     agent = str(args.get("subagent_type", "subagent"))
                     pending_tasks[tc["id"]] = agent
                     ctx.emit("agent", {"agent": agent, "status": "started", "task": str(args.get("description", ""))[:240]})
-                    ctx.pace()
+                    ctx.pace_quiet()
                 elif name == "write_todos":
                     ctx.emit("todo", {"items": [{"text": str(t.get("content", "")), "status": t.get("status", "pending")}
                                                 for t in args.get("todos", [])]})
-                    ctx.pace(0.5)
+                    ctx.pace_quiet(0.5)
                 elif name in ("write_file", "edit_file"):
                     ctx.emit("note", {"path": str(args.get("file_path", "")),
                                       "preview": str(args.get("content", args.get("new_string", "")))[:400]})

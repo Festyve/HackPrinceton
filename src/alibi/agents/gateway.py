@@ -26,6 +26,7 @@ from pydantic import ConfigDict, Field
 
 from alibi.config import RunCaps, Settings
 from alibi.contracts import Usage
+from alibi.runners import RuntimeBlocked  # noqa: F401 - re-exported
 
 GATEWAY_PROVIDER = "alibi_gateway"
 SCRIPTED_TURN_CAP = 80
@@ -33,10 +34,6 @@ SCRIPTED_TURN_CAP = 80
 
 class BudgetExceeded(RuntimeError):
     """A cap was reached. The run stops; it is reported as censored, never retried silently."""
-
-
-class RuntimeBlocked(RuntimeError):
-    """Live inference is not available under the current zero-charge configuration."""
 
 
 class BudgetLedger:

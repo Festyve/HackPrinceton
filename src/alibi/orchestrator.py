@@ -272,6 +272,16 @@ class Orchestrator:
                          client_token=client_token)
         return self._generate(rec, seed=seed, variant=variant, spec=None)
 
+    def create_case_from_spec(self, spec: dict[str, Any], *, title: str = "Custom scenario",
+                              runner_id: str | None = None) -> CaseRecord:
+        """Operator/test entry point: run a saved scenario specification. Not exposed over HTTP."""
+        runner_id = runner_id or default_runner_id(self.settings)
+        runner = get_runner(runner_id, self.settings)
+        rec = CaseRecord(case_id=f"case-{uuid.uuid4().hex[:12]}", title=title, difficulty=str(spec.get("difficulty", "")),
+                         seed=spec.get("seed"), runner_id=runner_id, inference_mode=runner.inference_mode,
+                         model_id=runner.model_id)
+        return self._generate(rec, seed=None, variant=None, spec=spec)
+
     def _generate(self, rec: CaseRecord, *, seed: int | None, variant: str | None, spec: dict | None) -> CaseRecord:
         case_id = rec.case_id
         t0 = time.perf_counter()
@@ -360,7 +370,7 @@ class Orchestrator:
                                                     "info": {"runner": rec.runner_id, "inference": rec.inference_mode}})
                 t0 = time.perf_counter()
                 report = runner.run(ctx)
-                compute = time.perf_counter() - t0 - ctx.paced_seconds
+                compute = max(0.0, time.perf_counter() - t0 - ctx.paced_seconds)
                 with self._lock(case_id):
                     self._finish_draft(self._load(case_id), paths, store, report, compute)
         except BaseException as exc:  # noqa: BLE001 - a crashed run must become a visible state
