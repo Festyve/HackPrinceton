@@ -32,7 +32,7 @@ from langchain.agents.middleware import TodoListMiddleware
 
 from alibi.agents.gateway import GATEWAY_PROVIDER
 from alibi.agents.tools import CaseToolbox
-from alibi.importing import is_imported, neutral_framing
+from alibi.importing import framing_for
 
 FS_TOOLS = ["ls", "read_file", "write_file", "edit_file"]
 CASE_DIR = "/case"
@@ -110,6 +110,57 @@ Use the checks to test each explanation. Reply with JSON only:
 {{"verdicts": [{{"finding_id", "verdict": "keep" | "downgrade", "reason"}}], "attribution_caution": "..."}}
 Downgrade anything the evidence does not support. You are not an oracle; say what remains uncertain.
 Call the checks in parallel and answer in at most two turns. Keep each reason under 60 words.
+
+{_RULES}"""
+
+LAB_LEAD_PROMPT_VERSION = "lab-lead/4"  # 2: first look delegated, narrow searches. 3-4: the plan is updated when a lead appears
+# Worker-lab cases, three-agent mode. Not a fixed order of steps: what is examined next depends on what the
+# evidence just showed. The clinic prompts above are unchanged, so the evaluation's prompt fingerprints still hold.
+LAB_LEAD_PROMPT = f"""You are the lead investigator on a frozen evidence bundle from a simulated lab in which automated
+workers process synthetic datasets. You receive a vague request. You do not know whether anything wrong happened;
+many runs are entirely ordinary. You are outside that lab: you see only the evidence that was collected.
+
+Work as an evidence-led loop, not a fixed script. Everything a tool returns stays in your context, and a request
+that grows too large is refused, so keep your own context small: delegate examinations, and keep notes in a file.
+
+The plan is a living list. Whenever a step finishes or a new lead appears, call write_todos again in the same
+turn as your other calls: mark finished steps completed and add one item for each new lead.
+
+Opening, two turns:
+1. write_todos with a short plan, and get_case_brief, together.
+2. write_file {CASE_DIR}/case.md with four short sections: Questions, Hypotheses, Evidence index, Open leads.
+   One line per item. Event ids and facts only, never pasted log text.
+
+First look: delegate the contradiction checks to `integrity-auditor` with the task tool. You do not hold the check
+tools, and reading the logs yourself is not a substitute. Its answer is short.
+When its answer comes back, your next turn must include write_todos with the updated plan: the finished steps
+marked completed and one new item for each conflict it reported, naming the record or the transfer. A plan that
+stays the same after new evidence is a mistake.
+
+Then repeat until the open leads are settled or you are running out of requests:
+- Decide what to examine next from what you just learned.
+- A result that conflicts with your plan or with another record is a new lead. Examples: the collector holds a
+  record that the host's own copy lacks; a bulk transfer goes to a destination that is not approved; an account
+  does something its assigned job does not explain. When that happens, in one turn: call write_todos with the
+  updated list (one new item per lead), and add the lead and the reason to case.md with edit_file. Then follow
+  the lead before you conclude. For "which worker was this account, and was this its job": one narrow search of the scheduler's records,
+  search_events(source="syslog", text_contains="assigned_to", limit=20). Never page through a log, and never search
+  without filters; at most three searches of your own in the whole investigation.
+- Record the findings you stand behind with submit_finding, all in ONE turn as parallel calls. The deterministic
+  verifier answers immediately; do not resubmit a rejected claim with invented evidence.
+- Delegate to `skeptic` once, with the finding ids, claim types, hosts, objects, windows and evidence ids, to test
+  benign explanations. If it challenges a finding that the checks support, keep the observation and record the
+  challenge with record_skeptic_verdict and a reason. A supported observation is never dropped silently.
+- Before attribution, read_file {CASE_DIR}/case.md and work from it: cite the event ids it holds, not memory.
+  Then, in ONE turn, record_skeptic_verdict for each finding and submit_attribution. Keep the account apart from
+  the worker and from any person: say which worker the scheduler's records tie the account to, and what that does
+  not establish. A missing line is an observation; it does not show intent.
+
+finalize_report as the only tool call of its turn. Write the summary in three short parts: Observations,
+Interpretation, Unresolved. A human will review it. Your requests are limited: if you are close to the end,
+finalize with what is supported and list what was not examined.
+
+{OBJECT_FORMATS}
 
 {_RULES}"""
 
@@ -288,9 +339,10 @@ def build_investigator(toolbox: CaseToolbox, *, lead_model: Any, auditor_model: 
     """
     checks, oracle = toolbox.checks_enabled, toolbox.verify_on_submit
     more = family_addendum(toolbox)
-    lead = lead_prompt(checks, oracle)
-    if is_imported(toolbox.manifest):
-        lead = neutral_framing(lead)
+    if "lab" in toolbox.manifest.operational_context and checks and oracle:
+        lead = LAB_LEAD_PROMPT  # the product's three-agent mode on a worker-lab case
+    else:
+        lead = framing_for(toolbox.manifest, lead_prompt(checks, oracle))
     subagents = [
         {"name": "integrity-auditor",
          "description": ("Runs the deterministic contradiction checks over the evidence and returns candidate findings "
@@ -314,9 +366,7 @@ def build_investigator(toolbox: CaseToolbox, *, lead_model: Any, auditor_model: 
 
 def build_single_agent(toolbox: CaseToolbox, *, model: Any, checkpointer: Any) -> Any:
     """One agent, no delegation. With the check tools this is arm B1+ (the product's fast mode); without, B1."""
-    prompt = single_prompt(toolbox.checks_enabled, toolbox.verify_on_submit)
-    if is_imported(toolbox.manifest):
-        prompt = neutral_framing(prompt)
+    prompt = framing_for(toolbox.manifest, single_prompt(toolbox.checks_enabled, toolbox.verify_on_submit))
     return create_deep_agent(
         model=model, tools=toolbox.tools_for("single-agent"),
         system_prompt=prompt + family_addendum(toolbox),

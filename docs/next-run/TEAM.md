@@ -1,5 +1,7 @@
 # Team plan through submission
 
+> **Historical handoff — superseded November 14 afternoon.** Use [../../PRODUCT.md](../../PRODUCT.md) and [the current owner instructions](../overhaul/START_HERE.md) for this continuation. This file preserves the previous plan/demo; its schedule, setup tasks and product direction must not override the current contract.
+
 All times are **America/New_York, November 14–15, 2026**. Submission is Sunday **08:00**, a hard packet deadline. Target 06:00. In-person judging is 09:30–14:30; presentation and optional video are each at most two minutes.
 
 ## Owners

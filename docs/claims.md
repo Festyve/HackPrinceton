@@ -1,5 +1,7 @@
 # Claims register
 
+> This register describes the measured pre-overhaul build. New worker-lab claims require [release acceptance](overhaul/ACCEPTANCE.md) evidence; the [product definition](../PRODUCT.md) is a specification, not a measured result.
+
 Each public claim, what supports it, its limitation and its status. Numbers come from saved runs. Nothing here is a target or a projection.
 
 | # | Claim | Support | Limitation | Status |

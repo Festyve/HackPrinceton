@@ -22,14 +22,15 @@ import traceback
 import uuid
 import weakref
 from contextlib import contextmanager
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from alibi import baselines, explain, evidence_views, export, importing, questions, source_experiment
+from alibi import baselines, checks, explain, evidence_views, export, importing, questions, source_experiment, trace
+from alibi.lab import engine as lab_engine
 from alibi.config import REPO_ROOT, Settings
-from alibi.contracts import INFERENCE_LABELS, InvestigationReport, QuestionAnswer
+from alibi.contracts import INFERENCE_LABELS, InvestigationReport, QuestionAnswer, iso
 from alibi.episode import (
     EpisodePaths,
     create_episode,
@@ -230,6 +231,9 @@ class CaseRecord:
     # Set only for an evidence view derived from another case with some sources withheld.
     parent_case_id: str | None = None
     excluded_sources: list[dict[str, Any]] = field(default_factory=list)
+    # Worker lab only: the experiment's settings, where the workers' choices came from and its lineage. Nothing
+    # in it says whether, when or for which worker an objective changed: that is sealed with the answer key.
+    lab: dict[str, Any] | None = None
 
     def labels_text(self) -> str:
         """One line for terminals: where the evidence came from and what produced the report."""
@@ -251,6 +255,9 @@ class CaseRecord:
             "investigation_mode_label": MODE_LABELS.get(self.investigation_mode or "", "Deterministic checks · no agent"),
             "ground_truth": "sealed answer key" if self.scored else "none · imported evidence is not scored",
         }
+        if self.lab:
+            d["labels"]["worker_choices"] = self.lab["provenance"]["ordinary_work_label"]
+            d["labels"]["changed_objective_policy"] = self.lab["provenance"]["changed_objective_label"]
         return d
 
 
@@ -444,6 +451,13 @@ class Orchestrator:
                 "note": ("one bounded model response, then offline generation" if live else
                          "no model is configured: a default environment is returned and labeled as a default"),
             },
+            "worker_lab": {
+                "endpoint": True, "version": lab_engine.LAB_VERSION,
+                "ordinary_work": "CONFIGURED" if live else "SCRIPTED_FIXTURE_ONLY",
+                "changed_objective": "scripted policy; no model is asked to choose a fault action",
+                "note": ("workers do ordinary jobs chosen by the configured model" if live else
+                         "no model is configured: ordinary work comes from a scripted fixture and is labeled as one"),
+            },
             "report_export": {"endpoint": True, "formats": ["markdown", "json"],
                               "note": "available once a report is locked; never contains the sealed answer"},
             "sensor_streams": {
@@ -578,6 +592,265 @@ class Orchestrator:
                          investigation_mode=mode, inference_mode=runner.inference_mode, model_id=runner.model_id,
                          client_token=client_token)
         return self._generate(rec, seed=None, variant=None, spec=spec)
+
+    # ------------------------------------------------------------------ worker lab
+    def lab_options(self) -> dict[str, Any]:
+        """What an experiment can be configured with, in its real units."""
+        live = self.settings.live_block_reason() is None
+        return {
+            "version": lab_engine.LAB_VERSION,
+            "variants": [{"id": "incident", "label": "A worker's objective is changed part-way through"},
+                         {"id": "control", "label": "No objective is changed; similar approved activity happens"}],
+            "presets": [{"id": k, **v} for k, v in lab_engine.PRESETS.items()],
+            "preset_note": ("A pool of 20 requests after the objective changes, split between the two sides. One unit "
+                            "is one model request for the investigator and one scripted turn for the changed worker. "
+                            "An allowance is not a probability and unused requests are not passed on."),
+            "rogue_permissions": [{"id": k, "actions": list(v)} for k, v in lab_engine.PERMISSIONS.items()],
+            "context_load": [{"id": k, "unrelated_records_per_tick": v} for k, v in lab_engine.CONTEXT_LOAD.items()],
+            "ordinary_work": [{"id": "model", "available": live, "label": "Chosen by the configured model"},
+                              {"id": "scripted", "available": True, "label": "Scripted fixture"}],
+            "defaults": {"variant": "incident", "preset": "balanced", "rogue_permissions": "export_log",
+                         "context_load": "standard", "ordinary_work": "model" if live else "scripted"},
+            "changed_objective_policy": ("Scripted. When an objective is changed, that worker's fault actions follow a "
+                                         "fixed policy. No model is asked to choose them."),
+        }
+
+    def create_lab_case(self, *, variant: str = "incident", seed: int | None = None, preset: str | None = None,
+                        rogue_permissions: str | None = None, rogue_requests: int | None = None,
+                        investigator_requests: int | None = None, context_load: str | None = None,
+                        ordinary_work: str | None = None, runner_id: str | None = None,
+                        investigation_mode: str | None = None, client_token: str | None = None,
+                        model_factory: Any = None) -> CaseRecord:
+        """Run the lab once and freeze what it left behind as a new case. A repeated token returns the same case."""
+        with self._once(client_token):
+            return self._known(client_token) or self._create_lab_case(
+                variant=variant, seed=seed, preset=preset, rogue_permissions=rogue_permissions,
+                rogue_requests=rogue_requests, investigator_requests=investigator_requests, context_load=context_load,
+                ordinary_work=ordinary_work, runner_id=runner_id, investigation_mode=investigation_mode,
+                client_token=client_token, model_factory=model_factory)
+
+    def _create_lab_case(self, *, variant: str, seed: int | None, preset: str | None, rogue_permissions: str | None,
+                         rogue_requests: int | None, investigator_requests: int | None, context_load: str | None,
+                         ordinary_work: str | None, runner_id: str | None, investigation_mode: str | None,
+                         client_token: str | None, model_factory: Any) -> CaseRecord:
+        if variant not in ("incident", "control"):
+            raise ValueError("variant must be incident or control")
+        if preset is not None and preset not in lab_engine.PRESETS:
+            raise ValueError(f"unknown preset {preset!r}; choose one of {list(lab_engine.PRESETS)}")
+        base = lab_engine.PRESETS[preset or "balanced"]
+        rogue_n = base["rogue_requests"] if rogue_requests is None else int(rogue_requests)
+        inv_n = base["investigator_requests"] if investigator_requests is None else int(investigator_requests)
+        if not 1 <= inv_n <= 40:
+            raise ValueError("investigator_requests must be between 1 and 40")
+        live = self.settings.live_block_reason() is None or model_factory is not None
+        work = ordinary_work or ("model" if live else "scripted")
+        if work not in ("model", "scripted"):
+            raise ValueError("ordinary_work must be model or scripted")
+        if work == "model" and not live:
+            raise RuntimeBlocked(f"ordinary work by a model is not available: {self.settings.live_block_reason()}")
+        seed = int(seed) if seed is not None else 1000 + uuid.uuid4().int % 9000
+        try:
+            spec = lab_engine.build_spec(seed, "lab_incident" if variant == "incident" else "lab_control",
+                                         permissions=rogue_permissions or "export_log", rogue_requests=rogue_n,
+                                         context_load=context_load or "standard")
+        except lab_engine.LabError as exc:
+            raise ValueError(str(exc)) from exc
+        case_id = f"case-{uuid.uuid4().hex[:12]}"
+        usage = None
+        if work == "model":
+            from alibi.lab.workers import model_work
+
+            requests = spec["lab"]["limits"]["normal_requests"] * len(spec["lab"]["workers"])
+            chooser, ledger = model_work(self.settings, self.runs_dir / f".lab-{case_id}.budget.json", requests=requests,
+                                         model_factory=model_factory)
+            spec, _ = lab_engine.run_fresh(spec, chooser)
+            usage = ledger.usage().model_dump()
+            (self.runs_dir / f".lab-{case_id}.budget.json").unlink(missing_ok=True)
+        else:
+            spec, _ = lab_engine.run_fresh(spec, lab_engine.scripted_work)
+        conditions = {"preset": preset if rogue_requests is None and investigator_requests is None else None,
+                      "preset_label": base["label"] if rogue_requests is None and investigator_requests is None else "Custom",
+                      "rogue_requests": rogue_n, "investigator_requests": inv_n,
+                      "rogue_permissions": spec["lab"]["permissions"], "context_load": spec["lab"]["context_load"]}
+        return self._lab_case(case_id, spec, conditions=conditions, worker_usage=usage, runner_id=runner_id,
+                              investigation_mode=investigation_mode, client_token=client_token,
+                              lineage={"root_case_id": case_id, "parent_case_id": None, "comparison": None, "changed": None})
+
+    def _lab_case(self, case_id: str, spec: dict[str, Any], *, conditions: dict[str, Any], worker_usage: dict | None,
+                  runner_id: str | None, investigation_mode: str | None, client_token: str | None,
+                  lineage: dict[str, Any]) -> CaseRecord:
+        runner_id = runner_id or default_runner_id(self.settings)
+        mode = resolve_mode(runner_id, investigation_mode)
+        runner = get_runner(runner_id, self.settings, mode)
+        prov = spec["lab"]["provenance"]
+        models = [c.removeprefix("model:") for c in prov["normal_work"] if c.startswith("model:")]
+        scripted = any(not c.startswith("model:") for c in prov["normal_work"])
+        if models and scripted:
+            work_label = f"Workers' ordinary choices: a model ({models[0]}) and a scripted fixture"
+        elif models:
+            work_label = f"Workers' ordinary choices: live model ({models[0]})"
+        else:
+            work_label = "Workers' ordinary choices: scripted fixture · no model"
+        rec = CaseRecord(
+            case_id=case_id, title=f"Worker lab · run {spec['seed']}", difficulty="L1", seed=spec["seed"],
+            card_id=lab_engine.CARD_WORKER_LAB, runner_id=runner_id, investigation_mode=mode,
+            inference_mode=runner.inference_mode, model_id=runner.model_id, client_token=client_token,
+            lab={"version": lab_engine.LAB_VERSION, "config": lab_engine.public_config(spec), "conditions": conditions,
+                 "provenance": {
+                     "ordinary_work": prov["normal_work"], "ordinary_work_label": work_label,
+                     "ordinary_requests": prov.get("ordinary_requests"), "worker_usage": worker_usage,
+                     "changed_objective_label": "If an objective is changed, its actions follow a scripted policy · no model chooses them",
+                     "model_chose_fault_actions": False},
+                 "lineage": lineage})
+        rec = self._generate(rec, seed=None, variant=None, spec=spec)
+        self._log(case_id).append("stage", {"name": "lab_run", "status": "done", "info": {
+            "workers": len(spec["lab"]["workers"]), "ordinary_work": work_label,
+            "requests_on_tape": len(spec["lab"]["tape"]), "note": "what the workers did is in the frozen evidence; "
+            "whether an objective was changed is sealed until the report is locked"}})
+        return rec
+
+    def _lab_record(self, case_id: str) -> CaseRecord:
+        rec = self._load(case_id)
+        if not rec.lab:
+            raise Conflict("this case is not a worker-lab run", rec.state)
+        return rec
+
+    def lab_view(self, case_id: str) -> dict[str, Any]:
+        """The experiment as anyone may see it: its settings, its workers and the activity the collector recorded.
+
+        Built from the case record and the frozen evidence only. It never reads the sealed scenario."""
+        rec = self._lab_record(case_id)
+        accounts = {w["account"]: w["id"] for w in rec.lab["config"]["workers"]}
+        activity: list[dict[str, Any]] = []
+        with EvidenceStore(self._paths(case_id).db) as store:
+            for ev in store.scan(source="collector"):
+                if ev.actor in accounts and ev.attrs.get("origin_file") == lab_engine.APP_LOG:
+                    activity.append({"event_id": ev.id, "worker": accounts[ev.actor], "account": ev.actor,
+                                     "t": iso(checks._inner_ts(ev)), "action": ev.action,
+                                     "dataset": ev.attrs.get("dataset"), "status": ev.attrs.get("status")})
+            jobs = [{"event_id": ev.id, "t": iso(ev.ts), "text": ev.raw.split(": ", 1)[-1]}
+                    for ev in store.scan(source="syslog") if "labsched" in ev.raw][:200]
+        activity.sort(key=lambda a: a["t"])
+        return {"case_id": case_id, "state": rec.state, "version": rec.lab["version"], "config": rec.lab["config"],
+                "conditions": rec.lab["conditions"], "provenance": rec.lab["provenance"], "lineage": rec.lab["lineage"],
+                "activity": activity[:600], "activity_total": len(activity), "scheduler_records": jobs,
+                "activity_source": "the collector's copy of the worker activity log (frozen evidence)",
+                "operator_record": {"available": self._operator_open(rec),
+                                    "note": "what each worker's objective was and every attempted action is sealed "
+                                            "until the report is locked"}}
+
+    def _operator_open(self, rec: CaseRecord) -> bool:
+        return rec.state in ("report_locked", "scored") or os.environ.get("ALIBI_OPERATOR_VIEW") == "1"
+
+    def lab_operator(self, case_id: str) -> dict[str, Any]:
+        """The operator's record: every attempted action with its real outcome, and the private change of objective.
+
+        Truth-bearing. Refused until the report is locked, unless the server was started for an operator's own
+        screen with ALIBI_OPERATOR_VIEW=1. It is never part of the evidence or of anything sent to a model."""
+        rec = self._lab_record(case_id)
+        if not self._operator_open(rec):
+            raise Conflict("the operator's record is sealed until the report is locked", rec.state)
+        ep = load_episode_manifest(self._paths(case_id))
+        out = lab_engine.execution_record(ep.scenario_spec)
+        out.update(case_id=case_id, variant=ep.variant, label=(
+            "Operator's record of the run. The investigator was not given this."))
+        return out
+
+    def lab_compare(self, case_id: str, *, kind: str, investigator_requests: int | None = None,
+                    rogue_permissions: str | None = None, client_token: str | None = None,
+                    runner_id: str | None = None, investigation_mode: str | None = None) -> CaseRecord:
+        """A second run to set beside this one, changing exactly one thing.
+
+        investigator_budget: the same frozen evidence (the saved tape is replayed, so the hashes are equal) with a
+        different request allowance for the investigator.
+        rogue_permissions: a new execution on the same seed and the same ordinary work (replayed from the tape),
+        in which a changed objective acts under a different permission profile. Its evidence may differ."""
+        parent = self._lab_record(case_id)
+        token = str(client_token or "").strip()
+        if not token or len(token) > 80:
+            raise ValueError("client_token is required (1 to 80 characters)")
+        key = f"lab-compare\x1f{case_id}\x1f{token}"
+        with self._once(key):
+            known = self._known(key)
+            if known is not None:
+                return known
+            spec = load_episode_manifest(self._paths(case_id)).scenario_spec
+            cond = dict(parent.lab["conditions"])
+            root = parent.lab["lineage"]["root_case_id"]
+            new_id = f"case-{uuid.uuid4().hex[:12]}"
+            if kind == "investigator_budget":
+                if investigator_requests is None or not 1 <= int(investigator_requests) <= 40:
+                    raise ValueError("investigator_requests must be between 1 and 40")
+                changed = {"investigator_requests": {"from": cond["investigator_requests"], "to": int(investigator_requests)}}
+                cond.update(investigator_requests=int(investigator_requests), preset=None, preset_label="Custom")
+                child_spec = spec  # the same scenario and tape: the evidence is rendered again and is identical
+                note = "same frozen evidence; only the investigator's request allowance differs"
+            elif kind == "rogue_permissions":
+                if rogue_permissions not in lab_engine.PERMISSIONS:
+                    raise ValueError(f"rogue_permissions must be one of {list(lab_engine.PERMISSIONS)}")
+                changed = {"rogue_permissions": {"from": cond["rogue_permissions"], "to": rogue_permissions}}
+                cond.update(rogue_permissions=rogue_permissions, preset=None, preset_label="Custom")
+                fresh = lab_engine.build_spec(spec["seed"], spec["variant"], permissions=rogue_permissions,
+                                              rogue_requests=spec["lab"]["limits"]["rogue_requests"],
+                                              normal_requests=spec["lab"]["limits"]["normal_requests"],
+                                              context_load=spec["lab"]["context_load"], ticks=spec["lab"]["ticks"])
+                child_spec, _ = lab_engine.run_fresh(fresh, lab_engine.ordinary_work_from(spec["lab"]["tape"]))
+                note = ("a new execution: the workers' ordinary choices are replayed from the first run's tape, and a "
+                        "changed objective acts again under the new permissions. The evidence may differ")
+            else:
+                raise ValueError("kind must be investigator_budget or rogue_permissions")
+            rec = self._lab_case(new_id, child_spec, conditions=cond, worker_usage=None,
+                                 runner_id=runner_id or parent.runner_id,
+                                 investigation_mode=investigation_mode or parent.investigation_mode, client_token=key,
+                                 lineage={"root_case_id": root, "parent_case_id": case_id, "comparison": kind,
+                                          "changed": changed, "note": note})
+            rec.lab["lineage"]["same_evidence_as_parent"] = rec.bundle_id == parent.bundle_id
+            self._save(rec)
+            return rec
+
+    def lab_comparisons(self, case_id: str) -> dict[str, Any]:
+        """This run and every run derived from the same first run, with what changed and what each one used."""
+        root = self._lab_record(case_id).lab["lineage"]["root_case_id"]
+        rows: list[dict[str, Any]] = []
+        for status in sorted(self.runs_dir.glob("case-*/status.json"), key=lambda p: p.stat().st_mtime):
+            try:
+                rec = CaseRecord(**json.loads(status.read_text(encoding="utf-8")))
+            except Exception:  # noqa: BLE001 - an unreadable record is not part of any comparison
+                continue
+            if not rec.lab or rec.lab["lineage"]["root_case_id"] != root:
+                continue
+            paths = self._paths(rec.case_id)
+            report = self._report(paths) if rec.state in ("awaiting_review", "report_locked", "scored") else None
+            usage = report.usage.model_dump() if report else None
+            stop = next((q for q in report.open_questions if q.startswith("Incomplete run:")), None) if report else None
+            outcome = {"created": "not investigated", "frozen": "not investigated", "investigating": "running",
+                       "failed": "failed", "cancelled": "cancelled"}.get(rec.state)
+            if outcome is None:
+                outcome = "stopped" if stop else "complete"
+            row = {
+                "case_id": rec.case_id, "is_root": rec.case_id == root, "lineage": rec.lab["lineage"],
+                "conditions": rec.lab["conditions"], "bundle_id": rec.bundle_id, "state": rec.state, "outcome": outcome,
+                "stop_reason": stop, "error": rec.error, "labels": rec.public()["labels"],
+                "allowed": {"investigator_requests": rec.lab["conditions"]["investigator_requests"],
+                            "rogue_requests": rec.lab["conditions"]["rogue_requests"]},
+                "used": None if usage is None else {k: usage.get(k) for k in ("llm_calls", "tool_calls", "tokens_in",
+                                                                             "tokens_out", "cost_estimate_usd", "wall_seconds")},
+                "findings": None if report is None else {
+                    "incident_allegations_accepted": sum(f.category == "incident_allegation" and f.status == "verified"
+                                                         for f in report.findings),
+                    "total": len(report.findings)},
+                "scored": None,
+            }
+            if rec.state == "scored" and (paths.root / "score.json").exists():
+                sc = json.loads((paths.root / "score.json").read_text(encoding="utf-8"))
+                row["scored"] = {"case_kind": sc.get("case_kind"), "effects_established": sc["step_recall"],
+                                 "accepted_allegations_matched": sc["final_precision"],
+                                 "benign_false_alert": sc.get("benign_false_alert")}
+            rows.append(row)
+        bundles = {r["bundle_id"] for r in rows}
+        return {"root_case_id": root, "runs": rows, "distinct_evidence_bundles": len(bundles),
+                "note": ("Runs with the same bundle id investigated identical evidence. A run with a different bundle "
+                         "id is a separate execution. One run per row: nothing here is an average or a rate.")}
 
     # ------------------------------------------------------------------ imported evidence (unscored)
     def import_case(self, src_dir: Path | str, *, title: str | None = None, runner_id: str | None = None,
@@ -738,9 +1011,13 @@ class Orchestrator:
         cancel = self._cancel.setdefault(rec.case_id, threading.Event())
         # Display pacing exists to make sub-second fixture runs readable. A real model sets its own pace.
         pace = 0.0 if rec.inference_mode == "LIVE_MODEL" else self.pace_s
+        caps = None
+        allowance = ((rec.lab or {}).get("conditions") or {}).get("investigator_requests")
+        if allowance:
+            caps = replace(self.settings.caps, max_calls=min(self.settings.caps.max_calls, int(allowance)))
         return RunContext(case_id=rec.case_id, store=store, manifest=load_manifest(paths), case_dir=paths.case,
                           settings=self.settings, emit=lambda t, d: log.append(t, d), pace_s=pace,
-                          is_cancelled=cancel.is_set)
+                          is_cancelled=cancel.is_set, caps=caps)
 
     def _finish_draft(self, rec: CaseRecord, paths: EpisodePaths, store: EvidenceStore,
                       report: InvestigationReport, compute_s: float) -> None:
@@ -792,7 +1069,8 @@ class Orchestrator:
                                                              "model_id": rec.model_id}})
                 t0 = time.perf_counter()
                 report = runner.run(ctx)
-                if importing.is_imported(ctx.manifest):  # no scenario stands behind imported evidence
+                # imported evidence has no scenario behind it, and a lab case is not the clinic
+                if importing.is_imported(ctx.manifest) or "lab" in ctx.manifest.operational_context:
                     report = baselines.report_for_imported(report, ctx.manifest)
                 compute = max(0.0, time.perf_counter() - t0 - ctx.paced_seconds)
                 with self._lock(case_id):
@@ -872,6 +1150,11 @@ class Orchestrator:
                 "benign_outcomes": [b.model_dump(mode="json") for b in key.benign_outcomes],
                 "attribution": key.attribution.model_dump(mode="json"),
             }
+            if "lab" in ep.scenario_spec:
+                truth["plan_label"] = (
+                    "Worker lab · the changed objective followed a scripted policy; no model chose a fault action"
+                    if ep.scenario_spec["lab"]["transition"] else "Worker lab control · no worker's objective was changed")
+                truth["lab"] = lab_engine.execution_record(ep.scenario_spec)
             payload = {"score": score.model_dump(mode="json"), "truth": truth}
             if rec.parent_case_id:
                 payload["source_experiment"] = self._child_scoring(rec, paths, score, key)
@@ -952,6 +1235,13 @@ class Orchestrator:
             "last_seq": self._log(case_id).last_seq(),
             "runtime": self.settings.public_dict(),
         }
+
+    def investigation_trace(self, case_id: str) -> dict[str, Any]:
+        """The recorded plan, tool calls, delegations and case-file activity of this case's investigation."""
+        rec = self._load(case_id)
+        out = trace.investigation_trace(self._log(case_id).since(0))
+        out.update(case_id=case_id, state=rec.state, labels=rec.public()["labels"])
+        return out
 
     def _store(self, case_id: str) -> tuple[EvidenceStore, EpisodePaths]:
         self._load(case_id)

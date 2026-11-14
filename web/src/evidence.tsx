@@ -33,7 +33,23 @@ export function EvidenceColumn({
       | undefined
   )?.logging_policy;
   const files = policy?.forwarded_files ?? [];
-  const [sel, setSel] = useState("workstation|/var/log/auth.log");
+  // Worker jobs are recorded in the application log, not the host login log.
+  // This comes from the public case family and declared forwarding policy, never sealed truth.
+  const preferred =
+    view.case.card_id === "worker-lab"
+      ? files.find((f) => f.file === "/var/log/records-app/access.log")
+      : files.find(
+          (f) => f.host === "workstation" && f.file === "/var/log/auth.log",
+        );
+  const defaultKey = preferred
+    ? `${preferred.host}|${preferred.file}`
+    : files[0]
+      ? `${files[0].host}|${files[0].file}`
+      : "workstation|/var/log/auth.log";
+  const [sel, setSel] = useState(defaultKey);
+  useEffect(() => {
+    setSel(defaultKey);
+  }, [caseId, defaultKey]);
   const hostFile = selectedHost
     ? files.find((f) => f.host === selectedHost)
     : null;
@@ -70,6 +86,7 @@ export function EvidenceColumn({
           caseId={caseId}
           host={host}
           file={file}
+          focusOnly={view.case.card_id === "worker-lab"}
           stateKey={view.case.state === "scored" ? "s" : "r"}
         />
       ) : (
@@ -109,11 +126,13 @@ function CompareTable({
   host,
   file,
   stateKey,
+  focusOnly = false,
 }: {
   caseId: string;
   host: string;
   file: string;
   stateKey: string;
+  focusOnly?: boolean;
 }) {
   const [data, setData] = useState<Compare | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -143,13 +162,15 @@ function CompareTable({
     const firstMismatch = data.rows.findIndex(
       (r) => r.status === "retained_by_collector",
     );
+    if (focusOnly && firstMismatch >= 0)
+      return data.rows.slice(firstMismatch, firstMismatch + 1);
     const first =
       firstMismatch >= 0
         ? firstMismatch
         : data.rows.findIndex((r) => interesting(r) || r.focus);
     if (first < 0) return data.rows.slice(0, 3);
     return data.rows.slice(Math.max(0, first - 1), first + 2);
-  }, [data, all]);
+  }, [data, all, focusOnly]);
 
   const notAssessable = data?.status === "not_assessable";
   const missing = data?.counts.retained_by_collector ?? 0;
@@ -355,6 +376,11 @@ export function RawViewer({ raw }: { raw: RawState | null }) {
       {raw?.error && <div className="banner err small">{raw.error}</div>}
       {raw?.data && (
         <>
+          {raw.eventId && (
+            <p className="small mono hash" data-testid="raw-record-id">
+              Record {raw.eventId}
+            </p>
+          )}
           <div className="small">
             <span className="mono">{raw.data.artifact}</span> · {raw.data.host}{" "}
             / {raw.data.source} · SHA-256{" "}

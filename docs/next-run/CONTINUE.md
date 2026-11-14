@@ -1,5 +1,7 @@
 # ALIBI: second-run implementation
 
+> **Historical handoff — superseded November 14 afternoon.** Use [../../PRODUCT.md](../../PRODUCT.md) and [the current owner instructions](../overhaul/START_HERE.md) for this continuation. This file preserves the previous plan/demo; its schedule, setup tasks and product direction must not override the current contract.
+
 This is an incremental continuation, not a rebuild. Start from the current working branch, preserve completed work and the original PLAN.md architecture, and use this document for phase-two priorities. Read REVIEW.md once. Commands and routes below marked **target** must be implemented before documentation advertises them.
 
 **Deadline:** Sunday November 15, 2026, 08:00 America/New_York. Feature freeze: Sunday 00:00. Submission target: 06:00. First checkpoint: Saturday 09:00. If starting later, keep the absolute freeze and shorten scope in the order below. Never claim unfinished work is finished.

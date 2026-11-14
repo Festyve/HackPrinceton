@@ -1,5 +1,7 @@
 # Review of the first build
 
+> **Historical handoff — superseded November 14 afternoon.** Use [../../PRODUCT.md](../../PRODUCT.md) and [the current owner instructions](../overhaul/START_HERE.md) for this continuation. This file preserves the previous plan/demo; its schedule, setup tasks and product direction must not override the current contract.
+
 Reviewed against commit `874cc5f` on `codex/alibi-build`, November 14, 2026. This continues the original ALIBI plan. Keep its simulator, evidence contracts, bounded steps, verifier, score, and DeepAgents integration.
 
 ## The important correction

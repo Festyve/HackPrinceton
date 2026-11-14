@@ -1,5 +1,7 @@
 # Sources checked for this continuation
 
+> **Historical handoff — superseded November 14 afternoon.** Use [../../PRODUCT.md](../../PRODUCT.md) and [the current owner instructions](../overhaul/START_HERE.md) for this continuation. This file preserves the previous plan/demo; its schedule, setup tasks and product direction must not override the current contract.
+
 Repository reviewed: owly1/HackPrinceton, codex/alibi-build, commit 874cc5f. Local review includes progress/decisions/blockers, package locks, model gateway and agents, evidence/check/verifier/scoring interfaces, orchestration/API, benchmark configurations/results/reports, replay provenance, frontend and test coverage. The existing screenshot was inspected and the build/tests were rerun.
 
 Event requirements come from the user's **F26 Onsite Hacker Packet (1).docx**, especially Project Submission, Judging Information, Amazon, Arlequin, LangChain and Peri sections. Deadline: November 15 at 08:00; one main track, compatible specials; public repo created November 13–15; maximum-two-minute presentation/video. The supplied travel packet is supporting context.

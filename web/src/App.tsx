@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, ApiError } from "./api";
-import type { CaseView, Presets, RawView, Runtime, ServerEvent } from "./api";
+import type {
+  CaseInfo,
+  CaseView,
+  Presets,
+  RawView,
+  Runtime,
+  ServerEvent,
+} from "./api";
 import { applyEvents, emptyRun, hasReport } from "./model";
 import type { Run } from "./model";
 import { EvidenceCtx } from "./common";
@@ -9,7 +16,6 @@ import { Dialog } from "./dialog";
 import {
   Sources,
   RuntimeDetails,
-  Questions,
   ProgressActivity,
   humanState,
   originLabel,
@@ -17,6 +23,27 @@ import {
 import { EvidenceColumn, RawViewer } from "./evidence";
 import { ScoreOverlay } from "./score";
 import { BenchmarkTab } from "./bench";
+import { Navigation, CommandPalette, SavedCases } from "./shell";
+import type { Workspace, PaletteAction } from "./shell";
+import { Lab, WorkerActivity } from "./lab";
+import { LabExperiments } from "./lab-experiments";
+import { useActionToken } from "./features/operation";
+import { SavedComparison } from "./comparisons";
+import {
+  EvidenceInspector,
+  InvestigationTools,
+  PlanView,
+  PlanSummary,
+  TraceView,
+  CaseFile,
+  Help,
+} from "./investigation";
+import {
+  DesignerDialog,
+  ExperimentComparison,
+  QuestionPanel,
+  TemperatureRecords,
+} from "./phase2";
 
 const EVENT_TYPES = [
   "state",
@@ -26,6 +53,7 @@ const EVENT_TYPES = [
   "tool",
   "finding",
   "note",
+  "note_read",
   "attribution",
   "usage",
   "report",
@@ -57,7 +85,20 @@ export interface RawTarget {
 }
 
 export default function App() {
-  const [tab, setTab] = useState<"case" | "benchmark">("case");
+  const [workspace, setWorkspace] = useState<Workspace>(
+    hashId() ? "investigation" : "lab",
+  );
+  const workspaceRef = useRef(workspace);
+  workspaceRef.current = workspace;
+  const [palette, setPalette] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [showSources, setShowSources] = useState(false);
+  const [panelDialog, setPanelDialog] = useState<
+    "plan" | "trace" | "notes" | null
+  >(null);
+  const [savedCases, setSavedCases] = useState<CaseInfo[]>([]);
+  const [savedError, setSavedError] = useState(false);
+  const [narrow, setNarrow] = useState(window.innerWidth < 900);
   const [runtime, setRuntime] = useState<Runtime | null>(null);
   const [presets, setPresets] = useState<Presets | null>(null);
   const [presetErr, setPresetErr] = useState<string | null>(null);
@@ -82,7 +123,10 @@ export default function App() {
   const [selectedHost, setSelectedHost] = useState<string | null>(null);
   const [disconnected, setDisconnected] = useState(false);
   const [attaching, setAttaching] = useState(false);
+  const [mode, setMode] = useState<string | null>(null);
+  const [showDesigner, setShowDesigner] = useState(false);
   const rawRequest = useRef(0);
+  const creation = useActionToken();
 
   const esRef = useRef<EventSource | null>(null);
   const genRef = useRef(0);
@@ -91,16 +135,30 @@ export default function App() {
   const retryRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
-    api
-      .runtime()
-      .then(setRuntime)
-      .catch(() => setRuntime(null));
+    // What the server can do decides what the controls say, so a failed first request is tried again.
+    let live = true;
+    let tries = 0;
+    const loadRuntime = () =>
+      api
+        .runtime()
+        .then((r) => live && setRuntime(r))
+        .catch(() => {
+          if (!live) return;
+          setRuntime(null);
+          tries += 1;
+          if (tries < 8)
+            window.setTimeout(loadRuntime, Math.min(1500 * tries, 8000));
+        });
+    void loadRuntime();
     api
       .presets()
       .then(setPresets)
       .catch((e: unknown) =>
         setPresetErr(String(e instanceof Error ? e.message : e)),
       );
+    return () => {
+      live = false;
+    };
   }, []);
 
   const closeStream = useCallback(() => {
@@ -126,6 +184,7 @@ export default function App() {
     setSelectedHost(null);
     setDisconnected(false);
     setShowLibrary(false);
+    setWorkspace("cases");
     setHash(null);
   }, [closeStream]);
 
@@ -220,6 +279,9 @@ export default function App() {
       closeStream();
       const gen = genRef.current;
       caseIdRef.current = id;
+      setWorkspace("investigation");
+      setShowSources(false);
+      setPanelDialog(null);
       setAttaching(true);
       setView(null);
       setShowDetails(false);
@@ -290,13 +352,23 @@ export default function App() {
   const doRun = (choice = selected) =>
     guard("run", async () => {
       if (!choice) return;
-      setTab("case");
-      const v =
-        choice.kind === "preset"
-          ? await api.createCase(choice.id)
-          : await api.openReplay(choice.id);
-      await attach(v.case.case_id, v);
+      setWorkspace("investigation");
+      try {
+        const requestToken = creation.take(
+          `${choice.kind}:${choice.id}:${mode ?? "default"}`,
+        );
+        const v =
+          choice.kind === "preset"
+            ? await api.createCase(choice.id, mode, requestToken)
+            : await api.openReplay(choice.id, requestToken);
+        creation.done();
+        await attach(v.case.case_id, v);
+      } catch (e) {
+        creation.done(e);
+        throw e;
+      }
     });
+  const doOpenCase = (id: string) => guard("run", () => attach(id));
   const doReset = () =>
     guard("reset", async () => {
       const id = caseIdRef.current;
@@ -308,6 +380,11 @@ export default function App() {
         }
       }
       clearCase();
+    });
+  const doCancel = () =>
+    guard("cancel", async () => {
+      const id = caseIdRef.current;
+      if (id) setView(await api.cancel(id));
     });
   const doReview = (d: "accept" | "reject") =>
     guard("review", async () => {
@@ -334,6 +411,9 @@ export default function App() {
     const id = caseIdRef.current;
     if (!id) return;
     setShowDetails(false);
+    setShowSources(false);
+    setPanelDialog(null);
+    if (workspaceRef.current !== "lab") setWorkspace("investigation");
     const requestId = ++rawRequest.current;
     const gen = genRef.current;
     setRaw({
@@ -368,68 +448,164 @@ export default function App() {
     }
   }, []);
 
+  useEffect(() => {
+    let live = true;
+    api
+      .listCases()
+      .then((r) => {
+        if (live) {
+          setSavedCases(r.cases);
+          setSavedError(false);
+        }
+      })
+      .catch(() => live && setSavedError(true));
+    return () => {
+      live = false;
+    };
+  }, [view?.case.case_id, view?.case.state]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPalette((v) => !v);
+      }
+    };
+    const onResize = () => setNarrow(window.innerWidth < 900);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
   const c = view?.case;
   const state = c?.state ?? "";
+  const labeledCase = workspace === "investigation" ? c : undefined;
   const failed = state === "failed" || state === "cancelled";
   const bannerMsg = failed ? c?.error || c?.detail || state : run.error;
-  const title = view?.card?.title ?? c?.title ?? "Case library";
+  const title =
+    (c?.lab ? c.title : view?.card?.title) ?? c?.title ?? "Case library";
   const reviewPhase = state === "awaiting_review" || state === "report_locked";
+  const closeRaw = () => {
+    rawRequest.current += 1;
+    setRaw(null);
+  };
+  const libraryProps = {
+    presets,
+    err: presetErr,
+    selected,
+    onSelect: setSelected,
+    onRun: (choice: { kind: "preset" | "replay"; id: string }) => doRun(choice),
+    busy: busy !== null,
+    runtime,
+    mode,
+    onMode: setMode,
+    onDesign: () => {
+      setShowLibrary(false);
+      setShowDesigner(true);
+    },
+  };
+  const actions: PaletteAction[] = [
+    {
+      id: "lab",
+      title: "Open Lab",
+      detail: "Configure a worker experiment",
+      action: () => setWorkspace("lab"),
+    },
+    {
+      id: "cases",
+      title: "Open Cases",
+      detail: "Recordings, original cases and captured evidence",
+      action: () => setWorkspace("cases"),
+    },
+    {
+      id: "experiments",
+      title: "Open Experiments",
+      detail: "Compare saved runs and measured results",
+      action: () => setWorkspace("experiments"),
+    },
+    {
+      id: "details",
+      title: "Runtime and case details",
+      detail: "Provenance, model, spend and hashes",
+      action: () => setShowDetails(true),
+    },
+    ...(view
+      ? [
+          {
+            id: "investigation",
+            title: "Return to current investigation",
+            detail: title,
+            action: () => setWorkspace("investigation"),
+          },
+          {
+            id: "review",
+            title: "Inspect current report",
+            detail: humanState(state),
+            action: () => setWorkspace("investigation"),
+          },
+        ]
+      : []),
+    ...savedCases.map((item) => ({
+      id: item.case_id,
+      title: item.title ?? item.case_id,
+      detail: `${item.case_id} · ${humanState(item.state)} · ${item.labels.inference_label}`,
+      action: () => {
+        void doOpenCase(item.case_id);
+      },
+    })),
+  ];
   return (
     <EvidenceCtx.Provider value={openEvidence}>
       <div
         className="app"
         data-testid="app-root"
         data-case-id={c?.case_id ?? ""}
+        data-workspace={workspace}
+        data-case-family={c?.card_id ?? ""}
         aria-busy={attaching || busy === "run"}
       >
-        <header className="hdr">
+        <header className="hdr app-bar">
           <button
             className="wordmark"
-            aria-label="ALIBI case library"
-            onClick={() => {
-              setTab("case");
-              setShowLibrary(!!view);
-            }}
+            aria-label="ALIBI Lab"
+            onClick={() => setWorkspace("lab")}
           >
-            ALIBI
-            <span className="wordmark-rule" aria-hidden>
-              {" "}
-              /{" "}
+            alibi
+            <span className="brand-dot" aria-hidden="true">
+              .
             </span>
           </button>
-          <nav className="tabs" aria-label="Workspace">
-            <button
-              data-testid="tab-case"
-              className={tab === "case" ? "on" : ""}
-              onClick={() => setTab("case")}
-            >
-              Workbench
-            </button>
-            <button
-              data-testid="tab-benchmark"
-              className={tab === "benchmark" ? "on" : ""}
-              onClick={() => setTab("benchmark")}
-            >
-              Benchmark
-            </button>
-          </nav>
+          <span className="product-label">
+            Research lab <span className="edition">/ 01</span>
+          </span>
+          <button
+            className="command-trigger"
+            data-testid="btn-command"
+            onClick={() => setPalette(true)}
+          >
+            <span aria-hidden="true">⌕</span> Search cases & actions{" "}
+            <kbd>⌘ K</kbd>
+          </button>
           <div className="badges">
             <span className="badge" data-testid="badge-inference">
-              {c?.labels.inference_label ??
+              {labeledCase?.labels.inference_label ??
                 (presets?.replays.length
                   ? "Offline replay available"
-                  : "Case library")}
+                  : "Connecting to the lab")}
             </span>
-            <span className="badge" data-testid="badge-evidence">
-              {originLabel(c?.labels.evidence_origin ?? "SIM")}
-            </span>
-            {c && (
+            {labeledCase && (
+              <span className="badge" data-testid="badge-evidence">
+                {originLabel(labeledCase.labels.evidence_origin)}
+              </span>
+            )}
+            {labeledCase && (
               <span className="badge playback" data-testid="badge-playback">
-                {c.labels.playback === "REPLAY"
+                {labeledCase.labels.playback === "REPLAY"
                   ? "REPLAY · recorded playback"
-                  : c.labels.playback === "LIVE"
+                  : labeledCase.labels.playback === "LIVE"
                     ? "LIVE · fresh case"
-                    : c.labels.playback}
+                    : labeledCase.labels.playback}
               </span>
             )}
           </div>
@@ -440,140 +616,364 @@ export default function App() {
             Details
           </button>
         </header>
-        <section className="case-heading">
-          <div>
-            <p className="eyebrow">
-              {c
-                ? `Case file / ${c.case_id.replace(/^case-/, "").slice(0, 8)}`
-                : "An evidence workbench"}
-            </p>
-            <h1>{view ? title : "The log is missing. The evidence isn’t."}</h1>
-          </div>
-          <div className="heading-actions">
-            {view ? (
-              <>
-                <button onClick={() => setShowLibrary(true)}>
-                  Case library
-                </button>
-                <button
-                  data-testid="btn-reset"
-                  disabled={busy !== null}
-                  onClick={doReset}
-                >
-                  {busy === "reset" ? "Resetting…" : "Reset"}
-                </button>
-              </>
-            ) : (
-              <button
-                className="primary"
-                data-testid="btn-run"
-                disabled={busy !== null || !selected}
-                onClick={() => doRun()}
-              >
-                {busy === "run" ? "Opening case…" : "Open selected case"}
-              </button>
-            )}
-          </div>
-        </section>
-        {view && (
-          <div className="case-subhead">
-            <span>{view.card?.audience_setup ?? view.case.detail}</span>
-            <ol className="workflow" aria-label="Case progress">
-              <li
-                className={!reviewPhase && state !== "scored" ? "current" : ""}
-              >
-                Investigation
-              </li>
-              <li className={reviewPhase ? "current" : ""}>Review</li>
-              <li className={state === "scored" ? "current" : ""}>Reveal</li>
-            </ol>
-            <span className="statepill" data-testid="case-state">
-              {humanState(state)}
-            </span>
-          </div>
-        )}
-        {!view && <span data-testid="case-state" />}
-        {err && !failed && (
-          <div className="banner err" role="alert" data-testid="error-banner">
-            {err}
-          </div>
-        )}
-        {bannerMsg && (
-          <div className="banner err" role="alert" data-testid="error-banner">
-            <span>
-              {humanState(state)}: {bannerMsg}
-            </span>
-            {failed && (
-              <button onClick={doReset} disabled={busy !== null}>
-                Reset
-              </button>
-            )}
-          </div>
-        )}
-        {disconnected && (
-          <div className="banner" role="status" data-testid="connection-status">
-            Connection interrupted. Retrying; your case and report are
-            preserved.
-          </div>
-        )}
-        {tab === "benchmark" ? (
-          <main className="single">
-            <BenchmarkTab />
-          </main>
-        ) : attaching && !view ? (
-          <main className="single">
-            <p role="status">
-              Opening the saved case and restoring its evidence…
-            </p>
-          </main>
-        ) : !view ? (
-          <main className="single">
-            <StartState
-              presets={presets}
-              err={presetErr}
-              selected={selected}
-              onSelect={setSelected}
-              onRun={(choice) => doRun(choice)}
-              busy={busy !== null}
-              runtime={runtime}
-            />
-          </main>
-        ) : (
-          <>
-            <main className="grid">
-              <Sources
-                view={view}
-                selectedHost={selectedHost}
-                onSelect={setSelectedHost}
-              />
-              <section
-                className="col evidence-area"
-                aria-label="Evidence comparison"
-              >
-                {hasReport(state) ? (
-                  <EvidenceColumn
-                    caseId={view.case.case_id}
-                    view={view}
-                    run={run}
-                    selectedHost={selectedHost}
-                  />
+        <div className="workspace-body">
+          <Navigation
+            current={workspace}
+            onNavigate={setWorkspace}
+            state={state}
+            onHelp={() => setShowHelp(true)}
+          />
+          <div className="workspace-content">
+            <section className="case-heading">
+              <div>
+                <p className="eyebrow" data-testid="case-eyebrow">
+                  {workspace === "lab"
+                    ? "Configure / observe / investigate"
+                    : workspace === "experiments"
+                      ? "Conditions, evidence & outcomes"
+                      : workspace === "cases"
+                        ? "Recorded runs & frozen evidence"
+                        : c
+                          ? `Case file / ${c.case_id.replace(/^case-/, "").slice(0, 8)}`
+                          : "Choose an investigation"}
+                  {workspace === "investigation" &&
+                    c?.parent_case_id &&
+                    " · reduced evidence view"}
+                  {workspace === "investigation" &&
+                    c?.scored === false &&
+                    " · imported evidence, unscored"}
+                </p>
+                <h1>
+                  {workspace === "lab"
+                    ? "The worker research lab"
+                    : workspace === "experiments"
+                      ? "Compare the conditions."
+                      : workspace === "cases"
+                        ? "Case library"
+                        : view
+                          ? title
+                          : "Open a case to begin."}
+                </h1>
+              </div>
+              <div className="heading-actions">
+                {view && workspace === "investigation" ? (
+                  <>
+                    <button onClick={() => setShowLibrary(true)}>
+                      Case library
+                    </button>
+                    {state === "investigating" &&
+                      c?.labels.playback !== "REPLAY" && (
+                        <button
+                          data-testid="btn-cancel"
+                          disabled={busy !== null}
+                          onClick={doCancel}
+                        >
+                          {busy === "cancel"
+                            ? "Requesting cancellation…"
+                            : "Cancel investigation"}
+                        </button>
+                      )}
+                    <button
+                      data-testid="btn-reset"
+                      disabled={busy !== null}
+                      onClick={doReset}
+                    >
+                      {busy === "reset" ? "Resetting…" : "Reset"}
+                    </button>
+                  </>
+                ) : workspace === "lab" && c?.lab ? (
+                  <button
+                    className="primary"
+                    data-testid="btn-return-investigation"
+                    onClick={() => setWorkspace("investigation")}
+                  >
+                    Open investigation <span aria-hidden="true">→</span>
+                  </button>
+                ) : workspace === "experiments" ? (
+                  <button onClick={() => setWorkspace("cases")}>
+                    Browse saved cases <span aria-hidden="true">↗</span>
+                  </button>
+                ) : workspace === "lab" &&
+                  !selected &&
+                  presets?.replays.some((x) => x.presentation_default) ? (
+                  <button
+                    className={
+                      runtime?.capabilities?.worker_lab?.endpoint
+                        ? ""
+                        : "primary"
+                    }
+                    data-testid="btn-lab-replay"
+                    disabled={busy !== null}
+                    onClick={() => {
+                      const r = presets.replays.find(
+                        (x) => x.presentation_default,
+                      );
+                      if (r) void doRun({ kind: "replay", id: r.id });
+                    }}
+                  >
+                    Open recorded investigation{" "}
+                    <span aria-hidden="true">→</span>
+                  </button>
                 ) : (
-                  <ProgressActivity run={run} state={state} />
+                  <button
+                    className={selected ? "primary" : ""}
+                    data-testid="btn-run"
+                    disabled={busy !== null || !selected}
+                    onClick={() => doRun()}
+                  >
+                    {busy === "run" ? "Opening case…" : "Open selected case"}
+                  </button>
                 )}
-                {view.report && <Ask caseId={view.case.case_id} />}
-              </section>
-              <CenterColumn
-                view={view}
-                run={run}
-                busy={busy}
-                reviewMsg={reviewMsg}
-                onReview={doReview}
-                onReveal={doReveal}
-                onShowScore={() => setShowScore(true)}
-              />
-            </main>
-            <Questions caseId={view.case.case_id} available={!!view.report} />
-          </>
+              </div>
+            </section>
+            {err && !failed && (
+              <div
+                className="banner err"
+                role="alert"
+                data-testid="error-banner"
+              >
+                {err}
+              </div>
+            )}
+            {bannerMsg && (
+              <div
+                className="banner err"
+                role="alert"
+                data-testid="error-banner"
+              >
+                <span>
+                  {humanState(state)}: {bannerMsg}
+                </span>
+                {failed && (
+                  <button onClick={doReset} disabled={busy !== null}>
+                    Reset
+                  </button>
+                )}
+              </div>
+            )}
+            {disconnected && (
+              <div
+                className="banner"
+                role="status"
+                data-testid="connection-status"
+              >
+                Connection interrupted. Retrying; your case and report are
+                preserved.
+              </div>
+            )}
+            {workspace === "experiments" ? (
+              <main className="single experiments-workspace">
+                <LabExperiments
+                  cases={savedCases}
+                  currentId={c?.case_id}
+                  runtime={runtime}
+                  onOpen={doOpenCase}
+                />
+                <SavedComparison cases={savedCases} onOpen={doOpenCase} />
+                <BenchmarkTab />
+              </main>
+            ) : workspace === "cases" || workspace === "lab" || !view ? (
+              <main className="single library-workspace">
+                {workspace === "lab" && (
+                  <>
+                    {c?.lab && (
+                      <WorkerActivity
+                        key={c.case_id}
+                        caseId={c.case_id}
+                        state={state}
+                      />
+                    )}
+                    {c?.lab ? (
+                      <details className="new-worker-experiment">
+                        <summary>Configure another worker experiment</summary>
+                        <Lab
+                          runtime={runtime}
+                          onCases={() => setWorkspace("cases")}
+                          onCase={doOpenCase}
+                        />
+                      </details>
+                    ) : (
+                      <Lab
+                        runtime={runtime}
+                        onCases={() => setWorkspace("cases")}
+                        onCase={doOpenCase}
+                      />
+                    )}
+                  </>
+                )}
+                {workspace === "cases" && (
+                  <>
+                    {savedError ? (
+                      <p role="status" className="amber">
+                        Saved cases could not be loaded. Existing recordings
+                        remain available below.
+                      </p>
+                    ) : (
+                      <SavedCases cases={savedCases} onOpen={doOpenCase} />
+                    )}
+                  </>
+                )}
+                {attaching && (
+                  <p role="status">
+                    Opening the saved case and restoring its evidence…
+                  </p>
+                )}
+                <StartState {...libraryProps} />
+              </main>
+            ) : (
+              <>
+                <div className="case-subhead">
+                  <span>{view.card?.audience_setup ?? c?.detail}</span>
+                  <ol className="workflow" aria-label="Case progress">
+                    <li
+                      className={
+                        !reviewPhase && state !== "scored" ? "current" : ""
+                      }
+                    >
+                      Investigation
+                    </li>
+                    <li className={reviewPhase ? "current" : ""}>Review</li>
+                    <li className={state === "scored" ? "current" : ""}>
+                      Reveal
+                    </li>
+                  </ol>
+                  <span className="statepill" data-testid="case-state">
+                    {humanState(state)}
+                  </span>
+                </div>
+                {c?.lab && (
+                  <div
+                    className="worker-run-context"
+                    data-testid="worker-provenance"
+                  >
+                    <div>
+                      <span>
+                        {c.labels.investigation_mode_label} ·{" "}
+                        {c.labels.worker_choices}
+                      </span>
+                      <span>{c.labels.changed_objective_policy}</span>
+                    </div>
+                    <button onClick={() => setWorkspace("lab")}>
+                      Inspect workers & activity ↗
+                    </button>
+                  </div>
+                )}
+                <InvestigationTools
+                  hasCase={!!view}
+                  planProgress={
+                    run.todo.length
+                      ? `${run.todo.filter((t) => t.status === "completed").length}/${run.todo.length}`
+                      : undefined
+                  }
+                  onSources={() => setShowSources(true)}
+                  onPlan={() => setPanelDialog("plan")}
+                  onCaseFile={() => setPanelDialog("notes")}
+                  onTrace={() => setPanelDialog("trace")}
+                  onQuestions={() =>
+                    document
+                      .querySelector<HTMLInputElement>("#case-question")
+                      ?.focus()
+                  }
+                />
+                <PlanSummary run={run} onOpen={() => setPanelDialog("plan")} />
+                <div
+                  className={
+                    "case-workspace" + (raw && !narrow ? " inspector-open" : "")
+                  }
+                >
+                  <div className="case-content">
+                    <main className="grid">
+                      <section
+                        className="col evidence-area"
+                        aria-label="Evidence comparison"
+                      >
+                        {c?.parent_case_id && (
+                          <ExperimentComparison view={view} />
+                        )}
+                        {c?.card_id === "cold-chain" && hasReport(state) && (
+                          <TemperatureRecords
+                            caseId={view.case.case_id}
+                            stateKey={view.manifest?.bundle_id ?? ""}
+                          />
+                        )}
+                        {hasReport(state) ? (
+                          <EvidenceColumn
+                            caseId={view.case.case_id}
+                            view={view}
+                            run={run}
+                            selectedHost={selectedHost}
+                          />
+                        ) : (
+                          <ProgressActivity run={run} state={state} />
+                        )}
+                        {view.report && <Ask caseId={view.case.case_id} />}
+                      </section>
+                      <CenterColumn
+                        view={view}
+                        run={run}
+                        busy={busy}
+                        reviewMsg={reviewMsg}
+                        onReview={doReview}
+                        onReveal={doReveal}
+                        onShowScore={() => setShowScore(true)}
+                      />
+                    </main>
+                    <QuestionPanel
+                      caseId={view.case.case_id}
+                      available={!!view.report}
+                      runtime={runtime}
+                    />
+                  </div>
+                  {raw && !narrow && (
+                    <EvidenceInspector raw={raw} onClose={closeRaw} />
+                  )}
+                </div>
+              </>
+            )}
+            {(workspace !== "investigation" || !view) && (
+              <span className="sr-only" data-testid="case-state">
+                {view ? humanState(state) : ""}
+              </span>
+            )}
+          </div>
+        </div>
+        {palette && (
+          <CommandPalette actions={actions} onClose={() => setPalette(false)} />
+        )}
+        {showHelp && <Help onClose={() => setShowHelp(false)} />}
+        {showSources && view && (
+          <Dialog
+            title="Sources & witnesses"
+            onClose={() => setShowSources(false)}
+          >
+            <Sources
+              view={view}
+              selectedHost={selectedHost}
+              onSelect={setSelectedHost}
+              onOpenCase={doOpenCase}
+            />
+          </Dialog>
+        )}
+        {panelDialog && view && (
+          <Dialog
+            title={
+              panelDialog === "plan"
+                ? "Investigation plan"
+                : panelDialog === "trace"
+                  ? "Investigation trace"
+                  : "Case file"
+            }
+            wide
+            onClose={() => setPanelDialog(null)}
+          >
+            {panelDialog === "plan" ? (
+              <PlanView run={run} caseId={view.case.case_id} />
+            ) : panelDialog === "trace" ? (
+              <TraceView run={run} caseId={view.case.case_id} />
+            ) : (
+              <CaseFile view={view} run={run} />
+            )}
+          </Dialog>
         )}
         {showLibrary && (
           <Dialog
@@ -585,15 +985,7 @@ export default function App() {
               Opening another case preserves the current one. Its case URL will
               restore it.
             </p>
-            <StartState
-              presets={presets}
-              err={presetErr}
-              selected={selected}
-              onSelect={setSelected}
-              onRun={(choice) => doRun(choice)}
-              busy={busy !== null}
-              runtime={runtime}
-            />
+            <StartState {...libraryProps} />
             <div className="modal-actions">
               {err && (
                 <p role="alert" className="bad">
@@ -610,30 +1002,41 @@ export default function App() {
             </div>
           </Dialog>
         )}
+        {showDesigner && (
+          <Dialog
+            title="Design an environment"
+            onClose={() => setShowDesigner(false)}
+          >
+            <DesignerDialog
+              runtime={runtime}
+              mode={mode}
+              onCase={(v) => {
+                setShowDesigner(false);
+                void attach(v.case.case_id, v);
+              }}
+            />
+          </Dialog>
+        )}
         {showDetails && (
           <Dialog title="Case details" onClose={() => setShowDetails(false)}>
             <RuntimeDetails view={view} run={run} runtime={runtime} />
           </Dialog>
         )}
-        {raw && (
-          <Dialog
-            title="Raw evidence"
-            wide
-            onClose={() => {
-              rawRequest.current += 1;
-              setRaw(null);
-            }}
-          >
+        {raw && (narrow || workspace === "lab") && (
+          <Dialog title="Raw evidence" wide onClose={closeRaw}>
             <RawViewer raw={raw} />
           </Dialog>
         )}
-        {state === "scored" && view?.reveal && showScore && (
-          <ScoreOverlay
-            view={view}
-            run={run}
-            onClose={() => setShowScore(false)}
-          />
-        )}
+        {state === "scored" &&
+          view?.reveal &&
+          showScore &&
+          workspace === "investigation" && (
+            <ScoreOverlay
+              view={view}
+              run={run}
+              onClose={() => setShowScore(false)}
+            />
+          )}
       </div>
     </EvidenceCtx.Provider>
   );
@@ -647,7 +1050,11 @@ function StartState(p: {
   onRun: (s: { kind: "preset" | "replay"; id: string }) => void;
   busy: boolean;
   runtime: Runtime | null;
+  mode: string | null;
+  onMode: (m: string) => void;
+  onDesign: () => void;
 }) {
+  const modes = p.runtime?.capabilities?.investigation_modes;
   if (p.err)
     return (
       <div className="banner err" role="alert">
@@ -661,13 +1068,14 @@ function StartState(p: {
       </p>
     );
   const recommended = p.presets.replays.find(
-    (x) => x.inference_mode === "RECORDED_MODEL",
+    (x) => x.presentation_default === true,
   );
   return (
     <div className="start">
       <p className="library-intro">
-        Compare the records that survived. Build a cited report. Lock your
-        findings, then see what really happened.
+        Inspect a saved run, or investigate a frozen case. The original
+        scenarios and captured bundles remain available alongside the new worker
+        lab.
       </p>
       {recommended && (
         <section className="featured-case">
@@ -708,11 +1116,39 @@ function StartState(p: {
           <p className="eyebrow">Case library</p>
           <h2>Fresh investigations</h2>
         </div>
-        <p className="small muted">
-          {p.runtime?.live_inference === "CONFIGURED"
-            ? "Live AI configured. New cases use the server runtime."
-            : "Fresh cases use a scripted fixture. Recorded AI works offline."}
-        </p>
+        <div>
+          <p className="small muted">
+            {p.runtime?.live_inference === "CONFIGURED"
+              ? "Live AI configured. New cases use the server runtime."
+              : "Fresh cases use a scripted fixture. Recorded AI works offline."}
+          </p>
+          {(modes?.available?.length ?? 0) > 1 && (
+            <label className="small mode-picker">
+              Investigation
+              <select
+                data-testid="mode-select"
+                value={p.mode ?? modes?.default ?? ""}
+                onChange={(e) => p.onMode(e.target.value)}
+              >
+                {(modes?.available ?? []).map((m) => (
+                  <option key={m} value={m}>
+                    {modes?.labels?.[m] ?? m}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {p.runtime?.capabilities?.scenario_designer?.endpoint && (
+            <button
+              className="linkish design-link"
+              data-testid="btn-design"
+              disabled={p.busy}
+              onClick={p.onDesign}
+            >
+              Design an environment for a new case
+            </button>
+          )}
+        </div>
       </div>
       <div className="cards">
         {p.presets.presets.map((x) => (

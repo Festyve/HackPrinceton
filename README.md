@@ -2,7 +2,9 @@
 
 **The log is missing. The evidence isn't.**
 
-ALIBI is a practice range for digital investigations. It runs a scripted incident in a simulated clinic network, seals the answer key, and asks an investigator to reconstruct what happened from the evidence that survived. Every finding opens its source. The report is locked before anyone sees the answer.
+ALIBI is a research lab for investigating AI workers. The team is building a controlled environment where workers do useful jobs, one can go rogue, and an outside investigator reconstructs what happened from surviving evidence. The experiment varies rogue permissions and investigation resources, then compares a locked, cited report with sealed ground truth.
+
+**Current build:** the evidence pipeline and real-model investigator work on scripted incidents. Productive model-driven workers, seeded rogue transitions and the new interface are the next implementation phase. [Product definition](PRODUCT.md) · [Start the overhaul](docs/overhaul/START_HERE.md) · [Audited status](docs/overhaul/STATUS.md). The instructions are ready; those new features are not yet claimed as implemented.
 
 Built at HackPrinceton Fall 2026 by Eric Chen, Rayan, Daniel, and Terry.
 
@@ -23,7 +25,7 @@ The recordings are saved runs of real Claude models. Playback needs no API key a
 
 Use `./start.sh --port 8010` if the default port is busy.
 
-## What makes a case
+## What makes a case in the current build
 
 A simulated clinic has a workstation, a records server, a badge reader, an IoT hub, a central log collector and a network tap. An incident leaves traces across those systems. Some traces can be removed locally; independent copies survive elsewhere.
 
@@ -103,7 +105,7 @@ We then ran the eight model cells of the first two incident cases once more on t
 
 ## Live AI and budget
 
-Live inference uses a server-side Anthropic key in a gitignored `.env`. **The total API allowance is $20 across both runs.** About $3.65 has been used. Follow [API setup](docs/next-run/API_SETUP.md) and never delete the spend ledger.
+Live inference uses a server-side Anthropic key in a gitignored `.env`. **The total API allowance is $20 across all runs, including the overhaul.** The last handoff reported about $3.65 used; read the current ledger before spending. Follow [current API setup](docs/overhaul/API_SETUP.md) and never delete the spend ledger.
 
 Every model call goes through one budget gateway. It counts the outgoing request before sending it, refuses one that is too large or cannot be counted, reserves tokens and money so parallel agents cannot jointly pass a cap, and keeps the worst-case cost of any call whose billing outcome is unknown until someone reconciles it. Automatic calls stop $0.50 short of the cap. The totals are a conservative estimate at list prices, not a bill; the provider console is the billing authority.
 
@@ -119,6 +121,8 @@ Tests use fixtures and need no model key.
 
 ## Read more
 
+- [Team roles and deadline](docs/overhaul/TEAM.md) · [Eric/Terry launch messages](docs/overhaul/START_HERE.md) · [UI specification](docs/overhaul/UI.md)
+- [New experiment protocol](docs/overhaul/EXPERIMENTS.md) · [Next-release demo](docs/overhaul/DEMO.md) · [Release acceptance](docs/overhaul/ACCEPTANCE.md)
 - [Architecture](docs/architecture.md) · [API added in the second run](docs/api.md) · [claims and their support](docs/claims.md)
 - [Two-minute demo](docs/demo-script.md) · [judge questions](docs/judge-qa.md)
 - [Build history and handoff](PROGRESS.md) · [engineering decisions](DECISIONS.md) · [remaining owner actions](BLOCKERS.md)

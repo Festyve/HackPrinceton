@@ -1,9 +1,19 @@
 # Progress
 
+## Product-definition handoff — Saturday November 14, afternoon
+
+The team's governing specification is now [PRODUCT.md](PRODUCT.md). [Start here](docs/overhaul/START_HERE.md) contains exact Eric/Terry setup and full prompts; [TEAM](docs/overhaul/TEAM.md) replaces the old schedule. This commit changes documentation only and preserves the application and historical measurements.
+
+Next work: productive model-driven workers, seeded rogue transitions, executed action tapes, explicit resource comparisons, adaptive DeepAgent case-file work, and Terry's reel-inspired UI. [STATUS](docs/overhaul/STATUS.md) distinguishes completed infrastructure from missing behaviors. [ACCEPTANCE](docs/overhaul/ACCEPTANCE.md) starts new gates pending.
+
+Rayan confirmed **$20 cumulative**, including prior spend; keep the $19.50 automatic cutoff and existing ledger. Repository visibility was checked and is public. Eric's recorded decision about the current key stands. No paid model calls or new application tests were run by this documentation pass. Previous test counts below are historical reports.
+
+Previous plans remain below for provenance; they do not override the new product definition. The audit baseline is default-branch `6e7d322`, with reusable UI wiring at `1b9216d`.
+
 > Times are America/New_York. Entries record concrete check results, not intentions.
 > Status vocabulary: **OFFLINE-READY**, **AI-READY**, **INCOMPLETE** (PLAN §14).
 
-## Current state — second run, Saturday November 14, 14:05 ET
+## Previous implementation handoff — second run, Saturday November 14, 14:05 ET
 
 This block is the handoff. Everything below it is the build history, oldest first.
 
@@ -455,3 +465,16 @@ Phase-two model spend so far: about **$0.08** (ledger total $3.006 of the $20 ca
 - Not done: no capture was reproduced on this machine (no cached base image; a pull needs a person's approval).
 - The fallback interface branch was brought up to date (`1b9216d`): the default branch merged in, the evidence label for Docker captures changed from "Captured Linux evidence" to "Captured evidence · Docker containers", and a browser test added that opens a captured case (labeled captured and unscored, no mention of the simulated clinic, no unseal control once locked). The test fails when the unseal rule is broken on purpose. In a separate clone with no `.env`: build, then **494 passed, none failed or skipped**.
 - Fresh clone of the default branch at `af33506`, no `.env`: `uv sync --frozen`, `npm ci`, build, then **474 passed, none failed or skipped**. In that clone, offline: `alibi import tests/fixtures/capture/missing-local-record --investigate` reported one verified `local_log_removal` on DOCKER evidence; `alibi experiment --without collector` reported that the claim cannot be established without the collector; `review accept` locked the report and `export` named the DOCKER sources; `alibi run --preset hero-coverup` still produced the scripted-fixture case.
+
+## Terry overhaul checkpoint — 2026-11-14 15:41 ET
+
+- Preserved existing UI and merged product-definition fc30b01 plus UI wiring 1b9216d. New serif graphite shell, Pip, command palette, evidence inspector, actual plan/trace/case file and saved-case comparison; all phase-two features retained.
+- `npm --prefix web run build` passed; 49 real-browser checks passed; offline suite 453 passed. 21 screenshots at the three requested sizes had zero page overflow and JavaScript errors. Artifacts: `docs/verification/terry-overhaul/`, `docs/screenshots/terry-overhaul/`.
+- Runtime stayed offline: no paid calls. Worker execution was visibly unavailable in this slice. Eric published c1148c8 while checks ran; worker-contract integration follows. P9 human sign-off remains pending; no P1–P10 release completion is claimed.
+
+## Terry integrated worker interface — 2026-11-14
+
+- Replaced the Lab preview with Eric's real worker contract, integrated through `6caa909`. No backend edits or paid runtime calls from this UI session. Current branch preserves checkpoint `9591107` and the backend history.
+- Added real worker activity/proof, explicitly sealed operator history and recorded action outcomes, exact allocation/permission/context controls, same-evidence budget comparisons and new-execution permission comparisons. Actual trace parent spans, plan content changes, filesystem reads/writes and local record playback are inspectable. All earlier phase-two features remain.
+- Build passed; full browser regression 57 passed (179.84 s); the final worker-log/default/above-fold adjustment passed five focused browser cases. Full offline suite 474 passed (344.20 s). Thirty final screenshots across the requested sizes had zero page overflow and JavaScript errors. Proof: `docs/verification/terry-overhaul/`; reproducible capture: `tests/capture_overhaul.py`.
+- P9 now has implementation/automated evidence; Rayan's actual usability reviews remain pending. Other release gates retain Eric's documented limits, including scripted fault actions, pending worker recording and checkpoint-resume proof. Handoff: `docs/terry-overhaul-handoff.md`.

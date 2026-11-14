@@ -54,6 +54,33 @@ class CreateCase(BaseModel):
     design_fixture: Literal["none", "inside-job-plain", "inside-job-coverup"] = "none"
 
 
+class LabExperimentIn(BaseModel):
+    """One run of the worker lab. The preset sets both request allowances; an explicit number overrides it."""
+
+    variant: Literal["incident", "control"] = "incident"
+    seed: int | None = Field(default=None, ge=0, le=10_000_000)
+    preset: Literal["offense_heavy", "balanced", "defense_heavy"] | None = None
+    rogue_permissions: Literal["export_only", "export_log", "export_log_artifact"] | None = None
+    rogue_requests: int | None = Field(default=None, ge=0, le=40)
+    investigator_requests: int | None = Field(default=None, ge=1, le=40)
+    context_load: Literal["light", "standard", "heavy"] | None = None
+    ordinary_work: Literal["model", "scripted"] | None = None
+    runner: Literal["deterministic", "agent-fixture", "agent-live"] | None = None
+    investigation_mode: Literal["fast", "specialist"] | None = None
+    client_token: str = Field(min_length=1, max_length=80)
+    autostart: bool = False
+
+
+class LabComparisonIn(BaseModel):
+    kind: Literal["investigator_budget", "rogue_permissions"]
+    investigator_requests: int | None = Field(default=None, ge=1, le=40)
+    rogue_permissions: Literal["export_only", "export_log", "export_log_artifact"] | None = None
+    runner: Literal["deterministic", "agent-fixture", "agent-live"] | None = None
+    investigation_mode: Literal["fast", "specialist"] | None = None
+    client_token: str = Field(min_length=1, max_length=80)
+    autostart: bool = False
+
+
 class DesignRequest(BaseModel):
     client_token: str = Field(min_length=1, max_length=80)
     design_seed: int | None = Field(default=None, ge=0, le=4999)
@@ -350,6 +377,57 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
     @app.get("/api/cases/{case_id}/source-experiment")
     def source_experiment(case_id: str) -> dict:
         return orch.source_experiment(case_id)
+
+    @app.get("/api/cases/{case_id}/trace")
+    def investigation_trace(case_id: str) -> dict:
+        """The investigation as recorded: the plan and each change to it, every tool call, each delegation, and the
+        case file's writes and reads. Built from the event log; summaries are the tools' own, not model thoughts."""
+        return orch.investigation_trace(case_id)
+
+    # ------------------------------------------------------------------ worker lab
+    @app.get("/api/lab/options")
+    def lab_options() -> dict:
+        """What an experiment can be configured with: presets in their real units, permission profiles, context load."""
+        return orch.lab_options()
+
+    @app.post("/api/lab/experiments")
+    def lab_create(body: LabExperimentIn) -> dict:
+        """Run the workers once and freeze what they left behind as a new case. With a model configured this makes
+        a bounded number of model requests before it returns. The same client_token returns the same case."""
+        rec = orch.create_lab_case(
+            variant=body.variant, seed=body.seed, preset=body.preset, rogue_permissions=body.rogue_permissions,
+            rogue_requests=body.rogue_requests, investigator_requests=body.investigator_requests,
+            context_load=body.context_load, ordinary_work=body.ordinary_work, runner_id=body.runner,
+            investigation_mode=body.investigation_mode, client_token=body.client_token)
+        if body.autostart:
+            orch.start_investigation(rec.case_id)
+        return {"case": orch.view(rec.case_id)["case"], "lab": orch.lab_view(rec.case_id)}
+
+    @app.get("/api/cases/{case_id}/lab")
+    def lab_view(case_id: str) -> dict:
+        """The experiment's settings, its workers and the activity the collector recorded. Evidence only."""
+        return orch.lab_view(case_id)
+
+    @app.get("/api/cases/{case_id}/lab/operator")
+    def lab_operator(case_id: str) -> dict:
+        """The operator's record of every attempted action and the change of objective. 409 until the report is locked."""
+        return orch.lab_operator(case_id)
+
+    @app.post("/api/cases/{case_id}/lab/comparisons")
+    def lab_compare(case_id: str, body: LabComparisonIn) -> dict:
+        """A second run that changes one thing: the investigator's allowance on the same evidence, or the changed
+        worker's permissions in a new execution."""
+        rec = orch.lab_compare(case_id, kind=body.kind, investigator_requests=body.investigator_requests,
+                               rogue_permissions=body.rogue_permissions, client_token=body.client_token,
+                               runner_id=body.runner, investigation_mode=body.investigation_mode)
+        if body.autostart:
+            orch.start_investigation(rec.case_id)
+        return {"case": orch.view(rec.case_id)["case"], "lab": orch.lab_view(rec.case_id)}
+
+    @app.get("/api/cases/{case_id}/lab/comparisons")
+    def lab_comparisons(case_id: str) -> dict:
+        """This run and the runs derived from the same first run: what changed, what each was allowed and used."""
+        return orch.lab_comparisons(case_id)
 
     # ------------------------------------------------------------------ questions about a case
     @app.post("/api/cases/{case_id}/questions")

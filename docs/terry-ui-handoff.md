@@ -1,5 +1,7 @@
 # Terry UI handoff — November 14, 2026
 
+> **Historical handoff — superseded November 14 afternoon.** Use [../PRODUCT.md](../PRODUCT.md) and [the current owner instructions](overhaul/START_HERE.md) for this continuation. This file preserves the previous plan/demo; its schedule, setup tasks and product direction must not override the current contract.
+
 The evidence workbench is implemented on `codex/terry-ui`. The branch preserves the existing application and real-model recording, and incorporates Eric's published backend/contract fixes through `0de232d` (merge `ad62bd8`). The first UI slice is `98623d8`; the complete deliverable is the branch tip.
 
 ## Launch
