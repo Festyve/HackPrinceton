@@ -1,0 +1,215 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v01-20261114t130152z-b2",
+ "bundle_id": "bndl-820162c5d101a140",
+ "system_id": "B2",
+ "system_label": "Arm B2: lead + integrity-auditor + skeptic with generic evidence tools only (no checks)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-75b227",
+   "claim_type": "timestamp_alteration",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-10-11T10:26:42Z",
+   "t_end": "2026-11-10T10:28:56Z",
+   "object_or_session": "/home/rhaddad/Downloads/cache-0a91.bin",
+   "evidence_ids": [
+    "ev_eb89a8080966",
+    "ev_09b4ad6dcb1f"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.5,
+   "rationale": "The file's mtime is 2026-10-11, but its change time is 2026-11-10 10:28:56, just after the 23 MB flow. This suggests the mtime was set back. The fs_stat snapshot is host-writable, so this is not conclusive.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "downgraded_by_skeptic",
+   "verification_status": "unresolved_interpretation",
+   "verifier_notes": [
+    "the time window is wider than 30 minutes; too broad to verify"
+   ],
+   "skeptic_note": "Single host-writable point-in-time snapshot; mtime earlier than ctime is explained by preserved timestamps or extraction.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-8db130",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": "T1048",
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T10:27:48Z",
+   "t_end": "2026-11-10T10:28:03Z",
+   "object_or_session": "10.20.9.62:8080",
+   "evidence_ids": [
+    "ev_09b4ad6dcb1f",
+    "ev_eb89a8080966"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.75,
+   "rationale": "Tap flow from workstation 10.20.1.21 sent 23.18 MB to 10.20.9.62:8080, an unapproved destination above the 5 MB bulk threshold. Staff file cache-0a91.bin of matching size exists on the workstation.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": "Flow to unapproved 10.20.9.62:8080 of 23.18 MB; size matches the staged file. Supported by the tap witness.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-0b669d",
+   "claim_type": "second_host_session",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T10:30:12Z",
+   "t_end": "2026-11-10T10:35:00Z",
+   "object_or_session": "records#402",
+   "evidence_ids": [
+    "ev_a9ffa48ff362",
+    "ev_bfdef7f743b0",
+    "ev_c8c107da32b4"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.7,
+   "rationale": "Admin account adm-tkim logged into records from 10.20.1.21, which is the workstation's address and not an admin source. The session ran the log-forwarder stop.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a session on this host was opened from another monitored host outside the stated access policy"
+   ],
+   "skeptic_note": "Admin session from workstation address, outside the listed admin sources. Spoofing not excluded.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-ec9a5a",
+   "claim_type": "forwarding_stopped",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T10:30:50Z",
+   "t_end": "2026-11-10T10:30:50Z",
+   "object_or_session": "log-forwarder",
+   "evidence_ids": [
+    "ev_bfdef7f743b0"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.7,
+   "rationale": "adm-tkim stopped the log-forwarder via sudo in session 402 on records. No approved change record in the brief covers this.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a recorded stop command opens this collection gap and no approved change record covers it"
+   ],
+   "skeptic_note": "Log-forwarder stop by adm-tkim in session 402 with no approved change record; collector copy corroborates.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-4862ec",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T12:18:04Z",
+   "t_end": "2026-11-10T12:18:11Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_ef2290dae9d7"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.5,
+   "rationale": "Outbound 23 MB transfer from 10.20.0.10 went to 10.20.0.45 (stor-nas-01), an approved backup and log archive destination, so it is consistent with transfer policy. The source host is not identified in the flow record.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": "Destination is the approved stor-nas-01 archive; policy-consistent.",
+   "produced_by": "lead-investigator"
+  }
+ ],
+ "attribution": {
+  "account_used": "adm-tkim",
+  "session_ref": "records#402",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_a9ffa48ff362",
+   "ev_bfdef7f743b0",
+   "ev_c8c107da32b4"
+  ],
+  "contrary_evidence_ids": [
+   "ev_85ee50d9b783"
+  ],
+  "assumptions": [],
+  "limits": [
+   "Source IP 10.20.1.21 may be spoofed or reused",
+   "Shared console credentials have been found written down before",
+   "Badge records do not cover remote sessions"
+  ],
+  "statement": "Account adm-tkim (admin) was used for records session 402, opened from the workstation address 10.20.1.21, which is not a listed admin source, and it stopped the log-forwarder. The workstation address was also used by rhaddad's console session. Account use is established; the human operator is not established. Shared credentials and remote access are not excluded.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "The investigator did not write a summary.",
+ "open_questions": [
+  "Incomplete run: stopped by the budget gateway: input token cap reached: 277855 used + 0 reserved + 26208 needed > 280000."
+ ],
+ "usage": {
+  "llm_calls": 15,
+  "tokens_in": 277855,
+  "tokens_out": 17511,
+  "tokens_cache_read": 180434,
+  "cost_estimate_usd": 0.022737,
+  "wall_seconds": 79.064,
+  "tool_calls": 43,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T13:03:56.444446Z",
+ "report_sha256": "6c10c5471760b3440bfef55d0f474e8bf5a106535b1670d98cb1d44562316676",
+ "review_history": [
+  {
+   "at": "2026-11-14T13:03:56.444446Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

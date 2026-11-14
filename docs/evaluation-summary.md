@@ -28,4 +28,19 @@ These findings matched an executed effect, but were not accepted in the locked r
 | paired-v2 | V02 | ALIBI | local log removal | downgraded by skeptic | supported observation |
 | paired-v2-rep1 | V06 | ALIBI | local log removal | downgraded by skeptic | supported observation |
 
+## Run again once
+
+`paired-v2-repeat1` ran the model cells of the incident cases of `paired-v2` once more on the same evidence. **2 of 8 cells established the same number of incident effects as the first time.** A difference of one or two effects between systems in the table above is therefore within what a second run changes. The repeat is not added to that table.
+
+| System | Effects established, first run | Effects established, repeat | Runs stopped by a cap, first / repeat |
+|---|---|---|---|
+| B0: Fixed keyword recipe (no model) | 2/8 | 2/8 | 0 / 0 |
+| BR: Deterministic checks, templated findings (no model) | 8/8 | 8/8 | 0 / 0 |
+| B1: One agent, generic evidence tools only | 5/8 | 4/8 | 1 / 2 |
+| B1+: One agent, generic tools + checks | 7/8 | 8/8 | 0 / 0 |
+| B2: Lead + auditor + skeptic, generic evidence tools only | 5/8 | 5/8 | 1 / 1 |
+| ALIBI: Lead + auditor + skeptic, generic tools + checks | 5/8 | 6/8 | 0 / 0 |
+
+[Cell by cell](evaluation-v2-repeat1.md). Two runs of the same cells on the same evidence. It shows whether each outcome happened again once. It is not a variance estimate, and it is not added to the per-system sums.
+
 Per-case tables: [paired-v2](evaluation-v2.md), [paired-v2-rep1](evaluation-v2-rep1.md).

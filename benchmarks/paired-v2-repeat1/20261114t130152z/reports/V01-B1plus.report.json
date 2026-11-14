@@ -1,0 +1,336 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v01-20261114t130152z-b1plus",
+ "bundle_id": "bndl-820162c5d101a140",
+ "system_id": "B1+",
+ "system_label": "Fast investigation: one agent with deterministic checks, no delegation (same configuration as benchmark arm B1+)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-9090df",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T10:26:38Z",
+   "t_end": "2026-11-10T10:28:03Z",
+   "object_or_session": "/home/rhaddad/Downloads/cache-0a91.bin",
+   "evidence_ids": [
+    "ev_eb89a8080966",
+    "ev_ad11135ba4d2",
+    "ev_61a92f53ab5f",
+    "ev_78cff1512ff0",
+    "ev_09b4ad6dcb1f"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.75,
+   "rationale": "Export of 23,176,722 bytes arrived in Downloads at 10:26:38 and was sent out at 10:27:48 to the non-approved destination. The file is the same size as the export.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size reached this host, per records independent of it, shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-51a659",
+   "claim_type": "timestamp_alteration",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T10:26:38Z",
+   "t_end": "2026-11-10T10:28:56Z",
+   "object_or_session": "/home/rhaddad/Downloads/cache-0a91.bin",
+   "evidence_ids": [
+    "ev_eb89a8080966",
+    "ev_ad11135ba4d2",
+    "ev_61a92f53ab5f"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.7,
+   "rationale": "File mtime is 2026-10-11T10:26:42, about 30 days before the file's ctime and the independently recorded arrival (10:26:38 on 2026-11-10). The mtime was set after arrival; the setter is not established.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an independent record shows the content arriving after the modification time the file carries"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-8db130",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": "T1048",
+   "technique_family": "exfiltration",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T10:27:48Z",
+   "t_end": "2026-11-10T10:28:03Z",
+   "object_or_session": "10.20.9.62:8080",
+   "evidence_ids": [
+    "ev_09b4ad6dcb1f",
+    "ev_2a1a69dae2fb",
+    "ev_f3e53611f8fb",
+    "ev_61a92f53ab5f",
+    "ev_ad11135ba4d2"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "23.18 MB flow from workstation (10.20.1.21) to 10.20.9.62:8080, not an approved bulk destination, during console session workstation#54 (rhaddad). A patients_full export of the same size was requested from the records app by rhaddad at 10.26:38 from client 10.20.1.21 (client request, not a scheduled job or approved change). Shell history for the session has no commands.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-0b669d",
+   "claim_type": "second_host_session",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "adm-tkim",
+   "t_start": "2026-11-10T10:30:12Z",
+   "t_end": "2026-11-10T10:35:00Z",
+   "object_or_session": "records#402",
+   "evidence_ids": [
+    "ev_a9ffa48ff362",
+    "ev_1f05ff28f0e1",
+    "ev_c8c107da32b4",
+    "ev_55e5f9f5c9f1",
+    "ev_98708a555bf3"
+   ],
+   "counterevidence_ids": [
+    "ev_196ace5fc219"
+   ],
+   "check_refs": [],
+   "confidence": 0.7,
+   "rationale": "Remote session as adm-tkim on records opened from workstation 10.20.1.21 while rhaddad's console session was active there. 10.20.1.21 is not a listed admin source, and no change record covers it.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a session on this host was opened from another monitored host outside the stated access policy"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-ea24f6",
+   "claim_type": "forwarding_stopped",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "adm-tkim",
+   "t_start": "2026-11-10T10:30:45Z",
+   "t_end": "2026-11-10T10:34:05Z",
+   "object_or_session": "log-forwarder",
+   "evidence_ids": [
+    "ev_e49249e092de",
+    "ev_bfb2782e7150",
+    "ev_bfdef7f743b0",
+    "ev_c602b8a93a8e",
+    "ev_196ace5fc219",
+    "ev_4e197d46ccb4",
+    "ev_570e93bd66fa",
+    "ev_fdb66ba0799c"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.75,
+   "rationale": "200-second forwarding gap on records (10:30:45 to 10:34:05) begins with a stop command run by adm-tkim during records#402. No approved change record covers it. Four access-log lines from that window exist locally but never reached the collector. Local copies are intact, so this is a collection stop, not local deletion.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a recorded stop command opens this collection gap and no approved change record covers it"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-96bc43",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:27:29Z",
+   "t_end": "2026-11-10T09:08:31Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_6eaf049c0dc0",
+    "ev_f9e94e1336e3",
+    "ev_bbda3cc55361",
+    "ev_8861b51489ae",
+    "ev_0dcdc55ca908",
+    "ev_a21c2728e861",
+    "ev_35da361d7424"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "202 collector lines from before 09:09 predate the oldest rotated generation kept on records; local absence is explained by rotation with archival off-host.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-2c7e80",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "svc-backup",
+   "t_start": "2026-11-10T12:18:02Z",
+   "t_end": "2026-11-10T12:18:11Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_ef2290dae9d7",
+    "ev_9ae44cbc7125",
+    "ev_a27eee5ffab7",
+    "ev_8194bd57fd73",
+    "ev_fd04296001d6"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "Scheduled svc-backup export of the same dataset, sent to the approved backup NAS 10.20.0.45.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-b0d74b",
+   "claim_type": "shell_history_gap",
+   "category": "neutral_reconstruction",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T10:25:21Z",
+   "t_end": "2026-11-10T10:35:26Z",
+   "object_or_session": "workstation#54",
+   "evidence_ids": [
+    "ev_2a1a69dae2fb",
+    "ev_f3e53611f8fb",
+    "ev_ad11135ba4d2"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.5,
+   "rationale": "Console session workstation#54 has an export request but no shell-history commands. The touch-screen client does not write history, so this is a gap to note, not proof of removal.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  }
+ ],
+ "attribution": {
+  "account_used": "rhaddad (workstation#54); adm-tkim (records#402)",
+  "session_ref": null,
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_a21bce096427",
+   "ev_fd82e48e97b7",
+   "ev_9ae44cbc7125",
+   "ev_98708a555bf3"
+  ],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Account names identify credentials, not people",
+   "Badge reads cannot show tailgating or shared credentials",
+   "No command history covers the export or the transfer"
+  ],
+  "statement": "Account use is established, but the human operator is not. The rhaddad console session and the adm-tkim remote session both overlapped on the same workstation address. Badge data shows only that the holder's badge was inside; it does not show who was typing. Remote adm-tkim access is not covered by policy, but that does not identify a person.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Shift review of records access and transfers at Northside Clinic (bndl-820162c5d101a140).\n\nSupported by the evidence:\n1. Unapproved bulk transfer: 23.18 MB from workstation (10.20.1.21) to 10.20.9.62:8080 at 10:27:48-10:28:03 UTC. The destination is not on the approved list, and no change record covers it. It overlapped console session workstation#54 under account rhaddad.\n2. Matching export: a patients_full export of the same size (23,176,722 bytes) was requested by rhaddad from client 10.20.1.21 at 10:26:38. It was a client request, not a scheduled job, and it is not covered by the server-side change-record rule.\n3. Staged file: /home/rhaddad/Downloads/cache-0a91.bin arrived at 10:26:38. Its recorded mtime (2026-10-11) contradicts the independent arrival record, and its ctime is 2026-11-10 10:28:56. This is a timestamp alteration. The setter is not established.\n4. Cross-host session: records#402, account adm-tkim, opened remotely from 10.20.1.21 at 10:30:12-10:35:00. That source is not a listed admin source, and no change record covers it. Remote access is not covered by badge data.\n5. Forwarding stop: records log forwarding was stopped for 200 seconds (10:30:45-10:34:05) by a command run by adm-tkim during records#402. No approved change record covers it. Four access-log lines from that window are present locally but never reached the collector. Local copies are intact, so this is a collection stop, not local deletion. No local_log_removal is claimed.\n6. Benign: svc-backup's scheduled export to the approved NAS 10.20.0.45 at 12:18 is policy-consistent. The 202 pre-09:09 absent access-log lines are explained by rotation with off-host archival.\n7. Note: workstation#54 has no shell-history commands. The touch-screen client does not write history, so this is a gap to note, not proof of removal.\n\nAttribution: The accounts rhaddad and adm-tkim are established as used. The human operator is not established. Badge data shows the rhaddad holder's badge was inside, but tha",
+ "open_questions": [
+  "Who typed the rhaddad console session and the adm-tkim remote session? The evidence does not establish this.",
+  "Who changed the mtime of cache-0a91.bin, and when?",
+  "What was the destination 10.20.9.62:8080? Its identity is not established.",
+  "Why was the records log forwarder stopped during records#402, and by whom? The stop command was run by adm-tkim, but no change record covers it.",
+  "Was the requested export from a clinic client authorized?"
+ ],
+ "usage": {
+  "llm_calls": 5,
+  "tokens_in": 88393,
+  "tokens_out": 6265,
+  "tokens_cache_read": 64717,
+  "cost_estimate_usd": 0.006739,
+  "wall_seconds": 25.803,
+  "tool_calls": 20,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T13:04:22.558450Z",
+ "report_sha256": "6d37b804bcda968e2a1995609578ece5a45db6651ece2753fef57f30fa00b0a4",
+ "review_history": [
+  {
+   "at": "2026-11-14T13:04:22.558450Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

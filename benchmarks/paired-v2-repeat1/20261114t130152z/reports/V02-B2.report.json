@@ -1,0 +1,167 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v02-20261114t130152z-b2",
+ "bundle_id": "bndl-644137520589f844",
+ "system_id": "B2",
+ "system_label": "Arm B2: lead + integrity-auditor + skeptic with generic evidence tools only (no checks)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-20c838",
+   "claim_type": "local_log_removal",
+   "category": "incident_allegation",
+   "attack_id": "T1070.002",
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:14:18Z",
+   "t_end": "2026-11-10T11:14:19Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_9b3995123e96",
+    "ev_424ebb025874",
+    "ev_0c41efcea0c4"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.55,
+   "rationale": "Collector holds a jpark tty1 login line at 11:14:18 (seq 29, contiguous with seq 28 and 30) that is absent from the workstation host auth.log, which shows only logouts around it. Suggests a line was removed from the host copy; host is writable and a forwarding fault is not excluded.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Forwarding or local logging fault dropped one line (collection gap)"
+   ],
+   "status": "downgraded_by_skeptic",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+   ],
+   "skeptic_note": "One missing line on a host-writable log could be a forwarding or logging fault; the rotation and gap explanations are not fully excluded. Insufficient to call removal established.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-3accd5",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": "T1074",
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:15:15Z",
+   "t_end": "2026-11-10T11:15:20Z",
+   "object_or_session": "/tmp/.font-unix/idx-3e08.bin",
+   "evidence_ids": [
+    "ev_3fb5abe9cac6",
+    "ev_7f43d4470d7b"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.75,
+   "rationale": "Shell history records a full patients_full export written to a hidden temp file; fs_stat lists the file at ~20.6 MB owned by jpark. Host-local sources, not independently confirmed.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Authorized one-off export; no approval in bundle",
+    "Host-local history and metadata are writable"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": "Shell history and fs_stat agree on a ~20.6 MB file at the staged path; corroborated by the independent tap transfer of the same size. Host-local, so moderate confidence.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-06531a",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": "T1048",
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:18:27Z",
+   "t_end": "2026-11-10T11:18:40Z",
+   "object_or_session": "10.20.9.87:8080",
+   "evidence_ids": [
+    "ev_647a922ee132",
+    "ev_ad1c5aaad750"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "curl upload of the staged file to 10.20.9.87:8080 matches a tap flow of ~20.58 MB out in the same 13-second window. Destination is not on the approved list and exceeds the 5 MB threshold. Source IP-to-host mapping is inferred from timing.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Undocumented approved vendor endpoint; no approval in bundle"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": "Independent tap flow matches size and timing; destination not approved and far above threshold.",
+   "produced_by": "lead-investigator"
+  }
+ ],
+ "attribution": {
+  "account_used": "jpark",
+  "session_ref": null,
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_3fb5abe9cac6",
+   "ev_ad1c5aaad750",
+   "ev_647a922ee132"
+  ],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Shell history and fs_stat are host-local",
+   "Tap IP-to-host mapping inferred from timing",
+   "Auditor output truncated after three candidates"
+  ],
+  "statement": "Account jpark (workstation, tty1 session) performed the staging and upload. The account used is established by the logs; the human operator is not established. Shared console credentials have been found written down before, and badge records do not cover remote or tailgated use.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Bundle bndl-644137520589f844 (Northside Clinic, 2026-11-10 06:16-15:16Z). Supported findings: (1) data staging: a full patients_full export was written by the jpark account to a hidden temp file /tmp/.font-unix/idx-3e08.bin at ~11:15:15Z, about 20.6 MB (shell history and fs_stat, host-local). (2) policy-violating transfer: at 11:18:27-11:18:40Z the staged file was uploaded via curl to 10.20.9.87:8080; the independent tap flow records 20,582,305 bytes out. That destination is not an approved bulk destination and the volume is far above the 5 MB threshold. Attribution: the jpark account was used; the human operator is not established. Shared console credentials have been found written down before, and badge data does not cover remote or tailgated sessions. Not supported: the local log removal claim. The collector holds a jpark login line at 11:14:18Z that the workstation auth.log lacks, but the gap is not tied to any removal action, so it is downgraded to an unexplained gap.",
+ "open_questions": [
+  "Is there any approval or ticket for the patients_full export on 2026-11-10?",
+  "Who controls 10.20.9.87 and is it an authorized vendor or lab endpoint?",
+  "Why is the 11:14:18Z login line missing from the workstation auth.log while the collector has it? Check auth.log.1 and forwarding logs.",
+  "Was the export tool clinic-export used by any other account or from the VPN (vpn-gw-01)?",
+  "Auditor output was truncated after three candidates; were there additional records-host access anomalies (access.log, adm-vrao history) not reviewed?",
+  "Did tmori or other accounts show any related activity?"
+ ],
+ "usage": {
+  "llm_calls": 12,
+  "tokens_in": 232801,
+  "tokens_out": 16149,
+  "tokens_cache_read": 150226,
+  "cost_estimate_usd": 0.019898,
+  "wall_seconds": 71.995,
+  "tool_calls": 33,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T13:06:27.586190Z",
+ "report_sha256": "58a8aba3acab0e1f2d6e1f9a9bdf759a0a7db88f06ba0d18825b38101e15ee32",
+ "review_history": [
+  {
+   "at": "2026-11-14T13:06:27.586190Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

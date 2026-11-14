@@ -264,5 +264,71 @@ def test_the_results_route_serves_the_same_summary_as_the_committed_result_files
     assert {k: v["censored"] for k, v in by.items()} == {"B0": 0, "BR": 0, "B1": 3, "B1+": 0, "B2": 3, "ALIBI": 0}
     assert all(v["aggregate"]["unsupported_named_attribution"] == 0 for v in by.values())
     assert len(got["correct_findings_not_counted"]) >= 3
+    # the declared repeat is reported beside the sums, never inside them (the systems above still have six cells)
+    assert {s["id"]: s["cells"] for s in got["systems"]}["B1+"] == 6
+    again = got["repeats"][0]
+    assert again["repeat"]["suite"] == evaluation.REPEAT_SUITE and again["same_evidence_bundles"] is True
+    assert (again["ai_cells_same_effects"], again["ai_cells"]) == (2, 8) and again["offline_cells_same_effects"] == 4
+    assert {s["id"]: (s["first"], s["repeat"]) for s in again["per_system"]} == {
+        "B0": ([2, 8], [2, 8]), "BR": ([8, 8], [8, 8]), "B1": ([5, 8], [4, 8]), "B1+": ([7, 8], [8, 8]),
+        "B2": ([5, 8], [5, 8]), "ALIBI": ([5, 8], [6, 8])}
+    assert all(c["first"]["unsupported_accepted"] == c["repeat"]["unsupported_accepted"] == 0 and
+               c["first"]["named_a_person"] == c["repeat"]["named_a_person"] == 0 for c in again["cells"])
     # with no result files there is nothing to show, and the route says so with null
     assert evaluation.summary({s: tmp_path / "none" / s for s in evaluation.SUITES}) is None
+
+
+# ----------------------------------------------------------------- a declared repeat of cells that already ran
+def test_a_repeat_is_declared_separately_fits_what_is_left_and_must_equal_what_it_repeats(monkeypatch):
+    cfg = evaluation.declared_config(evaluation.REPEAT_SUITE)
+    assert cfg["cases"] == evaluation.CASES[:2] and [c["seed"] for c in cfg["cases"]] == [201, 202]  # the same two bundles
+    assert cfg["matrix"]["ai_cells"] == 8 and cfg["repeats"]["suite"] == evaluation.SUITE
+    used = evaluation.PAIRED_V2_ESTIMATED_COST_USD + evaluation.REPLICATION_ESTIMATED_COST_USD
+    pre = cfg["cost_preflight"]
+    assert pre["category_ceiling_usd"] == round(0.75 - used, 4) and pre["worst_case_usd_total"] <= pre["category_ceiling_usd"]
+    assert "results had been seen" in cfg["repeats"]["note"] and "not a variance estimate" in cfg["what_this_cannot_show"]
+    # what the first two suites spent is what their result files say they spent
+    for suite, cost in ((evaluation.SUITE, evaluation.PAIRED_V2_ESTIMATED_COST_USD),
+                        (evaluation.REPLICATION_SUITE, evaluation.REPLICATION_ESTIMATED_COST_USD)):
+        assert abs(evaluation.latest(suite=suite)["spend"]["estimated_cost_usd"] - cost) < 0.0005
+    # a repeat adds no cases, so it is never part of the per-system sums
+    assert evaluation.summed_suites() == [evaluation.SUITE, evaluation.REPLICATION_SUITE]
+    assert evaluation.check_config(evaluation.REPEAT_SUITE) == []
+    # change anything about the system under test and it is no longer a repeat: the run is refused
+    monkeypatch.setattr(investigator, "FAMILY_VOCABULARY", investigator.FAMILY_VOCABULARY + " Try harder.")
+    problems = evaluation.check_config(evaluation.REPEAT_SUITE)
+    assert any("'prompt_sha256' differs from the declaration of paired-v2" in p and "would not be a repeat" in p for p in problems)
+
+
+def test_a_repeat_is_compared_cell_by_cell_and_never_added_to_the_sums(tmp_path):
+    case = [{"case_ref": "D01", "variant": "incident_coverup", "seed": 5, "group": "development", "why": "test"},
+            {"case_ref": "D02", "variant": "incident_plain", "seed": 6, "group": "development", "why": "test"}]
+    first = evaluation.run(OFFLINE, cases=case, runner_factory=_stand_in, out_root=tmp_path / "a", suite="unit-first")
+    again = evaluation.run(OFFLINE, cases=case, runner_factory=_stand_in, out_root=tmp_path / "b", suite="unit-again")
+    rep = evaluation.repeatability(first, again)
+    assert rep["same_evidence_bundles"] is True  # the same seeds give the same bytes
+    assert rep["ai_cells"] == 8 and rep["ai_cells_same_effects"] == 8 and rep["offline_cells"] == rep["offline_cells_same_effects"] == 4
+    by = {s["id"]: s for s in rep["per_system"]}
+    assert by["B1+"]["first"] == by["B1+"]["repeat"] and by["B1+"]["first"][1] > 0 and by["B1"]["repeat"][0] == 0
+    # one cell that came out differently the second time is reported as different, not averaged away
+    changed = json.loads(json.dumps(again))
+    cell = next(r for r in changed["runs"] if r["system_id"] == "ALIBI" and r["case_ref"] == "D01")
+    cell["score"]["step_recall"]["num"] -= 1
+    cell["censored"] = True
+    rep2 = evaluation.repeatability(first, changed)
+    assert rep2["ai_cells_same_effects"] == 7
+    odd = next(c for c in rep2["cells"] if c["system_id"] == "ALIBI" and c["case_ref"] == "D01")
+    assert odd["same_effects"] is False and odd["same_stop"] is False and odd["repeat"]["stopped_by_a_cap"] is True
+    md = evaluation.render_repeat(first, {**changed, "model": "test-double"})
+    assert "**7 of 8 model cells established the same number of incident effects in both runs.**" in md
+    assert "not a variance estimate" in md and "(stopped by a cap)" in md and "same hashes in both runs" in md
+    # different evidence is not a repeat, and the report says so
+    other = json.loads(json.dumps(again))
+    other["cases"][0]["raw_bundle_sha256"] = "0" * 64
+    assert evaluation.repeatability(first, other)["same_evidence_bundles"] is False
+    assert "WARNING" in evaluation.render_repeat(first, {**other, "model": "test-double"})
+    # the summary keeps the repeat apart: the systems' cells are those of the summed suites only
+    roots = {evaluation.SUITE: tmp_path / "a", evaluation.REPLICATION_SUITE: tmp_path / "none", evaluation.REPEAT_SUITE: tmp_path / "b"}
+    summary = evaluation.summary(roots)
+    assert {s["id"]: s["cells"] for s in summary["systems"]}["B1+"] == 2 and len(summary["repeats"]) == 1
+    assert summary["repeats"][0]["ai_cells"] == 8 and [x["suite"] for x in summary["suites"]] == ["unit-first"]

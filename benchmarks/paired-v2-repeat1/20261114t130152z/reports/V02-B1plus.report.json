@@ -1,0 +1,243 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v02-20261114t130152z-b1plus",
+ "bundle_id": "bndl-644137520589f844",
+ "system_id": "B1+",
+ "system_label": "Fast investigation: one agent with deterministic checks, no delegation (same configuration as benchmark arm B1+)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-26ff92",
+   "claim_type": "local_log_removal",
+   "category": "incident_allegation",
+   "attack_id": "T1070",
+   "technique_family": "indicator removal on host",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:03:39Z",
+   "t_end": "2026-11-10T11:20:41Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_9b3995123e96",
+    "ev_424ebb025874",
+    "ev_0c41efcea0c4",
+    "ev_e1dfdcd68150",
+    "ev_95c867044b06"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.7,
+   "rationale": "The collector holds the jpark session 74 login line (seq 29, inner ts 11:14:18) from workstation auth.log, but the local auth.log lacks it, although local records bracket it before (ev_424ebb025874) and after (ev_0c41efcea0c4). The last rotation was at 09:00:01 with keep=1 and the .1 generation still present, so rotation does not explain the absence. This is an unexplained local absence, but it does not show who removed it or how.</rationale>\n<parameter name=\"account_used\">jpark",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Write or sync fault on the host; collector duplicate delivery or parsing issue"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-3accd5",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": "T1074",
+   "technique_family": "data staging",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:15:15Z",
+   "t_end": "2026-11-10T11:15:20Z",
+   "object_or_session": "/tmp/.font-unix/idx-3e08.bin",
+   "evidence_ids": [
+    "ev_3fb5abe9cac6",
+    "ev_7fd4e032ea80",
+    "ev_6472dce3b3e7",
+    "ev_bb842212e4e9",
+    "ev_7f43d4470d7b"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "Shell history shows clinic-export of dataset patients_full to /tmp/.font-unix/idx-3e08.bin (ev_3fb5abe9cac6). Records app logged export_bulk of patients_full by jpark from 10.20.1.21 (ev_7fd4e032ea80, corroborated by collector ev_6472dce3b3e7). The tap shows a 20.58 MB retrieval from records (ev_bb842212e4e9), and fs_stat shows the 20,578,812-byte file owned by jpark (ev_7f43d4470d7b). The file sits in a hidden temp directory.</rationale>\n<parameter name=\"account_used\">jpark",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Export performed for a legitimate purpose and left in a temp path by someone else using the credential"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-06531a",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": "T1048",
+   "technique_family": "exfiltration over alternative protocol",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:18:27Z",
+   "t_end": "2026-11-10T11:18:40Z",
+   "object_or_session": "10.20.9.87:8080",
+   "evidence_ids": [
+    "ev_647a922ee132",
+    "ev_ad1c5aaad750",
+    "ev_9b3995123e96",
+    "ev_0c41efcea0c4",
+    "ev_65f8e01c713e"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "Tap flow shows 20,582,305 bytes sent from workstation (10.20.1.21) to 10.20.9.87:8080, which is not on the approved bulk-destination list (10.20.0.45, 10.20.8.20) and exceeds the 5 MB threshold. Shell history ev_ad1c5aaad750 shows curl upload of the staged file to that address. Overlapping session workstation#74 (account jpark, console) is the only session overlapping the transfer.",
+   "assumptions": [
+    "Flow records reflect actual bytes moved; content not verified",
+    "Shell history is host-local and writable, but corroborated by the tap flow"
+   ],
+   "alternative_explanations": [
+    "An authorized but undocumented transfer by someone else using the jpark credential"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-e8b13b",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:22:38Z",
+   "t_end": "2026-11-10T08:59:47Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_e924fefb8c5c",
+    "ev_ffc7e59dcc03",
+    "ev_10e3a094de47",
+    "ev_1e321a0f3e08",
+    "ev_edd878a5d5c8",
+    "ev_ae7b8f0bbdc3",
+    "ev_eb8475e19107"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.5,
+   "rationale": "Records access.log lines from 06:22 to 08:59 are absent locally but present at the collector. They predate the local rotation at 09:00:04 (keep 0, archived off-host), so the absence is explained by rotation/retention, not removal.</rationale>\n<parameter name=\"confidence\">0.8",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-954045",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:59:04Z",
+   "t_end": "2026-11-10T11:59:10Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_0a3326346765"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.5,
+   "rationale": "A 20.58 MB transfer from records to stor-nas-01 (10.20.0.45), which is an approved backup and log archive destination. No interactive session overlaps it, so it is policy-consistent and does not establish misuse.</rationale>\n<parameter name=\"confidence\">0.7",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  }
+ ],
+ "attribution": {
+  "account_used": "jpark",
+  "session_ref": "workstation#74",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_9b3995123e96",
+   "ev_ad1c5aaad750",
+   "ev_7fd4e032ea80",
+   "ev_647a922ee132"
+  ],
+  "contrary_evidence_ids": [
+   "ev_135b6f8fb4cb",
+   "ev_e18cda9a3328"
+  ],
+  "assumptions": [],
+  "limits": [
+   "Account is a credential, not a person",
+   "Badge records cannot show tailgating or shared-badge use",
+   "Shell history is host-local and writable; the tap and records app corroborate the key events"
+  ],
+  "statement": "The jpark account was used for a console session (workstation#74, 11:14–11:20 UTC) that performed a patients_full export, staging to a hidden temp path, and an unapproved 20.6 MB upload. The account is established as the credential used. The human operator is not established: the badge for the account holder was inside, but the badge check cannot identify who typed, and credentials were previously found written down at the shared station.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Tip: review records access and transfers this shift. Findings: (1) Console session workstation#74 under account jpark (11:14–11:20 UTC) exported patients_full from records (records app export_bulk, corroborated at collector and tap) to /tmp/.font-unix/idx-3e08.bin on workstation. (2) That file was uploaded (~20.58 MB, curl PUT) to 10.20.9.87:8080 at 11:18, which is not an approved bulk destination; this violates the transfer policy. (3) The collector holds the jpark session-74 login line, but workstation's local auth.log lacks it while local records bracket it on both sides; rotation does not explain it (unexplained local absence; who removed it and how is not established). (4) Records access.log gaps before 09:00 are explained by rotation with off-host archive. (5) A 20.58 MB transfer from records to approved stor-nas-01 (10.20.0.45) at 11:59 is policy-consistent and has no overlapping interactive session. Attribution: account jpark was used; the human operator is not established. The jpark badge was inside, but badge records cannot identify who typed, and shared credentials have been found written down before. No person is named or cleared.",
+ "open_questions": [
+  "Who operated the jpark console session at 11:14–11:20 UTC? Requires evidence beyond account and badge data.",
+  "How and by whom was the local auth.log entry for session 74 removed? The workstation .1 generation and fs_stat did not show this; not established.",
+  "Earlier tmori/jpark census-file and imm-registry file metadata (Aug–Nov) were not assessed in this pass.",
+  "Destination 10.20.9.87 identity is not established in the bundle."
+ ],
+ "usage": {
+  "llm_calls": 6,
+  "tokens_in": 102961,
+  "tokens_out": 5700,
+  "tokens_cache_read": 77271,
+  "cost_estimate_usd": 0.006834,
+  "wall_seconds": 27.264,
+  "tool_calls": 15,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T13:06:55.073347Z",
+ "report_sha256": "b333ed2f148cd8659bd51eb06213f9448b4cc2812477d179ab359af28564da39",
+ "review_history": [
+  {
+   "at": "2026-11-14T13:06:55.073347Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

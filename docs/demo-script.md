@@ -16,6 +16,17 @@ Start with `./start.sh`, open http://127.0.0.1:8000 and keep the benign control 
 
 Only show a feature on stage if you have just seen it work in the build you are presenting. The source-removal experiment, questions, export, the new cases and the scenario designer exist in the backend and are tested; whether a control for each is in the UI depends on the UI branch that is merged at the time.
 
+## Where the controls are in the fallback interface
+
+This applies only if the build you present includes the branch `codex/eric-ui-wiring` (check for a "Remove a witness" selector at the bottom of the Sources column). On the default branch without it, use the terminal commands below.
+
+- **Remove a witness:** bottom of the Sources column. Choose "Log collector", press "Derive the reduced view". The derived case opens with "What the original report can still establish" at the top. "Open the original case" takes you back. A derived case can be unsealed only after the original's report is locked.
+- **Ask a question:** the bar at the bottom. Recorded answers are listed closed above it; click one to open it. With no model configured a question is shown as "Not answered", never as an answer.
+- **Export:** "Download the locked report" appears in the review panel once the report is locked.
+- **Cold chain:** open the Cold chain recording. The chart "Two temperature records" is above the evidence comparison; hover or use the arrow keys to read both records.
+- **Fast or specialist:** the "Investigation" selector above the case library, for fresh investigations.
+- **Results:** the Benchmark tab starts with the six systems on the six new cases.
+
 ## If someone asks to see more
 
 - **Ask a question.** "What links the missing line to the transfer?" The answer comes back as single claims, each marked as checked by a deterministic check, cited, or the model's interpretation. Then ask "Who did it?": the answer names an account and says the person is not established.

@@ -1,0 +1,325 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v01-20261114t130152z-b1",
+ "bundle_id": "bndl-820162c5d101a140",
+ "system_id": "B1",
+ "system_label": "Arm B1: one agent with generic evidence tools only (no checks)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-7b1b80",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T10:26:38Z",
+   "t_end": "2026-11-10T10:28:56Z",
+   "object_or_session": "/home/rhaddad/Downloads/cache-0a91.bin",
+   "evidence_ids": [
+    "ev_eb89a8080966",
+    "ev_61a92f53ab5f",
+    "ev_09b4ad6dcb1f"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.5,
+   "rationale": "A file named cache-0a91.bin of 23,176,722 bytes, the same size as the patients_full export, is in rhaddad's Downloads. Its metadata snapshot shows a second time of 2026-11-10 10:28:56, just after the export and the 23 MB outbound flow. Link between the file and the export is inferred from size match and timing only; the snapshot is host-local and not forwarded.",
+   "assumptions": [
+    "Size match implies the same content as the export"
+   ],
+   "alternative_explanations": [
+    "File is an unrelated download with a coincidental size match",
+    "Time field reflects a later copy or tool update rather than staging"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size reached this host, per records independent of it, shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-8db130",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": "exfiltration",
+   "technique_family": "exfiltration",
+   "host": "workstation",
+   "actor_claimed": "",
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T10:27:48Z",
+   "t_end": "2026-11-10T10:28:03Z",
+   "object_or_session": "10.20.9.62:8080",
+   "evidence_ids": [
+    "ev_09b4ad6dcb1f",
+    "ev_61a92f53ab5f",
+    "ev_ad11135ba4d2"
+   ],
+   "counterevidence_ids": [
+    "ev_eb89a8080966"
+   ],
+   "check_refs": [],
+   "confidence": 0.75,
+   "rationale": "Records app logged an export_bulk of dataset patients_full (23,176,722 bytes) by rhaddad from client 10.20.1.21 at 10:26:38. Tap flow from 10.20.1.21 to 10.20.9.62:8080 at 10:27:48-10:28:03 sent 23,180,407 bytes out, which is above the 5,000,000-byte threshold and to a destination that is not an approved bulk destination (stor-nas-01 10.20.0.45, lab-gw-01 10.20.8.20). No change record in the brief covers this export.",
+   "assumptions": [
+    "10.20.1.21 is the workstation ws-nurse-01 (rhaddad console session 54 at 10:25:21 and the same client IP in app logs)",
+    "Byte counts in app log and tap flow refer to the same transfer"
+   ],
+   "alternative_explanations": [
+    "Undisclosed but authorized bulk export to an internal application server; no change record in the brief covers it",
+    "Export and transfer performed by someone other than the account holder using the shared console"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-0b669d",
+   "claim_type": "second_host_session",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "adm-tkim",
+   "t_start": "2026-11-10T10:30:12Z",
+   "t_end": "2026-11-10T10:35:00Z",
+   "object_or_session": "records#402",
+   "evidence_ids": [
+    "ev_1f05ff28f0e1",
+    "ev_c602b8a93a8e",
+    "ev_55e5f9f5c9f1",
+    "ev_c8c107da32b4"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "The admin account adm-tkim opened SSH session 402 on records from 10.20.1.21, which is the rhaddad nurse workstation and not an admin source (adm-lt-01 10.20.1.90 or vpn-gw-01 10.20.0.250). The session ran from 10:30:12 to 10:35:00 and stopped the log-forwarder.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Admin working from the nurse workstation; the brief lists only two admin source addresses"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a session on this host was opened from another monitored host outside the stated access policy"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-a31272",
+   "claim_type": "forwarding_stopped",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "adm-tkim",
+   "t_start": "2026-11-10T10:30:50Z",
+   "t_end": "2026-11-10T10:34:03Z",
+   "object_or_session": "log-forwarder",
+   "evidence_ids": [
+    "ev_bfdef7f743b0",
+    "ev_c602b8a93a8e",
+    "ev_196ace5fc219",
+    "ev_4e197d46ccb4",
+    "ev_fdb66ba0799c"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "adm-tkim ran sudo systemctl stop log-forwarder on records at 10:30:50; the collector recorded the stop and the restart at 10:34:03, leaving a 3-minute gap in forwarded records data. Collector copies of the records app log are continuous across the window (seq 319 to 320), so this gap is the forwarder, not records-app log deletion.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Authorized maintenance restart of the forwarder; no change record in the brief covers it"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a recorded stop command opens this collection gap and no approved change record covers it"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-fc523e",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T08:07:01Z",
+   "t_end": "2026-11-10T11:16:36Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_52231a92a2f4",
+    "ev_61c524aff7d0",
+    "ev_8df44ade6d0a",
+    "ev_31b0ff9dc481",
+    "ev_7fc3dd7ae856"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.6,
+   "rationale": "Several small lab-request PDF uploads (under 1 MB each) went to lab-gw-01 10.20.8.20, an approved destination for laboratory submissions. These are policy-consistent on destination and below the bulk threshold.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Uploads are small and approved, but the rhaddad and sdubois upload pattern is still worth reviewing"
+   ],
+   "status": "proposed",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-f1164e",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T09:09:03Z",
+   "t_end": "2026-11-10T09:09:04Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_35da361d7424",
+    "ev_6a680eb56d4a"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.7,
+   "rationale": "Scheduled logrotate rotated the records-app access log at 09:09 and archived it off-host to stor-nas-01 with keep 0, so the local copy is short by design. This is not evidence of removal.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-2cee96",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "svc-backup",
+   "t_start": "2026-11-10T12:18:00Z",
+   "t_end": "2026-11-10T12:18:11Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_ef2290dae9d7",
+    "ev_8194bd57fd73"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.7,
+   "rationale": "A 23 MB transfer to the approved backup destination stor-nas-01 at 12:18 matches the svc-backup scheduled backup-incremental job.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-5f2b12",
+   "claim_type": "shell_history_gap",
+   "category": "neutral_reconstruction",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T10:30:00Z",
+   "t_end": "2026-11-10T10:35:00Z",
+   "object_or_session": "/home/adm-tkim/.bash_history",
+   "evidence_ids": [
+    "ev_7f6efad595c0",
+    "ev_c602b8a93a8e"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.4,
+   "rationale": "Shell history records only one command for adm-tkim during session 402 (stop log-forwarder). Shell histories are not forwarded and the host copy is writable, so this sparse trail cannot show whether other commands were run.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  }
+ ],
+ "attribution": {
+  "account_used": null,
+  "session_ref": null,
+  "human_identity": "not_assessed",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [],
+  "statement": "The investigator did not submit an attribution assessment.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "The investigator did not write a summary.",
+ "open_questions": [
+  "Incomplete run: stopped by the budget gateway: input token cap reached: 223086 used + 0 reserved + 63311 needed > 280000."
+ ],
+ "usage": {
+  "llm_calls": 7,
+  "tokens_in": 223086,
+  "tokens_out": 10111,
+  "tokens_cache_read": 166384,
+  "cost_estimate_usd": 0.013807,
+  "wall_seconds": 43.554,
+  "tool_calls": 27,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T13:02:37.013814Z",
+ "report_sha256": "bde072a785fed939757f756a5404c9e3665dd2d0af0267d3b47672b2ec09bf3b",
+ "review_history": [
+  {
+   "at": "2026-11-14T13:02:37.013814Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

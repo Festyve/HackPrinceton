@@ -3,7 +3,7 @@
 > Times are America/New_York. Entries record concrete check results, not intentions.
 > Status vocabulary: **OFFLINE-READY**, **AI-READY**, **INCOMPLETE** (PLAN §14).
 
-## Current state — second run, Saturday November 14, 07:50 ET
+## Current state — second run, Saturday November 14, 08:25 ET
 
 This block is the handoff. Everything below it is the build history, oldest first.
 
@@ -13,10 +13,10 @@ This block is the handoff. Everything below it is the build history, oldest firs
 | Launch | `uv sync --frozen && ./start.sh`, then http://127.0.0.1:8000. `./start.sh --port 8010` if the port is busy. |
 | Demo selection | Recorded replays. For the pitch: **Inside job · cover-up** recorded on Claude Opus 5.5 (specialist mode) or on Claude Haiku 5.5 (fast mode, with two recorded question answers). Also recorded on Haiku: **Records heist** and **Cold chain**. No key or network needed. |
 | Model in use | `anthropic:claude-haiku-5-5`, effort low, for every role. Opus 5.5 recordings and pilot are from the first run and unchanged. |
-| Spend | Estimated **$3.515** of the **$20** cap across both runs (541 model calls). This run: about **$0.59**. Reserved: $0. Unreconciled: $0. Automatic calls stop at $19.50. `uv run alibi spend`. |
-| Tests | `uv run pytest` → **449 passed**: 428 offline, 21 in headless Chrome (07:40). On the UI fallback branch the browser count is 28. A fresh clone of the branch also installed, built, passed the offline tests and served the recorded demo with no key (checked at 06:00, before the last three commits). |
+| Spend | Estimated **$3.628** of the **$20** cap across both runs (621 model calls). This run: about **$0.71**. Reserved: $0. Unreconciled: $0. Automatic calls stop at $19.50. `uv run alibi spend`. |
+| Tests | `uv run pytest` → **450 passed**: 429 offline, 21 in headless Chrome. On the UI fallback branch the browser count is 30. A fresh clone of the default branch at `c0cf94e` (07:50) installed, built, passed every test and served the recorded demo with no key and no `.env`. |
 | Recordings | `demo/replays/`: 4 real-model runs (1 Opus, 3 Haiku) and 2 scripted-fixture runs. All six reproduce their evidence byte for byte and replay offline. |
-| Measured results | `benchmarks/offline-v1`, `benchmarks/ai-pilot-v1` (first run, frozen); `benchmarks/paired-v2` and `benchmarks/paired-v2-rep1` (this run's evaluation and its replication; summary in `docs/evaluation-summary.md`); `benchmarks/calibration`, `benchmarks/feature-checks`, `benchmarks/paired-v2-dev` (operational checks). |
+| Measured results | `benchmarks/offline-v1`, `benchmarks/ai-pilot-v1` (first run, frozen); `benchmarks/paired-v2` and `benchmarks/paired-v2-rep1` (this run's evaluation and its replication; summary in `docs/evaluation-summary.md`); `benchmarks/paired-v2-repeat1` (eight cells run a second time; `docs/evaluation-v2-repeat1.md`); `benchmarks/calibration`, `benchmarks/feature-checks`, `benchmarks/paired-v2-dev` (operational checks). |
 
 **What works end to end now**
 
@@ -34,8 +34,8 @@ This block is the handoff. Everything below it is the build history, oldest firs
 
 **What is not done, and who has it** (details in [BLOCKERS.md](BLOCKERS.md))
 
-- **No captured evidence exists in this build.** `codex/daniel-capture` has not been pushed. Every bundle is simulated. The receiving side is built and tested: `uv run alibi import <directory>` freezes a capture as an unscored case ([`docs/importing.md`](docs/importing.md)). (Daniel to deliver the capture; Eric to merge it.)
-- **The case board on the default branch does not yet call the new routes** (questions, source experiment, export, mode choice, temperature records, designer, new results). `codex/terry-ui` has not moved since 04:24. A working fallback for all but the designer and the new results table is on **`codex/eric-ui-wiring`** (`04620e3`): 28 browser tests pass there, checked by eye in Chrome at 1440 and 390 px wide. It is **not merged**, because `web/` is Terry's. (Terry to take, change or replace it. If nothing arrives before the feature freeze, Eric's session merges the fallback and records that in DECISIONS.md.)
+- **No captured evidence exists in this build.** `codex/daniel-capture` has not been pushed. Every bundle is simulated. This session did not build a capture of its own: Docker runs on this machine but no container image is cached, pulling one is a download that needs a person's approval, and the capture side is Daniel's. The receiving side is built and tested: `uv run alibi import <directory>` freezes a capture as an unscored case ([`docs/importing.md`](docs/importing.md)). (Daniel to deliver the capture; Eric to merge it.)
+- **The case board on the default branch does not yet call the new routes** (questions, source experiment, export, mode choice, temperature records, designer, new results). `codex/terry-ui` has not moved since 04:24. A working fallback for all but the designer is on **`codex/eric-ui-wiring`** (`98a90a8`): 30 browser tests pass there, it was checked by eye in Chrome at 1440 and 390 px wide, and one real-model question was asked through it in a browser (`benchmarks/feature-checks/live-question-in-browser-haiku-5-5.json`). It is **not merged**, because `web/` is Terry's. (Terry to take, change or replace it. If nothing arrives before the feature freeze, Eric's session merges the fallback and records that in DECISIONS.md.)
 - **The adversary planner stays disabled** after the model's refusal. Not worked around. Every incident is a scripted scenario.
 - Not verified: a second machine, the venue projector, any model other than Opus 5.5 and Haiku 5.5, run-to-run variance.
 
@@ -45,7 +45,7 @@ This block is the handoff. Everything below it is the build history, oldest firs
 2. Terry: add UI controls for the new routes, or take `codex/eric-ui-wiring`; rebase on `codex/eric-phase2`. See [`docs/ui-integration-brief.md`](docs/ui-integration-brief.md).
 3. Daniel: push the capture branch with its importer entry point.
 4. Repository owner: make the repository public. A redacted scan of the worktree and of every commit found no credential-like string, and `.env` and the ledger were never committed.
-5. Rayan: decide the pitch from [`docs/claims.md`](docs/claims.md). The honest headline from the measurements is that the deterministic comparison does the detecting (16 of 16 incident effects on the new cases) and the model investigates, explains and answers; the checks lifted one agent from 10 to 15 of 16; one agent did better than three.
+5. Rayan: decide the pitch from [`docs/claims.md`](docs/claims.md). The honest headline from the measurements is that the deterministic comparison does the detecting (16 of 16 incident effects on the new cases) and the model investigates, explains and answers; the checks lifted one agent from 10 to 15 of 16; one agent did better than three. A repeat of eight of those cells changed six of them by one or two effects, so present the order of the systems, which held both times, and not the exact gaps.
 
 ## Pre-existing state (before the overnight goal)
 
@@ -404,3 +404,19 @@ Phase-two model spend so far: about **$0.08** (ledger total $3.006 of the $20 ca
 - **UI fallback on its own branch** (`codex/eric-ui-wiring`, `04620e3`, not merged): question composer with recorded and unanswered states, witness removal with the server's comparison, report download, investigation mode, spend line, and a temperature chart for cold-chain cases. Three assertions in Terry's browser tests that pinned the old "unavailable" placeholders are changed on that branch only. 28 browser tests pass there; screenshots were checked by eye.
 - **Second independent review** (information barrier, input handling, new routes): ten defects, each reproduced by the reviewer, all fixed with regression tests (`32eb417`). The three that mattered: a derived evidence view could be unsealed while its original's report was still open; a command-line call beside a running server marked the server's running work as failed; a designed case's public seed differed with and without a placed incident. Details in DECISIONS.md. Recorded answers' labels were re-derived with the stricter claim check: all 22 unchanged.
 - Tests after these: **449 passed** (428 offline, 21 browser on this branch). Spend unchanged at $3.515: nothing in this stretch called a model.
+
+### Results in the interface, a live browser check and a fresh clone (07:50–08:10)
+
+- `GET /api/benchmark` now also returns `paired_summary`: the six systems summed over both declared suites, computed from the same result files as `docs/evaluation-summary.md`. A test pins the committed figures (4, 16, 10, 15, 7 and 12 of 16) so a result file cannot change silently (`fb8f9ff`).
+- UI fallback branch: the Benchmark tab opens with that table and its limits; a derived case shows the server's refusal when someone tries to unseal it before the original is locked (`98a90a8`, 30 browser tests).
+- **One real-model question through the browser** on the Haiku recording: answered in 7.3 s, labeled "Live model", 3 claims confirmed by a check, 1 cited, 1 marked as the model's interpretation, no person named; 2 model calls, est. $0.0021. The recording's own label and its five findings were unchanged. Saved as `benchmarks/feature-checks/live-question-in-browser-haiku-5-5.json`.
+- **Fresh clone** of the default branch at `c0cf94e`, with no `.env`: `uv sync --frozen`, UI build, all 449 tests of that commit, `./start.sh`, recorded demo opened as "Recorded AI run". Passed.
+- Spend after this stretch: $3.517326, 543 calls, nothing reserved or unreconciled.
+
+### A declared repeat of eight evaluation cells (08:00–08:25)
+
+- Every comparison so far rested on one run per cell. `paired-v2-repeat1` was declared and pushed (`9ebc4b2`) before it ran: the eight model cells of the two incident cases of `paired-v2`, on the same two bundles, same model, prompts, tools, rules and caps. The configuration check refuses it if any of those differs from `paired-v2`'s own declaration.
+- **Result: 2 of 8 model cells established the same number of incident effects as the first time.** Out of 8 effects per system: one agent with the checks 7 then 8; three agents with the checks 5 then 6; one agent without 5 then 4; three agents without 5 then 5. The two systems with no model were identical, and the bundle hashes were the same in both runs.
+- What was the same both times: the deterministic checks established everything; one agent with the checks was ahead of three; only the systems without the checks were stopped by the input cap; no unsupported accepted allegation and no named person in any cell.
+- Consequence: README, the claims register, the judge questions and the Devpost draft now say that a one- or two-effect gap between systems is within what a second run changes. The repeat is reported beside the sums and never added to them; a test pins both.
+- Cost: est. $0.1109 (worst case declared: $0.36 against the $0.4244 left of the evaluation ceiling). Ledger after: $3.628263, 621 calls, nothing reserved or unreconciled. `BENCH_MAX_SYSTEM_RUNS` is back to 0.

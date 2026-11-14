@@ -414,6 +414,13 @@ def _cmd_import(args: argparse.Namespace) -> int:
     return 0
 
 
+def _eval_report(evaluation: Any, suite: str, doc: dict[str, Any]) -> str:
+    """A suite's report. A repeat is reported beside the run it repeats, cell by cell."""
+    original = evaluation.SUITES[suite].get("repeat_of")
+    first = evaluation.latest(suite=original) if original else None
+    return evaluation.render_repeat(first, doc) if first else evaluation.render_markdown(doc)
+
+
 def _cmd_eval(args: argparse.Namespace) -> int:
     """The phase-two paired evaluation: declare, check, preflight (none of which call a model) or run."""
     from alibi import evaluation
@@ -442,13 +449,13 @@ def _cmd_eval(args: argparse.Namespace) -> int:
                 print(f"{suite} has no results yet", file=sys.stderr)
                 return 1
             name = "evaluation-v2.md" if suite == evaluation.SUITE else f"evaluation-{suite.replace('paired-', '')}.md"
-            evaluation.REPORT_MD.with_name(name).write_text(evaluation.render_markdown(doc), encoding="utf-8")
+            evaluation.REPORT_MD.with_name(name).write_text(_eval_report(evaluation, suite, doc), encoding="utf-8")
             print(f"wrote docs/{name} from {suite} run {doc['run_id']}")
             return 0
         if args.summary:
-            docs = [d for d in (evaluation.latest(suite=name) for name in evaluation.SUITES) if d]
+            docs = [d for d in (evaluation.latest(suite=name) for name in evaluation.summed_suites()) if d]
             out = evaluation.REPORT_MD.with_name("evaluation-summary.md")
-            out.write_text(evaluation.render_combined(docs), encoding="utf-8")
+            out.write_text(evaluation.render_combined(docs, (evaluation.summary() or {}).get("repeats")), encoding="utf-8")
             print(f"wrote {out}")
             return 0
         if args.dev_check:
@@ -456,7 +463,7 @@ def _cmd_eval(args: argparse.Namespace) -> int:
         elif args.run:
             doc = evaluation.run(settings, suite=suite)
             name = "evaluation-v2.md" if suite == evaluation.SUITE else f"evaluation-{suite.replace('paired-', '')}.md"
-            evaluation.REPORT_MD.with_name(name).write_text(evaluation.render_markdown(doc), encoding="utf-8")
+            evaluation.REPORT_MD.with_name(name).write_text(_eval_report(evaluation, suite, doc), encoding="utf-8")
         else:
             print("choose one of --declare, --check, --preflight, --dev-check, --run, --summary", file=sys.stderr)
             return 2
@@ -604,7 +611,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--run", action="store_true", help="run the declared matrix and write an immutable result directory")
     p.add_argument("--summary", action="store_true", help="write docs/evaluation-summary.md from the saved results")
     p.add_argument("--render", action="store_true", help="regenerate a suite's report from its saved results (no model call)")
-    p.add_argument("--suite", default="paired-v2", choices=["paired-v2", "paired-v2-rep1"],
+    p.add_argument("--suite", default="paired-v2", choices=["paired-v2", "paired-v2-rep1", "paired-v2-repeat1"],
                    help="paired-v2 (four cases) or its separately declared replication on two more incident seeds")
     p.set_defaults(func=_cmd_eval)
 
