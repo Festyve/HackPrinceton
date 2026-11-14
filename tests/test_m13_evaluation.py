@@ -239,3 +239,30 @@ def test_first_run_commands_refuse_to_rewrite_their_results(capsys, monkeypatch)
     assert cli.main(["bench", "--check"]) == 0
     assert before == (bench.RESULTS_PATH.read_bytes(), (bench.PILOT_DIR / "results.json").read_bytes(), bench.CONFIG_PATH.read_bytes())
     assert bench.V1_VERSIONS["br"] == "1.0.1" and bench.current_versions()["br"] == "1.1.0"
+
+
+def test_the_results_route_serves_the_same_summary_as_the_committed_result_files(tmp_path):
+    """The interface's results table and docs/evaluation-summary.md are computed from the same files."""
+    from dataclasses import replace as _replace
+
+    from fastapi.testclient import TestClient
+
+    from alibi.api.app import create_app
+    from alibi.config import load_settings
+    from alibi.orchestrator import Orchestrator
+
+    settings = _replace(load_settings({}, dotenv=False), runs_dir=tmp_path / "runs", sealed_dir=tmp_path / "sealed")
+    got = TestClient(create_app(settings, Orchestrator(settings, pace_s=0.0))).get("/api/benchmark").json()["paired_summary"]
+    assert got == json.loads(json.dumps(evaluation.summary()))
+    assert [s["suite"] for s in got["suites"]] == [evaluation.SUITE, evaluation.REPLICATION_SUITE]
+    assert got["incident_cases"] == 4 and got["benign_cases"] == 2 and got["verifier_feedback_during_investigation"] is False
+    assert got["inference"] == "LIVE_MODEL" and "claude-haiku-5-5" in got["model"] and "not an accuracy estimate" in got["note"].lower()
+    by = {s["id"]: s for s in got["systems"]}
+    recall = {k: (v["aggregate"]["step_recall"]["num"], v["aggregate"]["step_recall"]["den"]) for k, v in by.items()}
+    # the committed measurements; a change here means a result file changed, which must never happen silently
+    assert recall == {"B0": (4, 16), "BR": (16, 16), "B1": (10, 16), "B1+": (15, 16), "B2": (7, 16), "ALIBI": (12, 16)}
+    assert {k: v["censored"] for k, v in by.items()} == {"B0": 0, "BR": 0, "B1": 3, "B1+": 0, "B2": 3, "ALIBI": 0}
+    assert all(v["aggregate"]["unsupported_named_attribution"] == 0 for v in by.values())
+    assert len(got["correct_findings_not_counted"]) >= 3
+    # with no result files there is nothing to show, and the route says so with null
+    assert evaluation.summary({s: tmp_path / "none" / s for s in evaluation.SUITES}) is None

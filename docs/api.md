@@ -174,6 +174,7 @@ A model chooses an ordinary operating environment from fixed options. It plans n
 - `GET /api/presets` lists six more presets: `evasion`, `maintenance-control`, `records-heist`, `records-control`, `cold-chain`, `cold-chain-control`. `card.id` is `inside-job`, `records-heist` or `cold-chain`. Their evidence has two more source kinds, `sensor` and `reference`.
 - Reports on those cases can carry more claim types: `timestamp_alteration`, `forwarding_stopped`, `second_host_session`, `sensor_stream_discrepancy` (allegations) and `shell_history_gap`, `metadata_change`, `temperature_excursion`, `sensor_maintenance`, `policy_consistent_access` (notes). An effect that no captured source can show has outcome `unobservable` in the reveal.
 - `GET /api/benchmark` adds `paired_v2`: the latest result of the phase-two evaluation (six systems, four new cases), or `null`. It is a separate suite and is not merged into the first-run tables.
+- `GET /api/benchmark` adds `paired_summary`: the six systems summed over that suite and its separately declared replication (six cases), or `null`. `systems[]` has `id`, `label`, `cells`, `censored` (runs stopped by a budget cap) and `aggregate` with `step_recall`, `coverup_detected`, `benign_false_alert`, `false_claims_final`, `unsupported_named_attribution` and `cost_estimate_usd`. `correct_findings_not_counted[]` lists findings that matched an executed effect but were not accepted, and why. `note` states that these are sums of one run per cell, not an accuracy estimate; show it with the table.
 
 ## Imported evidence
 

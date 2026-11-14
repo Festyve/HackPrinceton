@@ -164,11 +164,11 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
         doc = bench.combined_results()
         # The phase-two paired evaluation is a separate suite with its own cases and rules. It is offered beside
         # the first-run results, never merged into them.
-        paired = evaluation.latest()
+        paired = {"paired_v2": evaluation.latest(), "paired_summary": evaluation.summary()}
         if doc is None:
-            return JSONResponse({"available": False, "paired_v2": paired,
+            return JSONResponse({"available": False, **paired,
                                  "reason": "no benchmark results yet; run `uv run alibi bench`"})
-        return JSONResponse({"available": True, **doc, "paired_v2": paired})
+        return JSONResponse({"available": True, **doc, **paired})
 
     # ------------------------------------------------------------------ cases
     @app.get("/api/cases")
