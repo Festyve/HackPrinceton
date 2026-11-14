@@ -28,7 +28,7 @@ Seeded cases; frozen raw evidence; exact-line provenance; a sealed answer key; s
 | UI | Seven header status elements, three dense columns, wrapped tiny logs, and an offline warning beside a valid replay. | Terry owns an evidence workbench: missing entry, surviving copy, next action. Runtime administration and metrics move to a drawer. |
 | Submission | Repository is private. | Owner makes it public after a redacted history/worktree secret scan. Creation time is valid. A branch named `main` is not required by the packet. |
 
-Budget findings do not establish that prior runs exceeded the cap. The previous estimate was about $2.92 used / $2.08 remaining; inspect the preserved ledger and Console before any new call.
+Budget findings do not establish that prior runs exceeded the cap. The previous estimate was about $2.92 used; the cap has since been raised to $20, leaving about $17.08. Inspect the preserved ledger and Console before any new call.
 
 ## Every unfinished item has an owner
 

@@ -6,7 +6,7 @@ All times are **America/New_York, November 14–15, 2026**. Submission is Sunday
 
 | Person | Owns | A real finished deliverable |
 |---|---|---|
-| Eric Chen | Runtime, backend, contracts, integrations | Safe $5 cumulative accounting; live fast/specialist workflows; cited questions; source experiment; completed evaluation; runnable release |
+| Eric Chen | Runtime, backend, contracts, integrations | Safe $20 cumulative accounting; live fast/specialist workflows; cited questions; source experiment; completed evaluation; runnable release |
 | Terry | Product UI | Designed evidence workbench, all states and real interactions, screenshots and passing browser checks |
 | Daniel | Independent evidence and evaluation | Real Linux/collector capture, importer, benign controls and harder cases, second-machine verification |
 | Rayan | Product direction and acceptance | Clear target user, feedback-driven decisions, accepted demo flow, credible claims, presentation and submission |
@@ -49,4 +49,4 @@ Keep the repo creation history. Make it public after scanning history/worktree f
 
 Owner branches: codex/eric-phase2, codex/terry-ui, codex/daniel-capture. Each handoff contains commit, working command, proof, integration request and remaining issue. Eric merges; agents do not silently edit another owner's paths.
 
-At 09:00 and 19:00 each person reports only: what works, a link/command proving it, and what another teammate needs to do. Keep live API usage exclusively on Eric's preserved ledger. The team's confirmed cap remains $5 total.
+At 09:00 and 19:00 each person reports only: what works, a link/command proving it, and what another teammate needs to do. Keep live API usage exclusively on Eric's preserved ledger. The confirmed cap is $20 total, including the first run.

@@ -4,7 +4,7 @@ The first build stays intact. This pack adds a concrete continuation, a full UI 
 
 ## Send Eric this
 
-> Eric — the second-run review is ready. The investigator already ran on real Claude; the missing AI piece is the adversary. Keep the existing checkout, .env and .alibi/spend.json. The cap is still $5 TOTAL, including the first run.
+> Eric — the second-run review is ready. The investigator already ran on real Claude; the missing AI piece is the adversary. Keep the existing checkout, .env and .alibi/spend.json. The cap is $20 TOTAL (raised from $5 on November 14), including the first run.
 >
 > Pull the codex/phase2-handoff branch into your working branch, then use the prompt below in Claude Code signed into Max. Start with the budget fixes, then fast investigation, cited questions and the remove-a-witness experiment. Terry owns web/, Daniel owns capture/import and independent controls. Your agent owns backend/contracts and merges their work.
 >
@@ -28,7 +28,7 @@ If the remote has advanced or there are conflicts, have Claude inspect and merge
 
 You own backend, shared contracts, CLI, model integration, tests and final integration. Terry owns web/ and UI tests; Daniel owns capture/, src/alibi/capture/, its fixtures and tests. Do independent work while they build, then integrate their committed branches without overwriting their changes.
 
-The total authorized API cap is $5 across BOTH runs. Preserve .alibi/spend.json and existing spend. First fix and regression-test the gateway reservations, uncertain usage and coverage issues before any paid call. Follow the inexpensive-model calibration and reserve policy in API_SETUP.md. Never purchase credits, reset a ledger, print secrets or route Claude Code coding work through the runtime API key. Preserve the proven Opus recording.
+The total authorized API cap is $20 across BOTH runs. Preserve .alibi/spend.json and existing spend. First fix and regression-test the gateway reservations, uncertain usage and coverage issues before any paid call. Follow the inexpensive-model calibration and reserve policy in API_SETUP.md. Never purchase credits, reset a ledger, print secrets or route Claude Code coding work through the runtime API key. Preserve the proven Opus recording.
 
 Finish fast/specialist investigation, bounded cited Q&A, immutable source-removal experiments, capture integration, remaining distinct case families, missing evaluation arms and the acceptance checks in CONTINUE.md. Do not bypass the prior adversary refusal; implement only the separate benign scenario-design task described there and label scripted incidents accurately. No fake AI results, stubbed production paths or invented measurements.
 
@@ -48,7 +48,7 @@ Terry needs a checkout of the repository plus TERRY.md and CONTRACTS.md. Daniel 
 ## Files
 
 - CONTINUE.md — Eric's implementation sequence and acceptance gates
-- API_SETUP.md — key location, rotation, exact profile and unchanged $5 cap
+- API_SETUP.md — key location, rotation, exact profile and the $20 total cap
 - CONTRACTS.md — shared API targets and file ownership
 - TERRY.md — full UI direction and copy-paste prompt
 - DANIEL.md — capture/evaluation assignment and copy-paste prompt

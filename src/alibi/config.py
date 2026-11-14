@@ -6,6 +6,7 @@ about a credential is whether a model route is *configured*.
 
 from __future__ import annotations
 
+import math
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -23,9 +24,12 @@ def _f(env: Mapping[str, str], key: str, default: float) -> float:
     if not raw:
         return default
     try:
-        return float(raw)
+        value = float(raw)
     except ValueError as exc:
         raise ConfigError(f"{key} must be a number, got {raw!r}") from exc
+    if not math.isfinite(value):  # NaN and infinity silently defeat every comparison a cap relies on
+        raise ConfigError(f"{key} must be a finite number, got {raw!r}")
+    return value
 
 
 def _i(env: Mapping[str, str], key: str, default: int) -> int:
@@ -43,6 +47,10 @@ def _s(env: Mapping[str, str], key: str) -> str | None:
     return raw or None
 
 
+PER_CALL_INPUT_HARD_MAX = 95_000  # stay under the 100,000-token request size where some price tiers change
+DEMO_RESERVE_USD = 0.50  # held back from automatic use for an operator-triggered live demo
+
+
 @dataclass(frozen=True)
 class RunCaps:
     """Per-investigation caps shared across lead, specialists and retries.
@@ -50,16 +58,33 @@ class RunCaps:
     Revised once from measured evidence (DECISIONS.md, 2026-11-14): the first real run used about
     8,000 input tokens per model call, almost all of it a cached prefix, so the planning guess of
     40,000 cumulative input tokens stopped a correct investigation after 5 calls.
+
+    `max_input_tokens_per_call` is ENFORCED: the gateway counts the outgoing request (system prompt,
+    tool schemas and messages) and refuses to send one that is larger.
     """
 
     max_calls: int = 16
     max_input_tokens: int = 200_000
     max_output_tokens: int = 10_000
     max_seconds: float = 180.0
-    max_input_tokens_per_call: int = 40_000  # bound used to size the per-call spend reservation
+    max_input_tokens_per_call: int = 40_000
     tool_result_max_records: int = 50
     tool_result_max_bytes: int = 8_192
     recursion_limit: int = 60
+
+    def problems(self) -> list[str]:
+        out = []
+        if self.max_calls < 1:
+            out.append("LLM_MAX_CALLS_PER_RUN must be at least 1")
+        if self.max_input_tokens < 1:
+            out.append("LLM_MAX_INPUT_TOKENS_PER_RUN must be at least 1")
+        if self.max_output_tokens < 1:
+            out.append("LLM_MAX_OUTPUT_TOKENS_PER_RUN must be at least 1")
+        if not (math.isfinite(self.max_seconds) and self.max_seconds > 0):
+            out.append("LLM_MAX_SECONDS_PER_RUN must be a positive, finite number")
+        if not 1 <= self.max_input_tokens_per_call <= PER_CALL_INPUT_HARD_MAX:
+            out.append(f"LLM_MAX_INPUT_TOKENS_PER_CALL must be between 1 and {PER_CALL_INPUT_HARD_MAX}")
+        return out
 
 
 @dataclass(frozen=True)
@@ -75,6 +100,12 @@ class Settings:
     price_out_per_mtok: float | None = None
     effort: str = "low"  # reasoning effort for live models that support it
     max_tokens_per_call: int = 3000  # per-response ceiling; the ledger enforces the cumulative cap
+    # LLM_MAX_USD is the absolute cap on estimated cumulative spend. Automatic calls stop at the
+    # development ceiling beneath it; only an explicit operator action may use the rest.
+    dev_ceiling_usd: float | None = None
+    use_demo_reserve: bool = False
+    spend_ledger_path: Path = REPO_ROOT / ".alibi" / "spend.json"
+    spend_floor_usd: float = 0.0  # known earlier spend; a missing ledger starts here, never at zero
     caps: RunCaps = RunCaps()
     runs_dir: Path = REPO_ROOT / "runs"
     sealed_dir: Path = REPO_ROOT / "sealed"
@@ -84,6 +115,13 @@ class Settings:
     @property
     def offline(self) -> bool:
         return self.runtime_mode != "live"
+
+    @property
+    def spend_limit_usd(self) -> float:
+        """The ceiling in force for this process: the development ceiling unless the reserve is opened."""
+        if self.use_demo_reserve or self.dev_ceiling_usd is None:
+            return self.llm_max_usd
+        return min(self.llm_max_usd, self.dev_ceiling_usd)
 
     def live_block_reason(self) -> str | None:
         """Why live inference cannot run right now, or None if it may be attempted."""
@@ -104,6 +142,14 @@ class Settings:
                     "Unknown pricing: set LLM_PRICE_IN_PER_MTOK and LLM_PRICE_OUT_PER_MTOK. "
                     "Unknown pricing disables billed routes rather than guessing."
                 )
+            if self.price_in_per_mtok <= 0 or self.price_out_per_mtok <= 0:
+                return "Pricing must be positive for a billed route: a zero price would hide all spend."
+            others = {m for m in (self.subagent_model, self.adversary_model) if m}
+            if others - {self.lead_model}:
+                return (
+                    "One price pair is configured, so every role must use the same model: set SUBAGENT_MODEL "
+                    "and ADVERSARY_MODEL to LEAD_MODEL (or leave them empty)."
+                )
         return None
 
     def public_dict(self) -> dict:
@@ -119,6 +165,9 @@ class Settings:
             "live_block_reason": self.live_block_reason(),
             "effort": self.effort,
             "max_tokens_per_call": self.max_tokens_per_call,
+            "dev_ceiling_usd": self.dev_ceiling_usd,
+            "spend_limit_in_force_usd": self.spend_limit_usd,
+            "demo_reserve_open": self.use_demo_reserve,
             "price_in_per_mtok": self.price_in_per_mtok,
             "price_out_per_mtok": self.price_out_per_mtok,
             "caps": {
@@ -126,6 +175,7 @@ class Settings:
                 "max_input_tokens": self.caps.max_input_tokens,
                 "max_output_tokens": self.caps.max_output_tokens,
                 "max_seconds": self.caps.max_seconds,
+                "max_input_tokens_per_call": self.caps.max_input_tokens_per_call,
                 "tool_result_max_records": self.caps.tool_result_max_records,
                 "tool_result_max_bytes": self.caps.tool_result_max_bytes,
             },
@@ -171,13 +221,34 @@ def load_settings(env: Mapping[str, str] | None = None, *, dotenv: bool = True) 
 
     price_in = _f(env, "LLM_PRICE_IN_PER_MTOK", -1.0)
     price_out = _f(env, "LLM_PRICE_OUT_PER_MTOK", -1.0)
+    for key, value in (("LLM_PRICE_IN_PER_MTOK", price_in), ("LLM_PRICE_OUT_PER_MTOK", price_out)):
+        if _s(env, key) is not None and value < 0:
+            raise ConfigError(f"{key} cannot be negative")
 
     caps = RunCaps(
         max_calls=_i(env, "LLM_MAX_CALLS_PER_RUN", 16),
         max_input_tokens=_i(env, "LLM_MAX_INPUT_TOKENS_PER_RUN", 200_000),
         max_output_tokens=_i(env, "LLM_MAX_OUTPUT_TOKENS_PER_RUN", 10_000),
         max_seconds=_f(env, "LLM_MAX_SECONDS_PER_RUN", 180.0),
+        max_input_tokens_per_call=_i(env, "LLM_MAX_INPUT_TOKENS_PER_CALL", 40_000),
     )
+    if caps.problems():
+        raise ConfigError("; ".join(caps.problems()))
+
+    dev_raw = _s(env, "LLM_DEV_CEILING_USD")
+    if dev_raw is None:
+        dev_ceiling = max(0.0, llm_max_usd - DEMO_RESERVE_USD)
+    else:
+        dev_ceiling = _f(env, "LLM_DEV_CEILING_USD", 0.0)
+        if dev_ceiling < 0 or dev_ceiling > llm_max_usd:
+            raise ConfigError("LLM_DEV_CEILING_USD must be between 0 and LLM_MAX_USD")
+    spend_floor = _f(env, "LLM_SPEND_FLOOR_USD", 0.0)
+    if spend_floor < 0:
+        raise ConfigError("LLM_SPEND_FLOOR_USD cannot be negative")
+    ledger_raw = _s(env, "ALIBI_SPEND_LEDGER")
+    if ledger_raw is not None and not Path(ledger_raw).is_absolute():
+        raise ConfigError("ALIBI_SPEND_LEDGER must be an absolute path, so every worktree shares one ledger")
+    ledger_path = Path(ledger_raw) if ledger_raw else REPO_ROOT / ".alibi" / "spend.json"
 
     effort = (_s(env, "LLM_EFFORT") or "low").lower()
     if effort not in ("low", "medium", "high", "xhigh", "max"):
@@ -201,6 +272,10 @@ def load_settings(env: Mapping[str, str] | None = None, *, dotenv: bool = True) 
         price_out_per_mtok=None if price_out < 0 else price_out,
         effort=effort,
         max_tokens_per_call=per_call,
+        dev_ceiling_usd=dev_ceiling,
+        use_demo_reserve=(_s(env, "ALIBI_USE_DEMO_RESERVE") == "1"),
+        spend_ledger_path=ledger_path,
+        spend_floor_usd=spend_floor,
         caps=caps,
         runs_dir=runs_dir,
         sealed_dir=sealed_dir,

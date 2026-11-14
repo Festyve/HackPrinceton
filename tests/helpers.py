@@ -5,7 +5,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from pathlib import Path
 
-from alibi.contracts import EvidenceManifest
+from alibi.contracts import CoverageGap, EvidenceManifest, SourceInfo
+from alibi.episode import INDEPENDENT_KINDS, classify
 from alibi.evidence.normalize import normalize_artifact
 from alibi.evidence.store import EvidenceStore, build_store
 
@@ -64,15 +65,37 @@ def context(**over) -> dict:
 
 
 def mini_case(tmp_path: Path, artifacts: dict[str, list[str]], ctx: dict | None = None,
-              start: str = "06:00:00", end: str = "16:00:00") -> tuple[EvidenceStore, EvidenceManifest]:
-    events = []
+              start: str = "06:00:00", end: str = "16:00:00",
+              declared: dict[str, tuple[str, str]] | None = None,
+              gaps: dict[str, list[tuple[str, str, str]]] | None = None) -> tuple[EvidenceStore, EvidenceManifest]:
+    """A hand-written bundle. The manifest lists exactly the artifacts given, as a real one does.
+
+    declared: artifact -> (start, end) the capture STATES it covered; gaps: artifact -> stated gaps.
+    """
+    events, sources = [], []
     for artifact, lines in artifacts.items():
         evs, errs = normalize_artifact(artifact, "".join(line + "\n" for line in lines))
         assert not errs, errs
         events.extend(evs)
+        kind, role, logical, _gen = classify(artifact)
+        tss = [e.ts for e in evs if e.action != "unparsed"]
+        stated = (declared or {}).get(artifact)
+        sources.append(SourceInfo(
+            artifact=artifact, host=role, source={"history": "shell_history"}.get(kind, kind), logical_file=logical,
+            sha256="0" * 64, size_bytes=sum(len(x) + 1 for x in lines), line_count=len(lines),
+            tamper_exposure="independent_witness" if kind in INDEPENDENT_KINDS else "host_local_writable",
+            coverage_start=dt(stated[0]) if stated else (min(tss) if tss else None),
+            coverage_end=dt(stated[1]) if stated else (max(tss) if tss else None),
+            coverage_declared=bool(stated),
+            known_gaps=[CoverageGap(start=dt(a), end=dt(b), reason=why) for a, b, why in (gaps or {}).get(artifact, [])],
+        ))
     db = tmp_path / f"mini-{len(list(tmp_path.glob('mini-*')))}.duckdb"
     build_store(db, events)
     manifest = EvidenceManifest(bundle_id="bndl-mini", normalizer_version="test", capture_start=dt(start),
-                                capture_end=dt(end), sources=[], raw_bundle_sha256="0" * 64,
+                                capture_end=dt(end), sources=sources, raw_bundle_sha256="0" * 64,
                                 operational_context=ctx or context())
     return EvidenceStore(db), manifest
+
+
+def badge(hms: str, badge_id: str, event: str, seq: int = 1) -> str:
+    return '{"ts":"%s","badge":"%s","event":"%s","reader":"door-staff-1","seq":%d}' % (ts(hms), badge_id, event, seq)

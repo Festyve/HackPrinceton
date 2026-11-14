@@ -38,4 +38,4 @@ Training teams can inspect how an investigator reached a conclusion. Builders ca
 
 **How much does it cost?**
 
-The recorded demo costs no model calls. The first pilot cost approximately $0.50 for four single-agent runs and $1.30 for four specialist runs. New runtime costs must be measured on the selected model. The team has authorized $5 total across development and demonstration; Console billing remains authoritative.
+The recorded demo costs no model calls. The first pilot cost approximately $0.50 for four single-agent runs and $1.30 for four specialist runs. New runtime costs must be measured on the selected model. The team has authorized $20 total across development and demonstration, tracked by a ledger that reserves before each call and keeps unknown outcomes at their worst case; Console billing remains authoritative.

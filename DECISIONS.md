@@ -68,3 +68,21 @@ One line per decision: **decision** · reason · how to reverse.
 ## Phase-two planning decisions — November 14
 
 The user kept the original $5 total API cap. The continuation prioritizes conservative gateway accounting, useful cited questions, source-removal experiments, independent capture, and UI clarity before additional simulator breadth. The existing single-agent builder becomes a product option because the pilot found equal accuracy at lower cost. Haiku 5.5 is a candidate for bounded calibration, not a validated runtime change. The prior adversary refusal is honored; any benign scenario-design feature has a different restricted task and must not be called an AI attacker. No application code or historical evaluation results changed in this documentation handoff.
+
+
+## Phase-two implementation decisions — November 14
+
+Format as above: decision · why · how to reverse.
+
+- **The total cap is $20 across both runs** · Eric raised it from $5 at the start of the second run and confirmed it again in the session; the $2.92 already spent counts toward it · `LLM_MAX_USD` in `.env`.
+- **The first-run ledger was migrated in place, not replaced** · `.alibi/spend.json` kept its $2.922403 and 91 calls through the format change; a copy of the original is beside it (`spend.v1-backup-2026-11-14.json`, gitignored) and `LLM_SPEND_FLOOR_USD=2.922403` means even a missing ledger cannot restart at zero · n/a.
+- **A request is counted with the provider's token-counting endpoint before it is sent, and one that cannot be counted is not sent** · the first gateway reserved against an assumed size; counting is a separate unbilled endpoint and sees the system prompt and tool schemas · `count_request_tokens` in `agents/gateway.py`.
+- **Unknown billing outcomes keep their worst-case cost until an operator reconciles them** · a timeout or lost response may have been billed; counting it as zero, or letting it expire after 15 minutes, could let total spend pass the cap unnoticed. The cost is that the ledger can overstate spend · `uv run alibi spend --reconcile <token> --actual <usd>`.
+- **A timed-out call also uses up its reserved tokens in the per-investigation caps** · the same reasoning applied to the run caps; one timeout plus its retry can end an investigation early, which is reported as an incomplete run · `BudgetLedger.commit(outcome="uncertain")`.
+- **Automatic calls stop $0.50 below the cap** · the reserve is for an operator-triggered live demo · `LLM_DEV_CEILING_USD`, `ALIBI_USE_DEMO_RESERVE=1`.
+- **All roles must use one model while one price pair is configured** · mixed models under one price would misprice some calls · `live_block_reason` in `config.py`.
+- **Candidate runtime profile is Claude Haiku 5.5 at $0.10 / $0.50 per million tokens, pending calibration** · per API_SETUP.md; the Opus recording and pilot stay as recorded. Not yet a claim that it works here · model and price lines in `.env`.
+- **A collector-retained line is "unexplained" only with a local record on both sides** · the old rule needed only a later record, so a late-start capture (missing prefix) would have been read as removal. Across all 56 development, test and demo cover-up seeds every existing unexplained line already had both brackets, so no recorded result changes · `reconcile_file` in `checks.py`, `CHECKS_VERSION` 1.1.0.
+- **A source missing from the bundle makes the dependent check "not assessable"** · no collector, no host copy, no flow records, no badge reader or no heartbeat data now read as unknown; before, some of these produced "consistent" or an empty list that looked clean · `coverage` and `coverage_limits` in each check result.
+- **Sources can state their coverage** (`coverage_declared`, `known_gaps` on `SourceInfo`) · needed for real captures that start late or pause; simulated bundles keep the old meaning (first and last surviving record) · additive fields with defaults, so first-run manifests and recordings still load.
+- **BR and verifier version numbers are unchanged for now** · their decisions on every first-run case are identical and `offline-v1` stays reproducible; only inputs that could not occur before (absent sources) get new wording. Both are bumped when the phase-two evaluation suite is declared with its own config · n/a.

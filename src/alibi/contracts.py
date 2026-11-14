@@ -87,6 +87,14 @@ class Event(Strict):
         return utc(v)
 
 
+class CoverageGap(Strict):
+    """A stated interval in which a source is known NOT to have been recording."""
+
+    start: datetime
+    end: datetime
+    reason: str = ""
+
+
 class SourceInfo(Strict):
     """Explicit trust/coverage metadata for one evidence source."""
 
@@ -103,6 +111,10 @@ class SourceInfo(Strict):
     coverage_start: datetime | None = None
     coverage_end: datetime | None = None
     coverage_note: str = ""
+    # False: coverage_start/end are just the first and last record that survive in the artifact.
+    # True: they are a statement by whoever captured the source about when it was recording.
+    coverage_declared: bool = False
+    known_gaps: list[CoverageGap] = Field(default_factory=list)
     forwarded_to_collector: bool = False
 
 
