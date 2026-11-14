@@ -3,7 +3,7 @@
 > Times are America/New_York. Entries record concrete check results, not intentions.
 > Status vocabulary: **OFFLINE-READY**, **AI-READY**, **INCOMPLETE** (PLAN §14).
 
-## Current state — second run, Saturday November 14, 08:35 ET
+## Current state — second run, Saturday November 14, 09:15 ET
 
 This block is the handoff. Everything below it is the build history, oldest first.
 
@@ -14,7 +14,7 @@ This block is the handoff. Everything below it is the build history, oldest firs
 | Demo selection | Recorded replays. For the pitch: **Inside job · cover-up** recorded on Claude Opus 5.5 (specialist mode) or on Claude Haiku 5.5 (fast mode, with two recorded question answers). Also recorded on Haiku: **Records heist** and **Cold chain**. No key or network needed. |
 | Model in use | `anthropic:claude-haiku-5-5`, effort low, for every role. Opus 5.5 recordings and pilot are from the first run and unchanged. |
 | Spend | Estimated **$3.639** of the **$20** cap across both runs (632 model calls). This run: about **$0.72**. Reserved: $0. Unreconciled: $0. Automatic calls stop at $19.50. `uv run alibi spend`. |
-| Tests | `uv run pytest` → **452 passed, none failed or skipped** at `a043d4a` (08:17): 431 offline, 21 in headless Chrome. On the UI fallback branch the browser count is 31. A fresh clone of the default branch at `c0cf94e` (07:50) installed, built, passed every test and served the recorded demo with no key and no `.env`. |
+| Tests | `uv run pytest` → **452 passed, none failed or skipped** at `a043d4a` (08:17): 431 offline, 21 in headless Chrome. On the UI fallback branch the browser count is 40. A fresh clone of the default branch at `c0cf94e` (07:50) installed, built, passed every test and served the recorded demo with no key and no `.env`. |
 | Recordings | `demo/replays/`: 4 real-model runs (1 Opus, 3 Haiku) and 2 scripted-fixture runs. All six reproduce their evidence byte for byte and replay offline. |
 | Measured results | `benchmarks/offline-v1`, `benchmarks/ai-pilot-v1` (first run, frozen); `benchmarks/paired-v2` and `benchmarks/paired-v2-rep1` (this run's evaluation and its replication; summary in `docs/evaluation-summary.md`); `benchmarks/paired-v2-repeat1` (eight cells run a second time; `docs/evaluation-v2-repeat1.md`); `benchmarks/calibration`, `benchmarks/feature-checks`, `benchmarks/paired-v2-dev` (operational checks). |
 
@@ -30,12 +30,12 @@ This block is the handoff. Everything below it is the build history, oldest firs
 - Paired evaluation of six systems on six new cases in two separately declared suites, and a declared repeat of eight of its cells.
 - Terminal commands for the whole flow: `alibi run`, `experiment`, `ask`, `review`, `export`, `import`, `cases`.
 - A read-only view of a cold-chain case's two temperature records (`GET /api/cases/{id}/evidence/sensor-streams`).
-- Two independent reviews (budget code; information barrier and input handling) with every finding fixed and pinned by a test.
+- Three independent reviews (budget code; information barrier and input handling; the fallback interface) with every finding fixed and pinned by a test.
 
 **What is not done, and who has it** (details in [BLOCKERS.md](BLOCKERS.md))
 
 - **No captured evidence exists in this build.** `codex/daniel-capture` has not been pushed. Every bundle is simulated. This session did not build a capture of its own: Docker runs on this machine but no container image is cached, pulling one is a download that needs a person's approval, and the capture side is Daniel's. The receiving side is built and tested: `uv run alibi import <directory>` freezes a capture as an unscored case ([`docs/importing.md`](docs/importing.md)). (Daniel to deliver the capture; Eric to merge it.)
-- **The case board on the default branch does not yet call the new routes** (questions, source experiment, export, mode choice, temperature records, designer, new results, spend). `codex/terry-ui` has not moved since 04:24. A working fallback for every item in the UI brief is on **`codex/eric-ui-wiring`** (`b172bb0`, 10 files, about 2,300 added lines, most of them one new component file, its styles and its tests): 31 browser tests pass there, a fresh clone of it at `5002b4e` passed all 461 tests of that commit, it was checked by eye in Chrome at 1440 and 390 px wide, and one real-model question was asked through it in a browser (`benchmarks/feature-checks/live-question-in-browser-haiku-5-5.json`). It is **not merged**, because `web/` is Terry's. (Terry to take, change or replace it. If nothing arrives before the feature freeze, Eric's session merges the fallback and records that in DECISIONS.md.)
+- **The case board on the default branch does not yet call the new routes** (questions, source experiment, export, mode choice, temperature records, designer, new results, spend). `codex/terry-ui` has not moved since 04:24. A working fallback for every item in the UI brief is on **`codex/eric-ui-wiring`** (`950829c`, 10 files, about 3,000 added lines, most of them one new component file, its styles and its tests): 40 browser tests pass there, an independent review of it found nine defects that are all fixed, a fresh clone of it at `5002b4e` passed all 461 tests of that commit, it was checked by eye in Chrome at 1440 and 390 px wide, and one real-model question was asked through it in a browser (`benchmarks/feature-checks/live-question-in-browser-haiku-5-5.json`). It is **not merged**, because `web/` is Terry's. (Terry to take, change or replace it. If nothing arrives before the feature freeze, Eric's session merges the fallback and records that in DECISIONS.md.)
 - **The adversary planner stays disabled** after the model's refusal. Not worked around. Every incident is a scripted scenario.
 - Not verified: a second machine, the venue projector, any model other than Opus 5.5 and Haiku 5.5, run-to-run variance.
 
@@ -433,3 +433,11 @@ Phase-two model spend so far: about **$0.08** (ledger total $3.006 of the $20 ca
 - In Chrome, on the fallback branch with the real model: the designer returned "Environment chosen by a model (anthropic:claude-haiku-5-5) from fixed options. It planned no incident…" in 1.8 s; the case generated from it (nothing placed by the operator) was investigated in fast mode in 24.3 s and labeled "Live model" / "LIVE · fresh case"; the report made no incident allegation and named nobody; one question was answered in 6.9 s with 1 claim confirmed by a check and 2 cited; unsealing showed a benign day, environment chosen by a model, no step chosen by a model, no false alert. No console errors.
 - Cost of that pass: est. $0.0106 (11 model calls). Ledger: $3.638866, 632 calls, nothing reserved or unreconciled.
 - Saved as `benchmarks/feature-checks/live-designer-investigation-question-in-browser-haiku-5-5.json`.
+
+### 09:00 checkpoint, and a review of the fallback interface (08:35–09:15)
+
+- The 09:00 checkpoint was presented in the session: default branch `26c2cba`, 452 tests passing at `a043d4a`, spend $3.639, no captured evidence, UI wiring only on the unmerged fallback branch.
+- An independent review of the fallback interface (a separate clone, offline, no model) reported nine defects, each reproduced. All are fixed on `codex/eric-ui-wiring` (`2c9f8b6`, `950829c`): the server's own reason for a refused question; polling that survives failed status requests and says "status unknown" instead of "answering" when the server stays unreachable; one idempotency token per composed question, derivation, design and generation; a temperature panel that counts nothing when nothing could be compared and whose headline says no more than the server's status; chart edge cases; a reduced view that says when its original was reset.
+- Nine browser tests were added (40 on that branch). Six behaviors were then broken on purpose, one at a time, and each breakage made a test fail. One earlier test turned out to reload the page where a user would switch cases in-app; it now switches in-app and catches stale answers.
+- Nothing in this stretch called a model. Ledger unchanged: $3.638866, 632 calls.
+

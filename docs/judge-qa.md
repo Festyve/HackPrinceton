@@ -46,7 +46,7 @@ Yes, once, and it changed how we talk about the results. We declared a repeat of
 
 **Who checked your code?**
 
-Tests, and two cold reads by a second agent that was told nothing about what to expect: one of the budget code, one of the information barrier and input handling in the new routes. They found fifteen defects, each reproduced before it was reported. The most serious: a derived evidence view could be unsealed while the original report was still open. All are fixed, and each has a regression test.
+Tests, and three cold reads by a second agent that was told nothing about what to expect: the budget code, the information barrier and input handling in the new routes, and the interface code for the new controls. They found twenty-four defects, each reproduced before it was reported. The most serious: a derived evidence view could be unsealed while the original report was still open. All are fixed, and each has a regression test.
 
 **Is simulated evidence enough?**
 
