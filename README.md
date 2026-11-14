@@ -57,7 +57,7 @@ Python checks establish observations. A LangChain DeepAgent investigates, consid
 - **Export** the locked report with its hash, the model and mode that produced it, and the exact cited lines.
 - **Design an environment.** A model picks an ordinary working day from fixed options; an operator may place a scripted incident in it.
 
-All of this is in the backend API ([reference](docs/api.md)) and tested. The case board in `web/` covers the investigation, evidence, review and reveal flow; controls for the newer features are being added by the UI owner. Until then the same features run from a terminal, against the same cases the case board shows:
+All of this is in the backend API ([reference](docs/api.md)) and tested. The case board in `web/` on this branch covers the investigation, evidence, review and reveal flow. Controls for the newer features (questions, removing a witness, export, mode choice, the temperature chart, the new results and the environment designer) are on the branch `codex/eric-ui-wiring`, tested in a browser and awaiting the UI owner's review: `git switch codex/eric-ui-wiring && ./start.sh`. On this branch the same features run from a terminal, against the same cases the case board shows:
 
 ```sh
 uv run alibi run --preset hero-coverup          # investigate; stops at human review and prints the case id
