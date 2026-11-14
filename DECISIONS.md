@@ -63,3 +63,8 @@ One line per decision: **decision** · reason · how to reverse.
 - **A replay of a real run is labeled `Recorded AI run` and its report `RECORDED_MODEL`** · a saved real run must never be presented as live (PLAN §2.6) · `_replay_thread` in `orchestrator.py`.
 - **Sealed attribution truth is derived from the executed login step** · with a model-chosen plan the scenario's intended account and the account actually used can differ; truth is what ran (PLAN §8.3) · `build_answer_key` in `episode.py`.
 - **Pilot development used only the demo seed (9023)**; the declared test seeds were first seen by a model in the pilot itself · keeps the pilot cases unseen by prompt tuning · n/a.
+
+
+## Phase-two planning decisions — November 14
+
+The user kept the original $5 total API cap. The continuation prioritizes conservative gateway accounting, useful cited questions, source-removal experiments, independent capture, and UI clarity before additional simulator breadth. The existing single-agent builder becomes a product option because the pilot found equal accuracy at lower cost. Haiku 5.5 is a candidate for bounded calibration, not a validated runtime change. The prior adversary refusal is honored; any benign scenario-design feature has a different restricted task and must not be called an AI attacker. No application code or historical evaluation results changed in this documentation handoff.

@@ -1,54 +1,31 @@
-# Two-minute demo script
+# Two-minute demonstration
 
-Draft for Terry and Rayan to edit. **Recommended mode:** replay of the recorded real-model run. Badges on screen: evidence `SIM`, inference `Recorded AI run`, playback `REPLAY`. It needs no network and costs nothing. A live run takes about a minute and does not fit two minutes.
+Use the committed **Recorded AI run** until a newer recording has been verified. This script describes the current build. Add phase-two features only after they work and the timed rehearsal still fits.
 
-Do not say "AI adversary". The adversary is a scripted scenario; a real model declined to plan it.
+Start with `./start.sh`. Open the case library. Keep a recorded benign control ready and test with Wi-Fi disconnected.
 
-## Before you start
-
-```sh
-./start.sh            # then open http://127.0.0.1:8000 in Chrome, 1280x720 or larger, 100% zoom
-```
-
-- No case open. Wi-Fi is not needed for the replay.
-- The header chip reads `Live AI: CONFIGURED` when a key is set in `.env`, `Live AI: BLOCKED` otherwise. Either is fine for the replay.
-- Replay timing measured on Eric's MacBook: report ready for review about 15–20 s after Run; accept and lock under a second; unseal and score 0.1 s.
-
-## Script
-
-| Time | Click | Say (gist) |
+| Time | Action | Spoken line |
 |---|---|---|
-| 0:00–0:15 | Start screen visible | "An account shows up in a breach. Does that tell you who did it? ALIBI stages a synthetic incident in a simulated clinic network, seals what really happened, and asks an investigator to reconstruct it from the evidence." |
-| 0:15–0:30 | Under **Recorded replays**, select **Inside job · cover-up** (tagged *Recorded AI run*), press **Run** | "The incident is a scripted scenario built from four approved simulation steps. The investigator is a real model, Claude Opus 5.5, running as a LangChain deep agent: a lead, an integrity auditor and a skeptic. This is a recording of that run, replayed; the label says so. It only ever saw frozen, hashed evidence and a vague tip." |
-| 0:30–1:05 | Point at the right panel: the hatched row | "This is the host's own login log next to the central collector's copy. One line is missing on the host. The collector kept it: a session opened for this account. That same session is the only one open when 20 megabytes leave for an address that is not on the approved list." Click an evidence chip: "Every claim opens the raw record and its hash, and a deterministic verifier checked each one." |
-| 1:05–1:20 | Point at the review bar and scroll to Attribution | "The account was used. The model's report says the human operator is not established: an account is a credential, not a person." Press **Accept report**. |
-| 1:20–1:40 | Press **Unseal answer key** | "Only now is the truth unsealed. Three of three executed effects caught, nothing unsupported, nobody named. And here is an attempt that failed: the scripted intruder tried to edit the collector and could not." |
-| 1:40–1:55 | Close the overlay, open the **Benchmark** tab | "On twelve held-out simulated cases a keyword recipe missed all four cover-ups; the contradiction checks caught them. In a four-case pilot with the real model, a single agent and our three-agent system both got every case right, and the single agent was a third of the cost. We report that as it is." |
-| 1:55–2:00 | Back to **Case** | "A proving ground for forensic investigators, human or AI, with inspectable evidence and an answer key." |
+| 0:00–0:12 | Show the library | “A login uses your account. A database leaves the network. Is that enough to say you did it?” |
+| 0:12–0:25 | Open the recorded Inside job case | “ALIBI creates a controlled incident, seals the answer, and asks an AI investigator to reconstruct it. This is a recorded run of the real model.” |
+| 0:25–0:55 | Point to the aligned mismatch; open its citation | “The workstation lost this login entry. The independent collector kept it. That session overlaps a transfer to an unapproved destination. Every finding opens the actual record.” |
+| 0:55–1:10 | Show account/person distinction | “The credential was used. The evidence does not establish the human operator. The investigator has to keep those conclusions separate.” |
+| 1:10–1:30 | Accept, lock, unseal | “We lock the report before revealing the answer. Here is what it caught, what it missed, and what the evidence could not establish.” |
+| 1:30–1:50 | Show the small benchmark table | “Across twelve simulated cases, keyword matching missed all four cover-ups. The comparison checks caught them. Our AI pilot also taught us something: one agent matched the specialists at lower cost.” |
+| 1:50–2:00 | Return to evidence | “A practice range for investigators—and a way to test whether your logs preserve the evidence you need.” |
 
-## Variants
+When phase two is verified, replace part of the benchmark segment with **Test without collector**: “Remove this witness, and this conclusion loses its support.” Say that only while showing an actual child evidence experiment. Use captured Linux evidence only if its origin/provenance is visible and verified.
 
-- **Live model** (for a sponsor who wants to see it run): select the **Inside job · cover-up** preset at the top instead of the replay and press Run. Badge: `Live model`. Expect 55–80 s to the review bar and about $0.35 of credit per run. Talk through the tool activity while it works. `uv run alibi spend` shows what is left under the cap.
-- **Fully offline, no model at all:** without a `.env`, the same preset runs the scripted fixture in about 10 s. Badge: `Scripted fixture · no model inference`. Say "scripted", not "AI".
+## Sponsor questions
 
-## If something goes wrong
+- **Arlequin:** open the missing record's source and a cited answer. Explain which observations come from checks and which interpretation comes from the model.
+- **LangChain:** show the recorded task/tool trace, case notes, specialist work and review checkpoint.
+- **Amazon:** show the ordinary user flow and explain the target user: training teams and builders evaluating forensic investigators and evidence coverage.
 
-| Problem | Do this |
-|---|---|
-| A live run is still working after 90 s, or shows an "Incomplete run" note | Press **Reset** and use the recorded replay. Say "this is a recorded run of the same model." |
-| Red error banner (`FAILED`) | Press **Reset** in the banner and run again. |
-| The page was refreshed | Nothing is lost. The case id is in the URL and the case reloads, including during review. |
-| The server was restarted during review | Reload the page. The report is still awaiting review and Accept still works. |
-| The port is busy | `./start.sh --port 8010` (the launcher says so if a port is taken; on Eric's machine another project already uses 8001) |
-| Judge asks for another case | **Sealed control case**: nothing malicious happened, the report alleges nothing, the unseal says "No incident occurred". Good for "does it cry wolf?". With a key set this runs the live model (about a minute); offline it is the scripted fixture. |
-| Judge asks "is the attacker an AI?" | "No. It is scripted. We asked a model to choose the steps once and it declined, so we kept it scripted and labeled it." |
+## Recovery
 
-## Ask box (if a judge wants to dig in)
+Use the recorded real-model case for the timed pitch. A fresh live investigation is an optional judge request, subject to the remaining allowance. If it stalls, switch to the labeled recording. Do not wait out a minute of inference in a two-minute presentation.
 
-Three predefined, cited explanations: *What links the missing line to this session?*, *Can you identify the person?*, *Why is the other gap not suspicious?* They are deterministic text, labeled as such. There is deliberately no free-text chat.
+If the server port is busy, use `./start.sh --port 8010`. Refresh should restore the case; review can resume after restart. Test reset twice before judging. For a no-incident example use the recorded benign control, not a new billed run.
 
-## Operator switches
-
-- `ALIBI_DEFAULT_RUNNER=agent-fixture ./start.sh` forces the scripted fixture even when a key is configured (no spend).
-- `ALIBI_DEFAULT_RUNNER=deterministic ./start.sh` runs the checks without the agent graph.
-- `ALIBI_DEMO_PACE_S=0.25 ./start.sh` speeds up the display pacing of fixture and replay runs; `0` removes it.
+Record the final video from the working application. Keep it at most two minutes, make the link accessible, and verify it from a logged-out browser.

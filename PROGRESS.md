@@ -218,3 +218,16 @@ Still true:
 README: [`README.md`](README.md) · architecture: [`docs/architecture.md`](docs/architecture.md) · claims: [`docs/claims.md`](docs/claims.md) · judge Q&A: [`docs/judge-qa.md`](docs/judge-qa.md) · demo script: [`docs/demo-script.md`](docs/demo-script.md) · decisions: [`DECISIONS.md`](DECISIONS.md) · screenshots: [`docs/screenshots/case-board-recorded-ai.png`](docs/screenshots/case-board-recorded-ai.png), [`case-board-unsealed.png`](docs/screenshots/case-board-unsealed.png), [`benchmark-tab.png`](docs/screenshots/benchmark-tab.png) · replays: `demo/replays/`.
 
 Housekeeping: the human-owned planning pack (`PLAN.md`, `TEAM_RUNBOOK.md`, `JUDGING_KIT.md`, `CLAUDE.md`, …) is untouched and untracked on Eric's machine. Pilot tool traces are kept locally in `benchmarks/ai-pilot-v1/transcripts/` (gitignored). ChatOverflow: 4 notes voted up after use, 1 comment, 2 generic field notes; nothing about the project was shared.
+
+
+## Phase-two review and handoff — November 14, 2026
+
+Reviewed implementation commit `874cc5f`. This change updates documentation and supplies the next implementation assignment; it does not claim phase-two application features are already built. Start at `docs/next-run/START_HERE.md`.
+
+- Confirmed real investigator recording and pilot; original adversary remains scripted.
+- Rayan reconfirmed **$5 cumulative**, with no increase. Preserve the existing ledger. Budget reservation/unknown-usage review findings must be fixed before more live calls.
+- Eric owns backend/integration; Terry the full UI; Daniel real Linux capture/import and independent controls; Rayan product acceptance, feedback and presentation.
+- Rewrote README, demo script, judge answers, Devpost copy and remaining owner actions. Added exact prompts, key setup, API contracts, deadlines and acceptance gates.
+- Reviewer validation: frontend TypeScript/Vite build passed; 143 non-browser tests passed, one asset test initially skipped before UI build and then passed separately; all 9 Chrome browser tests passed. Total: 153 passing checks across those invocations. Browser invocation required `PYTHONPATH=src` in the reviewer tool environment; normal clean-start commands still need the scheduled second-machine check.
+- No model inference or paid API calls were made during this review. No credentials were read or copied.
+- Existing v1 results and recorded runs were preserved. New features and new measurements belong in a separately versioned phase-two release.
