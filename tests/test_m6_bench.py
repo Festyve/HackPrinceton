@@ -106,3 +106,69 @@ def test_committed_results_are_consistent_with_their_own_runs():
             assert mine == [] and s["aggregate"] is None
     for r in doc["runs"]:
         assert (bench.REPO_ROOT / r["report_file"]).exists()
+
+
+# ----------------------------------------------------------------- AI pilot plumbing (no model involved)
+class _LiveDouble:
+    """TEST DOUBLE. Relabels a fixture run as LIVE_MODEL so the pilot plumbing can be exercised.
+    It exists only inside this test, writes only to a temp directory, and is not an AI result."""
+
+    def __init__(self, system_id, settings):
+        from alibi.bench import PILOT_SYSTEMS
+
+        self.inner = AgentRunner("agent-fixture", settings, architecture="alibi")
+        self.system_id = system_id
+        assert system_id in PILOT_SYSTEMS
+
+    def run(self, ctx):
+        rep = self.inner.run(ctx)
+        return rep.model_copy(update={"inference_mode": "LIVE_MODEL", "model_id": "test-double:not-a-model"})
+
+
+def test_ai_pilot_is_refused_without_a_runtime_or_a_run_budget(tmp_path):
+    from alibi.runners import RuntimeBlocked
+
+    with pytest.raises(RuntimeBlocked) as err:
+        bench.run_ai_pilot(load_settings({}), work_dir=tmp_path)
+    assert "BLOCKED" in str(err.value)
+    live_no_budget = load_settings({"RUNTIME_MODE": "live", "LEAD_MODEL": "x:y", "LIVE_PROVIDER_KIND": "local"})
+    with pytest.raises(RuntimeBlocked) as err:
+        bench.run_ai_pilot(live_no_budget, runner_factory=_LiveDouble, work_dir=tmp_path)
+    assert "BENCH_MAX_SYSTEM_RUNS is 0" in str(err.value)
+
+
+def test_ai_pilot_refuses_to_record_a_fixture_as_an_ai_run(tmp_path):
+    settings = replace(load_settings({}), bench_max_system_runs=8)
+    with pytest.raises(ValueError) as err:
+        bench.run_ai_pilot(settings, runner_factory=lambda sid, s: AgentRunner("agent-fixture", s), work_dir=tmp_path)
+    assert "only LIVE_MODEL runs count as AI results" in str(err.value)
+
+
+def test_ai_pilot_plumbing_respects_the_system_run_budget(tmp_path):
+    settings = replace(load_settings({}), bench_max_system_runs=3)
+    doc = bench.run_ai_pilot(settings, runner_factory=_LiveDouble, work_dir=tmp_path)
+    assert doc["suite"] == "ai-pilot-v1" and len(doc["cases"]) == 4 and len(doc["runs"]) == 8
+    assert doc["system_runs_started"] == 3
+    assert sum(r["status"] == "completed" for r in doc["runs"]) == 3
+    assert sum(r["status"] == "unrun_budget" for r in doc["runs"]) == 5  # unrun is recorded, never silently dropped
+    assert {s["id"] for s in doc["systems"]} == {"B1+", "ALIBI"}
+    assert all(r["score"] is None for r in doc["runs"] if r["status"] != "completed")
+    assert not (bench.PILOT_DIR / "results.json").exists()  # nothing from a test double reaches the repository
+
+
+def test_benchmark_view_merges_pilot_rows_only_when_real_pilot_results_exist(tmp_path):
+    if not bench.RESULTS_PATH.exists():
+        pytest.skip("benchmark has not been run yet")
+    base = bench.combined_results(pilot_path=tmp_path / "missing.json")
+    assert {s["id"]: s["status"] for s in base["systems"]}["ALIBI"] == "NOT_RUN" and "ai_pilot" not in base
+    pilot = {"suite": "ai-pilot-v1", "run_id": "r", "generated_at": "t", "git_commit": "c", "paired": {}, "system_runs_started": 1,
+             "notes": ["pilot note"], "runs": [{"system_id": "ALIBI", "case_ref": "T01", "status": "completed", "score": None}],
+             "systems": [{"id": "ALIBI", "status": "RUN", "label": "x", "aggregate": {}, "model_id": "m"},
+                         {"id": "B1+", "status": "NOT_RUN", "status_detail": "no run completed", "aggregate": None}]}
+    f = tmp_path / "pilot.json"
+    f.write_text(json.dumps(pilot))
+    merged = bench.combined_results(pilot_path=f)
+    status = {s["id"]: s["status"] for s in merged["systems"]}
+    assert status["ALIBI"] == "RUN" and status["B1+"] == "NOT_RUN" and status["B2"] == "NOT_RUN"
+    assert next(s for s in merged["systems"] if s["id"] == "B1+")["status_detail"] == "NOT RUN — runtime unavailable"
+    assert merged["ai_pilot"]["run_id"] == "r" and "pilot note" in merged["notes"]

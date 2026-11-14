@@ -384,3 +384,130 @@ def write_outputs(doc: dict[str, Any]) -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     RESULTS_PATH.write_text(json.dumps(doc, indent=1) + "\n", encoding="utf-8")
     REPORT_MD.write_text(render_markdown(doc), encoding="utf-8")
+
+
+# --------------------------------------------------------------------------- AI pilot (needs a real runtime)
+
+PILOT_SUITE = "ai-pilot-v1"
+PILOT_DIR = REPO_ROOT / "benchmarks" / PILOT_SUITE
+PILOT_SYSTEMS = {"B1+": "single-agent", "ALIBI": "alibi"}  # the minimum controlled test of delegation
+
+
+def _live_runner(system_id: str, settings: Settings) -> Any:
+    from alibi.agents.runner import AgentRunner
+
+    AgentRunner.create("agent-live", settings)  # raises RuntimeBlocked unless a zero-charge route is configured
+    return AgentRunner("agent-live", settings, architecture=PILOT_SYSTEMS[system_id])
+
+
+def run_ai_pilot(settings: Settings, *, runner_factory: Any = None, work_dir: Path | None = None) -> dict[str, Any]:
+    """The predeclared pilot: 4 cases x {B1+, ALIBI} = 8 system-runs, same model settings and per-case budget.
+
+    Refused unless a zero-charge runtime is configured AND BENCH_MAX_SYSTEM_RUNS allows it. Batch mode:
+    no human review is fabricated; each run stops at the review interrupt and its draft is locked as
+    `skipped_for_benchmark`. Failed and budget-stopped runs are kept. A pilot is a smoke comparison,
+    not a population estimate.
+    """
+    from alibi.runners import RunContext, RuntimeBlocked
+
+    if runner_factory is None:
+        reason = settings.live_block_reason()
+        if reason is not None:
+            raise RuntimeBlocked(f"AI pilot refused, live inference is BLOCKED: {reason}")
+    if settings.bench_max_system_runs <= 0:
+        raise RuntimeBlocked("AI pilot refused: BENCH_MAX_SYSTEM_RUNS is 0. Set it to the number of system-runs "
+                             "you have verified zero-charge capacity for (the full pilot is 8).")
+    factory = runner_factory or _live_runner
+    run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    order_rng = random.Random(f"{PILOT_SUITE}:{run_id}")
+    cases = [c for c in TEST_CASES if c["case_ref"] in PILOT_CASE_REFS]
+    tmp = None
+    if work_dir is None:
+        tmp = tempfile.TemporaryDirectory(prefix="alibi-pilot-")
+        work_dir = Path(tmp.name)
+    runs: list[dict[str, Any]] = []
+    case_rows = []
+    used = 0
+    model_ids: set[str] = set()
+    try:
+        for case in cases:
+            ep = f"pilot-{case['case_ref'].lower()}-{run_id.lower()}"
+            paths = create_episode(seed=case["seed"], variant=case["variant"], runs_dir=work_dir / "runs",
+                                   sealed_dir=work_dir / "sealed", episode_id=ep)
+            manifest, key = load_manifest(paths), load_answer_key(paths)
+            order = list(PILOT_SYSTEMS)
+            order_rng.shuffle(order)
+            case_rows.append({**case, "kind": key.case_kind, "bundle_id": manifest.bundle_id,
+                              "raw_bundle_sha256": manifest.raw_bundle_sha256, "events": manifest.event_count,
+                              "scorable_effects": sum(e.observable for e in key.effects), "system_order": order})
+            for system_id in order:
+                row: dict[str, Any] = {"system_id": system_id, "case_ref": case["case_ref"], "status": "completed",
+                                       "error": None, "score": None, "censored": False, "suite": PILOT_SUITE}
+                if used >= settings.bench_max_system_runs:
+                    row["status"], row["error"] = "unrun_budget", "not started: BENCH_MAX_SYSTEM_RUNS reached"
+                    runs.append(row)
+                    continue
+                used += 1
+                try:
+                    with EvidenceStore(paths.db) as store:  # fresh agent state per system-run
+                        ctx = RunContext(case_id=f"{ep}-{system_id.lower().replace('+', 'plus')}", store=store,
+                                         manifest=manifest, case_dir=paths.case / system_id.replace("+", "plus"),
+                                         settings=settings, emit=lambda t, d: None)
+                        report = factory(system_id, settings).run(ctx)
+                        report = report.model_copy(update={"system_id": system_id})
+                        validate_ai_run(system_id, report)
+                        model_ids.add(report.model_id or "")
+                        report = verifier.verify_report(report, store, manifest)
+                        report = lock_report(report, "skipped_for_benchmark", by_human=False)
+                        row["censored"] = any(q.startswith("Incomplete run") for q in report.open_questions)
+                        row["score"] = scoring.score_report(report, key, store).model_dump(mode="json")
+                except ValueError:
+                    raise  # a non-live result must never be recorded: stop the pilot loudly
+                except Exception as exc:  # noqa: BLE001 - provider errors are results too
+                    row["status"], row["error"] = "error", f"{type(exc).__name__}: {str(exc)[:300]}"
+                runs.append(row)
+    finally:
+        if tmp is not None:
+            tmp.cleanup()
+    systems = []
+    for system_id in PILOT_SYSTEMS:
+        spec = next(s for s in SYSTEMS if s["id"] == system_id)
+        mine = [r for r in runs if r["system_id"] == system_id]
+        done = [Score.model_validate(r["score"]) for r in mine if r["status"] == "completed"]
+        systems.append({**spec, "inference": "LIVE_MODEL", "status": "RUN" if done else "NOT_RUN",
+                        "status_detail": "" if done else "no run completed",
+                        "model_id": ", ".join(sorted(m for m in model_ids if m)) or None,
+                        "n_cases": len(cases), "completed": len(done), "errors": sum(r["status"] == "error" for r in mine),
+                        "censored": sum(bool(r["censored"]) for r in mine),
+                        "unrun_budget": sum(r["status"] == "unrun_budget" for r in mine),
+                        "aggregate": aggregate(done) if done else None, "suite": PILOT_SUITE})
+    return {"suite": PILOT_SUITE, "run_id": run_id, "generated_at": datetime.now(timezone.utc).isoformat(),
+            "git_commit": _git_commit(), "git_dirty": _git_dirty(), "scorer_version": scoring.SCORER_VERSION,
+            "evidence_origin": "SIM", "cases": case_rows, "systems": systems, "runs": runs,
+            "paired": paired_differences(runs, "ALIBI", "B1+"), "system_runs_started": used,
+            "notes": [f"AI pilot: {len(cases)} predeclared cases x 2 systems. A smoke comparison, not a population "
+                      "estimate. B1+ and ALIBI share model settings and the per-case budget."]}
+
+
+def write_pilot(doc: dict[str, Any]) -> Path:
+    PILOT_DIR.mkdir(parents=True, exist_ok=True)
+    out = PILOT_DIR / "results.json"
+    out.write_text(json.dumps(doc, indent=1) + "\n", encoding="utf-8")
+    return out
+
+
+def combined_results(offline_path: Path | None = None, pilot_path: Path | None = None) -> dict[str, Any] | None:
+    """Offline results, with AI rows replaced by real pilot results when (and only when) those exist."""
+    offline_path = offline_path or RESULTS_PATH
+    pilot_path = pilot_path or (PILOT_DIR / "results.json")
+    if not offline_path.exists():
+        return None
+    doc = json.loads(offline_path.read_text(encoding="utf-8"))
+    if pilot_path.exists():
+        pilot = json.loads(pilot_path.read_text(encoding="utf-8"))
+        ran = {s["id"]: s for s in pilot["systems"] if s["status"] == "RUN"}
+        doc["systems"] = [ran.get(s["id"], s) for s in doc["systems"]]
+        doc["runs"] = doc["runs"] + pilot["runs"]
+        doc["notes"] = doc["notes"] + pilot["notes"]
+        doc["ai_pilot"] = {k: pilot[k] for k in ("suite", "run_id", "generated_at", "git_commit", "paired", "system_runs_started")}
+    return doc

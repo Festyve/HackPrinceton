@@ -108,10 +108,13 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
 
     @app.get("/api/benchmark")
     def benchmark() -> JSONResponse:
-        if not BENCH_RESULTS.exists():
+        from alibi import bench
+
+        doc = bench.combined_results()
+        if doc is None:
             return JSONResponse({"available": False,
                                  "reason": "no benchmark results yet; run `uv run alibi bench`"})
-        return JSONResponse({"available": True, **json.loads(BENCH_RESULTS.read_text(encoding="utf-8"))})
+        return JSONResponse({"available": True, **doc})
 
     # ------------------------------------------------------------------ cases
     @app.get("/api/cases")

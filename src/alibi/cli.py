@@ -154,6 +154,56 @@ def _cmd_record(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_smoke(args: argparse.Namespace) -> int:
+    """One tiny real model call through the budget gateway: does this runtime do tool calling at all?"""
+    from langchain_core.tools import tool
+
+    from alibi.agents import gateway
+    from alibi.config import RunCaps
+
+    settings = load_settings()
+    reason = settings.live_block_reason()
+    if reason is not None:
+        print(f"live inference: BLOCKED\n  {reason}\nNo model call was made. See BLOCKERS.md B-1.")
+        return 2
+
+    @tool
+    def ping(value: int) -> str:
+        """Echo an integer back."""
+        return f"pong {value}"
+
+    ledger = gateway.BudgetLedger(None, RunCaps(max_calls=2, max_input_tokens=2000, max_output_tokens=300, max_seconds=60),
+                                  kind=settings.live_provider_kind or "local", max_usd=settings.llm_max_usd,
+                                  price_in_per_mtok=settings.price_in_per_mtok, price_out_per_mtok=settings.price_out_per_mtok)
+    model = gateway.wrap(gateway.live_chat_model(settings, settings.lead_model or ""), ledger, "smoke").bind_tools([ping])
+    reply = model.invoke("Call the tool `ping` with value 7. Do not answer in text.")
+    calls = getattr(reply, "tool_calls", [])
+    ok = any(c["name"] == "ping" and c["args"].get("value") == 7 for c in calls)
+    print(json.dumps({"model": settings.lead_model, "tool_call_ok": ok, "tool_calls": calls,
+                      "usage": ledger.usage().model_dump()}, indent=2, default=str))
+    return 0 if ok else 1
+
+
+def _cmd_pilot(args: argparse.Namespace) -> int:
+    from alibi import bench
+    from alibi.runners import RuntimeBlocked
+
+    settings = load_settings()
+    try:
+        doc = bench.run_ai_pilot(settings)
+    except RuntimeBlocked as exc:
+        print(f"{exc}\nNo model call was made.", file=sys.stderr)
+        return 2
+    out = bench.write_pilot(doc)
+    for s in doc["systems"]:
+        a = s["aggregate"]
+        print(f"  {s['id']:<6} completed {s['completed']}/{s['n_cases']} errors {s['errors']} censored {s['censored']} "
+              + (f"effects caught {a['step_recall']['num']}/{a['step_recall']['den']} model calls {a['llm_calls']} "
+                 f"tokens {a['tokens_in']}/{a['tokens_out']}" if a else s["status_detail"]))
+    print(f"wrote {out}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="alibi", description="ALIBI forensic proving ground")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -188,6 +238,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--check", action="store_true", help="only verify that the frozen config matches the code")
     p.add_argument("--write-config", action="store_true", help="write docs/evaluation-config.json from the code")
     p.set_defaults(func=_cmd_bench)
+
+    p = sub.add_parser("smoke", help="one tiny real model call to test tool calling (refused while live AI is blocked)")
+    p.set_defaults(func=_cmd_smoke)
+
+    p = sub.add_parser("pilot", help="the predeclared 8-system-run AI pilot (refused without a zero-charge runtime)")
+    p.set_defaults(func=_cmd_pilot)
 
     p = sub.add_parser("serve", help="serve the API and the built case board on localhost")
     p.add_argument("--host", default=None)

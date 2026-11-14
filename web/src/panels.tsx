@@ -64,7 +64,7 @@ export function LeftColumn({ view, run }: { view: CaseView; run: Run }) {
                   {s.tamper_exposure === "independent_witness"
                     ? <span className="tag witness" title="independent witness">{"◆"} independent witness</span>
                     : <span className="tag local" title="host-local, writable by an adversary in this model">{"◇"} host-local</span>}{" "}
-                  <span className="mono">{s.logical_file ?? s.source}</span>
+                  <span className="mono">{s.logical_file ?? s.artifact.split("/").slice(1).join("/")}</span>
                 </li>
               ))}
             </ul>

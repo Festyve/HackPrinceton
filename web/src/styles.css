@@ -143,3 +143,7 @@ button.line:hover { color: var(--blue); }
 details.activity { margin-top: 14px; border: 1px solid #263041; border-radius: 8px; padding: 8px 12px; }
 details.activity > summary { cursor: pointer; font-weight: 600; }
 .pre { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+
+/* the cited record must be readable in full without horizontal scrolling */
+.raw .focusline { white-space: pre-wrap; overflow-wrap: anywhere; }
+.bench td.sysid { font-family: var(--mono); font-weight: 700; white-space: nowrap; }

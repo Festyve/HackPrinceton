@@ -19,20 +19,21 @@ export function BenchmarkTab() {
       <p className="small muted">generated {b.generated_at ?? "n/a"} · commit <span className="mono">{b.git_commit ?? "n/a"}</span> · scorer {b.scorer_version ?? "n/a"} · evidence {b.evidence_origin ?? "n/a"}</p>
       <div className="tablewrap">
         <table data-testid="benchmark-table">
-          <thead><tr><th>System</th><th>Status</th><th>n</th><th>Step recall</th><th>Proposal prec.</th><th>Final prec.</th><th>Cover-ups detected</th><th>Benign false alerts</th><th>Raw proposals</th></tr></thead>
+          <thead><tr><th>ID</th><th>System</th><th>Status</th><th>Cases</th><th>Effects caught</th><th>Raw proposal prec.</th><th>Final prec.</th><th>Cover-ups detected</th><th>Account identified</th><th>Benign final false alerts</th><th>Benign raw alerts</th></tr></thead>
           <tbody>
             {(b.systems ?? []).map((s) => {
               const a = s.aggregate;
               const notRun = s.status === "NOT_RUN" || !a;
               return (
                 <tr key={s.id}>
+                  <td className="sysid">{s.id}</td>
                   <td><b>{s.label ?? s.id}</b><div className="small muted">{s.inference}{s.model_id ? " · " + s.model_id : ""}</div></td>
                   <td>{notRun ? <b className="amber">{"◌"} {s.status_detail ?? "NOT RUN"}</b> : <b className="ok">{"✓"} {s.status ?? "RUN"}</b>}</td>
                   <td>{s.completed ?? "—"}/{s.n_cases ?? "—"}{s.errors ? ` (${s.errors} errors)` : ""}</td>
-                  {notRun ? <td colSpan={6} className="muted">no results</td> : (
+                  {notRun ? <td colSpan={7} className="muted">no results: this system has not been run</td> : (
                     <>
-                      <td>{ratio(a?.step_recall)}</td><td>{ratio(a?.proposal_precision)}</td><td>{ratio(a?.final_precision)}</td>
-                      <td>{ratio(a?.coverup_detected)}</td><td>{ratio(a?.benign_false_alert)}</td><td>{n(a?.raw_incident_proposals)}</td>
+                      <td>{ratio(a?.step_recall)}</td><td>{ratio(a?.proposal_precision)} <span className="small muted">of {n(a?.raw_incident_proposals)} raw</span></td><td>{ratio(a?.final_precision)}</td>
+                      <td>{ratio(a?.coverup_detected)}</td><td>{ratio(a?.account_identification)}</td><td>{ratio(a?.benign_false_alert)}</td><td>{ratio(a?.benign_raw_alert)}</td>
                     </>
                   )}
                 </tr>
