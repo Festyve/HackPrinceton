@@ -269,3 +269,26 @@ def test_no_view_is_derived_from_evidence_that_fails_its_own_hashes(env, tmp_pat
     with pytest.raises(EpisodeError):
         source_experiment.create_child_bundle(paths, episode_paths("case-aaaaaaaaaaaa", settings.runs_dir, settings.sealed_dir),
                                               _sid(view, "badge"))
+
+
+def test_terminal_commands_show_the_experiment_the_question_and_the_export(env, monkeypatch, capsys):
+    from alibi import cli
+
+    settings, orch, c = env
+    monkeypatch.setattr(cli, "load_settings", lambda: settings)
+    cid, _ = _parent(c)
+    assert cli.main(["cases"]) == 0 and cid in capsys.readouterr().out
+    assert cli.main(["experiment", cid, "--without", "collector", "--runner", "deterministic"]) == 0
+    out = capsys.readouterr().out
+    assert "CANNOT BE ESTABLISHED  local_log_removal" in out and "STILL SUPPORTED        policy_violating_transfer" in out
+    assert "It is not shown to be false." in out and "No collector copy" in out
+    assert cli.main(["experiment", cid, "--without", "satellite"]) == 1 and "no source of kind" in capsys.readouterr().err
+    assert cli.main(["ask", cid, "What is missing from the host log?"]) == 1  # offline: asked, not answered
+    said = capsys.readouterr().out
+    assert "status: unavailable" in said and "No model is configured" in said
+    assert cli.main(["export", cid]) == 1 and "locked" in capsys.readouterr().err  # not reviewed yet
+    c.post(f"/api/cases/{cid}/review", json={"decision": "accept"})
+    assert cli.main(["export", cid]) == 0
+    md = capsys.readouterr().out
+    assert md.startswith("# Investigation report: Inside job · cover-up") and "## Cited records" in md
+    assert cli.main(["export", cid, "--json"]) == 0 and json.loads(capsys.readouterr().out)["lock"]["report_sha256"]

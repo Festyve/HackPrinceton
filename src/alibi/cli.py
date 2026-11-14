@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from typing import Any
 
 from alibi.config import ConfigError, load_settings
 
@@ -274,6 +275,127 @@ def _cmd_calibrate(args: argparse.Namespace) -> int:
     return 0 if doc["passed"] else 1
 
 
+def _orchestrator() -> Any:
+    from alibi.orchestrator import Orchestrator
+
+    return Orchestrator(load_settings(), pace_s=0.0)
+
+
+def _cmd_cases(args: argparse.Namespace) -> int:
+    """List the cases in the runs directory (the same ones the case board shows)."""
+    for c in _orchestrator().list_cases():
+        print(f"{c['case_id']}  {c['state']:<16} {c['labels']['inference_label']:<40} {c['title']}")
+    return 0
+
+
+def _cmd_run(args: argparse.Namespace) -> int:
+    """Create a case from a preset in the runs directory, investigate it and stop at human review."""
+    import time
+
+    settings = load_settings()
+    orch = _orchestrator()
+    rec = orch.create_case(preset_id=args.preset, runner_id=args.runner, investigation_mode=args.mode)
+    orch.start_investigation(rec.case_id)
+    deadline = time.time() + max(60.0, settings.caps.max_seconds + 60.0)
+    state = rec.state
+    while time.time() < deadline:
+        state = orch.record(rec.case_id).state
+        if state in ("awaiting_review", "failed", "cancelled"):
+            break
+        time.sleep(0.1)
+    done = orch.record(rec.case_id)
+    print(f"case {rec.case_id}: {done.title} · {done.labels_text()} · state {state}")
+    if state != "awaiting_review":
+        print(f"error: {done.error}", file=sys.stderr)
+        return 1
+    report = orch.view(rec.case_id)["report"]
+    for f in report["findings"]:
+        print(f"  {f['category']:<22} {f['claim_type']:<28} {f['host']:<12} {f['status']}")
+    print(f"  account: {report['attribution']['account_used']} · person: {report['attribution']['human_identity'].replace('_', ' ')}")
+    print(f"next: alibi ask {rec.case_id} \"...\" · alibi experiment {rec.case_id} --without collector · "
+          f"alibi review {rec.case_id} accept")
+    return 0
+
+
+def _cmd_review(args: argparse.Namespace) -> int:
+    """Record the human decision on a drafted report. Either decision locks the report as proposed."""
+    view = _orchestrator().review(args.case_id, args.decision, args.note)
+    print(f"case {args.case_id}: report {view['case']['review_decision']} and locked · sha256 {view['report']['report_sha256']}")
+    print(f"next: alibi export {args.case_id}")
+    return 0
+
+
+def _cmd_ask(args: argparse.Namespace) -> int:
+    """Ask one question about a case and print the answer with what trusted code made of each claim."""
+    import time
+    import uuid
+
+    orch = _orchestrator()
+    q = orch.ask_question(args.case_id, args.question, args.token or f"cli-{uuid.uuid4().hex[:10]}")
+    end = time.time() + 120
+    while q.status == "pending" and time.time() < end:
+        time.sleep(0.2)
+        q = orch.get_question(args.case_id, q.question_id)
+    print(f"[{q.inference_label}{' · ' + q.model_id if q.model_id else ''}] status: {q.status}"
+          + (f" · {q.usage.llm_calls} model call(s), est. ${q.usage.cost_estimate_usd:.4f}" if q.usage.llm_calls else ""))
+    if q.error:
+        print(f"note: {q.error}")
+    if q.answer:
+        print("\n" + q.answer + "\n")
+    for c in q.claims:
+        print(f"  {c.support.upper():<14} {c.text}\n{'':17}{c.basis}  [{', '.join(c.evidence_ids[:4]) or 'no citation'}]")
+    for line in q.limitations:
+        print(f"  limit: {line}")
+    for line in q.follow_up_evidence:
+        print(f"  would settle it: {line}")
+    return 0 if q.status in ("answered", "insufficient_evidence") else 1
+
+
+def _cmd_experiment(args: argparse.Namespace) -> int:
+    """Derive a view of a case without the named kinds of source and print what the original claims are worth there."""
+    import uuid
+
+    orch = _orchestrator()
+    sources = orch.source_experiment(args.case_id).get("sources")
+    if sources is None:
+        print("error: run the experiment from the original case, not from a derived view", file=sys.stderr)
+        return 1
+    wanted = {k.strip() for k in args.without.split(",") if k.strip()}
+    ids = [s["source_id"] for s in sources if s["source"] in wanted or s["source_id"] in wanted]
+    if not ids:
+        print(f"error: no source of kind {sorted(wanted)}. This case has: {sorted({s['source'] for s in sources})}", file=sys.stderr)
+        return 1
+    child = orch.create_source_experiment(args.case_id, ids, f"cli-{uuid.uuid4().hex[:10]}", runner_id=args.runner,
+                                          investigation_mode=args.mode)
+    exp = orch.source_experiment(child.case_id)
+    cmp_ = exp["comparison"]
+    print(f"derived case {child.case_id}: {child.title}")
+    print(f"withheld: {', '.join(s['artifact'] for s in exp['excluded_sources'])}")
+    print(f"events: {exp['events_original']} -> {exp['events_remaining']}\n")
+    if not cmp_["claims"]:
+        print(cmp_.get("note", "the original case has no report to compare"))
+    for row in cmp_["claims"]:
+        mark = {"retains_support": "STILL SUPPORTED", "loses_support": "CANNOT BE ESTABLISHED", "never_supported": "was not supported"}[row["change"]]
+        print(f"  {mark:<22} {row['claim_type']} on {row['host']} ({row['object_or_session']})\n{'':25}{row['reason']}")
+    if cmp_.get("attribution"):
+        a = cmp_["attribution"]
+        print(f"\n  account and person: {a['change']} ({a['parent_observation']} -> {a['child_observation']})")
+    for line in cmp_["coverage"]["child"]["limits"]:
+        print(f"  coverage limit: {line}")
+    print("\nA claim that cannot be established here is unknown in this view. It is not shown to be false.")
+    print(f"To investigate the derived view: POST /api/cases/{child.case_id}/investigate, or open it in the case board.")
+    return 0
+
+
+def _cmd_export(args: argparse.Namespace) -> int:
+    """Print the locked report of a case as markdown, or its machine-readable manifest."""
+    from alibi import export
+
+    doc = _orchestrator().report_export(args.case_id)
+    print(json.dumps(doc, indent=2) if args.json else export.render_markdown(doc))
+    return 0
+
+
 def _cmd_import(args: argparse.Namespace) -> int:
     """Freeze a capture directory (capture.json + its raw files) as an unscored case."""
     from alibi.orchestrator import Orchestrator
@@ -414,6 +536,39 @@ def build_parser() -> argparse.ArgumentParser:
                    help="agent-fixture exercises the harness offline with the scripted policy (no model)")
     p.set_defaults(func=_cmd_calibrate)
 
+    p = sub.add_parser("cases", help="list the cases in the runs directory")
+    p.set_defaults(func=_cmd_cases)
+
+    p = sub.add_parser("run", help="create a case from a preset, investigate it and stop at human review")
+    p.add_argument("--preset", default="hero-coverup")
+    p.add_argument("--runner", default=None, help="deterministic | agent-fixture | agent-live (default: runtime default)")
+    p.add_argument("--mode", default=None, choices=["fast", "specialist"])
+    p.set_defaults(func=_cmd_run)
+
+    p = sub.add_parser("review", help="accept or reject a drafted report; either way it is locked as proposed")
+    p.add_argument("case_id")
+    p.add_argument("decision", choices=["accept", "reject"])
+    p.add_argument("--note", default="")
+    p.set_defaults(func=_cmd_review)
+
+    p = sub.add_parser("ask", help="ask one question about a case; each claim is checked against the evidence")
+    p.add_argument("case_id")
+    p.add_argument("question")
+    p.add_argument("--token", default=None, help="reuse a token to get the same answer back without a new model call")
+    p.set_defaults(func=_cmd_ask)
+
+    p = sub.add_parser("experiment", help="derive a view of a case without some sources and compare the original claims")
+    p.add_argument("case_id")
+    p.add_argument("--without", required=True, help="source kinds or ids, comma separated, e.g. collector or badge,flow")
+    p.add_argument("--runner", default=None)
+    p.add_argument("--mode", default=None, choices=["fast", "specialist"])
+    p.set_defaults(func=_cmd_experiment)
+
+    p = sub.add_parser("export", help="print a case's locked report (markdown, or --json for the manifest)")
+    p.add_argument("case_id")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=_cmd_export)
+
     p = sub.add_parser("import", help="freeze a capture directory (capture.json + raw files) as an unscored case")
     p.add_argument("directory")
     p.add_argument("--title", default=None)
@@ -449,8 +604,11 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     except Exception as exc:  # noqa: BLE001 - CLI boundary: show a short reason, not a traceback
         from alibi.episode import EpisodeError
+        from alibi.runners import RuntimeBlocked
 
-        if isinstance(exc, (EpisodeError, ValueError, FileNotFoundError)):
+        # NotFound and Conflict (a request that is not valid for a case's state) are ordinary answers, not crashes
+        expected = (EpisodeError, ValueError, FileNotFoundError, RuntimeBlocked)
+        if isinstance(exc, expected) or type(exc).__name__ in ("NotFound", "Conflict"):
             print(f"error: {exc}", file=sys.stderr)
             return 1
         raise

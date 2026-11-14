@@ -48,6 +48,11 @@ MAX_EXCLUDED = 20
 NO_RECORD_REASON = "every record this step produced is in a source withheld from this evidence view"
 
 
+def source_words(host: str, source: str) -> str:
+    """How a source is named to a person: "collector", "tap flow", "workstation auth"."""
+    return source if host == source else f"{host} {source}"
+
+
 def public_source(s: SourceInfo) -> dict[str, Any]:
     return {"source_id": s.source_id, "artifact": s.artifact, "host": s.host, "source": s.source,
             "tamper_exposure": s.tamper_exposure, "lines": s.line_count}
@@ -98,7 +103,7 @@ def create_child_bundle(parent: EpisodePaths, child: EpisodePaths, excluded_sour
     db_hash = sha256_file(child.db)
     child.db.chmod(0o444)
 
-    kinds = sorted({f"{s.host} {s.source}" for s in withheld})
+    kinds = sorted({source_words(s.host, s.source) for s in withheld})
     manifest = pm.model_copy(deep=True, update={
         "bundle_id": f"bndl-{raw_hash[:16]}", "sources": [s.model_copy(deep=True) for s in kept],
         "raw_bundle_sha256": raw_hash, "derived_db_sha256": db_hash, "event_count": len(events),
@@ -206,6 +211,11 @@ def compare(parent_report: InvestigationReport | None, parent_store: EvidenceSto
                 f" ({len(gone)} of its cited record(s) are in a withheld source)" if gone else "")
         elif f.evidence_ids and not probe.evidence_ids:
             reason = "every record cited for this claim is in a withheld source; it cannot be established from this view"
+        elif f.category != "incident_allegation" and gone:
+            reason = (f"{len(gone)} of the {len(f.evidence_ids)} record(s) cited for this are in a withheld source, and "
+                      "the deterministic check does not support it from what remains")
+        elif f.category != "incident_allegation":
+            reason = "no deterministic check supports this observation, with or without the withheld source"
         else:
             reason = (again.verifier_notes or ["no deterministic support in this view"])[0]
         out["claims"].append({

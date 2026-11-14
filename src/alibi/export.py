@@ -128,7 +128,8 @@ def render_markdown(doc: dict[str, Any]) -> str:
            f"| Locked | {lock['locked_at']} |",
            f"| Report hash (SHA-256) | `{lock['report_sha256']}` |", ""]
     if doc["case"].get("parent_case_id"):
-        gone = ", ".join(f"{s['host']} {s['source']}" for s in doc["case"].get("excluded_sources") or [])
+        gone = ", ".join(s["source"] if s["host"] == s["source"] else f"{s['host']} {s['source']}"
+                         for s in doc["case"].get("excluded_sources") or [])
         out += [f"> This is a derived evidence view of case `{doc['case']['parent_case_id']}` with these sources "
                 f"withheld: {gone}. What they would have shown is unknown here.", ""]
     out += ["## Summary", "", rep["summary"] or "(no summary)", ""]

@@ -174,6 +174,13 @@ class CaseRecord:
     parent_case_id: str | None = None
     excluded_sources: list[dict[str, Any]] = field(default_factory=list)
 
+    def labels_text(self) -> str:
+        """One line for terminals: where the evidence came from and what produced the report."""
+        mode = MODE_LABELS.get(self.investigation_mode or "", "deterministic checks, no agent")
+        return (f"evidence {self.evidence_origin} · {INFERENCE_LABELS.get(self.inference_mode, self.inference_mode)}"
+                + (f" ({self.model_id})" if self.model_id and self.inference_mode in ("LIVE_MODEL", "RECORDED_MODEL") else "")
+                + f" · {mode}")
+
     def public(self) -> dict[str, Any]:
         d = asdict(self)
         d.pop("client_token", None)
@@ -902,7 +909,7 @@ class Orchestrator:
                 withheld = load_episode_manifest(cpaths).withheld_sources
             else:  # derived from imported evidence: unscored, with the operator record beside the evidence
                 withheld = json.loads((cpaths.evidence / "derived_from.json").read_text(encoding="utf-8"))["withheld_sources"]
-            what = ", ".join(sorted({f"{w['host']} {w['source']}" for w in withheld}))
+            what = ", ".join(sorted({source_experiment.source_words(w["host"], w["source"]) for w in withheld}))
             rec = CaseRecord(case_id=child_id, preset_id=parent.preset_id, title=f"{parent.title} · without {what}",
                              card_id=parent.card_id, difficulty=parent.difficulty, seed=parent.seed, runner_id=runner_id,
                              investigation_mode=mode, evidence_origin=parent.evidence_origin,
