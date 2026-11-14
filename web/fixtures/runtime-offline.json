@@ -1,0 +1,32 @@
+{
+  "runtime_mode": "offline",
+  "llm_max_usd": 0.0,
+  "bench_max_system_runs": 0,
+  "live_provider_kind": null,
+  "lead_model": null,
+  "subagent_model": null,
+  "adversary_model": null,
+  "live_block_reason": "RUNTIME_MODE is offline (default). No network model calls are made.",
+  "effort": "low",
+  "max_tokens_per_call": 3000,
+  "price_in_per_mtok": null,
+  "price_out_per_mtok": null,
+  "caps": {
+    "max_calls": 16,
+    "max_input_tokens": 200000,
+    "max_output_tokens": 10000,
+    "max_seconds": 180.0,
+    "tool_result_max_records": 50,
+    "tool_result_max_bytes": 8192
+  },
+  "paid_overage_authorized_usd": 0,
+  "live_inference": "BLOCKED",
+  "default_inference_mode": "SCRIPTED_FIXTURE",
+  "inference_labels": {
+    "LIVE_MODEL": "Live model",
+    "RECORDED_MODEL": "Recorded AI run",
+    "SCRIPTED_FIXTURE": "Scripted fixture \u00b7 no model inference",
+    "NO_MODEL_BASELINE": "Deterministic baseline \u00b7 no model inference"
+  },
+  "frontend_built": true
+}
