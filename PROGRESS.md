@@ -3,7 +3,7 @@
 > Times are America/New_York. Entries record concrete check results, not intentions.
 > Status vocabulary: **OFFLINE-READY**, **AI-READY**, **INCOMPLETE** (PLAN §14).
 
-## Current state — second run, Saturday November 14, 06:20 ET
+## Current state — second run, Saturday November 14, 06:45 ET
 
 This block is the handoff. Everything below it is the build history, oldest first.
 
@@ -13,8 +13,8 @@ This block is the handoff. Everything below it is the build history, oldest firs
 | Launch | `uv sync --frozen && ./start.sh`, then http://127.0.0.1:8000. `./start.sh --port 8010` if the port is busy. |
 | Demo selection | Recorded replays. For the pitch: **Inside job · cover-up** recorded on Claude Opus 5.5 (specialist mode) or on Claude Haiku 5.5 (fast mode, with two recorded question answers). Also recorded on Haiku: **Records heist** and **Cold chain**. No key or network needed. |
 | Model in use | `anthropic:claude-haiku-5-5`, effort low, for every role. Opus 5.5 recordings and pilot are from the first run and unchanged. |
-| Spend | Estimated **$3.475** of the **$20** cap across both runs (507 model calls). This run: about **$0.55**. Reserved: $0. Unreconciled: $0. Automatic calls stop at $19.50. `uv run alibi spend`. |
-| Tests | `uv run pytest` → **411 passed**: 390 offline, 21 in headless Chrome. A fresh clone of the branch also installs, builds, passes the offline tests and serves the recorded demo with no key. |
+| Spend | Estimated **$3.475** of the **$20** cap across both runs (508 model calls). This run: about **$0.55**. Reserved: $0. Unreconciled: $0. Automatic calls stop at $19.50. `uv run alibi spend`. |
+| Tests | `uv run pytest` → **422 passed**: 401 offline, 21 in headless Chrome. A fresh clone of the branch also installs, builds, passes the offline tests and serves the recorded demo with no key. |
 | Recordings | `demo/replays/`: 4 real-model runs (1 Opus, 3 Haiku) and 2 scripted-fixture runs. All six reproduce their evidence byte for byte and replay offline. |
 | Measured results | `benchmarks/offline-v1`, `benchmarks/ai-pilot-v1` (first run, frozen); `benchmarks/paired-v2` and `benchmarks/paired-v2-rep1` (this run's evaluation and its replication; summary in `docs/evaluation-summary.md`); `benchmarks/calibration`, `benchmarks/feature-checks`, `benchmarks/paired-v2-dev` (operational checks). |
 
@@ -379,3 +379,10 @@ Phase-two model spend so far: about **$0.08** (ledger total $3.006 of the $20 ca
 - Opened the merged case board in Chrome against an offline server. All nine presets and six recordings are listed with correct labels, no console errors.
 - Found and fixed a regression caused by the new recordings: the interface features the first recorded model run in the list, which had become "Cold chain" shown with the Inside-job description. Recordings are now listed with the proven specialist run (Claude Opus 5.5) first and marked `presentation_default`. Verified in the browser: the featured card and the case it opens are Inside job on Opus again.
 - The "Ask about this evidence" box in the interface still says questions are unavailable in this server version. The route exists now; the control needs wiring (Terry).
+
+### Independent review of the budget code (06:20–06:40)
+
+- A second agent read `agents/gateway.py` and `config.py` without being told what to expect. Verdict on the route in use: no path that undercounts spend, drops a reservation, charges twice or lets threads or processes jointly pass a cap. It reported five edge defects; all five are fixed and each has a regression test (`80bcb3b`, details in DECISIONS.md).
+- None of them had affected recorded spend. After the fixes: the real ledger still validates ($3.4749, 508 calls, nothing reserved or unreconciled), the unbilled count check works, and one smoke call settled normally.
+- Two more robustness tests for the checks: reordered or late collector delivery, and a collector clock that disagrees with the host (`40e6dac`). Both passed without a code change.
+- Added: `GET /api/spend` (totals only) for the interface's status drawer, and `alibi eval --render` to regenerate a report from saved results.
