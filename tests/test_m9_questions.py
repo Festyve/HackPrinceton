@@ -449,3 +449,40 @@ def test_record_command_can_ask_questions_and_never_saves_an_unanswered_one(tmp_
     assert "questions: unavailable (0 model call(s))" in out  # offline: asked, not answered, and said so
     saved = json.loads((tmp_path / "replays" / "with-question" / "recording.json").read_text())
     assert saved["questions"] == [] and saved["meta"]["inference_mode"] == "NO_MODEL_BASELINE"
+
+
+def test_claims_about_the_new_case_families_are_checked_against_their_own_checks(live):
+    from alibi import checks_families
+
+    settings, orch, c, use = live
+    cid, view = _case(c, preset="cold-chain")
+    disc = next(f for f in view["report"]["findings"] if f["claim_type"] == "sensor_stream_discrepancy")
+    exc = next(f for f in view["report"]["findings"] if f["claim_type"] == "temperature_excursion")
+    other = next(f for f in view["report"]["findings"] if f["claim_type"] == "policy_consistent_transfer")["evidence_ids"][0]
+    model = use(_fake([("check_sensor_streams", {})], [_answer(
+        answer="The hub's stored readings disagree with the reference logger during a real warm period.", claims=[
+            {"text": "Stored readings disagree with the independent reference.", "evidence_ids": disc["evidence_ids"][:3],
+             "kind": "sensor_stream_discrepancy"},
+            {"text": "Both sources record a real excursion.", "evidence_ids": exc["evidence_ids"][:2], "kind": "temperature_excursion"},
+            {"text": "The readings were altered.", "evidence_ids": [other], "kind": "sensor_stream_discrepancy"},
+            {"text": "Someone meant to hide spoiled vaccine.", "evidence_ids": [], "kind": "interpretation"}])]))
+    q = _ask(c, cid, text="Was the temperature record altered?")
+    assert [cl["support"] for cl in q["claims"]] == ["checked", "checked", "unsupported", "interpretation"]
+    assert "deterministic check for this kind of evidence" in q["claims"][0]["basis"]
+    assert "not for the cited records" in q["claims"][2]["basis"]
+    assert q["status"] == "answered" and q["trace"][0]["tool"] == "check_sensor_streams"
+    # the family vocabulary reached the model only because this bundle is of that family
+    said = str(model.seen[0][0].content)
+    assert "sensor_stream_discrepancy" in said and "Never infer intent from a temperature reading" in said
+    assert "check_sensor_streams" in model.tools_bound[0]
+    # a first-run bundle keeps the first-run prompt, tools and answer schema
+    cid2, view2 = _case(c, preset="hero-coverup")
+    removed, _, _ = _ids(view2)
+    plain = use(_fake([_answer(claims=[{"text": "A line is absent.", "evidence_ids": [removed], "kind": "line_missing_locally"},
+                                       {"text": "Readings disagree.", "evidence_ids": [removed], "kind": "sensor_stream_discrepancy"}])]))
+    q2 = _ask(c, cid2, token="t-first-run")
+    assert "sensor_stream_discrepancy" not in str(plain.seen[0][0].content) and "check_sensor_streams" not in plain.tools_bound[0]
+    # ... so a family kind is simply not a valid answer there: the tool rejects it and nothing is recorded as answered
+    assert q2["status"] == "failed" and q2["claims"] == [] and q2["answer"] == ""
+    assert any("invalid answer" in str(m.content) for m in plain.seen[-1])
+    assert questions.FAMILY_CLAIM_KINDS[:4] == checks_families.INCIDENT_CLAIMS
