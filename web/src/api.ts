@@ -65,6 +65,7 @@ export interface Replay {
   inference_mode?: string;
   inference_label?: string;
   model_id?: string | null;
+  presentation_default?: boolean;
   recorded_at?: string | null;
   note?: string;
 }
@@ -547,14 +548,19 @@ const q = encodeURIComponent;
 export const api = {
   runtime: () => req<Runtime>("/api/runtime"),
   presets: () => req<Presets>("/api/presets"),
-  createCase: (preset_id: string, investigation_mode?: string | null) =>
+  listCases: () => req<{ cases: CaseInfo[] }>("/api/cases"),
+  createCase: (
+    preset_id: string,
+    investigation_mode?: string | null,
+    client_token = token(),
+  ) =>
     post<CaseView>("/api/cases", {
       preset_id,
-      client_token: token(),
+      client_token,
       ...(investigation_mode ? { investigation_mode } : {}),
     }),
-  openReplay: (id: string) =>
-    post<CaseView>(`/api/replays/${q(id)}/open`, { client_token: token() }),
+  openReplay: (id: string, client_token = token()) =>
+    post<CaseView>(`/api/replays/${q(id)}/open`, { client_token }),
   getCase: (id: string) => req<CaseView>(`/api/cases/${q(id)}`),
   eventsJson: (id: string, after: number) =>
     req<{ events: ServerEvent[]; state: string }>(

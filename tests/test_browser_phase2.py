@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests.test_browser import browser, page, run_case, server, tid, wait_state  # noqa: F401  (fixtures)
+from tests.test_browser import browser, page, run_case, server, tid, wait_state, open_sources  # noqa: F401  (fixtures)
 
 pytestmark = pytest.mark.browser
 
@@ -85,6 +85,7 @@ def test_removing_the_collector_shows_what_can_no_longer_be_established(server, 
     run_case(page, base)
     page.wait_for_selector(tid("compare-row-retained"))
     original = page.evaluate("() => /case=([^&]+)/.exec(location.hash)[1]")
+    open_sources(page)
     assert page.locator(tid("witness-select")).input_value() == "collector"
     page.click(tid("btn-derive"))
     page.wait_for_selector(tid("experiment-comparison"))
@@ -111,12 +112,14 @@ def test_removing_the_collector_shows_what_can_no_longer_be_established(server, 
     page.wait_for_selector(tid("raw-focus-line"))
     page.keyboard.press("Escape")
     # the original case is unchanged and lists its derived view
+    open_sources(page)
     page.click(tid("btn-open-original"))
     wait_state(page, "awaiting_review")
     assert page.evaluate("() => /case=([^&]+)/.exec(location.hash)[1]") == original
     assert "reduced evidence view" not in page.inner_text(tid("case-eyebrow")).lower()
     page.wait_for_selector(tid("compare-row-retained"))
     assert page.locator(tid("experiment-comparison")).count() == 0
+    open_sources(page)
     assert "log collector" in page.inner_text(tid("derived-cases"))
     assert page.errors == []
 
@@ -213,6 +216,7 @@ def test_a_derived_view_is_not_unsealed_before_the_original_report_is_locked(ser
     base, _ = server
     run_case(page, base)
     page.wait_for_selector(tid("compare-row-retained"))
+    open_sources(page)
     page.click(tid("btn-derive"))
     page.wait_for_selector(tid("experiment-comparison"))
     wait_state(page, "awaiting_review")
@@ -224,10 +228,12 @@ def test_a_derived_view_is_not_unsealed_before_the_original_report_is_locked(ser
     assert page.inner_text(tid("case-state")) == "Report locked" and page.locator(tid("score-panel")).count() == 0
     page.errors[:] = [e for e in page.errors if "409" not in e]  # that refusal is the point of this test
     # lock the original, come back, and the derived view unseals
+    open_sources(page)
     page.click(tid("btn-open-original"))
     wait_state(page, "awaiting_review")
     page.click(tid("btn-accept"))
     wait_state(page, "report_locked")
+    open_sources(page)
     page.locator(f'{tid("derived-cases")} button').first.click()
     wait_state(page, "report_locked")
     page.wait_for_selector(tid("experiment-comparison"))
@@ -561,6 +567,7 @@ def test_a_reduced_cold_chain_view_counts_nothing_when_nothing_could_be_compared
     base, _ = server
     run_case(page, base, "cold-chain")
     page.wait_for_selector(tid("temperature-records"))
+    open_sources(page)
     page.select_option(tid("witness-select"), "reference")
     page.click(tid("btn-derive"))
     page.wait_for_selector(tid("experiment-comparison"))
@@ -578,14 +585,17 @@ def test_a_reduced_view_whose_original_was_reset_says_so_and_claims_nothing_abou
     base, _ = server
     run_case(page, base)
     original = _case_id(page)
+    open_sources(page)
     page.click(tid("btn-derive"))
     page.wait_for_selector(tid("experiment-comparison"))
     wait_state(page, "awaiting_review")
+    open_sources(page)
     assert "did not change the original evidence" in page.inner_text(tid("source-experiment"))
     assert page.request.post(f"{base}/api/cases/{original}/reset").ok
     page.reload()
     wait_state(page, "awaiting_review")
     page.wait_for_selector(f'{tid("experiment-comparison")} :text("no longer exists")')
+    open_sources(page)
     side = page.inner_text(tid("source-experiment"))
     assert "no longer exists" in side and "did not change the original" not in side
     assert page.locator(tid("btn-open-original")).count() == 0  # a button that could only lead to an error
@@ -609,7 +619,7 @@ def test_two_designed_cases_look_the_same_whatever_the_operator_placed(server, p
             assert words not in body, (choice, words)
         case = page.request.get(f"{base}/api/cases/{cid}").json()["case"]
         seen.append({
-            "heading": page.inner_text("h1"), "eyebrow": page.inner_text(tid("case-eyebrow")).replace(cid.replace("case-", "")[:8].upper(), "…"),
+            "heading": page.inner_text("h1"), "eyebrow": page.inner_text(tid("case-eyebrow")).replace(cid.replace("case-", "")[:8], "…"),
             "badges": [page.inner_text(tid(b)) for b in ("badge-inference", "badge-evidence", "badge-playback")],
             # each press of "Ask for a design" is a new design with its own exercise number, so title and seed
             # differ between the two for that reason; tests/test_m14_designer.py pins them for one design

@@ -18,7 +18,33 @@ export function Dialog({
     const el = ref.current;
     const trigger = document.activeElement as HTMLElement | null;
     el?.showModal();
+    // Keep keyboard focus inside the app even when Tab would otherwise visit browser chrome.
+    const contain = (e: KeyboardEvent) => {
+      if (e.key !== "Tab" || !el) return;
+      const candidates = Array.from(
+        el.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((node) => node.getClientRects().length && node.tabIndex >= 0);
+      const first = candidates[0],
+        last = candidates[candidates.length - 1];
+      if (!first) {
+        e.preventDefault();
+        el.focus();
+      } else if (
+        e.shiftKey &&
+        (document.activeElement === first || document.activeElement === el)
+      ) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    el?.addEventListener("keydown", contain);
     return () => {
+      el?.removeEventListener("keydown", contain);
       el?.close();
       if (trigger?.isConnected) trigger.focus();
     };
@@ -26,6 +52,7 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
+      tabIndex={-1}
       className={wide ? "drawer wide" : "drawer"}
       aria-label={title}
       onCancel={(e) => {
