@@ -1,0 +1,253 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-BR-bndl-1cfb993962c1ffb6",
+ "bundle_id": "bndl-1cfb993962c1ffb6",
+ "system_id": "BR",
+ "system_label": "BR · deterministic contradiction checks, templated findings",
+ "inference_mode": "NO_MODEL_BASELINE",
+ "model_id": null,
+ "findings": [
+  {
+   "id": "BR-01",
+   "claim_type": "local_log_removal",
+   "category": "incident_allegation",
+   "attack_id": "T1685.006",
+   "technique_family": "Host log lines removed (closest ATT&CK entry: Clear Linux or Mac System Logs)",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T11:20:32Z",
+   "t_end": "2026-11-10T11:20:32Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_50659d77d59f",
+    "ev_19da10b08860",
+    "ev_69518f246444"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "local_vs_collector"
+   ],
+   "confidence": 0.8,
+   "rationale": "1 line(s) of /var/log/auth.log on workstation were received by the collector but are absent from the host's own copy, after the host's retention boundary (2026-11-10T06:05:00+00:00, basis: capture_start) and bracketed by later local records. Retained line: 2026-11-10T11:20:32+00:00 ws-nurse-01 login[2079]: pam_unix(login:session): session opened for user sdubois on tty1 (session 34) Session(s): workstation#34.",
+   "assumptions": [
+    "the collector is not writable from the monitored host",
+    "the forwarder delivered the line before it disappeared locally"
+   ],
+   "alternative_explanations": [
+    "a local log-agent or filesystem fault dropped the line",
+    "an administrator edited the file without recording it"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-02",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": "T1074.001",
+   "technique_family": "Local data staging",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T11:22:38Z",
+   "t_end": "2026-11-10T11:22:41Z",
+   "object_or_session": "/tmp/.font-unix/upd-4c2e.pkg",
+   "evidence_ids": [
+    "ev_2f52788b038d",
+    "ev_7cf559c8a3b0",
+    "ev_7776e95b5fe3",
+    "ev_5ebf125d3c8a",
+    "ev_171d26760349"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.7,
+   "rationale": "/tmp/.font-unix/upd-4c2e.pkg (19,828,233 bytes, owner sdubois) was written on workstation shortly before the non-approved transfer and matches its size; the records application logged a bulk export of 'patients_full' to this host.",
+   "assumptions": [
+    "matching size and timing indicate the same object; content was not inspected"
+   ],
+   "alternative_explanations": [
+    "an unrelated file of similar size"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-03",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": "Transfer to a non-approved destination (exfiltration mapping is context-dependent)",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T11:25:43Z",
+   "t_end": "2026-11-10T11:25:56Z",
+   "object_or_session": "10.20.9.12:8080",
+   "evidence_ids": [
+    "ev_596ea8dff27d",
+    "ev_a5c060ebc6db",
+    "ev_50659d77d59f"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.8,
+   "rationale": "19,832,008 bytes left workstation for 10.20.9.12:8080 between 2026-11-10T11:25:43+00:00 and 2026-11-10T11:25:56+00:00. destination 10.20.9.12 is not on the approved bulk-destination list (10.20.0.45, 10.20.8.20). It overlaps exactly one session on workstation: workstation#34 (account sdubois, console; login record seen in: collector copy).",
+   "assumptions": [
+    "the supplied destination policy is complete and current"
+   ],
+   "alternative_explanations": [
+    "an approved destination missing from the supplied policy"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-04",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:18:08Z",
+   "t_end": "2026-11-10T08:54:46Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_e07ee139cffc",
+    "ev_7044093e3eb7",
+    "ev_86290c6a487f",
+    "ev_157a29b3eb24",
+    "ev_d97a8c717ec9",
+    "ev_ee26a8b06710",
+    "ev_d06790ac00dc"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "local_vs_collector"
+   ],
+   "confidence": 0.9,
+   "rationale": "184 line(s) of /var/log/records-app/access.log on records exist only at the collector, and all of them predate the host's retention boundary at 2026-11-10T08:55:04+00:00 (log rotation). Their absence from the host is expected, not suspicious.",
+   "assumptions": [
+    "the rotation record and the stated retention policy are accurate"
+   ],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-05",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:53:04Z",
+   "t_end": "2026-11-10T11:53:10Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_a472e7192acc"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.9,
+   "rationale": "19,833,433 bytes from records to 10.20.0.45:873. destination 10.20.0.45 is an approved bulk destination: stor-nas-01 (backup and log archive).",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  }
+ ],
+ "attribution": {
+  "account_used": "sdubois",
+  "session_ref": "workstation#34",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_50659d77d59f"
+  ],
+  "contrary_evidence_ids": [
+   "ev_690c754bdf5a",
+   "ev_e6dba65e9f38"
+  ],
+  "assumptions": [
+   "badge-to-account assignments in the supplied directory are current"
+  ],
+  "limits": [
+   "an account identifies a credential, not the person typing",
+   "badge readers record badge taps, not people; tailgating and shared badges are not visible",
+   "this check cannot establish who operated the session and cannot clear anyone"
+  ],
+  "statement": "Account used: sdubois. Human operator not established. Account sdubois opened a console session at 2026-11-10T11:20:32+00:00 while the badge assigned to that account (B-5273) had last tapped out at 2026-11-10T11:11:32+00:00. This is inconsistent with the account holder sitting at the console, but it does not identify who was.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "3 incident allegation(s), 2 benign explanation(s)/open note(s). Account used: sdubois. Human operator not established. Account sdubois opened a console session at 2026-11-10T11:20:32+00:00 while the badge assigned to that account (B-5273) had last tapped out at 2026-11-10T11:11:32+00:00. This is inconsistent with the account holder sitting at the console, but it does not identify who was.",
+ "open_questions": [
+  "Who had access to the credential used in the linked session?",
+  "Was the destination known to anyone at the clinic?"
+ ],
+ "usage": {
+  "llm_calls": 0,
+  "tokens_in": 0,
+  "tokens_out": 0,
+  "tokens_cache_read": 0,
+  "cost_estimate_usd": 0.0,
+  "wall_seconds": 0.082813,
+  "tool_calls": 0,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": "2026-11-14T11:11:47.303631Z",
+ "locked": true,
+ "locked_at": "2026-11-14T11:11:47.387584Z",
+ "report_sha256": "bf244e12455cf3b286a8999e21643d7fbda172a49c0cd65532d7a89b44369ff9",
+ "review_history": [
+  {
+   "at": "2026-11-14T11:11:47.387584Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

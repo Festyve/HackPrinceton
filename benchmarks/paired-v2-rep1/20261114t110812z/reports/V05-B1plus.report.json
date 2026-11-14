@@ -1,0 +1,339 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v05-20261114t110812z-b1plus",
+ "bundle_id": "bndl-e34df55aa1a3df3e",
+ "system_id": "B1+",
+ "system_label": "Fast investigation: one agent with deterministic checks, no delegation (same configuration as benchmark arm B1+)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-34fc6c",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "kcole",
+   "t_start": "2026-11-10T12:23:22Z",
+   "t_end": "2026-11-10T12:25:35Z",
+   "object_or_session": "/tmp/.font-unix/cache-0a91.bin",
+   "evidence_ids": [
+    "ev_dfef170424bc",
+    "ev_99e1a2a8215f",
+    "ev_892723bff370"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.5,
+   "rationale": "A 16.7 MB file with the same size as the client-requested patients_full export is in a hidden /tmp path on workstation shortly before the transfer to 10.20.9.67:8080. That is consistent with staging before exfiltration, but the file content is not inspected.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size reached this host, per records independent of it, shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-7cfb30",
+   "claim_type": "timestamp_alteration",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "kcole",
+   "t_start": "2026-11-10T12:23:22Z",
+   "t_end": "2026-11-10T12:25:35Z",
+   "object_or_session": "/tmp/.font-unix/cache-0a91.bin",
+   "evidence_ids": [
+    "ev_dfef170424bc",
+    "ev_99e1a2a8215f",
+    "ev_892723bff370",
+    "ev_e20aca0a4ed0"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.75,
+   "rationale": "The file's recorded mtime is 2026-10-11T12:23:25, but its ctime is 2026-11-10T12:25:35 and 16,679,959 bytes matches the export that the records application and collector recorded as arriving at 12:23:22. The mtime is contradicted by independent records, so it appears to have been edited. Only host-local metadata shows the change.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "A restore or copy could preserve an old mtime, but no restore record covers this file and the size matches the export."
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an independent record shows the content arriving after the modification time the file carries"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-d79b96",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": "T1048",
+   "technique_family": "exfiltration",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "kcole",
+   "t_start": "2026-11-10T12:24:54Z",
+   "t_end": "2026-11-10T12:25:05Z",
+   "object_or_session": "10.20.9.67:8080",
+   "evidence_ids": [
+    "ev_f8619f361b67",
+    "ev_e20aca0a4ed0",
+    "ev_892723bff370",
+    "ev_60bdbaa3906c",
+    "ev_d6f0b7927a71"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "About 16.7 MB (above the 5 MB bulk threshold) left workstation to 10.20.9.67:8080, which is not an approved bulk destination, with no covering change record. It overlaps the only session on workstation (workstation#42, console, account kcole, tty1). The same 16.68 MB patients_full dataset was produced by a client-requested export on records at 12:23:22 from 10.20.1.21.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "A client-requested export could be legitimate handoff, but the destination is not on the approved list and no change record covers it.",
+    "Who typed the export request and the transfer is not established by account activity alone."
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-f60e44",
+   "claim_type": "second_host_session",
+   "category": "incident_allegation",
+   "attack_id": "T1021",
+   "technique_family": "lateral_movement",
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "adm-bsato",
+   "t_start": "2026-11-10T12:26:48Z",
+   "t_end": "2026-11-10T12:30:50Z",
+   "object_or_session": "records#315",
+   "evidence_ids": [
+    "ev_ce48e22dfb73",
+    "ev_18ff19c2f2de",
+    "ev_40d1a04fbf5f",
+    "ev_9496948a7dfa",
+    "ev_52e1204e662d"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.7,
+   "rationale": "An adm-bsato session on records opened from workstation (10.20.1.21) while kcole held a console session on workstation. 10.20.1.21 is not a listed admin source (10.20.1.90, 10.20.0.250), and no change record covers it. The session overlapped the export and transfer window.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "CHG-9636 covers administrator access to records from the nurse workstation, but it was approved by the clinic manager for 08:52–09:37 UTC, which does not cover 12:26."
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a session on this host was opened from another monitored host outside the stated access policy"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-5d6a5c",
+   "claim_type": "forwarding_stopped",
+   "category": "incident_allegation",
+   "attack_id": "T1562.002",
+   "technique_family": "defense_evasion",
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "adm-bsato",
+   "t_start": "2026-11-10T12:27:25Z",
+   "t_end": "2026-11-10T12:29:45Z",
+   "object_or_session": "log-forwarder",
+   "evidence_ids": [
+    "ev_d71e68254da2",
+    "ev_270c15902682",
+    "ev_3daca5c1daa1",
+    "ev_c2cbcb95e938"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.75,
+   "rationale": "Log forwarding from records stopped for 140 s (13 missed heartbeats) during records#315. A recorded service-restart command was issued by adm-bsato, and no approved change record covers a forwarder stop at that time. The stop is recorded on the collector side, and the heartbeat gap is the collection interruption. Two local records-app lines from inside the gap (ev_f5d0e6e6106f, ev_3e2d71a1b8c1) never reached the collector.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "CHG-9636 covers log forwarder maintenance from workstation/records, but its window ends 09:37 UTC, before this gap.",
+    "A recorded command shows which account issued it, not who typed it."
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a recorded stop command opens this collection gap and no approved change record covers it"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-94aa3d",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:17:46Z",
+   "t_end": "2026-11-10T09:01:52Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_ee6754b7eec9",
+    "ev_24fceebe2d00",
+    "ev_13369c86c626",
+    "ev_5c51f54f34f1",
+    "ev_a6303b2c3f84",
+    "ev_b4252348a9fa",
+    "ev_127ceb34939e"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.9,
+   "rationale": "188 collector-retained access.log lines before 09:02 are absent locally. Log rotation at 09:02 archived the segment off-host with keep=0, so the absence is explained by retention.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-ba9f35",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:58:02Z",
+   "t_end": "2026-11-10T11:58:09Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_f0eab8d61f2f",
+    "ev_82fa7a5263ab",
+    "ev_917b0afcd599"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "A 16.7 MB patients_full export by the scheduled svc-backup job went to the approved backup NAS (stor-nas-01, 10.20.0.45). This is consistent with policy.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-5fcba4",
+   "claim_type": "shell_history_gap",
+   "category": "neutral_reconstruction",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "kcole",
+   "t_start": "2026-11-10T12:22:20Z",
+   "t_end": "2026-11-10T12:31:20Z",
+   "object_or_session": "workstation#42",
+   "evidence_ids": [
+    "ev_60bdbaa3906c",
+    "ev_d6f0b7927a71",
+    "ev_588af0b3aabf",
+    "ev_e70397e84f94",
+    "ev_892723bff370"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.5,
+   "rationale": "workstation#42 has a records export request but no shell history commands. The touch-screen client does not write history, so this is an unresolved note, not evidence of removal.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  }
+ ],
+ "attribution": {
+  "account_used": "kcole; adm-bsato",
+  "session_ref": "workstation#42; records#315",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_60bdbaa3906c",
+   "ev_d6f0b7927a71",
+   "ev_ce48e22dfb73",
+   "ev_d71e68254da2"
+  ],
+  "contrary_evidence_ids": [
+   "ev_82fa7a5263ab"
+  ],
+  "assumptions": [],
+  "limits": [
+   "Accounts identify credentials, not people. Credentials have been found written down at shared stations before.",
+   "Badge records do not cover remote sessions, and tailgating can be missed."
+  ],
+  "statement": "The account kcole was used at the console session workstation#42 during the export and transfer. The account adm-bsato was used for a remote session on records that stopped log forwarding. Neither account establishes who was at the keyboard. Human operator not established.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Tip: review records access and transfers during this shift. Findings:\n1) Policy-violating transfer: about 16.7 MB (patients_full) left workstation to 10.20.9.67:8080 at 12:24:54-12:25:05 UTC. The destination is not on the approved list and no change record covers it. It overlaps the only session on workstation (workstation#42, console, account kcole). The same dataset was produced by a client-requested export from 10.20.1.21 at 12:23:22.\n2) Timestamp alteration: /tmp/.font-unix/cache-0a91.bin (workstation) shows mtime 2026-10-11, but its ctime is 12:25:35 on 2026-11-10 and its size matches the export that arrived at 12:23:22. The mtime is contradicted by independent records.\n3) Data staging (probable): the same file in a hidden /tmp path before the transfer. Contents were not inspected.\n4) Log forwarding stopped on records for 140 s (12:27:25-12:29:45) via a recorded restart by adm-bsato, with no covering change record. Two local lines from inside the gap never reached the collector.\n5) Second-host session: records#315 (adm-bsato, remote) opened from workstation 10.20.1.21, which is not a listed admin source, with no covering change record. It overlapped the export and transfer.\nBenign or neutral: the 11:58 svc-backup export to the approved NAS is a scheduled job. The 188 missing access.log lines before 09:02 are explained by rotation with off-host archive. The workstation#42 session has no shell history (the touch-screen client writes none), which is a note only. Local-vs-collector comparison shows no unexplained local removal. Sensor checks are not applicable.\nAttribution: accounts kcole and adm-bsato were used. No human operator is established. Accounts are credentials, not people, and badge records do not cover remote sessions.",
+ "open_questions": [
+  "Who typed the kcole export request and the 10.20.9.67 transfer, and was the console credential in use by that person?",
+  "Who opened records#315 from 10.20.1.21 and issued the forwarder stop, given that CHG-9636 does not cover that time?",
+  "What is the content of /tmp/.font-unix/cache-0a91.bin and where did it go? Was 10.20.9.67 a clinic-approved destination not on the list?",
+  "Whether shell history is missing for workstation#42 (touch-screen client) or was removed cannot be determined from the bundle."
+ ],
+ "usage": {
+  "llm_calls": 4,
+  "tokens_in": 67169,
+  "tokens_out": 7085,
+  "tokens_cache_read": 43835,
+  "cost_estimate_usd": 0.006897,
+  "wall_seconds": 33.949,
+  "tool_calls": 18,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T11:10:58.429067Z",
+ "report_sha256": "d27969e7896f5c94cea01c3ca20b623c89e3eab15d2b14b6aeefd5923d283df8",
+ "review_history": [
+  {
+   "at": "2026-11-14T11:10:58.429067Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

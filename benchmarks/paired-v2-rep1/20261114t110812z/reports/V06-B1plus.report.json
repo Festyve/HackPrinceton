@@ -1,0 +1,233 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v06-20261114t110812z-b1plus",
+ "bundle_id": "bndl-1cfb993962c1ffb6",
+ "system_id": "B1+",
+ "system_label": "Fast investigation: one agent with deterministic checks, no delegation (same configuration as benchmark arm B1+)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-c35937",
+   "claim_type": "local_log_removal",
+   "category": "incident_allegation",
+   "attack_id": "T1070.002",
+   "technique_family": "defense_evasion",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T11:20:32Z",
+   "t_end": "2026-11-10T11:20:32Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_50659d77d59f",
+    "ev_19da10b08860",
+    "ev_69518f246444"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "check_local_vs_collector:workstation:/var/log/auth.log"
+   ],
+   "confidence": 0.6,
+   "rationale": "The collector holds the sdubois tty1 login line for session 34 (seq 28), bracketed by local auth.log records on both sides, but the workstation's own auth.log lacks it. The check classes this as unexplained: it postdates the host's retention boundary and no rotation explains it. The line was likely removed locally, though the check does not prove who did it or why.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-15dfe4",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": "T1074",
+   "technique_family": "collection/staging",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T11:22:37Z",
+   "t_end": "2026-11-10T11:22:41Z",
+   "object_or_session": "/tmp/.font-unix/upd-4c2e.pkg",
+   "evidence_ids": [
+    "ev_171d26760349",
+    "ev_2f52788b038d",
+    "ev_7cf559c8a3b0",
+    "ev_7776e95b5fe3",
+    "ev_5ebf125d3c8a"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "Shell history shows clinic-export of dataset patients_full written to a hidden /tmp path under sdubois; records app logged export_bulk of patients_full (19,828,233 bytes) for client 10.20.1.21 at the same time; file metadata shows the 19,828,233-byte object at that path; tap shows a matching 19.8 MB inbound pull from 10.20.0.10:443 in the same seconds.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-1ed7a2",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": "T1048",
+   "technique_family": "exfiltration",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T11:25:43Z",
+   "t_end": "2026-11-10T11:25:56Z",
+   "object_or_session": "10.20.9.12:8080",
+   "evidence_ids": [
+    "ev_596ea8dff27d",
+    "ev_a5c060ebc6db",
+    "ev_69518f246444"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "Tap flow shows 19,832,008 bytes sent from workstation 10.20.1.21 to 10.20.9.12:8080, above the 5,000,000-byte threshold and not on the approved list. Shell history shows the matching curl PUT of the staged package, issued in sdubois console session 34.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-0a26b2",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:18:08Z",
+   "t_end": "2026-11-10T08:54:46Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_e07ee139cffc",
+    "ev_7044093e3eb7",
+    "ev_d06790ac00dc",
+    "ev_ee26a8b06710"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "184 records access.log lines from 06:18 to 08:54 are absent locally because logrotate at 08:55:04 (keep 0) archived them off-host. This is scheduled rotation, not tampering.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-8cf750",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:53:04Z",
+   "t_end": "2026-11-10T11:53:10Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_a472e7192acc",
+    "ev_fb9d0941eaa4",
+    "ev_d06790ac00dc"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.6,
+   "rationale": "A 19.8 MB transfer from records to 10.20.0.45 (stor-nas-01, approved backup and log archive) is policy-consistent. No session or shell command ties to it, and the timing is consistent with the scheduled backup/archive pattern.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  }
+ ],
+ "attribution": {
+  "account_used": "sdubois",
+  "session_ref": "workstation#34",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_50659d77d59f",
+   "ev_171d26760349",
+   "ev_a5c060ebc6db",
+   "ev_7cf559c8a3b0"
+  ],
+  "contrary_evidence_ids": [
+   "ev_690c754bdf5a",
+   "ev_e6dba65e9f38"
+  ],
+  "assumptions": [],
+  "limits": [
+   "An account name identifies a credential, not a person.",
+   "Badge records show taps, not who is at the console; tailgating and shared credentials are not visible.",
+   "Remote sessions are not covered by badge records.",
+   "No named person is accused or cleared."
+  ],
+  "statement": "Account used: sdubois (console session workstation#34 on workstation, tty1, 11:20:32–11:28:28 UTC). The account, not a person, performed the staging and the outbound transfer. The account's badge B-5273 had tapped out at 11:11:32, so the session is inconsistent with the holder at the console. Human operator not established: the account may have been used by someone else, through a credential left written down, or by tailgating.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Tip: records access and transfers in this shift. Findings: on workstation, console session 34 under account sdubois (11:20:32–11:28:28 UTC) exported patients_full from records (19,828,233 bytes) to hidden path /tmp/.font-unix/upd-4c2e.pkg (11:22:37–11:22:41). It was then sent via curl to 10.20.9.12:8080 (19,832,008 bytes out, 11:25:43–11:25:56). That destination is not on the approved list, and the transfer exceeds the 5 MB threshold, so it violates policy. The workstation's local auth.log lacks the session-34 login line that the collector retained; the check reports it as unexplained absence (confidence 0.6). A separate 19.8 MB transfer from records to the approved stor-nas-01 (10.20.0.45) at 11:53 is policy-consistent. The 184 missing records access.log lines before 08:55 are explained by scheduled logrotate with keep 0. Attribution: the account sdubois was used, but the human operator is not established. The badge for that account had tapped out before the session began.",
+ "open_questions": [
+  "Who physically or remotely operated sdubois session 34 (possible credential sharing, tailgating or remote use via vpn-gw-01)?",
+  "Destination 10.20.9.12:8080: what host is it and was it authorized?",
+  "Why is the session-34 login line absent from the host's auth.log while the collector has it, and who had access to remove it?",
+  "Was the staged package at /tmp/.font-unix/upd-4c2e.pkg removed, and what is its current state? The workstation file metadata is a point-in-time snapshot only.",
+  "Does the transfer at 11:53 from records to 10.20.0.45 correspond to a scheduled backup job?"
+ ],
+ "usage": {
+  "llm_calls": 6,
+  "tokens_in": 112516,
+  "tokens_out": 5141,
+  "tokens_cache_read": 84879,
+  "cost_estimate_usd": 0.006874,
+  "wall_seconds": 21.201,
+  "tool_calls": 14,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T11:12:42.376486Z",
+ "report_sha256": "229074eb259aca71cc2922f6f81c13973cc04ee4610a16fabc8c8854ac64315a",
+ "review_history": [
+  {
+   "at": "2026-11-14T11:12:42.376486Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

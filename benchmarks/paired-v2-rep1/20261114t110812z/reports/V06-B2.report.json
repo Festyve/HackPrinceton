@@ -1,0 +1,167 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v06-20261114t110812z-b2",
+ "bundle_id": "bndl-1cfb993962c1ffb6",
+ "system_id": "B2",
+ "system_label": "Arm B2: lead + integrity-auditor + skeptic with generic evidence tools only (no checks)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-15dfe4",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": "T1074",
+   "technique_family": "collection",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T11:22:37Z",
+   "t_end": "2026-11-10T11:22:41Z",
+   "object_or_session": "/tmp/.font-unix/upd-4c2e.pkg",
+   "evidence_ids": [
+    "ev_171d26760349",
+    "ev_2f52788b038d",
+    "ev_50659d77d59f",
+    "ev_323bc245fbc3",
+    "ev_a89e870d92af"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "Full patients_full export written to hidden non-clinical path in console session workstation#34 by account sdubois; file size matches the records bulk export. Shell history and fs_stat are host-local; session is collector-witnessed.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Ad hoc troubleshooting export by an authorized user",
+    "Shell history is host-local and not independently witnessed"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": "Collector-witnessed console session; export size matches the records bulk export; staged file is in a non-clinical hidden path. Host-local evidence, benign alternative not excluded but not supported.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-1ed7a2",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": "T1048",
+   "technique_family": "exfiltration",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T11:25:43Z",
+   "t_end": "2026-11-10T11:25:56Z",
+   "object_or_session": "10.20.9.12:8080",
+   "evidence_ids": [
+    "ev_a5c060ebc6db",
+    "ev_596ea8dff27d"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "Tap-witnessed 19,832,008-byte outbound flow from workstation client 10.20.1.21 to 10.20.9.12:8080, immediately after a curl PUT of the staged package. Destination is not an approved bulk destination and the volume exceeds the 5,000,000-byte threshold.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Unrecorded sanctioned migration or vendor upload to an internal host",
+    "Payload content not inspected"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": "Tap-witnessed flow, volume above threshold, destination not approved; directly follows curl PUT of staged file.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-2a1dca",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T08:55:00Z",
+   "t_end": "2026-11-10T08:55:02Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_db85ff64a38d"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.7,
+   "rationale": "Scheduled logrotate rotated workstation auth.log to auth.log.1 (keep 1) at 08:55:01, collector-witnessed. Apparent shrinkage of the live file is explained by rotation; not evidence of removal.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": "Scheduled rotation, collector-witnessed; benign explanation for the absence. No removal claim made.",
+   "produced_by": "lead-investigator"
+  }
+ ],
+ "attribution": {
+  "account_used": "sdubois",
+  "session_ref": "workstation#34",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_50659d77d59f",
+   "ev_323bc245fbc3",
+   "ev_171d26760349",
+   "ev_a5c060ebc6db"
+  ],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Shell history and fs_stat are host-local",
+   "No payload inspection of the flow",
+   "No badge or remote-session linkage analyzed"
+  ],
+  "statement": "Account sdubois was used in console session workstation#34 to stage and transfer data. The human operator is not established: the credential is identified, not the person. Shared console credentials have been found written down before, and badge records do not cover tailgating or remote sessions.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Tip: review records access and transfers this shift. Supported: (1) Data staging on workstation: account sdubois, in collector-witnessed console session workstation#34 (11:20:32-11:28:28 UTC), ran clinic-export of patients_full to hidden path /tmp/.font-unix/upd-4c2e.pkg (19,828,233 bytes) at 11:22:37-11:22:41. (2) Policy-violating transfer: curl PUT of that package to 10.20.9.12:8080 at 11:25:43-11:25:56, tap-witnessed at 19,832,008 bytes out; destination is not an approved bulk destination. Benign: workstation auth.log shrinkage at 08:55 is explained by scheduled logrotate (keep 1), collector-witnessed; no log removal is supported. Attribution: account sdubois was used; the human operator is not established. The credential is not a person, and shared console credentials have been found written down before.",
+ "open_questions": [
+  "Who was at the keyboard for sdubois session workstation#34, and was the session local or remote via vpn-gw-01?",
+  "What is 10.20.9.12 and was any transfer to it authorized?",
+  "Tap source 10.20.1.21 is not explicitly tied to the workstation address in the records; confirm address mapping.",
+  "Staging and curl events are host-local (shell history, fs_stat) and need independent confirmation; the rotated auth.log.1 and records access.log were not fully reconciled against collector copies.",
+  "Was the svc-backup patients_full export (11:53) related to the staging, or independent?"
+ ],
+ "usage": {
+  "llm_calls": 13,
+  "tokens_in": 241966,
+  "tokens_out": 13995,
+  "tokens_cache_read": 155391,
+  "cost_estimate_usd": 0.019372,
+  "wall_seconds": 64.835,
+  "tool_calls": 34,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T11:14:36.007836Z",
+ "report_sha256": "4e850e9082221739e75627499050cf0d047ad7e699b815f13092c68dad7c96f4",
+ "review_history": [
+  {
+   "at": "2026-11-14T11:14:36.007836Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

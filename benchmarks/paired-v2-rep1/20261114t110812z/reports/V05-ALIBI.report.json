@@ -1,0 +1,231 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v05-20261114t110812z-alibi",
+ "bundle_id": "bndl-e34df55aa1a3df3e",
+ "system_id": "ALIBI",
+ "system_label": "Specialist review: lead + integrity-auditor + skeptic with deterministic checks (benchmark arm ALIBI)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-34fc6c",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "kcole",
+   "t_start": "2026-11-10T12:23:22Z",
+   "t_end": "2026-11-10T12:25:35Z",
+   "object_or_session": "/tmp/.font-unix/cache-0a91.bin",
+   "evidence_ids": [
+    "ev_dfef170424bc",
+    "ev_892723bff370",
+    "ev_e20aca0a4ed0",
+    "ev_99e1a2a8215f"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.7,
+   "rationale": "16.68 MB file matching the export size appeared in /tmp at 12:23:22, shortly before the non-approved outbound transfer.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size reached this host, per records independent of it, shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": "Size match and timing with the unapproved transfer; staging is the consistent reading, but who requested it is not shown.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-7cfb30",
+   "claim_type": "timestamp_alteration",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "kcole",
+   "t_start": "2026-11-10T12:23:22Z",
+   "t_end": "2026-11-10T12:25:35Z",
+   "object_or_session": "/tmp/.font-unix/cache-0a91.bin",
+   "evidence_ids": [
+    "ev_dfef170424bc",
+    "ev_892723bff370"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.7,
+   "rationale": "Recorded mtime 2026-10-11 is about 30 days before the independently recorded arrival; ctime is 12:25:35. Host-local metadata, so the edit is shown but not attributed to a person.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an independent record shows the content arriving after the modification time the file carries"
+   ],
+   "skeptic_note": "mtime about 30 days before arrival; host-writable metadata, so shown but not proven deliberate.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-d79b96",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "kcole",
+   "t_start": "2026-11-10T12:24:54Z",
+   "t_end": "2026-11-10T12:25:05Z",
+   "object_or_session": "10.20.9.67:8080",
+   "evidence_ids": [
+    "ev_f8619f361b67",
+    "ev_99e1a2a8215f"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "16,683,146 bytes out from workstation 10.20.1.21 to 10.20.9.67:8080, not an approved bulk destination, no change record.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": "Tap flow shows 16.68 MB to unapproved 10.20.9.67:8080, no change record.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-f60e44",
+   "claim_type": "second_host_session",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "adm-bsato",
+   "t_start": "2026-11-10T12:26:48Z",
+   "t_end": "2026-11-10T12:30:50Z",
+   "object_or_session": "records#315",
+   "evidence_ids": [
+    "ev_ce48e22dfb73",
+    "ev_18ff19c2f2de",
+    "ev_40d1a04fbf5f",
+    "ev_9496948a7dfa",
+    "ev_52e1204e662d"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.5,
+   "rationale": "Remote adm-bsato session on records opened from workstation 10.20.1.21, which is not a listed admin source; no covering change record; overlaps kcole console session.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a session on this host was opened from another monitored host outside the stated access policy"
+   ],
+   "skeptic_note": "Remote session from non-listed source 10.20.1.21, no covering change record.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-5d6a5c",
+   "claim_type": "forwarding_stopped",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "adm-bsato",
+   "t_start": "2026-11-10T12:27:25Z",
+   "t_end": "2026-11-10T12:29:45Z",
+   "object_or_session": "log-forwarder",
+   "evidence_ids": [
+    "ev_3daca5c1daa1",
+    "ev_c2cbcb95e938",
+    "ev_d71e68254da2",
+    "ev_270c15902682",
+    "ev_56c281791ebb",
+    "ev_8d682b9d8145",
+    "ev_99f088d91fc5",
+    "ev_c29b72cda964"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.7,
+   "rationale": "140 s heartbeat gap on records coincides with forwarder stop commands run by adm-bsato during records#315. No approved change record covers it.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a recorded stop command opens this collection gap and no approved change record covers it"
+   ],
+   "skeptic_note": "Stop commands by adm-bsato during gap, no change record; reason for stop not established.",
+   "produced_by": "lead-investigator"
+  }
+ ],
+ "attribution": {
+  "account_used": "kcole (workstation#42); adm-bsato (records#315)",
+  "session_ref": null,
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_60bdbaa3906c",
+   "ev_b379aa9ab1eb",
+   "ev_2dcc068c6e74",
+   "ev_ce48e22dfb73",
+   "ev_d71e68254da2"
+  ],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Shell history for kcole's session is empty; not forwarded and host-writable",
+   "fs_stat is a host-local snapshot",
+   "Remote session source is not a listed admin source but the client identity is not established"
+  ],
+  "statement": "Account used; human operator not established. Console session workstation#42 used account kcole for the staging and outbound transfer. Remote session records#315 used account adm-bsato from 10.20.1.21 and issued forwarder stop commands. Badge B-3205 was inside during the console session; the remote session has no badge coverage. Neither establishes who operated either account. Console credentials have been found written down before.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Tip: review records access and transfers this shift. Evidence supports the following incident-level findings (accounts used, not people):\n1. Workstation console session (workstation#42, account kcole, 10.20.1.21): a 16.68 MB file matching the patients_full export size appeared in /tmp/.font-unix/cache-0a91.bin at 12:23:22Z, and 16.68 MB was sent to 10.20.9.67:8080 at 12:24:54-12:25:05Z. That destination is not on the approved list and no change record covers it. Staging and transfer are supported; this is a policy-violating transfer on its face.\n2. The file's recorded mtime (2026-10-11) conflicts with its arrival and ctime; this is host-local metadata showing an edit, not proof of intent.\n3. Records host: adm-bsato remote session records#315 (12:26:48-12:30:50Z) opened from 10.20.1.21, which is not a listed admin source, with no covering change record (CHG-9636 ended 09:37:08). During it, the log forwarder stopped for about 140 s (12:27:25-12:29:45Z).\nBenign/neutral: an 11:58Z svc-backup export of 16.69 MB to approved stor-nas-01 (10.20.0.45) is scheduled and policy-consistent. The records access.log gap before 09:02 is explained by rotation; the lines are retained at the collector.\nAttribution: account used, human operator not established. Badge B-3205 was inside during the console session; no badge coverage exists for the remote session. Neither establishes who operated the accounts.",
+ "open_questions": [
+  "Is 10.20.9.67 a legitimate destination (e.g. a vendor or lab system not on the approved list)? Who requested the patients_full export?",
+  "Why did the forwarder stop, and was it authorized maintenance? Two access.log lines inside the heartbeat gap are missing at the collector (collection gap, not confirmed removal).",
+  "Shell history for kcole's session is empty (not forwarded); whether the touch-screen client writes history is unknown.",
+  "Was the timestamp change deliberate or a tool artifact? fs_stat is host-writable.",
+  "Who was physically or remotely operating kcole and adm-bsato? Console credentials have been found written down before; the remote client identity is unknown."
+ ],
+ "usage": {
+  "llm_calls": 11,
+  "tokens_in": 143994,
+  "tokens_out": 14357,
+  "tokens_cache_read": 93715,
+  "cost_estimate_usd": 0.0144,
+  "wall_seconds": 63.293,
+  "tool_calls": 32,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T11:09:17.261672Z",
+ "report_sha256": "d8630d9ae08036bfab629cb9ea22ccbc43cb3fab80ac4f747e9b898f04b3fc48",
+ "review_history": [
+  {
+   "at": "2026-11-14T11:09:17.261672Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

@@ -1,0 +1,55 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v05-20261114t110812z-b2",
+ "bundle_id": "bndl-e34df55aa1a3df3e",
+ "system_id": "B2",
+ "system_label": "Arm B2: lead + integrity-auditor + skeptic with generic evidence tools only (no checks)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [],
+ "attribution": {
+  "account_used": null,
+  "session_ref": null,
+  "human_identity": "not_assessed",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [],
+  "statement": "The investigator did not submit an attribution assessment.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "The investigator did not write a summary.",
+ "open_questions": [
+  "Incomplete run: stopped by the budget gateway: input token cap reached: 269691 used + 0 reserved + 42890 needed > 280000."
+ ],
+ "usage": {
+  "llm_calls": 10,
+  "tokens_in": 269691,
+  "tokens_out": 12056,
+  "tokens_cache_read": 165336,
+  "cost_estimate_usd": 0.020725,
+  "wall_seconds": 66.603,
+  "tool_calls": 35,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T11:10:24.163754Z",
+ "report_sha256": "7bd76d7f4e2452b5da65f04d1e9281ef7d18bc8e6579044d35bfdd3fc3bbca29",
+ "review_history": [
+  {
+   "at": "2026-11-14T11:10:24.163754Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

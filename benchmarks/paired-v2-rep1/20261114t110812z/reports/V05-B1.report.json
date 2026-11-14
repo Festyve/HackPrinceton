@@ -1,0 +1,257 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v05-20261114t110812z-b1",
+ "bundle_id": "bndl-e34df55aa1a3df3e",
+ "system_id": "B1",
+ "system_label": "Arm B1: one agent with generic evidence tools only (no checks)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-e6b96d",
+   "claim_type": "timestamp_alteration",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "kcole",
+   "t_start": "2026-10-11T12:23:25Z",
+   "t_end": "2026-11-10T12:25:35Z",
+   "object_or_session": "/tmp/.font-unix/cache-0a91.bin",
+   "evidence_ids": [
+    "ev_dfef170424bc"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.35,
+   "rationale": "The workstation fs_stat snapshot for /tmp/.font-unix/cache-0a91.bin (16,679,959 bytes, owner kcole) shows a 2026-10-11 12:23:25 time in one field and a 2026-11-10 12:25:35 time in another. That is a metadata discrepancy in a 16.7 MB file that sits near the 12:24 outbound transfer. The snapshot is host-local and not forwarded, so it does not show who changed it.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "unresolved_interpretation",
+   "verifier_notes": [
+    "the time window is wider than 30 minutes; too broad to verify"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-91d273",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "adm-bsato",
+   "t_start": "2026-11-10T12:24:54Z",
+   "t_end": "2026-11-10T12:25:05Z",
+   "object_or_session": "10.20.9.67:8080",
+   "evidence_ids": [
+    "ev_f8619f361b67"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.6,
+   "rationale": "Tap flow from 10.20.1.21 to 10.20.9.67:8080 sent 16,683,146 bytes out over about 11 seconds. This is above the 5 MB bulk threshold and the destination is not an approved bulk destination. The source is the same address as the adm-bsato session 315 at 12:26:48. Source-host mapping for 10.20.1.21 is not confirmed in the bundle, so host is set to records on the basis of that session.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "unresolved_interpretation",
+   "verifier_notes": [
+    "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-f60e44",
+   "claim_type": "second_host_session",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "adm-bsato",
+   "t_start": "2026-11-10T12:26:48Z",
+   "t_end": "2026-11-10T12:30:50Z",
+   "object_or_session": "records#315",
+   "evidence_ids": [
+    "ev_ce48e22dfb73",
+    "ev_d71e68254da2",
+    "ev_40d1a04fbf5f",
+    "ev_18ff19c2f2de"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "The adm-bsato session 315 on records came from 10.20.1.21. The brief's admin_sources are only 10.20.1.90 (adm-lt-01) and 10.20.0.250 (vpn-gw-01), so this is an unapproved source address. The session ran the log-forwarder stop. Session 314 came from the approved 10.20.1.90.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a session on this host was opened from another monitored host outside the stated access policy"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-03f862",
+   "claim_type": "forwarding_stopped",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "adm-bsato",
+   "t_start": "2026-11-10T12:27:34Z",
+   "t_end": "2026-11-10T12:29:46Z",
+   "object_or_session": "log-forwarder",
+   "evidence_ids": [
+    "ev_d71e68254da2",
+    "ev_6c0d2c0915a2",
+    "ev_270c15902682",
+    "ev_99f088d91fc5",
+    "ev_8d682b9d8145"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "adm-bsato ran 'sudo systemctl stop log-forwarder' on records at 12:27:34 (session 315). Collector copies show the stop and the later restart at 12:29:46. Collector copies of records' access.log jump from seq 501 (12:27:21) to seq 502 (12:30:32), so records-app lines in the gap were not forwarded.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Planned maintenance by an admin; no approved change record in the brief covers it."
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a recorded stop command opens this collection gap and no approved change record covers it"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-0e45d0",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "aokafor",
+   "t_start": "2026-11-10T07:08:39Z",
+   "t_end": "2026-11-10T07:59:58Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_52698484ee4f",
+    "ev_3d7f238138c5",
+    "ev_4a75a5b5eed7",
+    "ev_9f5e42dca299",
+    "ev_68325945b6b1",
+    "ev_aab1647e5756"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.7,
+   "rationale": "The aokafor shell history shows several small curl uploads of lab-req PDFs to 10.20.8.20 (lab-gw-01). That is an approved destination for laboratory submissions. The files are well under the bulk threshold.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-b778e1",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "tap",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:58:04Z",
+   "t_end": "2026-11-10T11:58:09Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_f0eab8d61f2f"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.5,
+   "rationale": "A 16.7 MB outbound transfer from 10.20.0.10 to stor-nas-01 (10.20.0.45:873) is an approved bulk destination for backup and log archive. The source host is not identified in the bundle.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  }
+ ],
+ "attribution": {
+  "account_used": "adm-bsato",
+  "session_ref": null,
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_ce48e22dfb73",
+   "ev_d71e68254da2",
+   "ev_270c15902682"
+  ],
+  "contrary_evidence_ids": [
+   "ev_97d7903dedde"
+  ],
+  "assumptions": [],
+  "limits": [
+   "Console credentials have been found written down before, and badge records do not cover remote sessions.",
+   "The source host for 10.20.1.21 is not mapped in the bundle."
+  ],
+  "statement": "The account adm-bsato (IT admin) was used for the records session 315 from 10.20.1.21, which is not a listed admin source. In that session it stopped log-forwarder and the forwarder was restarted about two minutes later. A 16.7 MB outbound flow from 10.20.1.21 to 10.20.9.67:8080 occurred minutes earlier. The human operator is not established. Account use does not identify a person.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Bundle bndl-e34df55aa1a3df3e, Northside Clinic. The main supported finding is a window of about 12:24 to 12:30 UTC on 2026-11-10. Account adm-bsato opened records session 315 from 10.20.1.21, which is not an approved admin source. The session stopped log-forwarder at 12:27:34 (collector copies match) and the forwarder restarted at 12:29:46. Collector copies of records' access.log show a gap in that window. At 12:24:54 a 16.7 MB outbound flow from 10.20.1.21 went to 10.20.9.67:8080, which is not an approved bulk destination. Separately, a workstation file in /tmp/.font-unix has inconsistent timestamps. Approved transfers (aokafor's small lab uploads to 10.20.8.20, and a 16.7 MB backup to stor-nas-01) are noted as policy-consistent. Attribution: the account used is adm-bsato; the human operator is not established.",
+ "open_questions": [
+  "Which host is 10.20.1.21, and what is 10.20.9.67? The flow record's source host is not mapped in the bundle.",
+  "What was the content of the 16.7 MB flow at 12:24:54, and does it match the staged file /tmp/.font-unix/cache-0a91.bin? The file's timestamps are inconsistent, but nothing in the bundle links it to the flow.",
+  "Why did the records adm-bsato shell history stop at 8 lines and not show the 10.20.1.21 session's commands? The shell history for that session is not in the bundle.",
+  "The sensor and reference comparison was not performed in this pass; no temperature finding is made.",
+  "Records access.log is host-local, and the rotated segment is archived off-host. The gap in collector copies may not match the host's own log."
+ ],
+ "usage": {
+  "llm_calls": 8,
+  "tokens_in": 259256,
+  "tokens_out": 8586,
+  "tokens_cache_read": 210265,
+  "cost_estimate_usd": 0.012519,
+  "wall_seconds": 48.065,
+  "tool_calls": 24,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T11:11:46.789526Z",
+ "report_sha256": "20ba814eacb73bb9386443331437f3bec74c373b59e3ff64766ff61c78e6b3f7",
+ "review_history": [
+  {
+   "at": "2026-11-14T11:11:46.789526Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

@@ -1,0 +1,188 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v06-20261114t110812z-b1",
+ "bundle_id": "bndl-1cfb993962c1ffb6",
+ "system_id": "B1",
+ "system_label": "Arm B1: one agent with generic evidence tools only (no checks)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-246c1b",
+   "claim_type": "local_log_removal",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T11:20:32Z",
+   "t_end": "2026-11-10T11:28:28Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_50659d77d59f",
+    "ev_323bc245fbc3",
+    "ev_69518f246444",
+    "ev_64c942112477"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.55,
+   "rationale": "The collector holds the sdubois tty1 login for session 34 at 11:20:32 (seq 28) and its logout at 11:28:28 (seq 29), with contiguous sequence numbers. The workstation's local auth.log returns the 11:28:28 logout but no 11:20:32 login for that window. Local auth.log is host-writable and the line is absent only locally. This is an absence in the local copy, not an established deletion; removal method and actor are not shown.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Local logging or write failure dropped the line",
+    "Rotation or copy issue on the host; the .1 generation was not checked"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-15dfe4",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T11:22:37Z",
+   "t_end": "2026-11-10T11:22:41Z",
+   "object_or_session": "/tmp/.font-unix/upd-4c2e.pkg",
+   "evidence_ids": [
+    "ev_171d26760349",
+    "ev_2f52788b038d"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "clinic-export of dataset patients_full written to a hidden tmp path during sdubois console session 34; fs_stat confirms a 19.8 MB file created 11:22:41 owned by sdubois. Staging precedes the 11:25 upload.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-1ed7a2",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T11:25:43Z",
+   "t_end": "2026-11-10T11:25:56Z",
+   "object_or_session": "10.20.9.12:8080",
+   "evidence_ids": [
+    "ev_596ea8dff27d",
+    "ev_a5c060ebc6db",
+    "ev_171d26760349",
+    "ev_2f52788b038d",
+    "ev_50659d77d59f"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "Shell history shows sdubois exporting patients_full to /tmp/.font-unix/upd-4c2e.pkg (11:22:37), then curl PUT of that file to http://10.20.9.12:8080 at 11:25:43. Tap flow ev_596ea8dff27d shows 19,832,008 bytes out from 10.20.1.21 to 10.20.9.12:8080 in that window; the file is 19,828,233 bytes. 10.20.9.12 is not an approved bulk destination (stor-nas-01 10.20.0.45, lab-gw-01 10.20.8.20), and the volume exceeds the 5 MB threshold. The tap source 10.20.1.21 is the workstation address seen in records access logs for lnguyen's session; mapping of 10.20.1.21 to workstation is inferred, not directly logged.",
+   "assumptions": [
+    "10.20.1.21 is the workstation ws-nurse-01"
+   ],
+   "alternative_explanations": [
+    "Authorized vendor or update upload that was not documented in the brief (the path name 'upd-' and the 'font-unix' directory suggest disguise, but this is not proof of intent)",
+    "The flow source address to workstation mapping is inferred"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-8cf750",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:53:04Z",
+   "t_end": "2026-11-10T11:53:10Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_a472e7192acc"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.6,
+   "rationale": "A 19.8 MB rsync-style (port 873) transfer from 10.20.0.10 to stor-nas-01 10.20.0.45, an approved backup and log archive destination. Policy-consistent; a large volume is expected for backup.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  }
+ ],
+ "attribution": {
+  "account_used": null,
+  "session_ref": null,
+  "human_identity": "not_assessed",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [],
+  "statement": "The investigator did not submit an attribution assessment.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "The investigator did not write a summary.",
+ "open_questions": [
+  "Incomplete run: stopped by the budget gateway: input token cap reached: 229151 used + 0 reserved + 66484 needed > 280000."
+ ],
+ "usage": {
+  "llm_calls": 7,
+  "tokens_in": 229151,
+  "tokens_out": 7555,
+  "tokens_cache_read": 169651,
+  "cost_estimate_usd": 0.012911,
+  "wall_seconds": 33.417,
+  "tool_calls": 25,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T11:12:21.001407Z",
+ "report_sha256": "7a0fdff0b84ad44c66add542211786c457698cf07b05627a692cbc517fbc38a3",
+ "review_history": [
+  {
+   "at": "2026-11-14T11:12:21.001407Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

@@ -1,0 +1,207 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v06-20261114t110812z-alibi",
+ "bundle_id": "bndl-1cfb993962c1ffb6",
+ "system_id": "ALIBI",
+ "system_label": "Specialist review: lead + integrity-auditor + skeptic with deterministic checks (benchmark arm ALIBI)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-c35937",
+   "claim_type": "local_log_removal",
+   "category": "incident_allegation",
+   "attack_id": "T1070",
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T11:20:32Z",
+   "t_end": "2026-11-10T11:20:32Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_50659d77d59f",
+    "ev_19da10b08860",
+    "ev_69518f246444",
+    "ev_db85ff64a38d",
+    "ev_1892c6702d9c"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.6,
+   "rationale": "Collector retained sdubois console login (seq 28) from workstation auth.log that is absent from the local copy, while local lines bracket it; rotation does not explain it. Moderate confidence: could be a write or copy fault.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Local write or copy error",
+    "Collector duplicate or mis-attribution",
+    "Host logging fault"
+   ],
+   "status": "downgraded_by_skeptic",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+   ],
+   "skeptic_note": "Single absent line bracketed by local records; supports a line-level gap, not established log removal. Write fault not excluded.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-15dfe4",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": "T1074",
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T11:22:37Z",
+   "t_end": "2026-11-10T11:22:41Z",
+   "object_or_session": "/tmp/.font-unix/upd-4c2e.pkg",
+   "evidence_ids": [
+    "ev_171d26760349",
+    "ev_2f52788b038d",
+    "ev_7cf559c8a3b0",
+    "ev_7776e95b5fe3",
+    "ev_5ebf125d3c8a"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "Shell history shows clinic-export of patients_full written to a hidden temp file; fs_stat shows a 19.8MB file owned by sdubois; records-app logs export_bulk by sdubois at 11:22:38; tap shows matching 19.8MB inbound flow from records.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Sanctioned export left in a temp directory",
+    "fs_stat is a host-writable point-in-time snapshot"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": "No approval recorded; staging chain consistent across shell history, fs_stat, records and tap.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-1ed7a2",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": "T1048",
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T11:25:43Z",
+   "t_end": "2026-11-10T11:25:56Z",
+   "object_or_session": "10.20.9.12:8080",
+   "evidence_ids": [
+    "ev_596ea8dff27d",
+    "ev_a5c060ebc6db"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.9,
+   "rationale": "Tap flow from workstation 10.20.1.21 sent 19,832,008 bytes to 10.20.9.12:8080, an unapproved destination above the 5MB bulk threshold; shell history shows a curl PUT of the staged package at the same time.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Unlisted but authorized destination; no approval record in bundle",
+    "Flow shows volume, not content"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": "Unapproved destination, 19.8MB above threshold, overlapping the sdubois console session.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-0a26b2",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:18:08Z",
+   "t_end": "2026-11-10T08:54:46Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_ee26a8b06710",
+    "ev_d06790ac00dc"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.9,
+   "rationale": "Early access.log lines are absent locally because the log rotated at 08:55 with keep 0 and the segment was archived off-host; the collector retains them.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "downgraded_by_skeptic",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": "Routine rotation with off-host archive explains the absence; not an incident claim.",
+   "produced_by": "lead-investigator"
+  }
+ ],
+ "attribution": {
+  "account_used": "sdubois",
+  "session_ref": null,
+  "human_identity": "not_assessed",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_50659d77d59f",
+   "ev_171d26760349",
+   "ev_2f52788b038d",
+   "ev_596ea8dff27d",
+   "ev_a5c060ebc6db"
+  ],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Flow records show volume, not content",
+   "fs_stat is host-writable snapshot",
+   "No approval record for export or destination",
+   "Badge does not cover remote or tailgating"
+  ],
+  "statement": "Account sdubois was used for the console session workstation#34 (tty1) on workstation that covered the patients_full export, staging to /tmp/.font-unix/upd-4c2e.pkg, and the 19.8MB transfer to unapproved 10.20.9.12:8080. Account use is not a person. The human operator is not established; the account's badge last tapped out before the login, and console credentials may be shared or written down.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Bundle bndl-1cfb993962c1ffb6 (Northside Clinic, 2026-11-10 06:05-15:05Z). Supported: on workstation, console session by account sdubois (workstation#34, tty1) ran a patients_full clinic-export that wrote a 19.8MB file to /tmp/.font-unix/upd-4c2e.pkg at about 11:22:38Z (shell history, fs_stat, records export_bulk log, tap inbound flow from records). At 11:25:43-11:25:56Z the workstation sent 19,832,008 bytes to 10.20.9.12:8080 via curl PUT, an unapproved destination above the 5MB policy threshold. Not supported as an incident: the single absent auth.log line at 11:20:32Z (downgraded; a line-level gap with write or copy fault not excluded), and the records access.log gap before 08:55Z, which is routine rotation with off-host archive (benign). Attribution: account sdubois was used; the human operator is not established.",
+ "open_questions": [
+  "Was the patients_full export authorized, and who requested it? No approval record is in the bundle.",
+  "What is 10.20.9.12:8080, and was the uploaded package received there?",
+  "Who physically operated the sdubois console session (shared or written-down credential, tailgating)?",
+  "Why does the workstation auth.log lack the 11:20:32Z login line the collector retained? Is it a write fault or deliberate removal? Check the auth.log.1 generation and host forensics.",
+  "Flow records show volume only; content of the package is unverified."
+ ],
+ "usage": {
+  "llm_calls": 11,
+  "tokens_in": 121621,
+  "tokens_out": 11533,
+  "tokens_cache_read": 77420,
+  "cost_estimate_usd": 0.012065,
+  "wall_seconds": 48.423,
+  "tool_calls": 20,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T11:13:30.969240Z",
+ "report_sha256": "f945c116512dfd5c6cf0d8c626118de8185802794992e89d5c8c933f91e1d621",
+ "review_history": [
+  {
+   "at": "2026-11-14T11:13:30.969240Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}
