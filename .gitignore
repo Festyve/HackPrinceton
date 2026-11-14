@@ -1,0 +1,33 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+.env.*
+!.env.example
+*.sqlite
+*.sqlite-*
+*.db
+out/
+.claude/settings.local.json
+CLAUDE.local.md
+
+# macOS
+.DS_Store
+
+# ALIBI local artifacts (never commit: per-episode evidence, sealed truth, traces)
+runs/
+sealed/
+data/external/
+*.duckdb
+*.duckdb.wal
+
+# frontend
+node_modules/
+web/dist/
+web/.vite/
+*.tsbuildinfo
+
+# test/browser output
+test-results/
+playwright-report/

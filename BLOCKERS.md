@@ -1,0 +1,17 @@
+# Blockers
+
+Anything needing a human, with exact steps. Nothing here was worked around by spending money or weakening a safeguard.
+
+## B-1 · Live AI inference is BLOCKED (no zero-charge runtime verified) — owner: Eric
+**Observed 00:20 ET:** no `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GOOGLE_API_KEY` / `GEMINI_API_KEY` / `GROQ_API_KEY` / `OPENROUTER_API_KEY` in the environment, no `.env`, `ollama` not installed, nothing listening on 11434 or 1234.
+**Effect:** every AI acceptance check (PLAN §14 items 7–9) is **BLOCKED, not passed**. AI benchmark arms read `NOT RUN — runtime unavailable`.
+**To unblock (pick one, spend $0):**
+1. *Local model:* install and start a tool-calling local model yourself (15-minute box), then in `.env`: `RUNTIME_MODE=live`, `LIVE_PROVIDER_KIND=local`, `LEAD_MODEL=<provider:model>`. A local provider package (e.g. `langchain-ollama`) may need `uv add`.
+2. *Verified included/sponsor credits with no paid fallback:* confirm the balance and that auto-reload/overage is off in the provider console, then in `.env`: the provider key, `RUNTIME_MODE=live`, `LIVE_PROVIDER_KIND=included_credits`, `LLM_MAX_USD=<credit cap>`, `LLM_PRICE_IN_PER_MTOK`, `LLM_PRICE_OUT_PER_MTOK`, `LEAD_MODEL=<provider:model>`.
+Then run the smoke test and pilot commands in the Morning Handoff. Do not paste keys into chat, logs or the frontend.
+
+## B-2 · GitHub repository is PRIVATE — owner: Rayan / Eric
+`owly1/HackPrinceton` was created 2026-11-13 20:42 ET (inside the event window) and is private. The packet requires a public repo. Before flipping it public: decide which planning-pack files to publish (see DECISIONS.md), and run a real secret scanner (`gitleaks detect`), which is not installed on this machine.
+
+## B-3 · Optional coding plugins/skills not installed — owner: Eric (non-blocking)
+`frontend-design@claude-plugins-official` and the `webapp-testing` skill are not present in this session. P0 does not depend on them (hand-built UI; Playwright + installed Chrome for browser checks).
