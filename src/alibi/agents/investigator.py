@@ -32,7 +32,7 @@ from langchain.agents.middleware import TodoListMiddleware
 
 from alibi.agents.gateway import GATEWAY_PROVIDER
 from alibi.agents.tools import CaseToolbox
-from alibi.importing import is_imported, neutral_framing
+from alibi.importing import framing_for
 
 FS_TOOLS = ["ls", "read_file", "write_file", "edit_file"]
 CASE_DIR = "/case"
@@ -288,9 +288,7 @@ def build_investigator(toolbox: CaseToolbox, *, lead_model: Any, auditor_model: 
     """
     checks, oracle = toolbox.checks_enabled, toolbox.verify_on_submit
     more = family_addendum(toolbox)
-    lead = lead_prompt(checks, oracle)
-    if is_imported(toolbox.manifest):
-        lead = neutral_framing(lead)
+    lead = framing_for(toolbox.manifest, lead_prompt(checks, oracle))
     subagents = [
         {"name": "integrity-auditor",
          "description": ("Runs the deterministic contradiction checks over the evidence and returns candidate findings "
@@ -314,9 +312,7 @@ def build_investigator(toolbox: CaseToolbox, *, lead_model: Any, auditor_model: 
 
 def build_single_agent(toolbox: CaseToolbox, *, model: Any, checkpointer: Any) -> Any:
     """One agent, no delegation. With the check tools this is arm B1+ (the product's fast mode); without, B1."""
-    prompt = single_prompt(toolbox.checks_enabled, toolbox.verify_on_submit)
-    if is_imported(toolbox.manifest):
-        prompt = neutral_framing(prompt)
+    prompt = framing_for(toolbox.manifest, single_prompt(toolbox.checks_enabled, toolbox.verify_on_submit))
     return create_deep_agent(
         model=model, tools=toolbox.tools_for("single-agent"),
         system_prompt=prompt + family_addendum(toolbox),

@@ -110,7 +110,7 @@ class AgentRunner:
 
     def _parts(self, ctx: RunContext) -> tuple[CaseToolbox, gateway.BudgetLedger, sqlite3.Connection]:
         ctx.case_dir.mkdir(parents=True, exist_ok=True)
-        ledger = gateway.make_ledger(self.settings, ctx.case_dir / "budget.json", scripted=self.scripted)
+        ledger = gateway.make_ledger(self.settings, ctx.case_dir / "budget.json", scripted=self.scripted, caps=ctx.caps)
         toolbox = CaseToolbox(ctx.store, ctx.manifest, ctx.case_dir / "draft_state.json", emit=ctx.emit,
                               pace=ctx.pace_quiet, on_tool_call=ledger.count_tool_call,
                               checks_enabled=self.with_checks, verify_on_submit=self.verify_on_submit)
@@ -129,7 +129,8 @@ class AgentRunner:
         try:
             graph = self._build(ctx, toolbox, ledger, conn)
             tip = ctx.manifest.operational_context.get("tip", "")
-            asked_by = "Request" if is_imported(ctx.manifest) else "Tip from the clinic"
+            asked_by = ("Request" if is_imported(ctx.manifest) else "Request from the lab's operator"
+                        if "lab" in ctx.manifest.operational_context else "Tip from the clinic")
             brief = (f"Evidence bundle {ctx.manifest.bundle_id} is frozen and ready. {asked_by}: \"{tip}\" "
                      "Establish what the evidence supports, then submit a report for human review.")
             ctx.emit("agent", {"agent": self.lead_role, "status": "started", "task": "investigate the frozen bundle"})
