@@ -172,16 +172,36 @@ def _cmd_smoke(args: argparse.Namespace) -> int:
         """Echo an integer back."""
         return f"pong {value}"
 
-    ledger = gateway.BudgetLedger(None, RunCaps(max_calls=2, max_input_tokens=2000, max_output_tokens=300, max_seconds=60),
-                                  kind=settings.live_provider_kind or "local", max_usd=settings.llm_max_usd,
-                                  price_in_per_mtok=settings.price_in_per_mtok, price_out_per_mtok=settings.price_out_per_mtok)
+    ledger = gateway.make_ledger(settings, None, scripted=False, label="smoke",
+                                 caps=RunCaps(max_calls=2, max_input_tokens=3000, max_output_tokens=600, max_seconds=60))
     model = gateway.wrap(gateway.live_chat_model(settings, settings.lead_model or ""), ledger, "smoke").bind_tools([ping])
-    reply = model.invoke("Call the tool `ping` with value 7. Do not answer in text.")
+    try:
+        reply = model.invoke("Call the tool `ping` with value 7. Do not answer in text.")
+    except gateway.ModelRefused as exc:
+        print(f"the model declined the smoke request: {exc}")
+        return 1
     calls = getattr(reply, "tool_calls", [])
     ok = any(c["name"] == "ping" and c["args"].get("value") == 7 for c in calls)
-    print(json.dumps({"model": settings.lead_model, "tool_call_ok": ok, "tool_calls": calls,
-                      "usage": ledger.usage().model_dump()}, indent=2, default=str))
+    spend = gateway.global_spend_for(settings)
+    print(json.dumps({"model_requested": settings.lead_model, "model_served": ledger.state["models"],
+                      "tool_call_ok": ok, "tool_calls": [{"name": c["name"], "args": c["args"]} for c in calls],
+                      "stop_reason": (reply.response_metadata or {}).get("stop_reason"),
+                      "usage": ledger.usage().model_dump(), "cache_write_tokens": ledger.state["tokens_cache_write"],
+                      "total_spend": spend.snapshot() if spend else None}, indent=2, default=str))
     return 0 if ok else 1
+
+
+def _cmd_spend(args: argparse.Namespace) -> int:
+    """Show the total-spend ledger shared by every billed model call."""
+    from alibi.agents import gateway
+
+    settings = load_settings()
+    spend = gateway.global_spend_for(settings)
+    if spend is None:
+        print(json.dumps({"total_spend": None, "note": "no billed route is configured; nothing can be spent"}, indent=2))
+        return 0
+    print(json.dumps(spend.snapshot(), indent=2))
+    return 0
 
 
 def _cmd_pilot(args: argparse.Namespace) -> int:
@@ -241,6 +261,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("smoke", help="one tiny real model call to test tool calling (refused while live AI is blocked)")
     p.set_defaults(func=_cmd_smoke)
+
+    p = sub.add_parser("spend", help="show estimated total model spend against the LLM_MAX_USD cap")
+    p.set_defaults(func=_cmd_spend)
 
     p = sub.add_parser("pilot", help="the predeclared 8-system-run AI pilot (refused without a zero-charge runtime)")
     p.set_defaults(func=_cmd_pilot)

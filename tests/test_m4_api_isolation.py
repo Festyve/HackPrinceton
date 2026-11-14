@@ -372,3 +372,72 @@ def test_a_recording_that_no_longer_reproduces_fails_visibly(env, tmp_path, monk
     v = c.post("/api/replays/t-stale/open", json={}).json()
     assert v["case"]["state"] == "failed" and "could not be reproduced" in v["case"]["error"]
     assert c.post("/api/replays/nope/open", json={}).status_code == 404
+
+
+# ----------------------------------------------------------------- model-planned adversary (no model involved here)
+class _FakePlanner:
+    """TEST DOUBLE standing in for the adversary model. Returns one fixed, valid plan."""
+
+    def __init__(self, spec_accounts, sink):
+        self.account, self.sink, self.calls = spec_accounts, sink, 0
+
+    def invoke(self, messages):
+        from langchain_core.messages import AIMessage
+
+        self.calls += 1
+        return AIMessage(content=json.dumps([
+            {"step": "login_as", "params": {"account": self.account}, "delay_s": 30},
+            {"step": "stage_copy", "params": {"src": "patients_full", "dst_dir": "/var/tmp/xfer", "dst_name": "q4.db"}, "delay_s": 60},
+            {"step": "exfil_http", "params": {"path": "/var/tmp/xfer/q4.db", "dst": self.sink}, "delay_s": 90},
+            {"step": "delete_log_lines", "params": {"host": "workstation", "file": "/var/log/auth.log",
+                                                    "event_selection": "own_session_open"}, "delay_s": 60}]))
+
+
+def test_model_planned_preset_is_hidden_and_refused_while_live_is_blocked(env):
+    _, orch, c = env
+    assert "model-planned" not in [p["id"] for p in c.get("/api/presets").json()["presets"]]
+    r = c.post("/api/cases", json={"preset_id": "model-planned"})
+    assert r.status_code == 409 and r.json()["live_inference"] == "BLOCKED"
+    assert c.get("/api/cases").json()["cases"] == []
+
+
+def test_model_planned_adversary_is_validated_executed_and_labeled(tmp_path, monkeypatch):
+    live = replace(load_settings({"RUNTIME_MODE": "live", "LIVE_PROVIDER_KIND": "local", "LEAD_MODEL": "fake:lead",
+                                  "ADVERSARY_MODEL": "fake:planner"}),
+                   runs_dir=tmp_path / "runs", sealed_dir=tmp_path / "sealed")
+    orch = Orchestrator(live, pace_s=0.0)
+    spec = build_spec(9027, "incident_coverup")
+    planner = _FakePlanner(spec["accounts"]["nurse_b"], spec["dmz_ips"][1])
+    monkeypatch.setattr(orch, "_adversary_model", lambda ledger: planner)
+    c = TestClient(create_app(live, orch))
+    assert "model-planned" in [p["id"] for p in c.get("/api/presets").json()["presets"]]
+    view = c.post("/api/cases", json={"preset_id": "model-planned", "runner": "deterministic"}).json()
+    cid = view["case"]["case_id"]
+    wait_state(c, cid)
+    assert planner.calls == 1
+    pre = json.dumps(c.get(f"/api/cases/{cid}/events.json").json())
+    assert "Model-generated plan (fake:planner)" in pre  # who planned is visible to the audience
+    inv = json.dumps(c.get(f"/api/cases/{cid}/events.json?view=investigator").json())
+    for step_name in ("login_as", "stage_copy", "exfil_http", "delete_log_lines"):
+        assert step_name not in pre and step_name not in inv  # what was planned stays sealed until reveal
+    assert "Model-generated plan" not in inv  # the investigator is not even told who planned
+    c.post(f"/api/cases/{cid}/review", json={"decision": "accept"})
+    reveal = c.post(f"/api/cases/{cid}/reveal").json()["reveal"]
+    assert reveal["truth"]["plan_label"] == "Model-generated plan (fake:planner)"
+    assert reveal["truth"]["plan_provenance"]["source"] == "model_generated"
+    assert [s["step_name"] for s in reveal["truth"]["steps"]] == ["login_as", "stage_copy", "exfil_http", "delete_log_lines"]
+    assert reveal["truth"]["attribution"]["account_used"] == spec["accounts"]["nurse_b"]
+    assert (reveal["score"]["step_recall"]["num"], reveal["score"]["step_recall"]["den"]) == (3, 3)
+
+
+def test_an_overlong_model_plan_is_rejected_by_validation():
+    from alibi.agents import adversary
+    from alibi.sim import steps as S
+
+    spec = build_spec(9027, "incident_coverup")
+    ctx = replace(adversary.plan_context(spec), max_total_delay_s=adversary.MODEL_PLAN_MAX_TOTAL_DELAY_S)
+    slow = [{"step": "login_as", "params": {"account": spec["accounts"]["nurse_a"]}, "delay_s": 600},
+            {"step": "stage_copy", "params": {"src": "patients_full", "dst_dir": "/var/tmp/xfer", "dst_name": "a.db"}, "delay_s": 600}]
+    with pytest.raises(S.PlanError) as err:
+        S.validate_plan(slow, ctx)
+    assert "must fit" in str(err.value)

@@ -59,6 +59,7 @@ class PlanContext:
     accounts: tuple[str, ...]  # accounts whose credentials are on the planted note
     sink_ips: tuple[str, ...]  # internal dummy destinations only
     dataset_sizes: dict[str, int]
+    max_total_delay_s: int | None = None  # when set, the sum of all delays must stay within it
 
 
 def _require(cond: bool, msg: str) -> None:
@@ -116,6 +117,10 @@ def validate_plan(plan: list[dict[str, Any]], ctx: PlanContext) -> list[dict[str
                      f"{where}: event_selection must be one of {list(DELETE_SELECTIONS)}")
         out.append({"step": name, "params": dict(params), "delay_s": delay})
     _require(out[0]["step"] == "login_as", "the first step must be login_as")
+    if ctx.max_total_delay_s is not None:
+        total = sum(step["delay_s"] for step in out)
+        _require(total <= ctx.max_total_delay_s,
+                 f"the delays add up to {total} s; the whole plan must fit in {ctx.max_total_delay_s} s")
     return out
 
 

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -28,6 +28,7 @@ Reply with ONLY a JSON array of at most 8 steps: [{"step": <name>, "params": {..
 The first step must be login_as. Use only the step names, parameter names and values you are given."""
 
 _JSON_ARRAY = re.compile(r"\[.*\]", re.S)
+MODEL_PLAN_MAX_TOTAL_DELAY_S = 1000  # a model plan must fit the console slot reserved for the incident
 
 
 @dataclass
@@ -61,7 +62,8 @@ def planning_prompt(spec: dict[str, Any], ctx: S.PlanContext) -> str:
         "difficulty": ctx.level,
         "allowed_steps": {name: lib[name] for name in allowed},
         "notes": ["in dst_dir, {account} is replaced by the account you logged in as",
-                  "the log collector is an independent witness"],
+                  "the log collector is an independent witness",
+                  f"the delay_s values of the whole plan must add up to at most {MODEL_PLAN_MAX_TOTAL_DELAY_S}"],
     }, indent=1)
 
 
@@ -87,8 +89,8 @@ def _text(msg: Any) -> str:
 
 def plan_adversary(spec: dict[str, Any], model: Any | None, model_id: str | None = None) -> PlanResult:
     """Return a validated plan. With model=None (offline) this is always the scripted scenario."""
-    ctx = plan_context(spec)
-    scripted = S.validate_plan(spec["plan"], ctx)
+    scripted = S.validate_plan(spec["plan"], plan_context(spec))
+    ctx = replace(plan_context(spec), max_total_delay_s=MODEL_PLAN_MAX_TOTAL_DELAY_S)
     if model is None:
         return PlanResult(plan=scripted, source="scripted_scenario", fallback_reason="no model runtime (offline)")
     result = PlanResult(plan=scripted, source="scripted_scenario", model_id=model_id)
@@ -116,4 +118,13 @@ def apply_plan(spec: dict[str, Any], result: PlanResult) -> dict[str, Any]:
     out = json.loads(json.dumps(spec))
     out["plan"] = result.plan
     out["plan_source"] = result.source
+    # Keep the scenario consistent with the plan that will run: the account the plan logs in as is the
+    # borrowed account, and the (private) operator must be someone other than that account's holder.
+    account = result.plan[0]["params"]["account"]
+    crime = out["crime"]
+    crime["framed_account"] = account
+    if crime["operator_person"] == f"person:{account}":
+        crime["operator_person"] = f"person:{out['accounts']['admin']}"
+    out["plan_provenance"] = {"source": result.source, "model_id": result.model_id, "attempts": result.attempts,
+                              "errors": result.errors, "fallback_reason": result.fallback_reason, "label": result.label}
     return out

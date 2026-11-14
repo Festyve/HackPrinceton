@@ -199,10 +199,14 @@ def build_answer_key(episode_id: str, sim: SimOutput, canary: str, executed_plan
         ))
     benign = [BenignOutcome(outcome_id=f"b{i + 1}", **o) for i, o in enumerate(sim.benign_outcomes)]
     if spec["case_kind"] == "incident":
+        # Truth is what was executed: the account comes from the login step that actually succeeded,
+        # not from what the scenario or a planning model intended.
+        logins = [r for r in sim.step_results if r.step == "login_as" and r.status == "succeeded"]
+        used = logins[0].account_used if logins else None
         attribution = AttributionTruth(
-            account_used=crime["framed_account"], account_owner_person=f"person:{crime['framed_account']}",
-            operator_true=crime["operator_person"], framed=True, session=sim.adversary_session,
-            named_attribution_supportable=False,
+            account_used=used, account_owner_person=f"person:{used}" if used else None,
+            operator_true=crime["operator_person"], framed=bool(used) and crime["operator_person"] != f"person:{used}",
+            session=sim.adversary_session, named_attribution_supportable=False,
         )
     else:
         attribution = AttributionTruth()

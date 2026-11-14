@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import threading
 import time
 from datetime import datetime
@@ -50,6 +51,26 @@ def _parse_ts(value: str | None) -> datetime | None:
         return datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError as exc:
         raise ValueError(f"timestamps must be ISO 8601, got {value!r}") from exc
+
+
+_PATH = re.compile(r"^/[^\s]+$")
+_DEST = re.compile(r"^\d{1,3}(?:\.\d{1,3}){3}(?::\d{1,5})?$")
+_SESSION = re.compile(r"^[a-z-]+#\d+$")
+
+
+def check_object_format(claim_type: str, category: str, obj: str | None) -> None:
+    """Incident allegations must name their object in the exact form the scorer compares."""
+    if category != "incident_allegation":
+        return
+    value = (obj or "").strip()
+    if _SESSION.match(value):
+        return
+    if claim_type in ("local_log_removal", "data_staging") and not _PATH.match(value):
+        raise ValueError(f"object_or_session for {claim_type} must be exactly a file path such as /var/log/auth.log "
+                         f"(no description, size or spaces), or a session id like workstation#12; got {value!r}")
+    if claim_type == "policy_violating_transfer" and not _DEST.match(value):
+        raise ValueError("object_or_session for policy_violating_transfer must be exactly the destination as IP:PORT, "
+                         f"for example 10.20.9.14:8080, or a session id like workstation#12; got {value!r}")
 
 
 def finding_id_for(claim_type: str, category: str, host: str, obj: str | None, t_start: datetime, t_end: datetime) -> str:
@@ -227,6 +248,8 @@ class CaseToolbox:
         t_start, t_end = _parse_ts(kw["t_start"]), _parse_ts(kw["t_end"])
         if t_start is None or t_end is None:
             raise ValueError("t_start and t_end are required")
+        kw["object_or_session"] = (kw.get("object_or_session") or "").strip() or None
+        check_object_format(kw["claim_type"], kw["category"], kw["object_or_session"])
         fid = finding_id_for(kw["claim_type"], kw["category"], kw["host"], kw.get("object_or_session"), t_start, t_end)
         finding = Finding(
             id=fid, claim_type=kw["claim_type"], category=kw["category"], host=kw["host"], t_start=t_start, t_end=t_end,
@@ -357,8 +380,11 @@ class CaseToolbox:
         ) -> str:
             """Record one finding. evidence_ids must be event ids from this bundle. It is verified immediately by a
             deterministic verifier and the verdict is returned. Use category incident_allegation only for a claim
-            that an incident effect occurred; use benign_explanation or unresolved otherwise. Leave actor_claimed
-            empty unless evidence beyond account activity identifies a person."""
+            that an incident effect occurred; use benign_explanation or unresolved otherwise. object_or_session must
+            be EXACTLY: the log file path for local_log_removal, the staged file path for data_staging, the
+            destination IP:PORT for a transfer (nothing else in the field). host is where it happened (the source
+            host for a transfer or staging). Leave actor_claimed empty unless evidence beyond account activity
+            identifies a person."""
             args = dict(claim_type=claim_type, category=category, host=host, t_start=t_start, t_end=t_end,
                         evidence_ids=evidence_ids, rationale=rationale, object_or_session=object_or_session,
                         confidence=confidence, account_used=account_used, actor_claimed=actor_claimed,

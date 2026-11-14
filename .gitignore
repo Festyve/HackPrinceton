@@ -18,6 +18,7 @@ CLAUDE.local.md
 # ALIBI local artifacts (never commit: per-episode evidence, sealed truth, traces)
 runs/
 sealed/
+.alibi/
 data/external/
 *.duckdb
 *.duckdb.wal

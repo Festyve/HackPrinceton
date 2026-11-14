@@ -208,10 +208,10 @@
   ],
   "batch_review": "skipped_for_benchmark (approved_by_human=false); the locked model/baseline output is graded as is",
   "ai_caps_per_investigation": {
-    "max_calls": 12,
-    "max_input_tokens": 40000,
-    "max_output_tokens": 6000,
-    "max_seconds": 90.0,
+    "max_calls": 16,
+    "max_input_tokens": 200000,
+    "max_output_tokens": 10000,
+    "max_seconds": 180.0,
     "tool_result_max_records": 50,
     "tool_result_max_bytes": 8192,
     "shared_across": "lead, specialists and retries"

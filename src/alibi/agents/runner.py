@@ -120,6 +120,8 @@ class AgentRunner:
                             self._observe(ctx, toolbox, msg, pending_tasks)
             except gateway.BudgetExceeded as exc:
                 stop_reason = f"stopped by the budget gateway: {exc}"
+            except gateway.ModelRefused as exc:
+                stop_reason = f"stopped because {exc}"
             except Exception as exc:  # noqa: BLE001 - keep the partial draft; the failure is reported, not hidden
                 if type(exc).__name__ == "GraphRecursionError":
                     stop_reason = "stopped at the turn limit before requesting review"
@@ -221,10 +223,13 @@ class AgentRunner:
                     "The reviewer rejected the report. Do not call any more tools and do not change any finding. "
                     "Reply with one sentence acknowledging the rejection.")}]}
             cfg = {**cfg, "recursion_limit": 12}
+            # The time cap measures investigation time, not how long a human took to review:
+            # the clock restarts for the short acknowledgement turn. Call and token caps still apply.
+            ledger.state["started"] = None
             try:
                 graph.invoke(Command(resume=payload), cfg)
-            except gateway.BudgetExceeded:
-                pass  # the decision was delivered; the model had no budget left to acknowledge it
+            except (gateway.BudgetExceeded, gateway.ModelRefused):
+                pass  # the decision was delivered; the model could not acknowledge it
             state = graph.get_state(cfg)
             self._save_transcript(ctx, state.values.get("messages") or [])
         finally:

@@ -45,12 +45,18 @@ def _s(env: Mapping[str, str], key: str) -> str | None:
 
 @dataclass(frozen=True)
 class RunCaps:
-    """Per-investigation caps shared across lead, specialists and retries."""
+    """Per-investigation caps shared across lead, specialists and retries.
 
-    max_calls: int = 12
-    max_input_tokens: int = 40_000
-    max_output_tokens: int = 6_000
-    max_seconds: float = 90.0
+    Revised once from measured evidence (DECISIONS.md, 2026-11-14): the first real run used about
+    8,000 input tokens per model call, almost all of it a cached prefix, so the planning guess of
+    40,000 cumulative input tokens stopped a correct investigation after 5 calls.
+    """
+
+    max_calls: int = 16
+    max_input_tokens: int = 200_000
+    max_output_tokens: int = 10_000
+    max_seconds: float = 180.0
+    max_input_tokens_per_call: int = 40_000  # bound used to size the per-call spend reservation
     tool_result_max_records: int = 50
     tool_result_max_bytes: int = 8_192
     recursion_limit: int = 60
@@ -67,6 +73,8 @@ class Settings:
     adversary_model: str | None = None
     price_in_per_mtok: float | None = None
     price_out_per_mtok: float | None = None
+    effort: str = "low"  # reasoning effort for live models that support it
+    max_tokens_per_call: int = 3000  # per-response ceiling; the ledger enforces the cumulative cap
     caps: RunCaps = RunCaps()
     runs_dir: Path = REPO_ROOT / "runs"
     sealed_dir: Path = REPO_ROOT / "sealed"
@@ -109,6 +117,10 @@ class Settings:
             "subagent_model": self.subagent_model,
             "adversary_model": self.adversary_model,
             "live_block_reason": self.live_block_reason(),
+            "effort": self.effort,
+            "max_tokens_per_call": self.max_tokens_per_call,
+            "price_in_per_mtok": self.price_in_per_mtok,
+            "price_out_per_mtok": self.price_out_per_mtok,
             "caps": {
                 "max_calls": self.caps.max_calls,
                 "max_input_tokens": self.caps.max_input_tokens,
@@ -161,11 +173,18 @@ def load_settings(env: Mapping[str, str] | None = None, *, dotenv: bool = True) 
     price_out = _f(env, "LLM_PRICE_OUT_PER_MTOK", -1.0)
 
     caps = RunCaps(
-        max_calls=_i(env, "LLM_MAX_CALLS_PER_RUN", 12),
-        max_input_tokens=_i(env, "LLM_MAX_INPUT_TOKENS_PER_RUN", 40_000),
-        max_output_tokens=_i(env, "LLM_MAX_OUTPUT_TOKENS_PER_RUN", 6_000),
-        max_seconds=_f(env, "LLM_MAX_SECONDS_PER_RUN", 90.0),
+        max_calls=_i(env, "LLM_MAX_CALLS_PER_RUN", 16),
+        max_input_tokens=_i(env, "LLM_MAX_INPUT_TOKENS_PER_RUN", 200_000),
+        max_output_tokens=_i(env, "LLM_MAX_OUTPUT_TOKENS_PER_RUN", 10_000),
+        max_seconds=_f(env, "LLM_MAX_SECONDS_PER_RUN", 180.0),
     )
+
+    effort = (_s(env, "LLM_EFFORT") or "low").lower()
+    if effort not in ("low", "medium", "high", "xhigh", "max"):
+        raise ConfigError("LLM_EFFORT must be one of low, medium, high, xhigh, max")
+    per_call = _i(env, "LLM_MAX_TOKENS_PER_CALL", 3000)
+    if per_call < 256:
+        raise ConfigError("LLM_MAX_TOKENS_PER_CALL must be at least 256")
 
     runs_dir = Path(_s(env, "ALIBI_RUNS_DIR") or (REPO_ROOT / "runs"))
     sealed_dir = Path(_s(env, "ALIBI_SEALED_DIR") or (REPO_ROOT / "sealed"))
@@ -180,6 +199,8 @@ def load_settings(env: Mapping[str, str] | None = None, *, dotenv: bool = True) 
         adversary_model=_s(env, "ADVERSARY_MODEL"),
         price_in_per_mtok=None if price_in < 0 else price_in,
         price_out_per_mtok=None if price_out < 0 else price_out,
+        effort=effort,
+        max_tokens_per_call=per_call,
         caps=caps,
         runs_dir=runs_dir,
         sealed_dir=sealed_dir,

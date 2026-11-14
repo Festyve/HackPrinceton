@@ -38,10 +38,16 @@ def wait(client, cid, want="awaiting_review"):
 def test_demo_recordings_exist_and_are_labeled_as_fixtures():
     assert "hero-coverup-fixture" in REPLAYS
     for name in REPLAYS:
-        meta = json.loads((REPLAY_DIR / name / "recording.json").read_text())["meta"]
+        data = json.loads((REPLAY_DIR / name / "recording.json").read_text())
+        meta = data["meta"]
         assert meta["inference_mode"] in ("SCRIPTED_FIXTURE", "LIVE_MODEL", "NO_MODEL_BASELINE")
         if meta["inference_mode"] == "SCRIPTED_FIXTURE":
             assert "no model" in (meta["model_id"] or "").lower() and "No model inference" in meta["note"]
+            assert data["report"]["usage"]["llm_calls"] == 0
+        if meta["inference_mode"] == "LIVE_MODEL":  # a recording of a real model run carries its provenance
+            assert meta["model_id"] and meta["recorded_at"] and meta["git_commit"]
+            assert data["report"]["usage"]["llm_calls"] > 0 and data["report"]["usage"]["tokens_in"] > 0
+        assert "sk-ant" not in json.dumps(data)  # no credential ever ends up in a recording
 
 
 @pytest.mark.parametrize("name", REPLAYS)
@@ -58,19 +64,25 @@ def test_committed_recording_replays_with_no_network_and_no_inference(client, na
     v = client.post(f"/api/replays/{name}/open", json={}).json()
     cid = v["case"]["case_id"]
     labels = v["case"]["labels"]
-    assert labels["playback"] == "REPLAY" and labels["inference"] == saved["meta"]["inference_mode"]
-    assert labels["inference_label"] == "Scripted fixture · no model inference"
+    real = saved["meta"]["inference_mode"] == "LIVE_MODEL"
+    # a saved real run replays as a RECORDED model run; a fixture stays a fixture. Neither becomes "live".
+    want_mode = "RECORDED_MODEL" if real else saved["meta"]["inference_mode"]
+    assert labels["playback"] == "REPLAY" and labels["inference"] == want_mode
+    assert labels["inference_label"] == ("Recorded AI run" if real else "Scripted fixture · no model inference")
+    if real:
+        assert labels["model_id"] == saved["meta"]["model_id"]
     v = wait(client, cid)
     assert v["manifest"]["raw_bundle_sha256"] == saved["meta"]["raw_bundle_sha256"]
     assert len(v["report"]["findings"]) == len(saved["report"]["findings"])
     client.post(f"/api/cases/{cid}/review", json={"decision": "accept"})
     score = client.post(f"/api/cases/{cid}/reveal").json()["reveal"]["score"]
-    assert score["inference_mode"] == "SCRIPTED_FIXTURE" and score["usage"]["llm_calls"] == 0
+    assert score["inference_mode"] == want_mode
+    assert (score["usage"]["llm_calls"] > 0) == real  # usage is the recorded run's usage; the replay itself called no model
     if name.startswith("hero-coverup"):
         assert (score["step_recall"]["num"], score["step_recall"]["den"]) == (3, 3)
 
 
-@pytest.mark.parametrize("preset", [p["id"] for p in PRESETS])
+@pytest.mark.parametrize("preset", [p["id"] for p in PRESETS if p.get("_planner") != "model"])
 def test_every_displayed_citation_opens_its_raw_record(client, preset):
     cid = client.post("/api/cases", json={"preset_id": preset}).json()["case"]["case_id"]
     v = wait(client, cid)

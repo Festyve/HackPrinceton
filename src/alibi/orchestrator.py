@@ -40,9 +40,9 @@ from alibi.episode import (
 )
 from alibi.evidence.store import EvidenceStore
 from alibi.reports import lock_report
-from alibi.runners import Cancelled, RunContext, default_runner_id, get_runner
+from alibi.runners import Cancelled, RunContext, RuntimeBlocked, default_runner_id, get_runner
 from alibi.scoring import score_report
-from alibi.sim.scenario import CARDS
+from alibi.sim.scenario import CARDS, build_spec
 from alibi.verifier import verify_report
 
 STATES = ("created", "generating", "frozen", "investigating", "awaiting_review", "report_locked", "scored",
@@ -63,6 +63,11 @@ PRESETS: list[dict[str, Any]] = [
     {"id": "sealed-control", "title": "Sealed control case", "difficulty": "sealed", "card_id": "inside-job", "seed": 9003,
      "blurb": "May or may not contain an incident. The investigator gets the same tip. Unseal to find out.",
      "_variant": "benign_approved_transfer"},
+    {"id": "model-planned", "title": "Inside job · model-planned adversary", "difficulty": "L2", "card_id": "inside-job",
+     "seed": 9027,
+     "blurb": "A model chooses the adversary's steps from the bounded library (one planning response). "
+              "Needs a live model runtime.",
+     "_variant": "incident_coverup", "_planner": "model"},
 ]
 _CUSTOM_VARIANT = {"L1": "incident_plain", "L2": "incident_coverup"}
 
@@ -229,9 +234,30 @@ class Orchestrator:
                 self._set_state(rec, "failed", rec.error)
 
     # ------------------------------------------------------------------ presets / replays
-    @staticmethod
-    def presets() -> list[dict[str, Any]]:
-        return [{k: v for k, v in p.items() if not k.startswith("_")} for p in PRESETS]
+    def presets(self) -> list[dict[str, Any]]:
+        """Only presets that can actually run are offered (a model-planned case needs a live runtime)."""
+        live = self.settings.live_block_reason() is None and bool(self.settings.adversary_model)
+        return [{k: v for k, v in p.items() if not k.startswith("_")} for p in PRESETS
+                if p.get("_planner") != "model" or live]
+
+    def _plan_with_model(self, spec: dict[str, Any]) -> dict[str, Any]:
+        """One bounded planning response (plus one repair) from the adversary model, through the gateway."""
+        from alibi.agents import adversary, gateway
+        from alibi.config import RunCaps
+
+        ledger = gateway.make_ledger(self.settings, None, scripted=False, label="adversary-plan",
+                                     caps=RunCaps(max_calls=2, max_input_tokens=8_000, max_output_tokens=3_000,
+                                                  max_seconds=120, max_input_tokens_per_call=4_000))
+        model = self._adversary_model(ledger)
+        result = adversary.plan_adversary(spec, model, model_id=self.settings.adversary_model)
+        out = adversary.apply_plan(spec, result)
+        out["plan_provenance"]["usage"] = ledger.usage().model_dump()
+        return out
+
+    def _adversary_model(self, ledger: Any) -> Any:
+        from alibi.agents import gateway
+
+        return gateway.wrap(gateway.live_chat_model(self.settings, self.settings.adversary_model or ""), ledger, "adversary")
 
     @staticmethod
     def replays() -> list[dict[str, Any]]:
@@ -260,6 +286,11 @@ class Orchestrator:
             if preset is None:
                 raise NotFound("no such preset")
             variant, seed, title, diff = preset["_variant"], preset["seed"], preset["title"], preset["difficulty"]
+            if preset.get("_planner") == "model":
+                reason = self.settings.live_block_reason()
+                if reason is not None or not self.settings.adversary_model:
+                    raise RuntimeBlocked("a model-planned adversary needs a live runtime and ADVERSARY_MODEL: "
+                                         + (reason or "ADVERSARY_MODEL is not set"))
         else:
             if difficulty not in _CUSTOM_VARIANT or seed is None:
                 raise ValueError("custom cases need a seed and difficulty L1 or L2")
@@ -270,7 +301,12 @@ class Orchestrator:
         rec = CaseRecord(case_id=case_id, preset_id=preset_id, title=title, difficulty=diff, seed=seed,
                          runner_id=runner_id, inference_mode=runner.inference_mode, model_id=runner.model_id,
                          client_token=client_token)
-        return self._generate(rec, seed=seed, variant=variant, spec=None)
+        spec = None
+        if preset_id is not None and preset.get("_planner") == "model":
+            t0 = time.perf_counter()
+            spec = self._plan_with_model(build_spec(seed, variant))
+            rec.timings["adversary_plan_s"] = round(time.perf_counter() - t0, 3)
+        return self._generate(rec, seed=seed, variant=variant, spec=spec)
 
     def create_case_from_spec(self, spec: dict[str, Any], *, title: str = "Custom scenario",
                               runner_id: str | None = None) -> CaseRecord:
@@ -286,8 +322,10 @@ class Orchestrator:
         case_id = rec.case_id
         t0 = time.perf_counter()
         try:
+            prov = (spec or {}).get("plan_provenance") or {}
             paths = create_episode(seed=seed or 0, variant=variant or "", runs_dir=self.runs_dir,
-                                   sealed_dir=self.sealed_dir, episode_id=case_id, spec=spec)
+                                   sealed_dir=self.sealed_dir, episode_id=case_id, spec=spec,
+                                   plan_model_id=prov.get("model_id") if prov.get("source") == "model_generated" else None)
         except Exception as exc:
             raise ValueError(f"could not generate the case: {exc}") from exc
         manifest = load_manifest(paths)
@@ -308,6 +346,10 @@ class Orchestrator:
                                       "derived_db_sha256": manifest.derived_db_sha256}})
         log.append("stage", {"name": "seal", "status": "done",
                              "info": {"note": "what actually happened is sealed until the report is locked"}})
+        if spec is not None and spec.get("plan_provenance"):
+            # who planned is shown to the audience; what was planned stays sealed
+            log.append("stage", {"name": "adversary_plan", "status": "done",
+                                 "info": {"planned_by": spec["plan_provenance"]["label"]}})
         self._set_state(rec, "frozen", "evidence frozen and hashed; answer key sealed")
         return rec
 
@@ -328,8 +370,10 @@ class Orchestrator:
     def _context(self, rec: CaseRecord, paths: EpisodePaths, store: EvidenceStore) -> RunContext:
         log = self._log(rec.case_id)
         cancel = self._cancel.setdefault(rec.case_id, threading.Event())
+        # Display pacing exists to make sub-second fixture runs readable. A real model sets its own pace.
+        pace = 0.0 if rec.inference_mode == "LIVE_MODEL" else self.pace_s
         return RunContext(case_id=rec.case_id, store=store, manifest=load_manifest(paths), case_dir=paths.case,
-                          settings=self.settings, emit=lambda t, d: log.append(t, d), pace_s=self.pace_s,
+                          settings=self.settings, emit=lambda t, d: log.append(t, d), pace_s=pace,
                           is_cancelled=cancel.is_set)
 
     def _finish_draft(self, rec: CaseRecord, paths: EpisodePaths, store: EvidenceStore,
@@ -420,6 +464,7 @@ class Orchestrator:
                 "plan_source": ep.plan_source, "plan_model_id": ep.plan_model_id,
                 "plan_label": ("Scripted scenario · no model chose these steps" if ep.plan_source == "scripted_scenario"
                                else f"Model-generated plan ({ep.plan_model_id})"),
+                "plan_provenance": ep.scenario_spec.get("plan_provenance"),
                 "steps": [s.model_dump(mode="json") for s in key.steps],
                 "effects": [e.model_dump(mode="json", exclude={"evidence"}) for e in key.effects],
                 "benign_outcomes": [b.model_dump(mode="json") for b in key.benign_outcomes],
@@ -606,6 +651,8 @@ class Orchestrator:
                 if self.pace_s:
                     time.sleep(self.pace_s * (0.6 if ev["type"] == "finding" else 1.0))
             report = InvestigationReport.model_validate(data["report"])
+            if report.inference_mode == "LIVE_MODEL":
+                report.inference_mode = "RECORDED_MODEL"  # a replay of a real run is never presented as live
             report.report_id = f"rep-{case_id}"
             report.bundle_id = load_manifest(paths).bundle_id
             with EvidenceStore(paths.db) as store, self._lock(case_id):

@@ -411,7 +411,68 @@ def test_adversary_prompt_offers_only_the_bounded_library():
 
 def test_live_model_arguments_are_provider_specific_and_bounded():
     local = gateway.live_model_kwargs("ollama:some-model", SETTINGS, env={})
-    assert local == {"temperature": 0, "num_ctx": 16384, "num_predict": 1500}
+    assert local == {"temperature": 0, "num_ctx": 16384, "num_predict": 3000}
     assert gateway.live_model_kwargs("ollama:some-model", SETTINGS, env={"LLM_NUM_CTX": "32768"})["num_ctx"] == 32768
-    other = gateway.live_model_kwargs("anthropic:some-model", SETTINGS, env={})
-    assert other["max_retries"] == 0 and other["max_tokens"] <= SETTINGS.caps.max_output_tokens and other["timeout"] <= 60
+    claude = gateway.live_model_kwargs("anthropic:some-model", SETTINGS, env={})
+    assert "temperature" not in claude  # current Claude models reject sampling parameters
+    assert claude["max_retries"] == 0 and claude["reasoning_effort"] == "low"
+    assert claude["max_tokens"] <= SETTINGS.caps.max_output_tokens and claude["timeout"] <= 120
+    assert load_settings({"LLM_EFFORT": "medium"}).effort == "medium"
+    with pytest.raises(Exception):
+        load_settings({"LLM_EFFORT": "ludicrous"})
+
+
+def test_cost_estimate_prices_cache_writes_and_reads_conservatively():
+    plain = gateway.call_cost_usd(10_000, 1_000, 0, 0, 4.0, 20.0)
+    assert plain == pytest.approx(0.04 + 0.02)
+    cached = gateway.call_cost_usd(10_000, 1_000, cache_read=8_000, cache_write=1_000, price_in=4.0, price_out=20.0)
+    assert cached == pytest.approx((1_000 * 4 + 1_000 * 4 * 1.25 + 8_000 * 4 * 0.10 + 1_000 * 20) / 1e6)
+    assert cached < plain
+
+
+def test_total_spend_cap_is_shared_across_runs_and_survives_restart(tmp_path):
+    caps = RunCaps(max_calls=12, max_input_tokens=40_000, max_output_tokens=6_000, max_seconds=90)
+    path = tmp_path / "spend.json"
+
+    def ledger(label):
+        return gateway.BudgetLedger(None, caps, kind="included_credits", max_usd=0.60, price_in_per_mtok=4.0,
+                                    price_out_per_mtok=20.0, global_spend=gateway.GlobalSpend(path, 0.60),
+                                    max_tokens_per_call=3000, label=label)
+
+    first = ledger("run-1")
+    gateway.wrap(_Echo(), first, "lead-investigator").invoke("a")  # 1000 in / 200 out = $0.008
+    snap = gateway.GlobalSpend(path, 0.60).snapshot()
+    assert snap["spent_usd"] == pytest.approx(0.008) and snap["reserved_usd"] == 0 and snap["calls"] == 1
+    # a different run (a new process would look the same) draws on the same total
+    second = ledger("run-2")
+    gateway.wrap(_Echo(), second, "lead-investigator").invoke("b")
+    assert gateway.GlobalSpend(path, 0.60).snapshot()["spent_usd"] == pytest.approx(0.016)
+    # the worst-case reservation for one more call (40k cached-write input + 3k output = $0.26) no longer
+    # fits once the shared total is nearly used up, even though THIS run has spent almost nothing
+    tight = gateway.GlobalSpend(path, 0.25)
+    third = gateway.BudgetLedger(None, caps, kind="included_credits", max_usd=0.25, price_in_per_mtok=4.0,
+                                 price_out_per_mtok=20.0, global_spend=tight, max_tokens_per_call=3000, label="run-3")
+    with pytest.raises(gateway.BudgetExceeded) as err:
+        gateway.wrap(_Echo(), third, "lead-investigator").invoke("c")
+    assert "LLM_MAX_USD" in str(err.value) or "credit cap" in str(err.value)
+    assert tight.snapshot()["reserved_usd"] == 0  # a refused reservation holds nothing
+
+
+class _Refuser(BaseChatModel):
+    @property
+    def _llm_type(self) -> str:
+        return "refuser-test-double"
+
+    def _generate(self, messages, stop=None, run_manager=None, **kw) -> ChatResult:
+        return ChatResult(generations=[ChatGeneration(message=AIMessage(
+            content="", usage_metadata={"input_tokens": 500, "output_tokens": 5, "total_tokens": 505},
+            response_metadata={"stop_reason": "refusal", "stop_details": {"category": "cyber"}, "model_name": "m"}))])
+
+
+def test_a_model_refusal_is_recorded_and_surfaced_not_retried_or_rerouted():
+    led = gateway.BudgetLedger(None, RunCaps(), kind="local")
+    with pytest.raises(gateway.ModelRefused) as err:
+        gateway.wrap(_Refuser(), led, "adversary").invoke("plan")
+    assert "cyber" in str(err.value)
+    assert (led.state["llm_calls"], led.state["refusals"], led.state["errors"]) == (1, 1, 1)
+    assert led.state["tokens_in"] == 500  # a refused call is still accounted for
