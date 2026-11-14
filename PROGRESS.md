@@ -3,7 +3,7 @@
 > Times are America/New_York. Entries record concrete check results, not intentions.
 > Status vocabulary: **OFFLINE-READY**, **AI-READY**, **INCOMPLETE** (PLAN §14).
 
-## Current state — second run, Saturday November 14, 06:00 ET
+## Current state — second run, Saturday November 14, 06:20 ET
 
 This block is the handoff. Everything below it is the build history, oldest first.
 
@@ -13,10 +13,10 @@ This block is the handoff. Everything below it is the build history, oldest firs
 | Launch | `uv sync --frozen && ./start.sh`, then http://127.0.0.1:8000. `./start.sh --port 8010` if the port is busy. |
 | Demo selection | Recorded replays. For the pitch: **Inside job · cover-up** recorded on Claude Opus 5.5 (specialist mode) or on Claude Haiku 5.5 (fast mode, with two recorded question answers). Also recorded on Haiku: **Records heist** and **Cold chain**. No key or network needed. |
 | Model in use | `anthropic:claude-haiku-5-5`, effort low, for every role. Opus 5.5 recordings and pilot are from the first run and unchanged. |
-| Spend | Estimated **$3.357** of the **$20** cap across both runs (427 model calls). This run: about **$0.43**. Reserved: $0. Unreconciled: $0. Automatic calls stop at $19.50. `uv run alibi spend`. |
-| Tests | `uv run pytest` → **410 passed**: 389 offline, 21 in headless Chrome. A fresh clone of the branch also installs, builds, passes the offline tests and serves the recorded demo with no key. |
+| Spend | Estimated **$3.475** of the **$20** cap across both runs (507 model calls). This run: about **$0.55**. Reserved: $0. Unreconciled: $0. Automatic calls stop at $19.50. `uv run alibi spend`. |
+| Tests | `uv run pytest` → **411 passed**: 390 offline, 21 in headless Chrome. A fresh clone of the branch also installs, builds, passes the offline tests and serves the recorded demo with no key. |
 | Recordings | `demo/replays/`: 4 real-model runs (1 Opus, 3 Haiku) and 2 scripted-fixture runs. All six reproduce their evidence byte for byte and replay offline. |
-| Measured results | `benchmarks/offline-v1`, `benchmarks/ai-pilot-v1` (first run, frozen); `benchmarks/paired-v2` (this run's evaluation); `benchmarks/calibration`, `benchmarks/feature-checks`, `benchmarks/paired-v2-dev` (operational checks). |
+| Measured results | `benchmarks/offline-v1`, `benchmarks/ai-pilot-v1` (first run, frozen); `benchmarks/paired-v2` and `benchmarks/paired-v2-rep1` (this run's evaluation and its replication; summary in `docs/evaluation-summary.md`); `benchmarks/calibration`, `benchmarks/feature-checks`, `benchmarks/paired-v2-dev` (operational checks). |
 
 **What works end to end now**
 
@@ -27,7 +27,8 @@ This block is the handoff. Everything below it is the build history, oldest firs
 - Three case families and four more cover-up steps, each with sealed controls.
 - Scenario designer: a model chooses an ordinary environment from fixed options. It plans no incident.
 - Report export with lock hash, provenance and exact cited lines.
-- Paired evaluation of six systems on four new cases, declared before it ran.
+- Paired evaluation of six systems on six new cases in two separately declared suites.
+- Terminal commands for the whole flow: `alibi run`, `experiment`, `ask`, `review`, `export`, `import`, `cases`.
 
 **What is not done, and who has it** (details in [BLOCKERS.md](BLOCKERS.md))
 
@@ -42,7 +43,7 @@ This block is the handoff. Everything below it is the build history, oldest firs
 2. Terry: add UI controls for the new routes; rebase on `codex/eric-phase2`.
 3. Daniel: push the capture branch with its importer entry point.
 4. Repository owner: make the repository public. A redacted scan of the worktree and of every commit found no credential-like string, and `.env` and the ledger were never committed.
-5. Rayan: decide the pitch from [`docs/claims.md`](docs/claims.md). The honest headline from the measurements is that the deterministic comparison does the detecting and the model investigates, explains and answers; one agent did as well as or better than three.
+5. Rayan: decide the pitch from [`docs/claims.md`](docs/claims.md). The honest headline from the measurements is that the deterministic comparison does the detecting (16 of 16 incident effects on the new cases) and the model investigates, explains and answers; the checks lifted one agent from 10 to 15 of 16; one agent did better than three.
 
 ## Pre-existing state (before the overnight goal)
 
@@ -355,3 +356,26 @@ Phase-two model spend so far: about **$0.08** (ledger total $3.006 of the $20 ca
 - Real-model check of the source-removal experiment: `benchmarks/feature-checks/source-experiment-haiku-5-5.json`.
 - Fresh-clone check (05:50): cloned the branch into an empty directory, `uv sync --frozen`, `npm ci`, build, 373 offline tests passed, `./start.sh --port 8017` served the UI; over HTTP both hero recordings replayed as "Recorded AI run", unsealed 3/3, exported, and the collector-removal comparison and an offline question behaved as documented. Default runtime there: offline, nothing spendable.
 - Unscored import mode for captured evidence (`8fa26b9`, test fix `d283dda`). One commit, `8fa26b9`, was pushed with a failing label test because the commit was not gated on the test run; it was fixed in the next commit eight minutes later. The tip is green.
+
+### Replication and summary (06:07–06:15)
+
+- `paired-v2-rep1`, declared (`d10d31e`) after `paired-v2` ran and before its seeds were generated: the two incident kinds again on seeds 205 and 206. All 12 cells completed; estimated cost $0.11. Results `benchmarks/paired-v2-rep1/20261114t110812z/`.
+- Both suites together (`docs/evaluation-summary.md`, `uv run alibi eval --summary`), four incident cases with 16 observable effects and two benign controls:
+
+| System | Effects established | Cover-ups found | Stopped by a cap | Est. cost |
+|---|---|---|---|---|
+| B0 keyword recipe | 4/16 | 0/4 | – | – |
+| BR deterministic checks | 16/16 | 4/4 | – | – |
+| B1 one agent, generic tools | 10/16 | 3/4 | 3 of 6 | $0.080 |
+| B1+ one agent with checks | 15/16 | 4/4 | 0 | $0.042 |
+| B2 three agents, generic tools | 7/16 | 1/4 | 3 of 6 | $0.121 |
+| ALIBI three agents with checks | 12/16 | 2/4 | 0 | $0.083 |
+
+- No accepted false allegation on a benign control and no named person, in any cell.
+- Why the three-agent system scored below one agent: in three cells its skeptic agent withdrew a correct finding that the deterministic check supported (listed in the summary). One run per cell; not an accuracy estimate.
+
+### Visual check of the merged interface (06:11)
+
+- Opened the merged case board in Chrome against an offline server. All nine presets and six recordings are listed with correct labels, no console errors.
+- Found and fixed a regression caused by the new recordings: the interface features the first recorded model run in the list, which had become "Cold chain" shown with the Inside-job description. Recordings are now listed with the proven specialist run (Claude Opus 5.5) first and marked `presentation_default`. Verified in the browser: the featured card and the case it opens are Inside job on Opus again.
+- The "Ask about this evidence" box in the interface still says questions are unavailable in this server version. The route exists now; the control needs wiring (Terry).
