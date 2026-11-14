@@ -46,6 +46,16 @@ ROLE_TOOLS: dict[str, tuple[str, ...]] = {
 }
 
 
+SUBMIT_FINDING_NO_VERDICT = (
+    "Record one finding. evidence_ids must be event ids from this bundle. The call only confirms that the finding "
+    "is well-formed and that its ids exist; it does not tell you whether the evidence supports it. That is decided "
+    "after the report is locked. Use category incident_allegation only for a claim that an incident effect "
+    "occurred; use benign_explanation or unresolved otherwise. object_or_session must be EXACTLY: the log file path "
+    "for local_log_removal, the staged file path for data_staging, the destination IP:PORT for a transfer (nothing "
+    "else in the field). host is where it happened (the source host for a transfer or staging). Leave actor_claimed "
+    "empty unless evidence beyond account activity identifies a person.")
+
+
 def _parse_ts(value: str | None) -> datetime | None:
     if not value:
         return None
@@ -104,7 +114,17 @@ def compact_reconcile(rec: dict[str, Any]) -> dict[str, Any]:
 class CaseToolbox:
     def __init__(self, store: EvidenceStore, manifest: EvidenceManifest, draft_path: Path | None = None,
                  emit: Callable[[str, dict[str, Any]], None] | None = None,
-                 pace: Callable[[], None] | None = None, on_tool_call: Callable[[], None] | None = None):
+                 pace: Callable[[], None] | None = None, on_tool_call: Callable[[], None] | None = None,
+                 *, checks_enabled: bool = True, verify_on_submit: bool = True):
+        """checks_enabled=False removes the deterministic check tools from every role (evaluation arms B1, B2).
+
+        verify_on_submit=False is the evaluation setting: submit_finding only confirms that a finding is
+        well-formed and that its ids exist. Whether the evidence supports it is decided once, by the
+        verifier, after the report is locked, identically for every arm. The interactive product keeps
+        immediate verification.
+        """
+        self.checks_enabled = checks_enabled
+        self.verify_on_submit = verify_on_submit
         self.store = store
         self.manifest = manifest
         self.draft_path = draft_path
@@ -247,13 +267,19 @@ class CaseToolbox:
 
     def search_events(self, source: str | None, host: str | None, actor: str | None, action: str | None,
                       object_contains: str | None, text_contains: str | None, t_start: str | None, t_end: str | None,
-                      limit: int) -> tuple[dict[str, Any], str, list[str]]:
+                      limit: int, origin_host: str | None = None, file: str | None = None,
+                      session_id: str | None = None, min_bytes_out: int | None = None,
+                      offset: int = 0) -> tuple[dict[str, Any], str, list[str]]:
         limit = max(1, min(int(limit or 20), MAX_RECORDS))
+        offset = max(0, int(offset or 0))
         filters = dict(source=source, host=host, actor=actor, action=action, object_contains=object_contains,
-                       text_contains=text_contains, t_start=_parse_ts(t_start), t_end=_parse_ts(t_end))
-        rows = self.store.search(limit=limit, **filters)
+                       text_contains=text_contains, t_start=_parse_ts(t_start), t_end=_parse_ts(t_end),
+                       origin_host=origin_host or None, file=file or None, session_id=session_id or None,
+                       min_bytes_out=int(min_bytes_out) if min_bytes_out not in (None, "") else None)
+        rows = self.store.search(limit=limit, offset=offset, **filters)
         total = self.store.count(**filters)
-        return ({"total_matching": total, "returned": len(rows), "events": [self._row(e) for e in rows]},
+        return ({"total_matching": total, "returned": len(rows), "offset": offset,
+                 "events": [self._row(e) for e in rows]},
                 f"{total} event(s) match; {len(rows)} returned", [e.id for e in rows])
 
     def count_events(self, group_by: str, source: str | None, host: str | None, actor: str | None, action: str | None,
@@ -306,6 +332,19 @@ class CaseToolbox:
             alternative_explanations=list(kw.get("alternative_explanations") or [])[:6],
             check_refs=list(kw.get("check_refs") or [])[:6], produced_by=role,
         )
+        if not self.verify_on_submit:
+            # Evaluation setting: no verdict comes back. Only form and reference validity are acknowledged,
+            # so an arm without the checks cannot recover their answers by probing this tool.
+            refs = list(dict.fromkeys(finding.evidence_ids + finding.counterevidence_ids))
+            known = self.store.existing_ids(refs) if refs else set()
+            unknown = [i for i in refs if i not in known]
+            with self._lock:
+                self.findings[fid] = finding
+                self._save()
+            self._emit("finding", {"finding": finding.model_dump(mode="json"), "phase": "proposed"})
+            return ({"finding_id": fid, "recorded": True, "references_resolve": not unknown, "unknown_ids": unknown[:10],
+                     "note": "recorded as written; whether the evidence supports it is decided after the report is locked"},
+                    f"{fid} {finding.claim_type}: recorded", finding.evidence_ids[:8])
         checked = verifier.verify_finding(finding, self.store, self.observations())
         with self._lock:
             self.findings[fid] = checked
@@ -365,7 +404,7 @@ class CaseToolbox:
 
     # ------------------------------------------------------------------ LangChain tools for one role
     def tools_for(self, role: str) -> list[StructuredTool]:
-        names = ROLE_TOOLS[role]
+        names = tuple(n for n in ROLE_TOOLS[role] if self.checks_enabled or n not in CHECK_TOOLS)
         tb = self
 
         def get_case_brief() -> str:
@@ -376,12 +415,20 @@ class CaseToolbox:
         def search_events(source: str | None = None, host: str | None = None, actor: str | None = None,
                           action: str | None = None, object_contains: str | None = None,
                           text_contains: str | None = None, t_start: str | None = None, t_end: str | None = None,
-                          limit: int = 20) -> str:
+                          limit: int = 20, origin_host: str | None = None, file: str | None = None,
+                          session_id: str | None = None, min_bytes_out: int | None = None, offset: int = 0) -> str:
             """Search normalized evidence events with typed filters (no SQL). source is one of auth, syslog, app,
             shell_history, fs_stat, flow, badge, mqtt, collector, heartbeat. host is one of workstation, records,
-            iot-hub, collector, tap. Timestamps are ISO 8601 UTC. Returns at most 50 rows with event ids."""
+            iot-hub, collector, tap. Timestamps are ISO 8601 UTC. Returns at most 50 rows with event ids, oldest
+            first; use offset to page.
+            file: a log path such as /var/log/auth.log. With host= it selects that host's own copy; with
+            source=collector and origin_host= it selects the collector's copies of that host's file (each has the
+            original line, its sequence number seq and original time inner_ts).
+            session_id: e.g. workstation#12. min_bytes_out: only flow records that sent at least this many bytes."""
             args = dict(source=source, host=host, actor=actor, action=action, object_contains=object_contains,
-                        text_contains=text_contains, t_start=t_start, t_end=t_end, limit=limit)
+                        text_contains=text_contains, t_start=t_start, t_end=t_end, limit=limit,
+                        origin_host=origin_host, file=file, session_id=session_id, min_bytes_out=min_bytes_out,
+                        offset=offset)
             return tb._run(role, "search_events", args, lambda: tb.search_events(**args))
 
         def count_events(group_by: Literal["source", "host", "actor", "action", "origin_host", "logical_file", "artifact"],
@@ -469,4 +516,9 @@ class CaseToolbox:
         available = {f.__name__: f for f in (get_case_brief, search_events, count_events, get_events,
                                              check_local_vs_collector, check_transfer_sessions, check_account_vs_person,
                                              submit_finding, record_skeptic_verdict, submit_attribution, finalize_report)}
-        return [StructuredTool.from_function(available[n], name=n) for n in names]
+        out = [StructuredTool.from_function(available[n], name=n) for n in names]
+        if not self.verify_on_submit:
+            for t in out:
+                if t.name == "submit_finding":  # the description must not promise a verdict that will not come
+                    t.description = SUBMIT_FINDING_NO_VERDICT
+        return out

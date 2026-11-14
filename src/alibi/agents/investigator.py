@@ -122,6 +122,109 @@ submit_attribution, then finalize_report as the only tool call of its own turn. 
 {_RULES}"""
 
 
+# ----------------------------------------------------------------------------- evaluation variants
+# The four AI arms of the evaluation differ in exactly two ways: one agent or three, and whether the
+# deterministic check tools exist. Prompts for arms without the checks never mention them. In the
+# evaluation no arm is told a verdict when it submits a finding (`oracle=False`).
+
+GENERIC_METHOD = """You have evidence search tools only: search_events, count_events and get_events. Comparisons that
+are usually informative, all of which you make yourself with those tools:
+- a host's own log (host=..., file=...) against the collector's copies of the same file (source=collector,
+  origin_host=..., file=...). Read the logging and rotation policy in the brief before treating an absence as
+  meaningful.
+- large outbound flow records (source=flow, min_bytes_out=...) against the approved destinations in the brief.
+- sessions (the host's auth log, or the collector's copies of it) against the times of transfers, shell history
+  and file metadata on the same host.
+- badge records against console sessions."""
+
+_NO_VERDICT = ("submit_finding only confirms that a finding is well-formed; it does not tell you whether the evidence "
+               "supports it. Submit only what the evidence you have seen supports.")
+_VERDICT = "The deterministic verifier answers immediately; do not resubmit a rejected claim with invented evidence."
+
+_CANDIDATE_JSON = """{{"candidates": [{{"claim_type", "category", "host", "t_start", "t_end", "object_or_session", "evidence_ids",
+"rationale", "confidence", "account_used", "alternative_explanations"}}], "attribution": {{"account_used",
+"human_identity", "statement", "supporting_evidence_ids", "contrary_evidence_ids", "limits"}}, "problems": []}}"""
+_ALLEGATION_RULE = """Use category incident_allegation only for: a collector-retained line unexplainedly absent on the host
+(local_log_removal), a bulk transfer to a non-approved destination (policy_violating_transfer), or an object staged
+for such a transfer (data_staging). Rotation-explained absences are benign_explanation; collection gaps are unresolved."""
+
+
+def lead_prompt(with_checks: bool = True, oracle: bool = True) -> str:
+    if with_checks and oracle:
+        return LEAD_PROMPT
+    step3 = ("run the contradiction checks and return candidates" if with_checks else
+             "examine the evidence and return candidate findings")
+    closing = ("Do not re-run checks the auditor already ran." if with_checks else
+               "Do not repeat searches the auditor already made.")
+    return f"""You are the lead investigator on a frozen evidence bundle from a small clinic network.
+You receive a vague tip. You do not know whether anything wrong happened; many cases are entirely benign.
+
+Work in this order:
+1. write_todos with a short plan. 2. get_case_brief.
+3. Delegate once to `integrity-auditor` (task tool) to {step3}.
+4. Keep short case notes in {CASE_DIR}/notes.md with write_file.
+5. Record each finding you stand behind with submit_finding: all of them in ONE turn as parallel calls, in the same
+   turn as the case note. {_VERDICT if oracle else _NO_VERDICT}
+6. Delegate once to `skeptic` with the finding ids, claim types, hosts, objects, windows and evidence ids.
+7. In ONE turn: record_skeptic_verdict for each finding, and submit_attribution keeping the account separate
+   from the human.
+8. finalize_report with a plain summary and the open questions, as the only tool call of its turn. A human
+   will review it.
+Aim for about seven turns in total. {closing}
+
+{OBJECT_FORMATS}
+
+{_RULES}"""
+
+
+def auditor_prompt(with_checks: bool = True) -> str:
+    if with_checks:
+        return AUDITOR_PROMPT
+    return f"""You are the integrity auditor. Examine the evidence yourself and return candidate findings.
+
+{GENERIC_METHOD}
+
+Reply with JSON only:
+{_CANDIDATE_JSON.replace("{{", "{").replace("}}", "}")}
+{_ALLEGATION_RULE}
+Make your tool calls in parallel where you can, and answer in at most six turns.
+
+{OBJECT_FORMATS}
+
+{_RULES}"""
+
+
+def skeptic_prompt(with_checks: bool = True) -> str:
+    if with_checks:
+        return SKEPTIC_PROMPT
+    return f"""You are the skeptic. For each finding you are given, try hard to explain it benignly: scheduled
+log rotation and retention, maintenance, approved backups and lab submissions, collection gaps, coincidence.
+Use the evidence search tools to test each explanation. Reply with JSON only:
+{{"verdicts": [{{"finding_id", "verdict": "keep" | "downgrade", "reason"}}], "attribution_caution": "..."}}
+Downgrade anything the evidence does not support. You are not an oracle; say what remains uncertain.
+Make your tool calls in parallel and answer in at most three turns. Keep each reason under 60 words.
+
+{_RULES}"""
+
+
+def single_prompt(with_checks: bool = True, oracle: bool = True) -> str:
+    if with_checks and oracle:
+        return SINGLE_AGENT_PROMPT
+    work = ("Run the deterministic checks yourself (in parallel)" if with_checks else
+            "Examine the evidence yourself with the search tools (parallel calls where you can)")
+    turns = "five" if with_checks else "eight"
+    method = "" if with_checks else f"\n{GENERIC_METHOD}\n"
+    return f"""You are a forensic investigator on a frozen evidence bundle from a small clinic network.
+You receive a vague tip. You do not know whether anything wrong happened; many cases are entirely benign.
+{work}, record all findings with submit_finding in one turn,
+submit_attribution, then finalize_report as the only tool call of its own turn. Aim for about {turns} turns.
+{_VERDICT if oracle else _NO_VERDICT}
+{method}
+{OBJECT_FORMATS}
+
+{_RULES}"""
+
+
 def todo_middleware() -> TodoListMiddleware:
     return TodoListMiddleware(system_prompt=TODO_PROMPT, tool_description=TODO_TOOL)
 
@@ -148,30 +251,38 @@ REVIEW_INTERRUPT: dict[str, Any] = {
 
 def build_investigator(toolbox: CaseToolbox, *, lead_model: Any, auditor_model: Any, skeptic_model: Any,
                        checkpointer: Any) -> Any:
-    """Full ALIBI architecture: lead + integrity-auditor + skeptic."""
+    """Lead + integrity-auditor + skeptic. With the check tools this is ALIBI; without them it is arm B2.
+
+    Which of the two it is, and whether submitting a finding returns a verdict, is read from the toolbox,
+    so the tools an agent holds and the prompt it is given can never disagree.
+    """
+    checks, oracle = toolbox.checks_enabled, toolbox.verify_on_submit
     subagents = [
         {"name": "integrity-auditor",
-         "description": "Runs the deterministic contradiction checks over the evidence and returns candidate findings "
-                        "with event ids as JSON. Delegate the checks to it once.",
-         "system_prompt": AUDITOR_PROMPT, "tools": toolbox.tools_for("integrity-auditor"), "model": auditor_model,
+         "description": ("Runs the deterministic contradiction checks over the evidence and returns candidate findings "
+                         "with event ids as JSON. Delegate the checks to it once." if checks else
+                         "Examines the evidence with the search tools and returns candidate findings with event ids "
+                         "as JSON. Delegate the examination to it once."),
+         "system_prompt": auditor_prompt(checks), "tools": toolbox.tools_for("integrity-auditor"), "model": auditor_model,
          "middleware": [_fs()], "permissions": case_permissions()},
         {"name": "skeptic",
          "description": "Tests each finding for a benign explanation and returns keep/downgrade verdicts as JSON. "
                         "Use it after findings exist.",
-         "system_prompt": SKEPTIC_PROMPT, "tools": toolbox.tools_for("skeptic"), "model": skeptic_model,
+         "system_prompt": skeptic_prompt(checks), "tools": toolbox.tools_for("skeptic"), "model": skeptic_model,
          "middleware": [_fs()], "permissions": case_permissions()},
     ]
     return create_deep_agent(
-        model=lead_model, tools=toolbox.tools_for("lead-investigator"), system_prompt=LEAD_PROMPT,
+        model=lead_model, tools=toolbox.tools_for("lead-investigator"), system_prompt=lead_prompt(checks, oracle),
         middleware=[_fs(), todo_middleware()], subagents=subagents, permissions=case_permissions(),
         interrupt_on=REVIEW_INTERRUPT, checkpointer=checkpointer, name="lead-investigator",
     )
 
 
 def build_single_agent(toolbox: CaseToolbox, *, model: Any, checkpointer: Any) -> Any:
-    """B1+: one agent with the same checks and evidence as full ALIBI, no delegation."""
+    """One agent, no delegation. With the check tools this is arm B1+ (the product's fast mode); without, B1."""
     return create_deep_agent(
-        model=model, tools=toolbox.tools_for("single-agent"), system_prompt=SINGLE_AGENT_PROMPT,
+        model=model, tools=toolbox.tools_for("single-agent"),
+        system_prompt=single_prompt(toolbox.checks_enabled, toolbox.verify_on_submit),
         middleware=[_fs(), todo_middleware()], permissions=case_permissions(),
         interrupt_on=REVIEW_INTERRUPT, checkpointer=checkpointer, name="single-agent",
     )

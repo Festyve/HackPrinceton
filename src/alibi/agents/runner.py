@@ -35,6 +35,10 @@ ROLES = ("lead-investigator", "integrity-auditor", "skeptic")
 # investigation mode (product) -> graph architecture
 MODE_ARCHITECTURE = {"fast": "single-agent", "specialist": "alibi"}
 ARCHITECTURE_ROLES = {"alibi": ROLES, "single-agent": ("single-agent",)}
+# (architecture, has the check tools) -> evaluation arm
+SYSTEM_IDS = {("alibi", True): "ALIBI", ("alibi", False): "B2", ("single-agent", True): "B1+", ("single-agent", False): "B1"}
+NO_CHECK_LABELS = {"alibi": "Arm B2: lead + integrity-auditor + skeptic with generic evidence tools only (no checks)",
+                   "single-agent": "Arm B1: one agent with generic evidence tools only (no checks)"}
 SYSTEM_LABELS = {
     ("alibi", False): "Specialist review: lead + integrity-auditor + skeptic with deterministic checks (benchmark arm ALIBI)",
     ("alibi", True): "DeepAgents graph (lead + integrity-auditor + skeptic) driven by a scripted fixture policy; "
@@ -47,9 +51,14 @@ _CATEGORY_ORDER = {"incident_allegation": 0, "unresolved": 1, "benign_explanatio
 
 
 class AgentRunner:
-    def __init__(self, runner_id: str, settings: Settings, *, architecture: str = "alibi"):
+    def __init__(self, runner_id: str, settings: Settings, *, architecture: str = "alibi",
+                 with_checks: bool = True, verify_on_submit: bool = True):
+        """with_checks=False and verify_on_submit=False exist for the evaluation arms only (see alibi/evaluation.py).
+        The product always runs with the checks and with immediate verification."""
         if architecture not in ARCHITECTURE_ROLES:
             raise ValueError(f"unknown architecture {architecture!r}")
+        self.with_checks = with_checks
+        self.verify_on_submit = verify_on_submit
         self.runner_id = runner_id
         self.settings = settings
         self.architecture = architecture  # alibi | single-agent
@@ -102,7 +111,8 @@ class AgentRunner:
         ctx.case_dir.mkdir(parents=True, exist_ok=True)
         ledger = gateway.make_ledger(self.settings, ctx.case_dir / "budget.json", scripted=self.scripted)
         toolbox = CaseToolbox(ctx.store, ctx.manifest, ctx.case_dir / "draft_state.json", emit=ctx.emit,
-                              pace=ctx.pace_quiet, on_tool_call=ledger.count_tool_call)
+                              pace=ctx.pace_quiet, on_tool_call=ledger.count_tool_call,
+                              checks_enabled=self.with_checks, verify_on_submit=self.verify_on_submit)
         conn = sqlite3.connect(str(ctx.case_dir / "checkpoints.sqlite"), check_same_thread=False)
         return toolbox, ledger, conn
 
@@ -227,9 +237,9 @@ class AgentRunner:
         fixture = self.scripted
         return InvestigationReport(
             report_id=f"rep-{ctx.case_id}", bundle_id=ctx.manifest.bundle_id,
-            system_id=("ALIBI-FIXTURE" if fixture else "ALIBI") if self.architecture == "alibi" else
-                      ("B1+-FIXTURE" if fixture else "B1+"),
-            system_label=SYSTEM_LABELS[(self.architecture, fixture)],
+            system_id=SYSTEM_IDS[(self.architecture, self.with_checks)] + ("-FIXTURE" if fixture else ""),
+            system_label=(SYSTEM_LABELS[(self.architecture, fixture)] if self.with_checks or fixture else
+                          NO_CHECK_LABELS[self.architecture]),
             inference_mode=self.inference_mode, model_id=self.model_id, findings=findings,
             attribution=toolbox.attribution or AttributionAssessment(
                 human_identity="not_assessed", statement="The investigator did not submit an attribution assessment."),

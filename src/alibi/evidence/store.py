@@ -123,6 +123,12 @@ class EvidenceStore:
             else:
                 clauses.append(f"{col} = ?")
                 params.append(val)
+        if filters.get("file"):  # the host's own file, or the collector's copies of that file
+            clauses.append("(logical_file = ? OR origin_file = ?)")
+            params += [str(filters["file"]), str(filters["file"])]
+        if filters.get("min_bytes_out") is not None:  # flow records at least this large
+            clauses.append("TRY_CAST(json_extract_string(attrs, '$.bytes_out') AS BIGINT) >= ?")
+            params.append(int(filters["min_bytes_out"]))
         if filters.get("object_contains"):
             clauses.append("contains(object, ?)")
             params.append(str(filters["object_contains"]))
