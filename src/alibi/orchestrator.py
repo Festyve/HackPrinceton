@@ -27,7 +27,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from alibi import explain, evidence_views, export, questions, source_experiment
+from alibi import baselines, explain, evidence_views, export, importing, questions, source_experiment
 from alibi.config import REPO_ROOT, Settings
 from alibi.contracts import INFERENCE_LABELS, InvestigationReport, QuestionAnswer
 from alibi.episode import (
@@ -584,8 +584,6 @@ class Orchestrator:
                     investigation_mode: str | None = None) -> CaseRecord:
         """Operator action (CLI): freeze a capture directory as an unscored case. Not exposed over HTTP, because
         it reads a path on this machine."""
-        from alibi import importing
-
         runner_id = runner_id or default_runner_id(self.settings)
         mode = resolve_mode(runner_id, investigation_mode)
         runner = get_runner(runner_id, self.settings, mode)
@@ -794,6 +792,8 @@ class Orchestrator:
                                                              "model_id": rec.model_id}})
                 t0 = time.perf_counter()
                 report = runner.run(ctx)
+                if importing.is_imported(ctx.manifest):  # no scenario stands behind imported evidence
+                    report = baselines.report_for_imported(report, ctx.manifest)
                 compute = max(0.0, time.perf_counter() - t0 - ctx.paced_seconds)
                 with self._lock(case_id):
                     self._finish_draft(self._load(case_id), paths, store, report, compute)

@@ -1,6 +1,6 @@
 # Importing captured evidence
 
-`uv run alibi import <directory>` freezes a capture directory as an **unscored** case. No captured evidence ships with this build; this page describes the entry point a capture has to meet. The importer is `src/alibi/importing.py` (`load_capture`, `import_bundle`, `write_capture_manifest`).
+`uv run alibi import <directory>` freezes a capture directory as an **unscored** case; add `--investigate` to take it straight to human review, or run `uv run alibi investigate <case-id>` later. Three small captured bundles ship in `tests/fixtures/capture/` ([how they were made](capture.md)). This page describes the entry point a capture has to meet. The importer is `src/alibi/importing.py` (`load_capture`, `import_bundle`, `write_capture_manifest`).
 
 ## The capture directory
 
@@ -43,6 +43,8 @@ Bytes are copied verbatim and made read-only. Lines a parser does not understand
 
 - State `frozen`, card `imported`, `case.scored = false`, `labels.ground_truth = "none · imported evidence is not scored"`.
 - It can be investigated, questioned, reviewed, locked, exported and used for a source-removal experiment (the derived view is unscored too).
+- Nothing is assumed about where it came from. A model is told the evidence was imported and that nothing is known beyond its manifest; the simulated clinic is not mentioned. Templated questions that need a scenario (a linked session, a transfer destination) are left off its report unless the evidence has that subject.
+- Sub-second timestamps are kept, so records inside one second keep their real order. Times are displayed to the second, and a time bound given to the second covers that whole second.
 - `POST /api/cases/{id}/reveal` returns **409**: there is no answer key to unseal.
 - It cannot be saved as a replayable recording, because a recording regenerates its evidence from a scenario.
 - Import is a command, not an HTTP route, because it reads a path on the machine.

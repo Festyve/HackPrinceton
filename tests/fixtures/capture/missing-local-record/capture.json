@@ -1,0 +1,49 @@
+{
+  "format": "alibi-capture/1",
+  "capture_id": "capture-002",
+  "captured_by": {
+    "name": "alibi-docker-capture",
+    "version": "1",
+    "image_digests": {
+      "service": "sha256:e1b620dcca4ad7158c8c4d96c1f15f2f6abc29a819c432d12d817d922abe7e79",
+      "collector": "sha256:e1b620dcca4ad7158c8c4d96c1f15f2f6abc29a819c432d12d817d922abe7e79",
+      "base": "sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90"
+    }
+  },
+  "capture_start": "2026-11-14T17:23:41.232873+00:00",
+  "capture_end": "2026-11-14T17:23:44.417500+00:00",
+  "evidence_origin": "DOCKER",
+  "artifacts": [
+    {
+      "path": "collector/collected/collected.log",
+      "sha256": "30e1662bb0d0ad030202452a7bc3c3298145e4b70dcea7c23f12f5d890ed87bd",
+      "size_bytes": 675,
+      "origin": "DOCKER",
+      "coverage_start": "2026-11-14T17:23:41.232873+00:00",
+      "coverage_end": "2026-11-14T17:23:44.417500+00:00"
+    },
+    {
+      "path": "records/var/log/records-app/access.log",
+      "sha256": "70be92fade8fb2c4b2463314cf9dc2f9a6b44d806a9dda1e72547f822d98aee8",
+      "size_bytes": 230,
+      "origin": "DOCKER",
+      "coverage_start": "2026-11-14T17:23:41.232873+00:00",
+      "coverage_end": "2026-11-14T17:23:44.417500+00:00",
+      "known_gaps": [],
+      "forwarded_to_collector": true
+    }
+  ],
+  "operational_context": {
+    "logging_policy": {
+      "forwarded_files": [
+        {
+          "host": "records",
+          "file": "/var/log/records-app/access.log"
+        }
+      ]
+    }
+  },
+  "notes": [
+    "Synthetic requests to a controlled test application. Collector acknowledges durable receipt."
+  ]
+}

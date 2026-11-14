@@ -46,11 +46,11 @@ Yes, once, and it changed how we talk about the results. We declared a repeat of
 
 **Who checked your code?**
 
-Tests, and two cold reads by a second agent that was told nothing about what to expect: one of the budget code, one of the information barrier and input handling in the new routes. They found fifteen defects, each reproduced before it was reported. The most serious: a derived evidence view could be unsealed while the original report was still open. All are fixed, and each has a regression test.
+Tests, and three cold reads by a second agent that was told nothing about what to expect: the budget code, the information barrier and input handling in the new routes, and the interface code for the new controls. They found twenty-four defects, each reproduced before it was reported. The most serious: a derived evidence view could be unsealed while the original report was still open. All are fixed, and each has a regression test.
 
 **Is simulated evidence enough?**
 
-It gives a reproducible answer key and controlled comparisons. It does not establish real-world performance. Capture from real Linux processes is being built by a teammate; until it is merged, everything here is simulated and labeled so.
+No. It gives a reproducible answer key and controlled comparisons; it does not establish real-world performance. A first step past it is merged: three small captures written by running processes (a test application and an independent collector in Docker containers) import as unscored cases. The deterministic comparison reports the removed line on the capture that has one and nothing on the two controls. A real model, run once on each, alleged nothing on the controls; on the removal capture it described the missing line and left it unresolved instead of calling it removal. These are not system logs and three captures are not a detection rate.
 
 **Could someone use this?**
 
@@ -58,4 +58,4 @@ Training teams can see how an investigator reached a conclusion and check every 
 
 **How much does it cost?**
 
-Replaying a recording costs nothing. A fresh fast investigation on Claude Haiku 5.5 took about 25 seconds and under one cent; a question took two or three model calls and about a quarter of a cent. The whole second-run evaluation, twenty-four investigations, was an estimated $0.33. The team authorized $20 in total and an estimated $3.47 has been used. A ledger reserves before each call and keeps unknown outcomes at their worst case; the provider console is the billing authority.
+Replaying a recording costs nothing. A fresh fast investigation on Claude Haiku 5.5 took about 25 seconds and under one cent; a question took two or three model calls and about a quarter of a cent. The whole second-run evaluation, twenty-four investigations, was an estimated $0.33. The team authorized $20 in total and an estimated $3.65 has been used. A ledger reserves before each call and keeps unknown outcomes at their worst case; the provider console is the billing authority.

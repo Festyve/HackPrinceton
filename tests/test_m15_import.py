@@ -1,8 +1,8 @@
 """Importing evidence captured outside the simulator, as an unscored case. Offline.
 
-No captured evidence exists in this repository yet. These tests feed the importer simulator bytes that
-are labeled as simulated (SIM), plus hand-made manifests for the rejection and labeling rules. Nothing
-here is evidence of a real capture.
+These tests feed the importer simulator bytes that are labeled as simulated (SIM), plus hand-made manifests
+for the rejection and labeling rules. Nothing here is evidence of a real capture: the captured bundles are
+under tests/fixtures/capture/ and are tested in tests/test_capture.py and tests/test_m18_capture_integration.py.
 """
 
 from __future__ import annotations

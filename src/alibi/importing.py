@@ -239,6 +239,23 @@ def import_bundle(src_dir: Path, paths: EpisodePaths) -> EvidenceManifest:
         raise
 
 
+SIMULATED_FRAMING = "a frozen evidence bundle from a small clinic network"
+IMPORTED_FRAMING = ("a frozen evidence bundle that was imported from outside this system. Nothing is known about where "
+                    "it came from beyond its manifest: assume nothing about the organization, its people or its data")
+
+
+def is_imported(manifest: EvidenceManifest) -> bool:
+    """True for evidence that came through this importer: it has no scenario and no answer key."""
+    return "capture" in manifest.operational_context
+
+
+def neutral_framing(prompt: str) -> str:
+    """A model prompt for imported evidence: the simulated clinic is not mentioned, the rest is word for word."""
+    if SIMULATED_FRAMING not in prompt:
+        raise ValueError("this prompt does not carry the simulated-case framing, so it cannot be made neutral")
+    return prompt.replace(SIMULATED_FRAMING, IMPORTED_FRAMING)
+
+
 def write_capture_manifest(src_dir: Path, capture_id: str, tool: str, origin: EvidenceOrigin, capture_start: datetime,
                            capture_end: datetime, *, operational_context: dict[str, Any] | None = None,
                            notes: list[str] | None = None, per_artifact: dict[str, dict[str, Any]] | None = None) -> Path:

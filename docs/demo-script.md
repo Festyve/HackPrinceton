@@ -34,6 +34,7 @@ This applies only if the build you present includes the branch `codex/eric-ui-wi
 - **A different case.** Records heist (the records server's own export trail) or Cold chain (stored temperature readings against an independent reference logger). Each has a sealed control where nothing wrong happened.
 - **A live run.** Fast mode takes about 25 seconds on Claude Haiku 5.5 and costs under a cent. If it stalls, switch to the recording. Do not wait out inference in a timed pitch.
 - **Export.** Download the locked report: its hash, the model and mode that produced it, and the exact cited lines.
+- **Captured evidence.** `uv run alibi import tests/fixtures/capture/missing-local-record --investigate`, then open the case from the case library. It is labeled as captured evidence: the host's own log lacks a request that the collector kept. It has no answer key, so nothing can be unsealed.
 
 ## From a terminal
 

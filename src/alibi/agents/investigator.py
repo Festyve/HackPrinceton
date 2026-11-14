@@ -32,6 +32,7 @@ from langchain.agents.middleware import TodoListMiddleware
 
 from alibi.agents.gateway import GATEWAY_PROVIDER
 from alibi.agents.tools import CaseToolbox
+from alibi.importing import is_imported, neutral_framing
 
 FS_TOOLS = ["ls", "read_file", "write_file", "edit_file"]
 CASE_DIR = "/case"
@@ -287,6 +288,9 @@ def build_investigator(toolbox: CaseToolbox, *, lead_model: Any, auditor_model: 
     """
     checks, oracle = toolbox.checks_enabled, toolbox.verify_on_submit
     more = family_addendum(toolbox)
+    lead = lead_prompt(checks, oracle)
+    if is_imported(toolbox.manifest):
+        lead = neutral_framing(lead)
     subagents = [
         {"name": "integrity-auditor",
          "description": ("Runs the deterministic contradiction checks over the evidence and returns candidate findings "
@@ -302,7 +306,7 @@ def build_investigator(toolbox: CaseToolbox, *, lead_model: Any, auditor_model: 
          "middleware": [_fs()], "permissions": case_permissions()},
     ]
     return create_deep_agent(
-        model=lead_model, tools=toolbox.tools_for("lead-investigator"), system_prompt=lead_prompt(checks, oracle) + more,
+        model=lead_model, tools=toolbox.tools_for("lead-investigator"), system_prompt=lead + more,
         middleware=[_fs(), todo_middleware()], subagents=subagents, permissions=case_permissions(),
         interrupt_on=REVIEW_INTERRUPT, checkpointer=checkpointer, name="lead-investigator",
     )
@@ -310,9 +314,12 @@ def build_investigator(toolbox: CaseToolbox, *, lead_model: Any, auditor_model: 
 
 def build_single_agent(toolbox: CaseToolbox, *, model: Any, checkpointer: Any) -> Any:
     """One agent, no delegation. With the check tools this is arm B1+ (the product's fast mode); without, B1."""
+    prompt = single_prompt(toolbox.checks_enabled, toolbox.verify_on_submit)
+    if is_imported(toolbox.manifest):
+        prompt = neutral_framing(prompt)
     return create_deep_agent(
         model=model, tools=toolbox.tools_for("single-agent"),
-        system_prompt=single_prompt(toolbox.checks_enabled, toolbox.verify_on_submit) + family_addendum(toolbox),
+        system_prompt=prompt + family_addendum(toolbox),
         middleware=[_fs(), todo_middleware()], permissions=case_permissions(),
         interrupt_on=REVIEW_INTERRUPT, checkpointer=checkpointer, name="single-agent",
     )

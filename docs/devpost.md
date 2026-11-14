@@ -32,7 +32,7 @@ These are small, simulated measurements with one run per cell, and one repeat of
 
 ## What comes next
 
-Run the same pipeline on evidence captured from real Linux processes, and repeat the evaluation with more cases and repeated runs.
+Three small captures from running processes already go through the same pipeline as unscored cases. Next: real system logs, more cases, and repeated runs of the evaluation.
 
 ## Submission fields
 
