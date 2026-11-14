@@ -303,8 +303,9 @@ def normalize_artifact(artifact: str, text: str) -> tuple[list[Event], list[str]
                     raise ValueError("expected 5 fields")
                 ts_raw, logger, monitors, seq, temp = parts
                 emit(n, off, raw, _ts(ts_raw), ts_raw, host=role, source="reference", actor=logger, action="reading",
-                     object=monitors, attrs={"seq": int(seq), "temp_c": float(temp), "logger": logger},
-                     clock_assumption="the logger's own clock, not network-synchronised; no offset correction applied")
+                     object=monitors,
+                     attrs={"seq": int(seq), "temp_c": float(temp), "logger": logger,
+                            "clock_note": "the logger's own clock, not network-synchronised; no offset correction applied"})
             except ValueError as exc:
                 unparsed(n, off, raw, f"bad reference reading ({exc})", "reference")
     else:
