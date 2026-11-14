@@ -5,6 +5,13 @@ investigator-visible operational context. It returns compact structured
 observations with event ids. Checks compute *observations under explicit coverage
 assumptions*; they never decide guilt and never see the answer key.
 
+Coverage rules (1.1.0)
+  * A source that is not in the bundle makes the dependent comparison NOT ASSESSABLE. That is
+    "unknown": never "consistent", never "no anomaly", never an allegation.
+  * A collector-retained line is called unexplained only when a local record precedes it AND a
+    local record follows it. A missing prefix (late-start capture) or missing tail is inconclusive.
+  * Where a source declares when it was recording, lines outside that window are outside coverage.
+
 P0 checks
   reconcile_logs      local log vs. collector copy, rotation/retention aware
   correlate_transfers bulk flows vs. destination policy, sessions and staged objects
@@ -21,7 +28,7 @@ from typing import Any
 from alibi.contracts import Event, EvidenceManifest, iso
 from alibi.evidence.store import EvidenceStore
 
-CHECKS_VERSION = "1.0.0"
+CHECKS_VERSION = "1.1.0"  # 1.1.0: both local brackets required; declared coverage honored; absent sources are unknown
 SIZE_TOLERANCE = 0.01  # staged object vs. transfer size
 STAGING_LOOKBACK_S = 1800
 GAP_FACTOR = 2.5  # heartbeat gap = silence longer than this many intervals
@@ -58,6 +65,45 @@ class Policy:
     account_role: dict[str, str]
     remote_allowed: bool
     remote_via_ip: str | None
+    # what the bundle actually contains (from the manifest, never from the stated policy)
+    source_kinds: set[str] = field(default_factory=set)
+    local_files: set[tuple[str, str]] = field(default_factory=set)
+    declared_spans: dict[tuple[str, str], list[tuple[datetime, datetime]]] = field(default_factory=dict)
+    known_gaps: dict[tuple[str, str], list[tuple[datetime, datetime, str]]] = field(default_factory=dict)
+    collector_spans: list[tuple[datetime, datetime]] = field(default_factory=list)
+    collector_gaps: list[tuple[datetime, datetime, str]] = field(default_factory=list)
+
+    def has(self, kind: str) -> bool:
+        return kind in self.source_kinds
+
+
+def _coverage_from(manifest: EvidenceManifest) -> dict[str, Any]:
+    kinds = {s.source for s in manifest.sources}
+    local_files: set[tuple[str, str]] = set()
+    undeclared: set[tuple[str, str]] = set()
+    spans: dict[tuple[str, str], list[tuple[datetime, datetime]]] = {}
+    gaps: dict[tuple[str, str], list[tuple[datetime, datetime, str]]] = {}
+    c_spans: list[tuple[datetime, datetime]] = []
+    c_gaps: list[tuple[datetime, datetime, str]] = []
+    for src in manifest.sources:
+        stated = src.coverage_declared and src.coverage_start is not None and src.coverage_end is not None
+        if src.source == "collector":
+            if stated:
+                c_spans.append((src.coverage_start, src.coverage_end))
+            c_gaps += [(g.start, g.end, g.reason) for g in src.known_gaps]
+        elif src.source in _LOCAL_SOURCES and src.logical_file:
+            key = (src.host, src.logical_file)
+            local_files.add(key)
+            if stated:
+                spans.setdefault(key, []).append((src.coverage_start, src.coverage_end))
+            else:
+                undeclared.add(key)
+            if src.known_gaps:
+                gaps.setdefault(key, []).extend((g.start, g.end, g.reason) for g in src.known_gaps)
+    # a window is only enforced for a file when EVERY captured generation of it states one
+    spans = {k: v for k, v in spans.items() if k not in undeclared}
+    return {"source_kinds": kinds, "local_files": local_files, "declared_spans": spans, "known_gaps": gaps,
+            "collector_spans": c_spans, "collector_gaps": c_gaps}
 
 
 def policy_from(manifest: EvidenceManifest) -> Policy:
@@ -82,6 +128,7 @@ def policy_from(manifest: EvidenceManifest) -> Policy:
         account_role={a["account"]: a.get("role", "") for a in ctx.get("accounts", [])},
         remote_allowed=bool((ctx.get("remote_access_policy", {}) or {}).get("allowed", False)),
         remote_via_ip=via_ip,
+        **_coverage_from(manifest),
     )
 
 
@@ -145,7 +192,17 @@ def reconstruct_sessions(store: EvidenceStore, host: str) -> dict[str, SessionVi
 
 
 def heartbeat_gaps(store: EvidenceStore, pol: Policy, host: str) -> list[dict[str, Any]]:
+    return heartbeat_view(store, pol, host)[0]
+
+
+def heartbeat_view(store: EvidenceStore, pol: Policy, host: str) -> tuple[list[dict[str, Any]], str]:
+    """Heartbeat gaps for one host, plus whether heartbeat data exists to look for gaps in.
+
+    Fewer than two heartbeats means gaps cannot be measured: the answer is "not_available",
+    which is different from "no gaps".
+    """
     beats = store.scan(source="heartbeat", origin_host=host)
+    availability = "available" if len(beats) >= 2 else "not_available"
     gaps: list[dict[str, Any]] = []
     limit = pol.heartbeat_interval_s * GAP_FACTOR
     svc = store.scan(source="collector", origin_host=host, action="service") + store.scan(source="syslog", host=host, action="service")
@@ -164,7 +221,7 @@ def heartbeat_gaps(store: EvidenceStore, pol: Policy, host: str) -> list[dict[st
             "cause": "recorded_service_restart" if restart else "unknown",
             "note": "A heartbeat gap shows collection was interrupted. It does not show why or by whom.",
         })
-    return gaps
+    return gaps, availability
 
 
 # --------------------------------------------------------------------------- check 1: local vs collector
@@ -188,10 +245,48 @@ def _rotation_records(store: EvidenceStore, host: str, file: str) -> list[dict[s
     return sorted(recs.values(), key=lambda r: r["ts"])
 
 
+def _not_assessable(host: str, file: str, reason: str, local_lines: int = 0, collector_lines: int = 0) -> dict[str, Any]:
+    """Same shape as a reconciled file, with nothing concluded. Unknown is not a clean result."""
+    return {
+        "host": host, "file": file, "status": "not_assessable", "status_reason": reason,
+        "local_lines": local_lines, "collector_lines": collector_lines, "collector_duplicate_deliveries": 0,
+        "local_segments": [], "rotations": [], "local_coverage_start": None, "coverage_basis": "not_assessable",
+        "coverage_boundary_event_ids": [], "unexplained_local_absence": [],
+        "retention_explained_absence": {"count": 0, "first_ts": None, "last_ts": None, "sample_collector_event_ids": [],
+                                        "all_collector_event_ids": [], "explanation": None},
+        "inconclusive_local_absence": [],
+        "missing_at_collector": {"in_heartbeat_gap": 0, "outside_heartbeat_gap": 0, "outside_collector_coverage": 0,
+                                 "samples": [], "all_local_event_ids": [], "gap_ids": []},
+        "heartbeat_coverage": "not_available",
+    }
+
+
+def _within(ts: datetime, spans: list[tuple[datetime, datetime]]) -> bool:
+    return any(a <= ts <= b for a, b in spans)
+
+
+def _gap_reason(ts: datetime, gaps: list[tuple[datetime, datetime, str]]) -> str | None:
+    for a, b, why in gaps:
+        if a <= ts <= b:
+            return why or "a stated gap in this source's coverage"
+    return None
+
+
 def reconcile_file(store: EvidenceStore, pol: Policy, host: str, file: str,
-                   gaps: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+                   gaps: list[dict[str, Any]] | None = None, heartbeat: str | None = None) -> dict[str, Any]:
     """Compare one host-local log (all captured generations) with the collector's copies."""
-    gaps = heartbeat_gaps(store, pol, host) if gaps is None else gaps
+    if not pol.has("collector"):
+        return _not_assessable(host, file, "this bundle has no collector copy, so the host's own log cannot be "
+                               "compared with an independent one. Its completeness is unknown.",
+                               local_lines=len([e for e in store.scan(host=host, logical_file=file)
+                                                if e.source in _LOCAL_SOURCES]))
+    if (host, file) not in pol.local_files:
+        return _not_assessable(host, file, f"the host's own copy of {file} is not in this bundle, so collector records "
+                               "cannot be compared with it. That is a property of the bundle, not evidence of removal.",
+                               collector_lines=len({int(e.attrs["seq"]) for e in
+                                                    store.scan(source="collector", origin_host=host, origin_file=file)}))
+    if gaps is None or heartbeat is None:
+        gaps, heartbeat = heartbeat_view(store, pol, host)
     local = [e for e in store.scan(host=host, logical_file=file) if e.source in _LOCAL_SOURCES]
     fwd_all = store.scan(source="collector", origin_host=host, origin_file=file)
     by_seq: dict[int, Event] = {}
@@ -233,6 +328,8 @@ def reconcile_file(store: EvidenceStore, pol: Policy, host: str, file: str,
         coverage_start, basis, boundary_ids = pol.capture_start, "capture_start", []
 
     local_sorted = sorted(local, key=lambda e: (e.ts, e.artifact_ref.artifact, e.artifact_ref.line))
+    spans = pol.declared_spans.get((host, file), [])
+    stated_gaps = pol.known_gaps.get((host, file), [])
     unexplained: list[dict[str, Any]] = []
     retention: list[Event] = []
     inconclusive: list[dict[str, Any]] = []
@@ -248,16 +345,37 @@ def reconcile_file(store: EvidenceStore, pol: Policy, host: str, file: str,
             "actor": ev.actor, "action": ev.action, "session_id": ev.attrs.get("session_id"),
             "bracket_before_id": before.id if before else None, "bracket_after_id": after.id if after else None,
         }
-        if after is None:
-            row["reason"] = "no later local record brackets this line; the local capture may simply end earlier"
+        stated = _gap_reason(ts, stated_gaps)
+        if stated is not None:
+            row["reason"] = f"the host's capture of this file states a gap here ({stated}); the line is outside local coverage"
             inconclusive.append(row)
-        else:
+        elif spans and not _within(ts, spans):
+            row["reason"] = ("this line falls outside the window in which the host's copy states it was captured "
+                             "(late-start or partial capture); its absence there is not informative")
+            inconclusive.append(row)
+        elif before is None and after is None:
+            row["reason"] = "the host's copy has no records at all to bracket this line; what it covered is unknown"
+            inconclusive.append(row)
+        elif before is None:
+            row["reason"] = ("no earlier local record precedes this line; the host's copy may simply start later "
+                             "(missing prefix or late-start capture)")
+            inconclusive.append(row)
+        elif after is None:
+            row["reason"] = "no later local record follows this line; the host's copy may simply end earlier"
+            inconclusive.append(row)
+        else:  # a local record on BOTH sides: the file covered this moment and the line is not in it
             unexplained.append(row)
 
-    in_gap, not_in_gap = [], []
+    in_gap, not_in_gap, outside_collector = [], [], []
     for ev in missing_at_collector:
+        row = {"local_event_id": ev.id, "line_ts": iso(ev.ts), "gap_id": None}
+        why = _gap_reason(ev.ts, pol.collector_gaps)
+        if why is not None or (pol.collector_spans and not _within(ev.ts, pol.collector_spans)):
+            outside_collector.append({**row, "reason": why or "outside the window the collector states it was recording"})
+            continue
         g = next((g for g in gaps if _dt(g["start"]) <= ev.ts <= _dt(g["end"])), None)
-        (in_gap if g else not_in_gap).append({"local_event_id": ev.id, "line_ts": iso(ev.ts), "gap_id": g["gap_id"] if g else None})
+        row["gap_id"] = g["gap_id"] if g else None
+        (in_gap if g else not_in_gap).append(row)
 
     if unexplained:
         status = "unexplained_local_absence"
@@ -265,6 +383,8 @@ def reconcile_file(store: EvidenceStore, pol: Policy, host: str, file: str,
         status = "inconclusive"
     elif in_gap:
         status = "collection_gap"
+    elif outside_collector:
+        status = "collector_coverage_limited"
     elif retention:
         status = "retention_explained_only"
     else:
@@ -293,10 +413,13 @@ def reconcile_file(store: EvidenceStore, pol: Policy, host: str, file: str,
         "inconclusive_local_absence": inconclusive,
         "missing_at_collector": {
             "in_heartbeat_gap": len(in_gap), "outside_heartbeat_gap": len(not_in_gap),
+            "outside_collector_coverage": len(outside_collector),
             "samples": (in_gap + not_in_gap)[:SAMPLE],
             "all_local_event_ids": [r["local_event_id"] for r in in_gap + not_in_gap],
             "gap_ids": sorted({r["gap_id"] for r in in_gap if r["gap_id"]}),
         },
+        # "not_available": there is no heartbeat data to look for gaps in, so "no gap" cannot be said
+        "heartbeat_coverage": heartbeat,
     }
 
 
@@ -306,18 +429,35 @@ def reconcile_logs(store: EvidenceStore, manifest: EvidenceManifest, host: str |
     pol = policy_from(manifest)
     targets = [(h, f) for h, f in pol.forwarded if (host is None or h == host) and (file is None or f == file)]
     hosts = sorted({h for h, _ in targets})
-    gaps = {h: heartbeat_gaps(store, pol, h) for h in hosts}
-    files = [reconcile_file(store, pol, h, f, gaps[h]) for h, f in targets]
+    views = {h: heartbeat_view(store, pol, h) for h in hosts}
+    files = [reconcile_file(store, pol, h, f, views[h][0], views[h][1]) for h, f in targets]
+    blind = [{"host": f["host"], "file": f["file"], "reason": f["status_reason"]} for f in files
+             if f["status"] == "not_assessable"]
+    no_beats = sorted(h for h in hosts if views[h][1] != "available")
+    limits: list[str] = []
+    if not pol.has("collector"):
+        limits.append("No collector copy is in this bundle. Host-log completeness is unknown; it is not confirmed.")
+    elif blind:
+        limits.append(f"{len(blind)} forwarded file(s) could not be compared because the host's own copy is not in "
+                      "this bundle. That is unknown, not a clean result and not evidence of removal.")
+    if no_beats:
+        limits.append("No heartbeat data for " + ", ".join(no_beats) + ": collection gaps there cannot be measured, "
+                      "so the absence of a reported gap means nothing.")
     return {
         "check": "local_vs_collector", "version": CHECKS_VERSION,
         "assumptions": [
             "the collector, tap and badge reader are not writable from the monitored hosts",
             "lines are matched on exact original text; duplicate deliveries are collapsed by sequence number",
             "a line absent locally is only called unexplained when it postdates the host's retention boundary "
-            "and a later local record brackets it",
+            "and a local record brackets it on BOTH sides (one before, one after)",
+            "a source that is missing from the bundle makes the comparison not assessable: unknown, not clean",
         ],
         "files": files,
-        "heartbeat_gaps": [g for h in hosts for g in gaps[h]],
+        "heartbeat_gaps": [g for h in hosts for g in views[h][0]],
+        "coverage": {"collector_present": pol.has("collector"),
+                     "heartbeat": {h: views[h][1] for h in hosts},
+                     "files_not_assessable": blind},
+        "coverage_limits": limits,
     }
 
 
@@ -331,6 +471,25 @@ def _near(a: int, b: int, tol: float = SIZE_TOLERANCE) -> bool:
 def correlate_transfers(store: EvidenceStore, manifest: EvidenceManifest) -> dict[str, Any]:
     """Bulk outbound flows vs. destination policy, overlapping sessions and staged objects."""
     pol = policy_from(manifest)
+    has_sessions = pol.has("auth") or pol.has("collector")
+    limits: list[str] = []
+    if not pol.has("flow"):
+        return {
+            "check": "transfer_session_correlation", "version": CHECKS_VERSION, "status": "not_assessable",
+            "bulk_threshold_bytes": pol.bulk_threshold, "approved_bulk_destinations": pol.approved_ips,
+            "transfers": [],
+            "coverage": {"flow": False, "sessions": has_sessions, "shell_history": pol.has("shell_history"),
+                         "file_metadata": pol.has("fs_stat")},
+            "coverage_limits": ["No network flow source is in this bundle. Whether a bulk transfer happened is "
+                                "unknown; an empty list here does not mean there was none."],
+        }
+    if not has_sessions:
+        limits.append("No login records (host auth log or collector copy) are in this bundle: transfers cannot be "
+                      "linked to a session. 'No session' here means unknown.")
+    if not pol.has("shell_history"):
+        limits.append("No shell history is in this bundle: the command behind a transfer cannot be shown.")
+    if not pol.has("fs_stat"):
+        limits.append("No file metadata snapshot is in this bundle: staging before a transfer cannot be shown.")
     flows = store.scan(source="flow")
     bulk_out = [f for f in flows if f.attrs["bytes_out"] >= pol.bulk_threshold]
     bulk_in = [f for f in flows if f.attrs["bytes_in"] >= pol.bulk_threshold]
@@ -360,6 +519,8 @@ def correlate_transfers(store: EvidenceStore, manifest: EvidenceManifest) -> dic
                     and (s.logout_ts is None or s.logout_ts >= start)]
             row["sessions"] = [s.as_dict() for s in sorted(over, key=lambda s: s.session_id)]
             row["session_link"] = {0: "none", 1: "single_overlapping_session"}.get(len(over), "ambiguous_multiple")
+            if not over and not has_sessions:
+                row["session_link"] = "unknown_no_login_records_in_bundle"
             accounts = {s.account for s in over}
             cmds = [e for e in store.scan(source="shell_history", host=src_host,
                                           t_start=start - timedelta(seconds=10), t_end=start + timedelta(seconds=10))
@@ -392,10 +553,13 @@ def correlate_transfers(store: EvidenceStore, manifest: EvidenceManifest) -> dic
             row["job_event_ids"] = [e.id for e in near if e.attrs.get("client") == "127.0.0.1"]
         transfers.append(row)
     return {
-        "check": "transfer_session_correlation", "version": CHECKS_VERSION,
+        "check": "transfer_session_correlation", "version": CHECKS_VERSION, "status": "assessed",
         "bulk_threshold_bytes": pol.bulk_threshold,
         "approved_bulk_destinations": pol.approved_ips,
         "transfers": transfers,
+        "coverage": {"flow": True, "sessions": has_sessions, "shell_history": pol.has("shell_history"),
+                     "file_metadata": pol.has("fs_stat")},
+        "coverage_limits": limits,
     }
 
 
@@ -413,8 +577,12 @@ def assess_presence(store: EvidenceStore, manifest: EvidenceManifest, session_id
         "this check cannot establish who operated the session and cannot clear anyone",
     ]
     if sv is None or sv.login_ts is None:
-        return {"check": "account_vs_person", "version": CHECKS_VERSION, "session_id": session_id,
-                "observation": "session_not_found", "supports_named_person": False, "limits": limits}
+        out0: dict[str, Any] = {"check": "account_vs_person", "version": CHECKS_VERSION, "session_id": session_id,
+                                "observation": "session_not_found", "supports_named_person": False, "limits": limits}
+        if not (pol.has("auth") or pol.has("collector")):
+            out0["observation"] = "login_records_not_in_bundle"
+            out0["statement"] = "This bundle has no login records, so the session cannot be examined. That is unknown, not absent."
+        return out0
     badge = pol.account_badge.get(sv.account or "")
     out: dict[str, Any] = {
         "check": "account_vs_person", "version": CHECKS_VERSION, "session": sv.as_dict(),
@@ -432,6 +600,12 @@ def assess_presence(store: EvidenceStore, manifest: EvidenceManifest, session_id
     if not badge:
         out["observation"] = "no_badge_assigned"
         out["statement"] = f"No badge is assigned to account {sv.account}; physical presence cannot be compared."
+        return out
+    if not pol.has("badge"):
+        out["observation"] = "badge_source_not_in_bundle"
+        out["holder_badge_state_at_login"] = "unknown"
+        out["statement"] = (f"This bundle has no badge-reader source, so the physical presence of the holder of "
+                            f"account {sv.account} cannot be compared with the session. Presence is unknown.")
         return out
     taps = store.scan(source="badge", actor=badge)
     before = [e for e in taps if e.ts <= sv.login_ts]

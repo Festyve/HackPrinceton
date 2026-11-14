@@ -57,7 +57,7 @@ def compare_local_collector(store: EvidenceStore, manifest: EvidenceManifest, ho
         by_seq.setdefault(int(ev.attrs["seq"]), ev)
     unexplained = {r["collector_event_id"] for r in rec["unexplained_local_absence"]}
     retention = set(rec["retention_explained_absence"]["all_collector_event_ids"])
-    inconclusive = {r["collector_event_id"] for r in rec["inconclusive_local_absence"]}
+    inconclusive = {r["collector_event_id"]: r.get("reason") for r in rec["inconclusive_local_absence"]}
     local_only = set(rec["missing_at_collector"]["all_local_event_ids"])
 
     pool: dict[str, list[Event]] = {}
@@ -80,7 +80,7 @@ def compare_local_collector(store: EvidenceStore, manifest: EvidenceManifest, ho
             status = "collector_only"
         ts = datetime.fromisoformat(cev.attrs["inner_ts"]) if cev.attrs.get("inner_ts") else cev.ts
         rows.append({"ts": iso(ts), "text": text, "status": status, "actor": cev.actor, "action": cev.action,
-                     "session_id": cev.attrs.get("session_id"),
+                     "session_id": cev.attrs.get("session_id"), "reason": inconclusive.get(cev.id),
                      "local": None if lev is None else {"event_id": lev.id, "artifact": lev.artifact_ref.artifact,
                                                         "line": lev.artifact_ref.line},
                      "collector": {"event_id": cev.id, "seq": seq, "received": iso(cev.ts),
@@ -88,7 +88,7 @@ def compare_local_collector(store: EvidenceStore, manifest: EvidenceManifest, ho
     for ev in local:
         if ev.id in local_only:
             rows.append({"ts": iso(ev.ts), "text": ev.raw, "status": "local_only", "actor": ev.actor, "action": ev.action,
-                         "session_id": ev.attrs.get("session_id"),
+                         "session_id": ev.attrs.get("session_id"), "reason": None,
                          "local": {"event_id": ev.id, "artifact": ev.artifact_ref.artifact, "line": ev.artifact_ref.line},
                          "collector": None})
     rows.sort(key=lambda r: (r["ts"], (r["collector"] or {}).get("seq", 0)))
@@ -109,7 +109,8 @@ def compare_local_collector(store: EvidenceStore, manifest: EvidenceManifest, ho
     for r in rows:
         counts[r["status"]] = counts.get(r["status"], 0) + 1
     return {
-        "host": host, "file": file, "status": rec["status"], "counts": counts,
+        "host": host, "file": file, "status": rec["status"], "status_reason": rec.get("status_reason"),
+        "heartbeat_coverage": rec.get("heartbeat_coverage"), "counts": counts,
         "local_coverage_start": rec["local_coverage_start"], "coverage_basis": rec["coverage_basis"],
         "coverage_boundary_event_ids": rec["coverage_boundary_event_ids"], "rotations": rec["rotations"],
         "local_segments": rec["local_segments"], "rows": window, "rows_total": len(rows), "window_start": lo,
@@ -118,7 +119,8 @@ def compare_local_collector(store: EvidenceStore, manifest: EvidenceManifest, ho
             "retained_by_collector": "retained by collector; absent from the host's own log after its retention boundary",
             "rotated_out": "only at the collector because the host rotated this segment out (expected)",
             "local_only": "on the host only; the collector never received it (collection gap)",
-            "inconclusive": "absent locally but no later local record brackets it",
+            "inconclusive": ("absent locally, but local records do not bracket it on both sides or it lies "
+                             "outside the host's stated coverage: not enough to say it was removed"),
             "collector_only": "only at the collector",
         },
     }

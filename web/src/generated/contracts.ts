@@ -25,6 +25,13 @@ export interface AttributionAssessment {
   approved_at?: string | null;
 }
 
+/** A stated interval in which a source is known NOT to have been recording. */
+export interface CoverageGap {
+  start: string;
+  end: string;
+  reason?: string;
+}
+
 export interface EffectOutcome {
   effect_id: string;
   effect_type: string;
@@ -202,6 +209,8 @@ export interface SourceInfo {
   coverage_start?: string | null;
   coverage_end?: string | null;
   coverage_note?: string;
+  coverage_declared?: boolean;
+  known_gaps?: Array<CoverageGap>;
   forwarded_to_collector?: boolean;
 }
 

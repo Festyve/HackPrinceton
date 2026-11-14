@@ -27,9 +27,11 @@ def explanations(store: EvidenceStore, manifest: EvidenceManifest, report: Inves
     if missing:
         f, r = missing[0]
         ids = [r["collector_event_id"], r["bracket_before_id"], r["bracket_after_id"]]
+        # the check only reports a line as unexplained when BOTH brackets exist; say so only then
+        both = bool(r["bracket_before_id"] and r["bracket_after_id"])
         text = (f"The collector holds a record that the host's own {f['file']} no longer has: \"{r['line']}\". "
-                f"It is bracketed by local records before and after, and it postdates the host's retention boundary "
-                f"({f['local_coverage_start']}), so rotation does not explain it.")
+                + ("It is bracketed by local records before and after, and it" if both else "It")
+                + f" postdates the host's retention boundary ({f['local_coverage_start']}), so rotation does not explain it.")
         if r["session_id"] and linked and linked["sessions"][0]["session_id"] == r["session_id"]:
             text += (f" That record opens session {r['session_id']}. The same session is the only one open on "
                      f"{linked['src_host']} when {linked['bytes_out']:,} bytes leave for {linked['dst']}:{linked['dport']}, "
@@ -39,8 +41,20 @@ def explanations(store: EvidenceStore, manifest: EvidenceManifest, report: Inves
             text += f" The record belongs to session {r['session_id']}; no non-approved transfer overlaps it."
         out.append({**q1, "available": True, "answer": text, "evidence_ids": [i for i in ids if i]})
     else:
-        out.append({**q1, "available": False, "evidence_ids": [],
-                    "answer": "No line is unexplainedly missing from a host log in this evidence."})
+        blind = [f for f in rec["files"] if f["status"] == "not_assessable"]
+        open_rows = [(f, r) for f in rec["files"] for r in f["inconclusive_local_absence"]]
+        if blind:
+            answer = (f"Unknown. {len(blind)} forwarded log(s) could not be compared in this evidence: "
+                      f"{blind[0]['status_reason']} Nothing here shows a missing line, and nothing rules one out.")
+            ids: list[str] = []
+        elif open_rows:
+            f, r = open_rows[0]
+            answer = (f"Inconclusive. The collector holds \"{r['line']}\" and the host's own {f['file']} does not, but "
+                      f"{r['reason']}. That is not enough to say the line was removed.")
+            ids = [i for i in (r["collector_event_id"], r["bracket_before_id"], r["bracket_after_id"]) if i]
+        else:
+            answer, ids = "No line is unexplainedly missing from a host log in this evidence.", []
+        out.append({**q1, "available": bool(open_rows) and not blind, "evidence_ids": ids, "answer": answer})
 
     q2 = {"key": "identify-person", "question": "Can you identify the person?", "label": LABEL}
     if linked:
@@ -66,10 +80,13 @@ def explanations(store: EvidenceStore, manifest: EvidenceManifest, report: Inves
                                f"stated retention policy, so it is reported as a benign explanation, not as tampering.")})
     else:
         gaps = rec["heartbeat_gaps"]
+        no_beats = sorted(h for h, v in (rec.get("coverage", {}).get("heartbeat") or {}).items() if v != "available")
+        none = ("Collection gaps cannot be measured in this evidence: there is no heartbeat data for "
+                + ", ".join(no_beats) + ". That is unknown, not gap-free." if no_beats else
+                "There is no other gap in this evidence.")
         out.append({**q3, "available": bool(gaps),
                     "evidence_ids": [i for g in gaps[:1] for i in (g["before_event_id"], g["after_event_id"])],
                     "answer": (f"There is a {int(gaps[0]['seconds'])} s collection gap from {gaps[0]['host']} "
                                f"(cause: {gaps[0]['cause'].replace('_', ' ')}). A gap shows collection stopped; it does not "
-                               f"show why, so it stays an open note rather than an allegation." if gaps else
-                               "There is no other gap in this evidence.")})
+                               f"show why, so it stays an open note rather than an allegation." if gaps else none)})
     return out

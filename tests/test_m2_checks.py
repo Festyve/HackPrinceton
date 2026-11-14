@@ -6,13 +6,16 @@ from datetime import datetime
 
 import pytest
 
-from alibi import checks
+from alibi import checks, verifier
 from alibi.baselines import run_br
+from alibi.evidence_views import compare_local_collector
+from alibi.explain import explanations
+from alibi.runners import summarize_reconcile, summarize_transfers
 from alibi.episode import load_answer_key, load_manifest
 from alibi.sim.scenario import BENIGN_VARIANTS, VARIANTS, build_spec
 
 from .conftest import DEV_SEED
-from .helpers import auth_close, auth_open, context, flow, fwd, hb, mini_case, ts
+from .helpers import auth_close, auth_open, badge, context, flow, fwd, hb, mini_case, ts
 
 
 def _file(rec, host, path):
@@ -212,10 +215,165 @@ def test_unknown_session_and_missing_badge_are_reported_not_guessed(tmp_path):
     st, m = mini_case(tmp_path, {"workstation/var/log/auth.log": [a],
                                  "collector/var/log/collected/collected.log": [fwd("09:00:01", 1, a), hb("09:00:05", 1)]})
     assert checks.assess_presence(st, m, "workstation#99")["observation"] == "session_not_found"
-    assert checks.assess_presence(st, m, "workstation#1")["observation"] == "no_badge_data_before_session"
+    # no badge reader in the bundle at all: presence is unknown, and the check says which kind of unknown
+    none = checks.assess_presence(st, m, "workstation#1")
+    assert none["observation"] == "badge_source_not_in_bundle" and "unknown" in none["statement"]
+    # a badge reader that simply recorded nothing for this badge before the session
+    st2, m2 = mini_case(tmp_path, {"workstation/var/log/auth.log": [a],
+                                   "collector/var/log/collected/collected.log": [fwd("09:00:01", 1, a)],
+                                   "iot-hub/badge/door-staff-1.jsonl": [badge("11:00:00", "B-1", "out")]})
+    assert checks.assess_presence(st2, m2, "workstation#1")["observation"] == "no_badge_data_before_session"
 
 
 def test_checks_are_deterministic(coverup, store_for):
     st, m = store_for(coverup), load_manifest(coverup)
     assert checks.reconcile_logs(st, m) == checks.reconcile_logs(st, m)
     assert checks.correlate_transfers(st, m) == checks.correlate_transfers(st, m)
+
+
+# ----------------------------------------------------------------- coverage: unknown is not clean, and not an allegation
+def _allegations(st, m):
+    return [x for x in run_br(st, m).findings if x.category == "incident_allegation"]
+
+
+def test_missing_prefix_is_inconclusive_never_an_allegation(tmp_path):
+    """The host copy starts later than the collector's records and nothing local precedes the line."""
+    a, b, c = auth_open("09:00:00", "ann", 1), auth_close("09:10:00", "ann", 1), auth_open("09:20:00", "bob", 2)
+    st, m = mini_case(tmp_path, {
+        "workstation/var/log/auth.log": [b, c],  # late-start local capture: the first line was never captured
+        "collector/var/log/collected/collected.log": [fwd("09:00:01", 1, a), fwd("09:10:01", 2, b), fwd("09:20:01", 3, c)],
+    })
+    rec = checks.reconcile_logs(st, m)
+    f = rec["files"][0]
+    assert f["unexplained_local_absence"] == [] and f["status"] == "inconclusive"
+    row = f["inconclusive_local_absence"][0]
+    assert row["line"] == a and row["bracket_before_id"] is None and row["bracket_after_id"]
+    assert "no earlier local record" in row["reason"]
+    assert _allegations(st, m) == []
+    rep = run_br(st, m)
+    assert any("inconclusive, not an allegation" in q for q in rep.open_questions)
+    q1 = explanations(st, m, None)[0]
+    assert q1["answer"].startswith("Inconclusive") and "before and after" not in q1["answer"]
+
+
+def test_both_brackets_are_cited_before_saying_before_and_after(tmp_path):
+    a, b, c = auth_open("09:00:00", "ann", 1), auth_open("09:05:00", "bob", 2), auth_close("09:10:00", "ann", 1)
+    st, m = mini_case(tmp_path, {
+        "workstation/var/log/auth.log": [a, c],
+        "collector/var/log/collected/collected.log": [fwd("09:00:01", 1, a), fwd("09:05:01", 2, b), fwd("09:10:01", 3, c)],
+    })
+    row = checks.reconcile_logs(st, m)["files"][0]["unexplained_local_absence"][0]
+    assert row["bracket_before_id"] and row["bracket_after_id"]
+    q1 = explanations(st, m, None)[0]
+    assert "before and after" in q1["answer"]
+    assert {row["bracket_before_id"], row["bracket_after_id"], row["collector_event_id"]} <= set(q1["evidence_ids"])
+    removal = next(x for x in run_br(st, m).findings if x.claim_type == "local_log_removal")
+    assert {row["bracket_before_id"], row["bracket_after_id"]} <= set(removal.evidence_ids)
+
+
+def test_stated_source_coverage_is_honored_even_when_both_brackets_exist(tmp_path):
+    """A line that falls between two captured generations, outside the window each one STATES it covered."""
+    x, a, c, d = (auth_open("08:10:00", "ann", 1), auth_close("09:00:00", "ann", 1),
+                  auth_open("09:20:00", "bob", 2), auth_close("09:30:00", "bob", 2))
+    arts = {"workstation/var/log/auth.log.1": [x], "workstation/var/log/auth.log": [c, d],
+            "collector/var/log/collected/collected.log": [fwd("08:10:01", 1, x), fwd("09:00:01", 2, a),
+                                                          fwd("09:20:01", 3, c), fwd("09:30:01", 4, d)]}
+    st, m = mini_case(tmp_path, arts)  # nothing stated: both brackets exist, so the line is unexplained
+    assert [r["line"] for r in checks.reconcile_logs(st, m)["files"][0]["unexplained_local_absence"]] == [a]
+    st, m = mini_case(tmp_path, arts, declared={"workstation/var/log/auth.log.1": ("08:00:00", "08:30:00"),
+                                                "workstation/var/log/auth.log": ("09:15:00", "10:00:00")})
+    f = checks.reconcile_logs(st, m)["files"][0]
+    assert f["unexplained_local_absence"] == [] and f["status"] == "inconclusive"
+    assert "outside the window" in f["inconclusive_local_absence"][0]["reason"] and _allegations(st, m) == []
+    # a stated gap inside an otherwise covered file does the same
+    st, m = mini_case(tmp_path, {"workstation/var/log/auth.log": [x, c, d], "collector/var/log/collected/collected.log":
+                                 arts["collector/var/log/collected/collected.log"]},
+                      gaps={"workstation/var/log/auth.log": [("08:55:00", "09:05:00", "log agent paused for maintenance")]})
+    f = checks.reconcile_logs(st, m)["files"][0]
+    assert f["unexplained_local_absence"] == [] and "log agent paused" in f["inconclusive_local_absence"][0]["reason"]
+
+
+def test_missing_collector_is_not_assessable_not_consistent(tmp_path):
+    a, b = auth_open("09:00:00", "ann", 1), auth_close("09:10:00", "ann", 1)
+    st, m = mini_case(tmp_path, {"workstation/var/log/auth.log": [a, b]})  # no independent copy at all
+    rec = checks.reconcile_logs(st, m)
+    f = rec["files"][0]
+    assert f["status"] == "not_assessable" and "no collector copy" in f["status_reason"]
+    assert rec["coverage"]["collector_present"] is False and rec["coverage"]["heartbeat"] == {"workstation": "not_available"}
+    assert f["unexplained_local_absence"] == [] and f["missing_at_collector"]["all_local_event_ids"] == []
+    assert rec["coverage_limits"] and "unknown" in rec["coverage_limits"][0]
+    rep = run_br(st, m)
+    assert rep.findings == []  # nothing alleged, nothing called benign, no invented collection gap
+    assert "unknown" in rep.summary and any(q.startswith("Coverage limit:") for q in rep.open_questions)
+    text, _ = summarize_reconcile(rec)
+    assert "NOT assessable" in text and text.startswith("0 forwarded logs compared")
+    q1, _, q3 = explanations(st, m, None)
+    assert q1["answer"].startswith("Unknown") and "No line is unexplainedly missing" not in q1["answer"]
+    assert "cannot be measured" in q3["answer"] and "There is no other gap" not in q3["answer"]
+    view = compare_local_collector(st, m, "workstation", "/var/log/auth.log")
+    assert view["status"] == "not_assessable" and view["status_reason"]
+
+
+def test_missing_host_copy_is_not_read_as_removal(tmp_path):
+    a, b = auth_open("09:00:00", "ann", 1), auth_close("09:10:00", "ann", 1)
+    st, m = mini_case(tmp_path, {"collector/var/log/collected/collected.log": [
+        fwd("09:00:01", 1, a), fwd("09:10:01", 2, b), hb("09:00:05", 1), hb("09:00:15", 2)]})
+    f = checks.reconcile_logs(st, m)["files"][0]
+    assert f["status"] == "not_assessable" and f["collector_lines"] == 2 and f["unexplained_local_absence"] == []
+    assert "not evidence of removal" in f["status_reason"] and _allegations(st, m) == []
+    obs = verifier.compute_observations(st, m)
+    assert obs.removal == []
+
+
+def test_missing_flow_source_means_transfers_are_unknown_not_zero(tmp_path):
+    a = auth_open("09:00:00", "ann", 1)
+    st, m = mini_case(tmp_path, {"workstation/var/log/auth.log": [a],
+                                 "collector/var/log/collected/collected.log": [fwd("09:00:01", 1, a)]})
+    xfer = checks.correlate_transfers(st, m)
+    assert xfer["status"] == "not_assessable" and xfer["transfers"] == [] and xfer["coverage"]["flow"] is False
+    assert "does not mean there was none" in xfer["coverage_limits"][0]
+    text, _ = summarize_transfers(xfer)
+    assert "NOT assessable" in text and "0 bulk" not in text
+    assert any("flow source" in q for q in run_br(st, m).open_questions)
+    # with a flow source but no login records, a transfer is reported and its session link is 'unknown', not 'none'
+    st, m = mini_case(tmp_path, {"tap/flows.jsonl": [flow("09:05:00", "09:05:09", "10.20.1.21", "10.20.9.50", 8080, 9_000_000)]})
+    xfer = checks.correlate_transfers(st, m)
+    assert xfer["status"] == "assessed" and xfer["transfers"][0]["session_link"] == "unknown_no_login_records_in_bundle"
+    assert xfer["coverage"] == {"flow": True, "sessions": False, "shell_history": False, "file_metadata": False}
+    assert len(xfer["coverage_limits"]) == 3
+
+
+def test_no_heartbeat_data_is_not_reported_as_no_gap(tmp_path):
+    a, b = auth_open("09:00:00", "ann", 1), auth_close("09:10:00", "ann", 1)
+    st, m = mini_case(tmp_path, {"workstation/var/log/auth.log": [a, b],
+                                 "collector/var/log/collected/collected.log": [fwd("09:00:01", 1, a)]})  # b never arrived
+    rec = checks.reconcile_logs(st, m)
+    f = rec["files"][0]
+    assert f["heartbeat_coverage"] == "not_available" and f["missing_at_collector"]["outside_heartbeat_gap"] == 1
+    assert any("cannot be measured" in x for x in rec["coverage_limits"])
+    note = next(x for x in run_br(st, m).findings if x.claim_type == "collection_gap")
+    assert "no heartbeat data" in note.rationale and "no heartbeat gap to explain it" not in note.rationale
+
+
+def test_lines_outside_the_collectors_stated_window_are_not_a_collection_gap(tmp_path):
+    a, b = auth_open("09:00:00", "ann", 1), auth_close("09:10:00", "ann", 1)
+    col = "collector/var/log/collected/collected.log"
+    st, m = mini_case(tmp_path, {"workstation/var/log/auth.log": [a, b], col: [fwd("09:10:01", 1, b)]},
+                      declared={col: ("09:05:00", "10:00:00")})  # the collector says it only started at 09:05
+    f = checks.reconcile_logs(st, m)["files"][0]
+    mac = f["missing_at_collector"]
+    assert mac["outside_collector_coverage"] == 1 and mac["outside_heartbeat_gap"] == 0
+    assert f["status"] == "collector_coverage_limited" and run_br(st, m).findings == []
+
+
+def test_existing_cases_are_unchanged_by_the_coverage_rules(make_episode, store_for):
+    """Every simulated variant still has all its sources, so nothing becomes 'not assessable' or loses a bracket."""
+    for variant in VARIANTS:
+        p = make_episode(DEV_SEED, variant)
+        st, m = store_for(p), load_manifest(p)
+        rec, xfer = checks.reconcile_logs(st, m), checks.correlate_transfers(st, m)
+        assert rec["coverage_limits"] == [] and xfer["coverage_limits"] == [] and xfer["status"] == "assessed"
+        assert rec["coverage"]["files_not_assessable"] == [] and set(rec["coverage"]["heartbeat"].values()) == {"available"}
+        for f in rec["files"]:
+            assert f["status"] != "not_assessable"
+            assert all(r["bracket_before_id"] and r["bracket_after_id"] for r in f["unexplained_local_absence"])
