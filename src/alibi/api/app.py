@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
 from pathlib import Path
 from typing import Any, Literal
 
@@ -50,6 +51,11 @@ class CreateCase(BaseModel):
 class Review(BaseModel):
     decision: Literal["accept", "reject"]
     note: str = Field(default="", max_length=500)
+
+
+class AskQuestion(BaseModel):
+    question: str = Field(min_length=1, max_length=1000)
+    client_token: str = Field(min_length=1, max_length=80)
 
 
 class OpenReplay(BaseModel):
@@ -232,6 +238,26 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
     @app.get("/api/cases/{case_id}/explanations")
     def explanations(case_id: str) -> dict:
         return {"explanations": orch.explanations(case_id)}
+
+    # ------------------------------------------------------------------ questions about a case
+    @app.post("/api/cases/{case_id}/questions")
+    def ask_question(case_id: str, body: AskQuestion, wait_s: float = Query(0, ge=0, le=30)) -> dict:
+        """Ask one bounded question. Returns at once with status `pending` (poll the GET below), or waits up to
+        wait_s seconds for the answer. The same client_token returns the same question: a retry is never charged twice."""
+        q = orch.ask_question(case_id, body.question, body.client_token)
+        end = time.time() + wait_s
+        while q.status == "pending" and time.time() < end:
+            time.sleep(0.2)
+            q = orch.get_question(case_id, q.question_id)
+        return q.model_dump(mode="json")
+
+    @app.get("/api/cases/{case_id}/questions")
+    def list_questions(case_id: str) -> dict:
+        return {"questions": [q.model_dump(mode="json") for q in orch.list_questions(case_id)]}
+
+    @app.get("/api/cases/{case_id}/questions/{question_id}")
+    def get_question(case_id: str, question_id: str) -> dict:
+        return orch.get_question(case_id, question_id).model_dump(mode="json")
 
     # ------------------------------------------------------------------ static case board
     @app.get("/{path:path}", include_in_schema=False)

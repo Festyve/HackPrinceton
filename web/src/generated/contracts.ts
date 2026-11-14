@@ -142,6 +142,44 @@ export interface MatchRecord {
   effect_type: string;
 }
 
+/** One bounded question about one case and its answer. Never contains sealed truth. A question does not change the report. `inference_mode` says where the answer came from: LIVE_MODEL (answered now by a model), RECORDED_MODEL (a saved model answer being shown again) or NO_MODEL_BASELINE (no model answered: status is `unavailable`). */
+export interface QuestionAnswer {
+  schema_version?: string;
+  question_id: string;
+  case_id: string;
+  bundle_id: string;
+  question: string;
+  status: "pending" | "answered" | "insufficient_evidence" | "unavailable" | "failed";
+  answer?: string;
+  claims?: Array<QuestionClaim>;
+  limitations?: Array<string>;
+  follow_up_evidence?: Array<string>;
+  dropped_evidence_ids?: Array<string>;
+  trace?: Array<QuestionTraceStep>;
+  inference_mode: "LIVE_MODEL" | "RECORDED_MODEL" | "SCRIPTED_FIXTURE" | "NO_MODEL_BASELINE";
+  inference_label?: string;
+  model_id?: string | null;
+  usage?: Usage;
+  error?: string | null;
+  asked_at: string;
+  answered_at?: string | null;
+}
+
+export interface QuestionClaim {
+  text: string;
+  evidence_ids?: Array<string>;
+  support: "checked" | "contradicted" | "cited" | "interpretation" | "unsupported";
+  kind?: string;
+  basis?: string;
+}
+
+export interface QuestionTraceStep {
+  tool: string;
+  args?: Record<string, unknown>;
+  result_summary?: string;
+  ok?: boolean;
+}
+
 /** A metric with integer numerator/denominator. value is None when not applicable. */
 export interface Ratio {
   num?: number | null;

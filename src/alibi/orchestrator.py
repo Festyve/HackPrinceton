@@ -25,9 +25,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from alibi import explain, evidence_views
+from alibi import explain, evidence_views, questions
 from alibi.config import REPO_ROOT, Settings
-from alibi.contracts import INFERENCE_LABELS, InvestigationReport
+from alibi.contracts import INFERENCE_LABELS, InvestigationReport, QuestionAnswer
 from alibi.episode import (
     EpisodePaths,
     create_episode,
@@ -70,6 +70,12 @@ PRESETS: list[dict[str, Any]] = [
      "_variant": "incident_coverup", "_planner": "model"},
 ]
 _CUSTOM_VARIANT = {"L1": "incident_plain", "L2": "incident_coverup"}
+
+
+def questions_id_ok(question_id: str) -> bool:
+    import re
+
+    return bool(re.fullmatch(r"q-[0-9a-f]{10}", str(question_id)))
 
 
 def _recorded_mode(meta: dict[str, Any]) -> str | None:
@@ -190,6 +196,9 @@ class Orchestrator:
         self._threads: dict[str, threading.Thread] = {}
         self._cancel: dict[str, threading.Event] = {}
         self._tokens: dict[str, str] = {}
+        self._qa_active: dict[str, str] = {}  # case id -> the one question being answered for it
+        self._qa_threads: dict[str, threading.Thread] = {}
+        self.qa_model_factory: Any = None  # tests only: a stand-in model; production builds the real one
         self._recover()
 
     # ------------------------------------------------------------------ plumbing
@@ -244,6 +253,16 @@ class Orchestrator:
             if rec.state in TRANSIENT:
                 rec.error = "interrupted by a server restart; reset the case and run it again"
                 self._set_state(rec, "failed", rec.error)
+            for qf in (status.parent / "case" / "questions").glob("q-*.json"):
+                try:  # a question that was mid-answer is a visible failure too, never an endless "pending"
+                    q = QuestionAnswer.model_validate_json(qf.read_text(encoding="utf-8"))
+                    if q.status == "pending":
+                        qf.write_text(q.model_copy(update={
+                            "status": "failed", "answered_at": _now(),
+                            "error": "interrupted by a server restart before an answer was produced; ask again",
+                        }).model_dump_json(indent=1), encoding="utf-8")
+                except Exception:
+                    continue
 
     # ------------------------------------------------------------------ presets / replays
     def presets(self) -> list[dict[str, Any]]:
@@ -262,6 +281,14 @@ class Orchestrator:
             },
             "live_model": {"configured": live, "model_id": self.settings.lead_model if live else None,
                            "note": "configured does not mean a successful model call has been observed"},
+            "questions": {
+                "endpoint": True, "model_answers": "CONFIGURED" if live else "BLOCKED",
+                "max_question_chars": questions.MAX_QUESTION_CHARS, "max_model_calls": questions.MAX_MODEL_CALLS,
+                "max_questions_per_case": questions.MAX_QUESTIONS_PER_CASE,
+                "note": ("answers come from a model with read-only access to this case's evidence and report" if live else
+                         "no model is configured: a question returns status 'unavailable'; the predefined, "
+                         "labeled explanations remain available"),
+            },
         }
 
     def _model_planner_enabled(self) -> bool:
@@ -645,6 +672,108 @@ class Orchestrator:
         with store:
             return explain.explanations(store, load_manifest(paths), self._report(paths))
 
+    # ------------------------------------------------------------------ questions (never change the report)
+    _QUESTION_STATES = ("frozen", "awaiting_review", "report_locked", "scored")
+
+    def _qdir(self, case_id: str) -> Path:
+        return self._paths(case_id).case / "questions"
+
+    def _read_question(self, case_id: str, question_id: str) -> QuestionAnswer:
+        if not questions_id_ok(question_id):
+            raise NotFound("no such question")
+        f = self._qdir(case_id) / f"{question_id}.json"
+        if not f.exists():
+            raise NotFound("no such question")
+        return QuestionAnswer.model_validate_json(f.read_text(encoding="utf-8"))
+
+    def _write_question(self, q: QuestionAnswer) -> None:
+        qdir = self._qdir(q.case_id)
+        qdir.mkdir(parents=True, exist_ok=True)
+        tmp = qdir / f"{q.question_id}.json.tmp"
+        tmp.write_text(q.model_dump_json(indent=1), encoding="utf-8")
+        os.replace(tmp, qdir / f"{q.question_id}.json")
+
+    def _question_index(self, case_id: str) -> dict[str, str]:
+        f = self._qdir(case_id) / "index.json"
+        return json.loads(f.read_text(encoding="utf-8")) if f.exists() else {}
+
+    def ask_question(self, case_id: str, question: str, client_token: str) -> QuestionAnswer:
+        """Register one question and start answering it. The same client_token always returns the same question."""
+        text = questions.clean_question(question)
+        token = str(client_token or "").strip()
+        if not token or len(token) > 80:
+            raise ValueError("client_token is required (at most 80 characters); it makes a retried request safe")
+        with self._lock(case_id):
+            rec = self._load(case_id)
+            index = self._question_index(case_id)
+            if token in index:
+                return self._read_question(case_id, index[token])  # a retry: no second model call, no second charge
+            if rec.state not in self._QUESTION_STATES:
+                raise Conflict("questions can be asked once the evidence is frozen and no investigation is running "
+                               f"(state: {rec.state})", rec.state)
+            if case_id in self._qa_active:
+                raise Conflict("another question is being answered for this case; wait for it to finish", rec.state)
+            if len(index) >= questions.MAX_QUESTIONS_PER_CASE:
+                raise Conflict(f"this case already has {questions.MAX_QUESTIONS_PER_CASE} questions, the most allowed",
+                               rec.state)
+            live = self.settings.live_block_reason() is None or self.qa_model_factory is not None
+            pending = QuestionAnswer(
+                question_id=f"q-{uuid.uuid4().hex[:10]}", case_id=case_id, bundle_id=rec.bundle_id or "", question=text,
+                status="pending", inference_mode="LIVE_MODEL" if live else "NO_MODEL_BASELINE",
+                inference_label=INFERENCE_LABELS["LIVE_MODEL"] if live else "No model answer",
+                model_id=self.settings.lead_model if live else None, asked_at=_now())
+            self._write_question(pending)
+            index[token] = pending.question_id
+            (self._qdir(case_id) / "index.json").write_text(json.dumps(index), encoding="utf-8")
+            if not live:  # nothing to wait for: say so now
+                done = self._answer(case_id, pending)
+                self._write_question(done)
+                return done
+            self._qa_active[case_id] = pending.question_id
+            th = threading.Thread(target=self._question_thread, args=(case_id, pending), daemon=True,
+                                  name=f"question-{pending.question_id}")
+            self._qa_threads[case_id] = th
+            th.start()
+            return pending
+
+    def _answer(self, case_id: str, pending: QuestionAnswer) -> QuestionAnswer:
+        """Only investigator-visible material is opened here: the evidence store, the public manifest and the report.
+        The sealed directory, the reveal and the audience event log are never read, before or after a reveal."""
+        paths = self._paths(case_id)
+        with EvidenceStore(paths.db) as store:
+            return questions.answer_question(
+                self.settings, pending, store, load_manifest(paths), self._report(paths),
+                ledger_path=self._qdir(case_id) / f"{pending.question_id}.budget.json",
+                model_factory=self.qa_model_factory)
+
+    def _question_thread(self, case_id: str, pending: QuestionAnswer) -> None:
+        try:
+            try:
+                done = self._answer(case_id, pending)
+            except Exception as exc:  # noqa: BLE001 - a crashed answer is a visible failure
+                done = pending.model_copy(update={"status": "failed", "answered_at": _now(),
+                                                  "error": f"{type(exc).__name__}: {str(exc)[:300]}"})
+            try:
+                self._write_question(done)
+            except OSError:
+                pass  # the case was reset while the question was running
+        finally:
+            self._qa_active.pop(case_id, None)
+
+    def get_question(self, case_id: str, question_id: str) -> QuestionAnswer:
+        self._load(case_id)
+        return self._read_question(case_id, question_id)
+
+    def list_questions(self, case_id: str) -> list[QuestionAnswer]:
+        self._load(case_id)
+        out = []
+        for f in self._qdir(case_id).glob("q-*.json"):
+            try:
+                out.append(QuestionAnswer.model_validate_json(f.read_text(encoding="utf-8")))
+            except Exception:
+                continue
+        return sorted(out, key=lambda q: q.asked_at)
+
     # ------------------------------------------------------------------ recordings / replay
     def save_recording(self, case_id: str, name: str, note: str = "") -> Path:
         """Save a finished investigation so it can be replayed offline. Trusted operator action."""
@@ -668,6 +797,9 @@ class Orchestrator:
             "spec": ep.scenario_spec,
             "events": events,
             "report": draft.model_dump(mode="json"),
+            # model answers given on this case; a replay shows them again as recorded answers, never as live ones
+            "questions": [q.model_dump(mode="json") for q in self.list_questions(case_id)
+                          if q.status in ("answered", "insufficient_evidence")],
         }, indent=1), encoding="utf-8")
         return out
 
@@ -696,6 +828,17 @@ class Orchestrator:
         if got != meta.get("raw_bundle_sha256"):
             rec.error = "the recording's evidence could not be reproduced byte-for-byte (simulator version changed?)"
             self._set_state(rec, "failed", rec.error)
+            return rec
+        for saved in data.get("questions") or []:
+            try:
+                q = QuestionAnswer.model_validate(saved)
+            except Exception:
+                continue
+            recorded = q.inference_mode == "LIVE_MODEL"
+            self._write_question(q.model_copy(update={
+                "case_id": rec.case_id, "bundle_id": rec.bundle_id or q.bundle_id,
+                "inference_mode": "RECORDED_MODEL" if recorded else q.inference_mode,
+                "inference_label": "Recorded AI answer" if recorded else q.inference_label}))
         return rec
 
     def _replay_thread(self, case_id: str) -> None:

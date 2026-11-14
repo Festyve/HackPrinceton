@@ -278,6 +278,62 @@ class InvestigationReport(Strict):
     verifier_version: str | None = None
 
 
+# --------------------------------------------------------------------------- questions about a case
+
+QuestionStatus = Literal["pending", "answered", "insufficient_evidence", "unavailable", "failed"]
+# How far trusted code could back one claim in an answer:
+#   checked         a registered deterministic check agrees with the claim for the cited records
+#   contradicted    a registered deterministic check disagrees
+#   cited           the cited records exist in this bundle; that they say this was not machine-checked
+#   interpretation  the model's reading, offered as such
+#   unsupported     no valid citation, or the registered check does not report this
+ClaimSupport = Literal["checked", "contradicted", "cited", "interpretation", "unsupported"]
+
+
+class QuestionClaim(Strict):
+    text: str
+    evidence_ids: list[str] = Field(default_factory=list)  # only ids that resolve in this bundle
+    support: ClaimSupport
+    kind: str = "record"
+    basis: str = ""  # what the support label rests on, in plain words
+
+
+class QuestionTraceStep(Strict):
+    tool: str
+    args: dict[str, Any] = Field(default_factory=dict)
+    result_summary: str = ""
+    ok: bool = True
+
+
+class QuestionAnswer(Strict):
+    """One bounded question about one case and its answer. Never contains sealed truth.
+
+    A question does not change the report. `inference_mode` says where the answer came from:
+    LIVE_MODEL (answered now by a model), RECORDED_MODEL (a saved model answer being shown again)
+    or NO_MODEL_BASELINE (no model answered: status is `unavailable`).
+    """
+
+    schema_version: str = "1.0.0"
+    question_id: str
+    case_id: str
+    bundle_id: str
+    question: str
+    status: QuestionStatus
+    answer: str = ""
+    claims: list[QuestionClaim] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    follow_up_evidence: list[str] = Field(default_factory=list)
+    dropped_evidence_ids: list[str] = Field(default_factory=list)  # cited by the model, not in this bundle
+    trace: list[QuestionTraceStep] = Field(default_factory=list)
+    inference_mode: InferenceMode
+    inference_label: str = ""
+    model_id: str | None = None
+    usage: Usage = Field(default_factory=Usage)
+    error: str | None = None
+    asked_at: datetime
+    answered_at: datetime | None = None
+
+
 # --------------------------------------------------------------------------- private truth
 
 EffectType = Literal["data_staging", "policy_violating_transfer", "local_log_removal"]

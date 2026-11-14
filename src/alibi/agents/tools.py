@@ -41,6 +41,8 @@ ROLE_TOOLS: dict[str, tuple[str, ...]] = {
     "skeptic": EVIDENCE_TOOLS + ("check_local_vs_collector", "check_transfer_sessions"),
     # B1+ single agent: the same checks and evidence, no delegation
     "single-agent": EVIDENCE_TOOLS + CHECK_TOOLS + REPORT_TOOLS,
+    # answering a question about a case: read-only. No report tool is ever bound.
+    "question": EVIDENCE_TOOLS + CHECK_TOOLS,
 }
 
 

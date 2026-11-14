@@ -19,7 +19,8 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "web" / "src" / "generated" / "contracts.ts"
 
 MODELS = [C.Event, C.SourceInfo, C.EvidenceManifest, C.Finding, C.AttributionAssessment, C.Usage, C.ReviewEvent,
-          C.InvestigationReport, C.Ratio, C.MatchRecord, C.FindingOutcome, C.EffectOutcome, C.Score]
+          C.InvestigationReport, C.Ratio, C.MatchRecord, C.FindingOutcome, C.EffectOutcome, C.Score,
+          C.QuestionAnswer]
 
 
 def ts_type(schema: dict[str, Any]) -> str:
