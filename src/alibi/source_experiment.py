@@ -110,6 +110,14 @@ def create_child_bundle(parent: EpisodePaths, child: EpisodePaths, excluded_sour
     _write_json(child.manifest, manifest.model_dump(mode="json"))
     child.case.mkdir(parents=True, exist_ok=True)  # fresh and empty: nothing is carried over from the parent
 
+    if not parent.answer_key.exists():
+        # Imported evidence has no answer key. Its derived view has none either: unscored stays unscored,
+        # and the operator record of what was withheld is kept beside the evidence, not in a sealed directory.
+        _write_json(child.evidence / "derived_from.json", {
+            "parent_episode_id": parent.episode_id, "parent_raw_bundle_sha256": pm.raw_bundle_sha256,
+            "withheld_sources": [public_source(s) | {"sha256": s.sha256} for s in withheld]})
+        return manifest
+
     # Sealed side: what was executed is unchanged; observability is recomputed against the child's evidence.
     pkey, pep = load_answer_key(parent), load_episode_manifest(parent)
     with EvidenceStore(child.db) as store:

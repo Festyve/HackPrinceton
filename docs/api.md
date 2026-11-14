@@ -152,6 +152,6 @@ A model chooses an ordinary operating environment from fixed options. It plans n
 - Reports on those cases can carry more claim types: `timestamp_alteration`, `forwarding_stopped`, `second_host_session`, `sensor_stream_discrepancy` (allegations) and `shell_history_gap`, `metadata_change`, `temperature_excursion`, `sensor_maintenance`, `policy_consistent_access` (notes). An effect that no captured source can show has outcome `unobservable` in the reveal.
 - `GET /api/benchmark` adds `paired_v2`: the latest result of the phase-two evaluation (six systems, four new cases), or `null`. It is a separate suite and is not merged into the first-run tables.
 
-## Not built yet
+## Imported evidence
 
-Capture import. Do not show a control for it until it is listed here.
+`uv run alibi import <directory>` freezes a capture directory as an unscored case ([format and rules](importing.md)). It is a command, not a route. An imported case appears in `GET /api/cases` like any other, with `case.scored: false`, `card.id: "imported"` and `labels.ground_truth` starting with `none`. Reveal returns **409** for it. Each source in its manifest keeps its own `origin` (`SIM`, `DOCKER`, `HYBRID`). `capabilities.capture_import` describes this. No captured evidence ships with this build.

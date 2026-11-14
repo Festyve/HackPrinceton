@@ -274,6 +274,23 @@ def _cmd_calibrate(args: argparse.Namespace) -> int:
     return 0 if doc["passed"] else 1
 
 
+def _cmd_import(args: argparse.Namespace) -> int:
+    """Freeze a capture directory (capture.json + its raw files) as an unscored case."""
+    from alibi.orchestrator import Orchestrator
+
+    orch = Orchestrator(load_settings(), pace_s=0.0)
+    rec = orch.import_case(args.directory, title=args.title, runner_id=args.runner, investigation_mode=args.mode)
+    view = orch.view(rec.case_id)
+    print(json.dumps({"case_id": rec.case_id, "state": rec.state, "bundle_id": rec.bundle_id,
+                      "evidence_origin": rec.evidence_origin, "scored": rec.scored,
+                      "sources": [{"artifact": s["artifact"], "origin": s["origin"], "lines": s["line_count"]}
+                                  for s in view["manifest"]["sources"]],
+                      "events": view["manifest"]["event_count"],
+                      "unparsed_or_errors": len(view["manifest"]["normalization_errors"]),
+                      "next": f"open it in the case board, or POST /api/cases/{rec.case_id}/investigate"}, indent=2))
+    return 0
+
+
 def _cmd_eval(args: argparse.Namespace) -> int:
     """The phase-two paired evaluation: declare, check, preflight (none of which call a model) or run."""
     from alibi import evaluation
@@ -396,6 +413,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--runner", default="agent-live", choices=["agent-live", "agent-fixture"],
                    help="agent-fixture exercises the harness offline with the scripted policy (no model)")
     p.set_defaults(func=_cmd_calibrate)
+
+    p = sub.add_parser("import", help="freeze a capture directory (capture.json + raw files) as an unscored case")
+    p.add_argument("directory")
+    p.add_argument("--title", default=None)
+    p.add_argument("--runner", default=None, help="deterministic | agent-fixture | agent-live (default: runtime default)")
+    p.add_argument("--mode", default=None, choices=["fast", "specialist"])
+    p.set_defaults(func=_cmd_import)
 
     p = sub.add_parser("eval", help="the phase-two paired evaluation: six systems, four new cases, no verifier feedback")
     p.add_argument("--declare", action="store_true", help="write docs/evaluation-config-v2.json (before any run)")

@@ -110,6 +110,16 @@ def _recorded_mode(meta: dict[str, Any]) -> str | None:
     return meta.get("investigation_mode") or "specialist"
 
 
+CARD_IMPORTED = {"id": "imported", "title": "Imported evidence",
+                 "tip": "Review this evidence; establish what it supports.",
+                 "audience_setup": "Evidence captured outside the simulator. No scenario is known to this system and "
+                                   "there is no answer key: the report can be reviewed, locked and exported, not scored."}
+
+
+def card_for(card_id: str) -> dict[str, Any]:
+    return CARDS.get(card_id, CARD_IMPORTED)
+
+
 class NotFound(LookupError):
     pass
 
@@ -158,6 +168,8 @@ class CaseRecord:
     review_decision: str | None = None
     review_note: str = ""
     timings: dict[str, float] = field(default_factory=dict)
+    # False for imported evidence: no scenario and no answer key exist, so there is nothing to unseal or score.
+    scored: bool = True
     # Set only for an evidence view derived from another case with some sources withheld.
     parent_case_id: str | None = None
     excluded_sources: list[dict[str, Any]] = field(default_factory=list)
@@ -173,6 +185,7 @@ class CaseRecord:
             "model_id": self.model_id,
             "investigation_mode": self.investigation_mode,
             "investigation_mode_label": MODE_LABELS.get(self.investigation_mode or "", "Deterministic checks · no agent"),
+            "ground_truth": "sealed answer key" if self.scored else "none · imported evidence is not scored",
         }
         return d
 
@@ -309,6 +322,11 @@ class Orchestrator:
             },
             "live_model": {"configured": live, "model_id": self.settings.lead_model if live else None,
                            "note": "configured does not mean a successful model call has been observed"},
+            "capture_import": {
+                "cli": "uv run alibi import <capture directory>", "http": False, "scored": False,
+                "note": "imports a directory with capture.json and its raw files as an unscored case; not offered over "
+                        "HTTP because it reads a local path. No captured evidence ships with this build",
+            },
             "scenario_designer": {
                 "endpoint": True, "model": "CONFIGURED" if live else "BLOCKED",
                 "chooses": ["background activity", "one routine operational condition", "time of day",
@@ -433,6 +451,39 @@ class Orchestrator:
                          client_token=client_token)
         return self._generate(rec, seed=None, variant=None, spec=spec)
 
+    # ------------------------------------------------------------------ imported evidence (unscored)
+    def import_case(self, src_dir: Path | str, *, title: str | None = None, runner_id: str | None = None,
+                    investigation_mode: str | None = None) -> CaseRecord:
+        """Operator action (CLI): freeze a capture directory as an unscored case. Not exposed over HTTP, because
+        it reads a path on this machine."""
+        from alibi import importing
+
+        runner_id = runner_id or default_runner_id(self.settings)
+        mode = resolve_mode(runner_id, investigation_mode)
+        runner = get_runner(runner_id, self.settings, mode)
+        case_id = f"case-{uuid.uuid4().hex[:12]}"
+        t0 = time.perf_counter()
+        manifest = importing.import_bundle(Path(src_dir), self._paths(case_id))
+        cap = manifest.operational_context.get("capture", {})
+        rec = CaseRecord(case_id=case_id, title=title or f"Imported evidence · {cap.get('capture_id', 'capture')}",
+                         card_id="imported", difficulty="unscored", seed=None, runner_id=runner_id, investigation_mode=mode,
+                         evidence_origin=manifest.evidence_origin, inference_mode=runner.inference_mode,
+                         model_id=runner.model_id, bundle_id=manifest.bundle_id, scored=False)
+        rec.timings["import_s"] = round(time.perf_counter() - t0, 3)
+        self._save(rec)
+        log = self._log(case_id)
+        log.append("state", {"state": "generating", "detail": "importing captured evidence"})
+        log.append("stage", {"name": "import", "status": "done", "info": {
+            "capture_id": cap.get("capture_id"), "evidence_origin": manifest.evidence_origin,
+            "origins": sorted({s.origin for s in manifest.sources}), "ground_truth": "none"}})
+        log.append("stage", {"name": "freeze", "status": "done",
+                             "info": {"artifacts": len(manifest.sources), "raw_bundle_sha256": manifest.raw_bundle_sha256}})
+        log.append("stage", {"name": "normalize", "status": "done",
+                             "info": {"events": manifest.event_count, "errors": len(manifest.normalization_errors),
+                                      "derived_db_sha256": manifest.derived_db_sha256}})
+        self._set_state(rec, "frozen", "imported evidence frozen and hashed; there is no answer key for it")
+        return rec
+
     # ------------------------------------------------------------------ scenario designer (environment only)
     def _design_dir(self) -> Path:
         return self.runs_dir / "_designs"
@@ -514,7 +565,7 @@ class Orchestrator:
         log = self._log(case_id)
         log.append("state", {"state": "generating", "detail": "simulating the shift"})
         log.append("stage", {"name": "generate", "status": "done",
-                             "info": {"card": CARDS[rec.card_id]["title"], "evidence_origin": "SIM"}})
+                             "info": {"card": card_for(rec.card_id)["title"], "evidence_origin": "SIM"}})
         log.append("stage", {"name": "freeze", "status": "done",
                              "info": {"artifacts": len(manifest.sources), "raw_bundle_sha256": manifest.raw_bundle_sha256}})
         log.append("stage", {"name": "normalize", "status": "done",
@@ -652,6 +703,9 @@ class Orchestrator:
             rec, paths = self._load(case_id), self._paths(case_id)
             if rec.state == "scored":
                 return self.view(case_id)
+            if not rec.scored:
+                raise Conflict("this case has no answer key: imported evidence is not scored, so there is nothing to "
+                               "unseal. The locked report can be exported", rec.state)
             if rec.state != "report_locked":
                 raise Conflict("reveal refused: the report must be locked before truth is unsealed", rec.state)
             report = InvestigationReport.model_validate_json((paths.case / "report.json").read_text(encoding="utf-8"))
@@ -743,8 +797,8 @@ class Orchestrator:
             reveal = json.loads((paths.root / "reveal.json").read_text(encoding="utf-8"))
         return {
             "case": rec.public(),
-            "card": {"id": rec.card_id, "title": CARDS[rec.card_id]["title"], "tip": CARDS[rec.card_id]["tip"],
-                     "audience_setup": CARDS[rec.card_id]["audience_setup"]},
+            "card": {"id": rec.card_id, "title": card_for(rec.card_id)["title"], "tip": card_for(rec.card_id)["tip"],
+                     "audience_setup": card_for(rec.card_id)["audience_setup"]},
             "manifest": manifest.model_dump(mode="json"),
             "report": report.model_dump(mode="json") if report else None,
             "reveal": reveal,
@@ -844,13 +898,16 @@ class Orchestrator:
             except Exception:
                 remove_episode(cpaths, self.runs_dir, self.sealed_dir)  # never leave a half-built evidence view
                 raise
-            withheld = load_episode_manifest(cpaths).withheld_sources
+            if cpaths.episode_manifest.exists():
+                withheld = load_episode_manifest(cpaths).withheld_sources
+            else:  # derived from imported evidence: unscored, with the operator record beside the evidence
+                withheld = json.loads((cpaths.evidence / "derived_from.json").read_text(encoding="utf-8"))["withheld_sources"]
             what = ", ".join(sorted({f"{w['host']} {w['source']}" for w in withheld}))
             rec = CaseRecord(case_id=child_id, preset_id=parent.preset_id, title=f"{parent.title} · without {what}",
                              card_id=parent.card_id, difficulty=parent.difficulty, seed=parent.seed, runner_id=runner_id,
                              investigation_mode=mode, evidence_origin=parent.evidence_origin,
                              inference_mode=runner.inference_mode, model_id=runner.model_id, bundle_id=manifest.bundle_id,
-                             client_token=token, parent_case_id=case_id,
+                             client_token=token, parent_case_id=case_id, scored=parent.scored,
                              excluded_sources=[{k: v for k, v in w.items() if k != "sha256"} for w in withheld])
             rec.timings["derive_s"] = round(time.perf_counter() - t0, 3)
             self._save(rec)
@@ -1027,6 +1084,9 @@ class Orchestrator:
         rec, paths = self._load(case_id), self._paths(case_id)
         if rec.state not in ("awaiting_review", "report_locked", "scored"):
             raise Conflict("only a case with a drafted report can be recorded", rec.state)
+        if not rec.scored or rec.parent_case_id:
+            raise Conflict("a recording replays by regenerating its evidence from a scenario; imported evidence and "
+                           "derived evidence views have none", rec.state)
         ep = load_episode_manifest(paths)
         draft = InvestigationReport.model_validate_json((paths.case / "report.draft.json").read_text(encoding="utf-8"))
         events = [e for e in self._log(case_id).since(0, "investigator")
