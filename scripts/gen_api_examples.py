@@ -61,8 +61,16 @@ def main(live: bool) -> None:
                     q = c.get(f"/api/cases/{cid}/questions/{q['question_id']}").json()
                 _save(name, q)
             _save("questions-list-live.json", c.get(f"/api/cases/{cid}/questions").json())
+            _save("scenario-design-live.json", c.post("/api/scenario-designs", json={"client_token": "example-design-live",
+                                                                                     "design_seed": 12}).json())
             return
 
+        design = c.post("/api/scenario-designs", json={"client_token": "example-design-1", "design_seed": 12}).json()
+        _save("scenario-design-default-offline.json", design)
+        designed = c.post("/api/cases", json={"design_id": design["design_id"], "runner": "deterministic",
+                                              "autostart": False}).json()
+        _save("case-created-from-design.json", {"case": designed["case"]})
+        _save("presets.json", c.get("/api/presets").json())
         fast = c.post("/api/cases", json={"preset_id": "hero-coverup", "runner": "agent-fixture",
                                           "investigation_mode": "fast"}).json()
         _save("case-created-fast-mode.json", {"case": fast["case"]})

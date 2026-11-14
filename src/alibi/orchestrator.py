@@ -309,6 +309,14 @@ class Orchestrator:
             },
             "live_model": {"configured": live, "model_id": self.settings.lead_model if live else None,
                            "note": "configured does not mean a successful model call has been observed"},
+            "scenario_designer": {
+                "endpoint": True, "model": "CONFIGURED" if live else "BLOCKED",
+                "chooses": ["background activity", "one routine operational condition", "time of day",
+                            "collection interruption cause and length"],
+                "never_chooses": "incident steps, commands, destinations or strategy. Incidents are pre-authored scripted scenarios",
+                "note": ("one bounded model response, then offline generation" if live else
+                         "no model is configured: a default environment is returned and labeled as a default"),
+            },
             "report_export": {"endpoint": True, "formats": ["markdown", "json"],
                               "note": "available once a report is locked; never contains the sealed answer"},
             "source_experiments": {
@@ -412,15 +420,79 @@ class Orchestrator:
         return self._generate(rec, seed=seed, variant=variant, spec=spec)
 
     def create_case_from_spec(self, spec: dict[str, Any], *, title: str = "Custom scenario",
-                              runner_id: str | None = None, investigation_mode: str | None = None) -> CaseRecord:
+                              runner_id: str | None = None, investigation_mode: str | None = None,
+                              difficulty: str | None = None, client_token: str | None = None) -> CaseRecord:
         """Operator/test entry point: run a saved scenario specification. Not exposed over HTTP."""
         runner_id = runner_id or default_runner_id(self.settings)
         mode = resolve_mode(runner_id, investigation_mode)
         runner = get_runner(runner_id, self.settings, mode)
-        rec = CaseRecord(case_id=f"case-{uuid.uuid4().hex[:12]}", title=title, difficulty=str(spec.get("difficulty", "")),
+        rec = CaseRecord(case_id=f"case-{uuid.uuid4().hex[:12]}", title=title,
+                         difficulty=difficulty if difficulty is not None else str(spec.get("difficulty", "")),
                          seed=spec.get("seed"), card_id=str(spec.get("card_id") or "inside-job"), runner_id=runner_id,
-                         investigation_mode=mode, inference_mode=runner.inference_mode, model_id=runner.model_id)
+                         investigation_mode=mode, inference_mode=runner.inference_mode, model_id=runner.model_id,
+                         client_token=client_token)
         return self._generate(rec, seed=None, variant=None, spec=spec)
+
+    # ------------------------------------------------------------------ scenario designer (environment only)
+    def _design_dir(self) -> Path:
+        return self.runs_dir / "_designs"
+
+    def design_environment(self, client_token: str, design_seed: int | None = None) -> dict[str, Any]:
+        """Ask a model, once, to choose an ordinary operating environment. Returns the stored design.
+
+        The model chooses no incident and no step. Offline, a default environment is returned and labeled as one.
+        """
+        from alibi.agents import designer
+
+        token = str(client_token or "").strip()
+        if not token or len(token) > 80:
+            raise ValueError("client_token is required (at most 80 characters); it makes a retried request safe")
+        ddir = self._design_dir()
+        ddir.mkdir(parents=True, exist_ok=True)
+        with self._guard:
+            index_file = ddir / "index.json"
+            index = json.loads(index_file.read_text(encoding="utf-8")) if index_file.exists() else {}
+            if token in index:
+                return json.loads((ddir / f"{index[token]}.json").read_text(encoding="utf-8"))  # a retry: no second call
+            seed = int(design_seed) if design_seed is not None else (len(index) + 1)
+            design_id = f"design-{uuid.uuid4().hex[:10]}"
+            doc = designer.design_environment(self.settings, seed, model_factory=self.qa_model_factory,
+                                              ledger_path=ddir / f"{design_id}.budget.json")
+            doc.update(design_id=design_id, created_at=_iso_now(), fixtures=list(designer.FIXTURES))
+            (ddir / f"{design_id}.json").write_text(json.dumps(doc, indent=1), encoding="utf-8")
+            index[token] = design_id
+            index_file.write_text(json.dumps(index), encoding="utf-8")
+            return doc
+
+    def get_design(self, design_id: str) -> dict[str, Any]:
+        import re
+
+        f = self._design_dir() / f"{design_id}.json"
+        if not re.fullmatch(r"design-[0-9a-f]{10}", str(design_id)) or not f.exists():
+            raise NotFound("no such design")
+        return json.loads(f.read_text(encoding="utf-8"))
+
+    def create_case_from_design(self, design_id: str, *, fixture: str = "none", runner_id: str | None = None,
+                                investigation_mode: str | None = None, client_token: str | None = None) -> CaseRecord:
+        """Generate a case in a designed environment. `fixture` optionally places a pre-authored, scripted incident
+        scenario in it; that choice is the operator's, never the model's, and is not shown before the reveal."""
+        from alibi.agents import designer
+
+        with self._guard:
+            if client_token and client_token in self._tokens:
+                try:
+                    return self._load(self._tokens[client_token])
+                except NotFound:
+                    self._tokens.pop(client_token, None)
+        doc = self.get_design(design_id)
+        if not doc.get("design"):
+            raise Conflict(f"this design request ended without a design ({doc['status']}); no case can be made from it")
+        design = designer.EnvironmentDesign.model_validate(doc["design"])
+        spec, realized = designer.realize(design, doc["design_seed"], fixture)
+        spec["environment_provenance"] = designer.provenance(doc, realized, fixture)
+        return self.create_case_from_spec(
+            spec, title=f"Designed environment · exercise {doc['design_seed']}", runner_id=runner_id,
+            investigation_mode=investigation_mode, difficulty="sealed", client_token=client_token)
 
     def _generate(self, rec: CaseRecord, *, seed: int | None, variant: str | None, spec: dict | None) -> CaseRecord:
         case_id = rec.case_id
@@ -454,6 +526,10 @@ class Orchestrator:
             # who planned is shown to the audience; what was planned stays sealed
             log.append("stage", {"name": "adversary_plan", "status": "done",
                                  "info": {"planned_by": spec["plan_provenance"]["label"]}})
+        if spec is not None and spec.get("environment_provenance"):
+            # who chose the ordinary environment is shown; whether an incident scenario was placed in it stays sealed
+            log.append("stage", {"name": "environment_design", "status": "done",
+                                 "info": {"designed_by": spec["environment_provenance"]["label"]}})
         self._set_state(rec, "frozen", "evidence frozen and hashed; answer key sealed")
         return rec
 
@@ -589,6 +665,7 @@ class Orchestrator:
                 "plan_label": ("Scripted scenario · no model chose these steps" if ep.plan_source == "scripted_scenario"
                                else f"Model-generated plan ({ep.plan_model_id})"),
                 "plan_provenance": ep.scenario_spec.get("plan_provenance"),
+                "environment_provenance": ep.scenario_spec.get("environment_provenance"),
                 "steps": [s.model_dump(mode="json") for s in key.steps],
                 "effects": [e.model_dump(mode="json", exclude={"evidence"}) for e in key.effects],
                 "benign_outcomes": [b.model_dump(mode="json") for b in key.benign_outcomes],

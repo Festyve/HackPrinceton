@@ -1,18 +1,21 @@
 # Remaining owner actions
 
-Status after the phase-two review on November 14. Implementation work is assigned in [the continuation](docs/next-run/CONTINUE.md); this file lists prerequisites and unresolved external conditions.
+Status on November 14 during the second run. This file lists what a person still has to do and what is waiting on someone else. Completed work is in [PROGRESS.md](PROGRESS.md).
 
 | Item | Owner | Next action |
 |---|---|---|
-| Runtime key was pasted in an earlier coding chat | Eric | Replace it locally in the existing .env and revoke the old key before sharing transcripts/publication. Do not paste the replacement into chat. |
-| $20 cumulative API cap (raised from $5 by Eric, Nov 14) | Eric | Preserve .alibi/spend.json; compare its totals with Console usage (`uv run alibi spend`). Gateway accounting edges are fixed and regression-tested. Nothing beyond $20 is authorized. |
-| Private GitHub repository | Repo owner | Scan history/worktree with redacted output, then make the submission repo public. Keep its creation history. |
-| Actual venue display | Terry + Daniel | Run the final integrated build on a second machine and the projector. Browser automation alone does not establish projector readability. |
-| IoT-CAD availability | Daniel | Verify the catalog/download/license and ingest a relevant subset if accessible; document the exact external blocker otherwise. |
-| Real user consultation for Peri | Rayan | Enter only after a qualifying consultation, supporting evidence and a resulting useful change. |
+| The runtime key was pasted into a coding chat | Eric | Create a replacement in the Claude Console, edit only the key line in the existing `.env`, revoke the old key. Do this before sharing transcripts or making the repository public. Do not paste the new key into chat. |
+| $20 cumulative API cap | Eric | Nothing to do unless the ledger and the Console disagree. `uv run alibi spend` shows the estimate; the Console is the billing authority. Nothing beyond $20 is authorized. |
+| UI for the new backend features | Terry | Add controls against [`docs/api.md`](docs/api.md) and the real payloads in `docs/api-examples/`: questions, source-removal experiment, report export, fast/specialist choice, the six new presets, the scenario designer preview, and the `paired_v2` results. The backend routes exist and are tested; the merged UI does not call them yet. |
+| Captured Linux evidence | Daniel | Push `codex/daniel-capture` with the importer entry point and a small captured fixture. Until it exists, capture import is not built and every bundle is simulated. Eric wires the importer into the CLI and API when it arrives. |
+| IoT-CAD | Daniel | Verify the catalog, download and licence; ingest a relevant subset or record the exact blocker. |
+| Private GitHub repository | Repository owner | Run the redacted secret scan described in the final handoff, then make the repository public. Keep its creation history. |
+| Venue display and second machine | Terry + Daniel | Run the final build on a second machine and on the projector. Browser automation does not establish projector readability. |
+| User consultation for the Peri track | Rayan | Enter only after a qualifying consultation, supporting evidence and a resulting change. |
+| Video and submission | Rayan | Record at most two minutes from the working application; verify the link and the submission in a logged-out browser. |
 
-Live investigator inference is already demonstrated. The next work improves the product around it.
+## Not blockers, but do not change
 
-The model refused the original adversary-planning request. Keep that route disabled. Do not rephrase the refused request, enable refusal fallback or change providers to circumvent it. The separate benign scenario-design feature in the continuation changes the task itself; scripted incident execution stays labeled scripted.
-
-Optional frontend-design installation is not a blocker. Playwright is installed as a project dependency. The current default branch name is not a submission blocker either: the packet requires a public repository created during the event, not a branch named main.
+- **The adversary planner stays disabled.** The model declined the one real request to plan an adversary's steps. Do not rephrase that request, add a refusal fallback or switch models to get around it. The scenario designer is a different task (it chooses an ordinary operating environment and no incident step) and must not be described as an AI attacker. Every incident in ALIBI is a scripted scenario and is labeled as one.
+- **`offline-v1` and `ai-pilot-v1` are frozen.** `uv run alibi bench` and `uv run alibi pilot` refuse to rewrite them. New measurements go through `uv run alibi eval`.
+- **The spend ledger is never deleted or reset.** `.alibi/spend.json` carries the first run's $2.92 forward.

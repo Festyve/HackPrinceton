@@ -83,6 +83,9 @@ CARDS[CARD_COLD_CHAIN] = {
     "difficulties": ["C1"],
 }
 
+# Idle time between routine sessions at the shared workstation, in seconds, by how busy the day is.
+BACKGROUND_GAPS = {"quiet": (480, 1500), "normal": (120, 720), "busy": (45, 300)}
+
 EVASION_INCIDENT_VARIANTS = ("incident_evasion",)  # inside job plus the four phase-two steps
 MAINTENANCE_BENIGN_VARIANTS = ("benign_maintenance",)  # their legitimate counterparts
 HEIST_INCIDENT_VARIANTS = ("heist_incident", "heist_coverup")
@@ -700,7 +703,9 @@ def simulate(spec: dict[str, Any]) -> SimOutput:
         who = rb.choice([n for n in cands if n != last] or cands)
         last = who
         console_session(who, t, dur)
-        t += timedelta(seconds=dur + rb.randrange(120, 720))
+        # "normal" (also the value when no environment is stated) draws exactly what every earlier spec drew
+        gap_lo, gap_hi = BACKGROUND_GAPS[(spec.get("environment") or {}).get("background_activity", "normal")]
+        t += timedelta(seconds=dur + rb.randrange(gap_lo, gap_hi))
 
     # ---------------- legitimate remote access (present in every case)
     pre = t0 - _m(rb.randrange(30, 41))

@@ -48,6 +48,15 @@ class CreateCase(BaseModel):
     investigation_mode: Literal["fast", "specialist"] | None = None
     client_token: str | None = Field(default=None, max_length=80)
     autostart: bool = True
+    # A case in a designed environment (see POST /api/scenario-designs). design_fixture optionally places a
+    # pre-authored scripted incident scenario in it; the model that designed the environment never chooses that.
+    design_id: str | None = Field(default=None, max_length=40)
+    design_fixture: Literal["none", "inside-job-plain", "inside-job-coverup"] = "none"
+
+
+class DesignRequest(BaseModel):
+    client_token: str = Field(min_length=1, max_length=80)
+    design_seed: int | None = Field(default=None, ge=0, le=4999)
 
 
 class Review(BaseModel):
@@ -131,11 +140,16 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
     def benchmark() -> JSONResponse:
         from alibi import bench
 
+        from alibi import evaluation
+
         doc = bench.combined_results()
+        # The phase-two paired evaluation is a separate suite with its own cases and rules. It is offered beside
+        # the first-run results, never merged into them.
+        paired = evaluation.latest()
         if doc is None:
-            return JSONResponse({"available": False,
+            return JSONResponse({"available": False, "paired_v2": paired,
                                  "reason": "no benchmark results yet; run `uv run alibi bench`"})
-        return JSONResponse({"available": True, **doc})
+        return JSONResponse({"available": True, **doc, "paired_v2": paired})
 
     # ------------------------------------------------------------------ cases
     @app.get("/api/cases")
@@ -144,9 +158,13 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
 
     @app.post("/api/cases")
     def create_case(body: CreateCase) -> dict:
-        rec = orch.create_case(preset_id=body.preset_id, seed=body.seed, difficulty=body.difficulty,
-                               runner_id=body.runner, client_token=body.client_token,
-                               investigation_mode=body.investigation_mode)
+        if body.design_id:
+            rec = orch.create_case_from_design(body.design_id, fixture=body.design_fixture, runner_id=body.runner,
+                                               investigation_mode=body.investigation_mode, client_token=body.client_token)
+        else:
+            rec = orch.create_case(preset_id=body.preset_id, seed=body.seed, difficulty=body.difficulty,
+                                   runner_id=body.runner, client_token=body.client_token,
+                                   investigation_mode=body.investigation_mode)
         if body.autostart:
             orch.start_investigation(rec.case_id)
         return orch.view(rec.case_id)
@@ -249,6 +267,17 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
     @app.get("/api/cases/{case_id}/explanations")
     def explanations(case_id: str) -> dict:
         return {"explanations": orch.explanations(case_id)}
+
+    # ------------------------------------------------------------------ scenario designer (environment only)
+    @app.post("/api/scenario-designs")
+    def design_environment(body: DesignRequest) -> dict:
+        """One bounded model response choosing an ordinary operating environment from fixed options. It plans no
+        incident. Returns a preview a person can read before a case is generated from it."""
+        return orch.design_environment(body.client_token, body.design_seed)
+
+    @app.get("/api/scenario-designs/{design_id}")
+    def get_design(design_id: str) -> dict:
+        return orch.get_design(design_id)
 
     # ------------------------------------------------------------------ exports (downloads)
     def _download(body: str, media: str, name: str) -> Response:

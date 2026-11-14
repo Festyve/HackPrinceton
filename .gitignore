@@ -37,3 +37,6 @@ playwright-report/
 benchmarks/*/transcripts/
 # model tool traces are kept locally, never published
 benchmarks/**/transcripts/
+
+# agent worktrees are local scratch space
+.claude/worktrees/

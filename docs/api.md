@@ -127,6 +127,31 @@ All three are downloads (`Content-Disposition: attachment`).
 
 `capabilities.report_export` in `GET /api/runtime` announces the endpoint.
 
+## Scenario designer
+
+A model chooses an ordinary operating environment from fixed options. It plans no incident: there is no field for a step, a command or a destination. The earlier adversary-planning route is a different feature and stays disabled.
+
+`POST /api/scenario-designs` with `{"client_token": "required", "design_seed": 0..4999 (optional)}` makes one bounded model call and returns a stored design:
+
+| Field | Meaning |
+|---|---|
+| `status` | `designed`, `default_used` (no model configured, or its output was not valid), `refused`, `unavailable` (spending limit) |
+| `source` | `model_designed`, `default`, `default_after_invalid_output`, `none` |
+| `label` | the text to show, e.g. "Environment chosen by a model (…) from fixed options. It planned no incident; …" |
+| `design` | `background_activity` (quiet, normal, busy), `routine_condition`, `condition_time`, `interruption_cause`, `interruption_seconds` |
+| `preview` | the design in plain sentences, for a person to read before generating |
+| `fixtures` | the pre-authored scripted incident scenarios an operator may place in it |
+
+`GET /api/scenario-designs/{design_id}` returns it again. The same `client_token` returns the same design without a second model call.
+
+`POST /api/cases` with `design_id` (and optionally `design_fixture`: `none`, `inside-job-plain`, `inside-job-coverup`) generates a case in that environment, offline. Its title and difficulty (`sealed`) are the same whether or not a fixture was placed in it. After the reveal, `reveal.truth.environment_provenance` shows what was requested, what the simulator realized, and `incident_steps_chosen_by_model: false`; `plan_label` stays "Scripted scenario · no model chose these steps". A refused design cannot become a case (**409**).
+
+## More cases and results
+
+- `GET /api/presets` lists six more presets: `evasion`, `maintenance-control`, `records-heist`, `records-control`, `cold-chain`, `cold-chain-control`. `card.id` is `inside-job`, `records-heist` or `cold-chain`. Their evidence has two more source kinds, `sensor` and `reference`.
+- Reports on those cases can carry more claim types: `timestamp_alteration`, `forwarding_stopped`, `second_host_session`, `sensor_stream_discrepancy` (allegations) and `shell_history_gap`, `metadata_change`, `temperature_excursion`, `sensor_maintenance`, `policy_consistent_access` (notes). An effect that no captured source can show has outcome `unobservable` in the reveal.
+- `GET /api/benchmark` adds `paired_v2`: the latest result of the phase-two evaluation (six systems, four new cases), or `null`. It is a separate suite and is not merged into the first-run tables.
+
 ## Not built yet
 
 Capture import. Do not show a control for it until it is listed here.

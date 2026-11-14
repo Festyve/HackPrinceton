@@ -434,3 +434,18 @@ def test_claim_checks_agree_with_the_deterministic_checks(coverup, make_episode,
     assert questions.clean_question("  why?\x00 ") == "why?"
     with pytest.raises(ValueError):
         questions.clean_question("x" * 1001)
+
+
+def test_record_command_can_ask_questions_and_never_saves_an_unanswered_one(tmp_path, monkeypatch, capsys):
+    from alibi import cli
+    from alibi import orchestrator as orch_mod
+
+    monkeypatch.setattr(orch_mod, "REPLAY_DIR", tmp_path / "replays")
+    for key in ("RUNTIME_MODE", "LIVE_PROVIDER_KIND", "LEAD_MODEL", "SUBAGENT_MODEL", "ADVERSARY_MODEL"):
+        monkeypatch.setenv(key, "offline" if key == "RUNTIME_MODE" else "")
+    assert cli.main(["record", "--preset", "hero-coverup", "--name", "with-question", "--runner", "deterministic",
+                     "--question", "What links the missing line to the transfer?"]) == 0
+    out = capsys.readouterr().out
+    assert "questions: unavailable (0 model call(s))" in out  # offline: asked, not answered, and said so
+    saved = json.loads((tmp_path / "replays" / "with-question" / "recording.json").read_text())
+    assert saved["questions"] == [] and saved["meta"]["inference_mode"] == "NO_MODEL_BASELINE"

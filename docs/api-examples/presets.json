@@ -1,0 +1,117 @@
+{
+  "presets": [
+    {
+      "id": "hero-coverup",
+      "title": "Inside job \u00b7 cover-up",
+      "difficulty": "L2",
+      "card_id": "inside-job",
+      "seed": 9023,
+      "blurb": "Someone uses a colleague's account, copies the synthetic patient database out, then edits a host log."
+    },
+    {
+      "id": "hero-plain",
+      "title": "Inside job \u00b7 no cover-up",
+      "difficulty": "L1",
+      "card_id": "inside-job",
+      "seed": 9002,
+      "blurb": "The same crime with no anti-forensics."
+    },
+    {
+      "id": "sealed-control",
+      "title": "Sealed control case",
+      "difficulty": "sealed",
+      "card_id": "inside-job",
+      "seed": 9003,
+      "blurb": "May or may not contain an incident. The investigator gets the same tip. Unseal to find out."
+    },
+    {
+      "id": "evasion",
+      "title": "Inside job \u00b7 covering tracks",
+      "difficulty": "L3",
+      "card_id": "inside-job",
+      "seed": 9041,
+      "blurb": "The same crime, then four attempts to cover it: cleared shell history, a backdated file, log forwarding stopped and a hop to a second host. One of them leaves nothing an investigator can see."
+    },
+    {
+      "id": "maintenance-control",
+      "title": "Sealed control case \u00b7 maintenance window",
+      "difficulty": "sealed",
+      "card_id": "inside-job",
+      "seed": 9042,
+      "blurb": "May or may not contain an incident. The same kinds of activity can be legitimate maintenance. Unseal to find out."
+    },
+    {
+      "id": "records-heist",
+      "title": "Records heist \u00b7 cover-up",
+      "difficulty": "H2",
+      "card_id": "records-heist",
+      "seed": 9041,
+      "blurb": "Someone signs in to the records server with an administrator's credential, exports the synthetic patient database there, sends it out and edits the application's own log."
+    },
+    {
+      "id": "records-control",
+      "title": "Sealed control case \u00b7 records export",
+      "difficulty": "sealed",
+      "card_id": "records-heist",
+      "seed": 9043,
+      "blurb": "May or may not contain an incident. An export from the records server can be approved work. Unseal to find out."
+    },
+    {
+      "id": "cold-chain",
+      "title": "Cold chain \u00b7 altered readings",
+      "difficulty": "C1",
+      "card_id": "cold-chain",
+      "seed": 9041,
+      "blurb": "The vaccine refrigerator warms past its range and the stored readings are overwritten to look normal. An independent reference logger kept recording."
+    },
+    {
+      "id": "cold-chain-control",
+      "title": "Sealed control case \u00b7 cold chain",
+      "difficulty": "sealed",
+      "card_id": "cold-chain",
+      "seed": 9044,
+      "blurb": "May or may not contain an incident. A real excursion with honest records is not falsification. Unseal to find out."
+    }
+  ],
+  "replays": [
+    {
+      "id": "hero-coverup-fixture",
+      "title": "Inside job \u00b7 cover-up",
+      "model_id": "scripted-fixture-policy-v1 (no model)",
+      "recorded_at": "2026-11-14T06:21:26.342045+00:00",
+      "runner_id": "agent-fixture",
+      "git_commit": "4043f5a",
+      "note": "Scripted fixture run of the hero case. No model inference. Recorded offline.",
+      "inference_mode": "SCRIPTED_FIXTURE",
+      "inference_label": "Scripted fixture \u00b7 no model inference",
+      "investigation_mode": "specialist",
+      "investigation_mode_label": "Specialist review \u00b7 lead, auditor and skeptic"
+    },
+    {
+      "id": "hero-coverup-live-opus-5-5",
+      "title": "Inside job \u00b7 cover-up",
+      "model_id": "anthropic:claude-opus-5-5",
+      "recorded_at": "2026-11-14T07:00:06.181543+00:00",
+      "runner_id": "agent-live",
+      "git_commit": "631f7b5",
+      "note": "Real model run (claude-opus-5-5 via the budget gateway). Adversary plan: scripted scenario.",
+      "inference_mode": "RECORDED_MODEL",
+      "inference_label": "Recorded AI run",
+      "investigation_mode": "specialist",
+      "investigation_mode_label": "Specialist review \u00b7 lead, auditor and skeptic"
+    },
+    {
+      "id": "sealed-control-fixture",
+      "title": "Sealed control case",
+      "model_id": "scripted-fixture-policy-v1 (no model)",
+      "recorded_at": "2026-11-14T06:21:27.425909+00:00",
+      "runner_id": "agent-fixture",
+      "git_commit": "4043f5a",
+      "note": "Scripted fixture run of the sealed control case. No model inference. Recorded offline.",
+      "inference_mode": "SCRIPTED_FIXTURE",
+      "inference_label": "Scripted fixture \u00b7 no model inference",
+      "investigation_mode": "specialist",
+      "investigation_mode_label": "Specialist review \u00b7 lead, auditor and skeptic"
+    }
+  ]
+}

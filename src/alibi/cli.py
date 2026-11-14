@@ -152,11 +152,19 @@ def _cmd_record(args: argparse.Namespace) -> int:
         if state != "awaiting_review":
             print(f"error: the run ended in state {state}: {orch.record(rec.case_id).error}", file=sys.stderr)
             return 1
+        asked = []
+        for n, text in enumerate(args.question or []):  # answers are saved with the recording and replay as recorded
+            q = orch.ask_question(rec.case_id, text, f"record-{n}")
+            end = time.time() + 120
+            while q.status == "pending" and time.time() < end:
+                time.sleep(0.2)
+                q = orch.get_question(rec.case_id, q.question_id)
+            asked.append(f"{q.status} ({q.usage.llm_calls} model call(s))")
         out = orch.save_recording(rec.case_id, args.name, note=args.note)
         done = orch.record(rec.case_id)
         mode, how = done.inference_mode, done.investigation_mode or "no agent"
     print(f"saved {out}  (inference: {mode}; mode: {how}; replay it from the case board start screen or "
-          f"POST /api/replays/{args.name}/open)")
+          f"POST /api/replays/{args.name}/open)" + (f"\nquestions: {', '.join(asked)}" if asked else ""))
     return 0
 
 
@@ -362,6 +370,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--mode", default=None, choices=["fast", "specialist"],
                    help="fast = one agent, specialist = lead + auditor + skeptic (default: fast for a live model)")
     p.add_argument("--note", default="")
+    p.add_argument("--question", action="append", default=[],
+                   help="ask this question after the investigation and save the answer with the recording (repeatable)")
     p.set_defaults(func=_cmd_record)
 
     p = sub.add_parser("bench", help="run the declared offline benchmark suite (B0 and BR; no model calls)")

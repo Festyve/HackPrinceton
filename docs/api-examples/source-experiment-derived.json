@@ -1,7 +1,7 @@
 {
   "role": "derived",
-  "case_id": "case-b1dcc9e931f1",
-  "parent_case_id": "case-4a5e87e9a157",
+  "case_id": "case-7c87ff2faf70",
+  "parent_case_id": "case-cb5ce3e5c339",
   "child_state": "frozen",
   "excluded_sources": [
     {
@@ -22,7 +22,7 @@
   "events_original": 12802,
   "parent_state": "awaiting_review",
   "parent_report": {
-    "report_id": "rep-case-4a5e87e9a157",
+    "report_id": "rep-case-cb5ce3e5c339",
     "locked": false,
     "report_sha256": null,
     "system_id": "BR",

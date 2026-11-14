@@ -1,6 +1,6 @@
 {
-  "child_case_id": "case-b1dcc9e931f1",
-  "parent_case_id": "case-4a5e87e9a157",
+  "child_case_id": "case-7c87ff2faf70",
+  "parent_case_id": "case-cb5ce3e5c339",
   "parent_bundle_id": "bndl-646e90a648ad486f",
   "parent_raw_bundle_sha256": "646e90a648ad486f1b8f81a173ce6b4a865ba8edebef63ce98a367ddbff31444",
   "child_bundle_id": "bndl-709aad43a6afeaf9",
@@ -67,11 +67,11 @@
     }
   },
   "case": {
-    "case_id": "case-b1dcc9e931f1",
+    "case_id": "case-7c87ff2faf70",
     "state": "frozen",
     "detail": "evidence view frozen and hashed; nothing is carried over from the original case",
-    "created_at": "2026-11-14T09:39:49.325361+00:00",
-    "updated_at": "2026-11-14T09:39:49.326178+00:00",
+    "created_at": "2026-11-14T10:30:14.766419+00:00",
+    "updated_at": "2026-11-14T10:30:14.777992+00:00",
     "preset_id": "hero-coverup",
     "title": "Inside job \u00b7 cover-up \u00b7 without collector collector",
     "card_id": "inside-job",
@@ -90,9 +90,9 @@
     "review_decision": null,
     "review_note": "",
     "timings": {
-      "derive_s": 0.131
+      "derive_s": 0.128
     },
-    "parent_case_id": "case-4a5e87e9a157",
+    "parent_case_id": "case-cb5ce3e5c339",
     "excluded_sources": [
       {
         "artifact": "collector/var/log/collected/collected.log",

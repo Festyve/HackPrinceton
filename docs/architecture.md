@@ -1,6 +1,6 @@
 # Architecture
 
-Status: OFFLINE-READY, with the investigator demonstrated on a real model (Claude Opus 5.5). Evidence origin: simulated (`SIM`). The adversary is a scripted scenario.
+Status: runs offline end to end; the investigator, question answering and scenario designer are demonstrated on real models (Claude Opus 5.5 in the first run, Claude Haiku 5.5 in the second). Evidence origin: simulated (`SIM`). Every incident is a scripted scenario.
 
 ## Components
 
@@ -11,14 +11,18 @@ Status: OFFLINE-READY, with the investigator demonstrated on a real model (Claud
 | Step library | `src/alibi/sim/steps.py` | The only things the adversary can do. Plans are data, validated against allowlists and precondition order, at most eight steps. |
 | Episode builder | `src/alibi/episode.py` | simulate → freeze (write, hash, read-only) → normalize → derived DuckDB (hashed separately) → public manifest → sealed answer key in a separate root. |
 | Normalizer and store | `src/alibi/evidence/` | Parses frozen artifacts into events with provenance (artifact, line, byte offset). Unparseable lines stay visible. The store is opened read-only with external access disabled and offers typed filters only. |
-| Checks | `src/alibi/checks.py` | Deterministic contradiction checks returning observations with event ids. |
+| Checks | `src/alibi/checks.py`, `src/alibi/checks_families.py` | Deterministic contradiction checks returning observations with event ids. A source that is not in the bundle makes a check "not assessable": unknown, never clean. |
 | Verifier | `src/alibi/verifier.py` | Validates references and recomputes registered predicates. Applied identically to every system. Never adds findings, never reads truth. |
 | Scorer | `src/alibi/scoring.py` | One-to-one maximum matching of final accepted allegations to executed, successful, observable effects. Runs only on a locked report. |
 | Baselines | `src/alibi/baselines.py` | B0 keyword recipe and BR rule-based findings. |
-| Agents | `src/alibi/agents/` | Budget gateway, typed tools, the DeepAgents investigator graph, the scripted fixture policy, the bounded adversary planner. |
+| Agents | `src/alibi/agents/` | Budget gateway, typed tools, the DeepAgents investigator graph (one agent or three), the scripted fixture policy, the scenario designer, and the disabled adversary planner. |
+| Questions | `src/alibi/questions.py` | Bounded question answering over one case with read-only tools; trusted validation of every cited id and claim. |
+| Source experiment | `src/alibi/source_experiment.py` | Derives an immutable evidence view with chosen sources withheld and re-checks the original claims against it. |
+| Export | `src/alibi/export.py` | The locked report with its hash, provenance and exact cited lines. |
 | Orchestrator and API | `src/alibi/orchestrator.py`, `src/alibi/api/app.py` | Case state machine, append-only event log, review, lock, reveal, reset, replay; FastAPI with server-sent events. |
 | Case board | `web/` | React + TypeScript, no external assets. |
-| Benchmark | `src/alibi/bench.py` | Runs the frozen offline suite and generates `docs/benchmark.md`. |
+| Benchmark | `src/alibi/bench.py` | The first-run suites (`offline-v1`, `ai-pilot-v1`), kept as recorded. |
+| Evaluation | `src/alibi/evaluation.py`, `src/alibi/calibration.py` | The phase-two paired evaluation (six systems, declared before it ran) and the model calibration check. |
 
 ## Episode lifecycle and states
 
@@ -33,6 +37,39 @@ Status: OFFLINE-READY, with the investigator demonstrated on a real model (Claud
 7. **Reveal and score**: refused with HTTP 409 until the report is locked. Then the scorer reads the sealed key.
 
 Duplicate Run, review and reveal requests are idempotent. Events carry stable sequence ids and the stream resumes from `Last-Event-ID`. After a server restart, a case awaiting review resumes from its SQLite checkpoint; a case that was mid-run becomes a visible `failed` state.
+
+## Investigation modes
+
+A case is investigated in one of two modes, saved with the case so a refresh, a restart or the review resume cannot switch it.
+
+- **Fast**: one agent with the deterministic checks. The default for a live model, because in the first-run pilot it matched the three-agent graph's accuracy at about a third of the cost and time.
+- **Specialist**: a lead that delegates to an integrity auditor and a skeptic. The mode of the recorded Opus run.
+
+Fast mode constructs one model, specialist mode three. A case is never finished by a different model than the one that ran it: if the configured model changed, the review decision still locks the report and the model acknowledgement is skipped.
+
+## Questions
+
+`POST /api/cases/{id}/questions` gives a model at most three calls over read-only tools (evidence search, the checks, the public report) and no way to change the report. The answer is a set of single-fact claims with event ids. Trusted code then drops ids that are not in this bundle, compares each claim with the deterministic check that covers its kind (`checked`, `contradicted`, `unsupported`) and labels the rest `cited` or `interpretation`. An answer with nothing tied to evidence becomes `insufficient_evidence`. Nothing sealed is reachable before or after the reveal. Offline the status is `unavailable`; the predefined explanations stay labeled as predefined.
+
+## Source-removal experiment
+
+`POST /api/cases/{id}/source-experiments` derives a new case from an existing one with chosen manifest sources withheld. The original's bytes, report and sealed truth are only read. In the derived case the source is gone from the raw files, the rebuilt event store, the manifest and therefore from every check and model context; the case directory starts empty. `GET /api/cases/{id}/source-experiment` re-checks each claim of the original report with the same predicates and says which keep support and which can no longer be established, with reasons. For research scoring the executed truth is unchanged and observability is recomputed: every original effect is listed with both recall denominators, so a smaller denominator cannot read as better detection.
+
+## Case families
+
+| Card | Incident variants | Benign controls | What decides it |
+|---|---|---|---|
+| Inside job | plain, cover-up, covering tracks (four more steps) | forced rotation, approved transfer, remote login, collection gap, maintenance window | host log against collector copy; tap flows against transfer policy |
+| Records heist | export from the records server, with or without a cover-up | approved export under a change record | the records application's export trail against change records and the tap |
+| Cold chain | stored readings overwritten | a real excursion honestly recorded; sensor maintenance | the hub's stored readings against an independent reference logger |
+
+The four added steps are clearing shell history, backdating a file, stopping log forwarding and hopping to a second host. Each has a legitimate counterpart. Cleared shell history has no independent copy, so it is recorded in the answer key as unobservable and is never scored.
+
+## Scenario designer
+
+`POST /api/scenario-designs` asks a model, once, to choose an ordinary operating environment from fixed options: how busy the day is, one routine operational condition, when it happens, and the cause and length of a collection interruption. There is no field for a step, a command or a destination. Trusted code turns the validated choices into a scenario specification offline. Output outside the options becomes a default that is labeled as a default; a refusal ends the request. An operator may place one of the pre-authored scripted incident scenarios in a designed environment; that choice is never the model's and the case is labeled the same either way until the reveal.
+
+This is not the adversary planner. The one real request to plan an adversary's steps was declined by the model; that route stays disabled and is not rephrased, retried or rerouted.
 
 ## Information barrier
 

@@ -51,6 +51,26 @@
       "model_id": null,
       "note": "configured does not mean a successful model call has been observed"
     },
+    "scenario_designer": {
+      "endpoint": true,
+      "model": "BLOCKED",
+      "chooses": [
+        "background activity",
+        "one routine operational condition",
+        "time of day",
+        "collection interruption cause and length"
+      ],
+      "never_chooses": "incident steps, commands, destinations or strategy. Incidents are pre-authored scripted scenarios",
+      "note": "no model is configured: a default environment is returned and labeled as a default"
+    },
+    "report_export": {
+      "endpoint": true,
+      "formats": [
+        "markdown",
+        "json"
+      ],
+      "note": "available once a report is locked; never contains the sealed answer"
+    },
     "source_experiments": {
       "endpoint": true,
       "max_excluded_sources": 20,
