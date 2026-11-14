@@ -448,10 +448,12 @@ export default function App() {
         </header>
         <section className="case-heading">
           <div>
-            <p className="eyebrow">
+            <p className="eyebrow" data-testid="case-eyebrow">
               {c
                 ? `Case file / ${c.case_id.replace(/^case-/, "").slice(0, 8)}`
                 : "An evidence workbench"}
+              {c?.parent_case_id && " · reduced evidence view"}
+              {c?.scored === false && " · imported evidence, unscored"}
             </p>
             <h1>{view ? title : "The log is missing. The evidence isn’t."}</h1>
           </div>

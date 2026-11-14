@@ -91,6 +91,7 @@ def test_removing_the_collector_shows_what_can_no_longer_be_established(server, 
     wait_state(page, "awaiting_review")
     derived = page.evaluate("() => /case=([^&]+)/.exec(location.hash)[1]")
     assert derived != original
+    assert "reduced evidence view" in page.inner_text(tid("case-eyebrow")).lower()  # the heading says what this is
     # the reduced view was examined by the checks, not by a model, and says so
     assert "Deterministic baseline · no model inference" in page.inner_text(tid("badge-inference"))
     cmp_ = page.locator(tid("experiment-comparison"))
@@ -113,6 +114,7 @@ def test_removing_the_collector_shows_what_can_no_longer_be_established(server, 
     page.click(tid("btn-open-original"))
     wait_state(page, "awaiting_review")
     assert page.evaluate("() => /case=([^&]+)/.exec(location.hash)[1]") == original
+    assert "reduced evidence view" not in page.inner_text(tid("case-eyebrow")).lower()
     page.wait_for_selector(tid("compare-row-retained"))
     assert page.locator(tid("experiment-comparison")).count() == 0
     assert "log collector" in page.inner_text(tid("derived-cases"))
