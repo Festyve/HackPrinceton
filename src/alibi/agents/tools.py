@@ -115,6 +115,8 @@ class CaseToolbox:
         self.attribution: AttributionAssessment | None = None
         self.final: dict[str, Any] | None = None
         self.finalized = False
+        self.preapplied: dict[str, str] = {}  # call key -> result, for calls applied ahead of the review pause
+        self._capture = False
         if draft_path is not None and draft_path.exists():
             self._load()
 
@@ -125,6 +127,7 @@ class CaseToolbox:
         self.attribution = AttributionAssessment.model_validate(data["attribution"]) if data.get("attribution") else None
         self.final = data.get("final")
         self.finalized = bool(data.get("finalized"))
+        self.preapplied = dict(data.get("preapplied") or {})
 
     def _save(self) -> None:
         if self.draft_path is None:
@@ -132,7 +135,7 @@ class CaseToolbox:
         self.draft_path.write_text(json.dumps({
             "findings": {k: v.model_dump(mode="json") for k, v in self.findings.items()},
             "attribution": self.attribution.model_dump(mode="json") if self.attribution else None,
-            "final": self.final, "finalized": self.finalized,
+            "final": self.final, "finalized": self.finalized, "preapplied": self.preapplied,
         }, indent=1), encoding="utf-8")
 
     def observations(self) -> verifier.Observations:
@@ -168,7 +171,43 @@ class CaseToolbox:
         return json.dumps({"error": "result too large for one tool response", "bytes": len(text),
                            "hint": "narrow the request (host, file, time window)"})
 
-    def _run(self, role: str, name: str, args: dict[str, Any], fn: Callable[[], tuple[dict[str, Any], str, list[str]]]) -> str:
+    @staticmethod
+    def call_key(name: str, args: dict[str, Any]) -> str:
+        clean = {k: v for k, v in args.items() if v not in (None, "", [])}
+        return name + ":" + hashlib.sha256(json.dumps(clean, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:16]
+
+    def apply_pending(self, role: str, name: str, args: dict[str, Any]) -> bool:
+        """Apply a report-building call the model made in the SAME turn as finalize_report.
+
+        The review gate pauses the whole turn, so such a call (typically submit_attribution) would
+        otherwise be missing from the draft a human reviews and from a batch run that never resumes.
+        Only the model's own report tools are applied, exactly as given; finalize_report never is.
+        When the paused turn later resumes, the identical call returns the stored result instead of
+        running (and being reported) twice.
+        """
+        if name not in ("submit_finding", "record_skeptic_verdict", "submit_attribution"):
+            return False
+        tool = next((x for x in self.tools_for(role) if x.name == name), None)
+        if tool is None:
+            return False
+        marker = "applied:" + self.call_key(name, args)
+        if marker in self.preapplied:
+            return True
+        self._capture = True
+        try:
+            tool.invoke(args)
+        finally:
+            self._capture = False
+        with self._lock:
+            self.preapplied[marker] = "1"
+            self._save()
+        return True
+
+    def _run(self, role: str, name: str, args: dict[str, Any], fn: Callable[[], tuple[dict[str, Any], str, list[str]]],
+             key_args: dict[str, Any] | None = None) -> str:
+        key = self.call_key(name, key_args) if key_args is not None else None
+        if key is not None and not self._capture and key in self.preapplied:
+            return self.preapplied[key]  # applied ahead of the review pause: do not run or report it twice
         t0 = time.perf_counter()
         self._on_tool_call()
         try:
@@ -180,6 +219,10 @@ class CaseToolbox:
         self._emit("tool", {"agent": role, "tool": name, "args": {k: v for k, v in args.items() if v not in (None, "", [])},
                             "result_summary": summary, "evidence_ids": ids[:8], "ok": ok,
                             "ms": int((time.perf_counter() - t0) * 1000)})
+        if key is not None and self._capture:
+            with self._lock:
+                self.preapplied[key] = out
+                self._save()
         self._pace()
         return out
 
@@ -392,13 +435,13 @@ class CaseToolbox:
                         counterevidence_ids=counterevidence_ids, assumptions=assumptions,
                         alternative_explanations=alternative_explanations, check_refs=check_refs)
             shown = {"claim_type": claim_type, "category": category, "host": host, "object_or_session": object_or_session}
-            return tb._run(role, "submit_finding", shown, lambda: tb.submit_finding(role, **args))
+            return tb._run(role, "submit_finding", shown, lambda: tb.submit_finding(role, **args), key_args=args)
 
         def record_skeptic_verdict(finding_id: str, verdict: Literal["keep", "downgrade"], reason: str) -> str:
             """Record the skeptic's verdict on one finding. 'downgrade' removes it from the accepted findings."""
             args = dict(finding_id=finding_id, verdict=verdict, reason=reason)
             return tb._run(role, "record_skeptic_verdict", {"finding_id": finding_id, "verdict": verdict},
-                           lambda: tb.record_skeptic_verdict(**args))
+                           lambda: tb.record_skeptic_verdict(**args), key_args=args)
 
         def submit_attribution(
             statement: str, account_used: str | None = None,
@@ -415,7 +458,7 @@ class CaseToolbox:
                         contrary_evidence_ids=contrary_evidence_ids, limits=limits, assumptions=assumptions,
                         named_person_accused=named_person_accused, named_person_exonerated=named_person_exonerated)
             return tb._run(role, "submit_attribution", {"account_used": account_used, "human_identity": human_identity},
-                           lambda: tb.submit_attribution(**args))
+                           lambda: tb.submit_attribution(**args), key_args=args)
 
         def finalize_report(summary: str, open_questions: list[str] | None = None) -> str:
             """Submit the report for human review. Execution pauses until a reviewer accepts or rejects it."""

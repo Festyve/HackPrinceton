@@ -340,7 +340,8 @@ def render_markdown(doc: dict[str, Any]) -> str:
         if s["status"] != "RUN" or not a:
             L.append(f"| **{s['id']}** | {s['label']} | **{s['status_detail']}** | 0 | — | — | — | — | — | — | — | — | — |")
             continue
-        L.append(f"| **{s['id']}** | {s['label']} | run, no model | {s['completed']}/{s['n_cases']} | {_r(a['step_recall'])} | "
+        how = "run, no model" if s.get("inference") != "LIVE_MODEL" else f"**live model** `{s.get('model_id')}`, pilot"
+        L.append(f"| **{s['id']}** | {s['label']} | {how} | {s['completed']}/{s['n_cases']} | {_r(a['step_recall'])} | "
                  f"{_r(a['incident_cases_fully_reconstructed'])} | {_r(a['final_precision'])} | {_r(a['proposal_precision'])} | "
                  f"{_r(a['coverup_detected'])} | {_r(a['account_identification'])} | {_r(a['benign_false_alert'])} | "
                  f"{_r(a['benign_raw_alert'])} ({a['raw_incident_proposals_in_benign_cases']} raw claims) | "
@@ -357,6 +358,37 @@ def render_markdown(doc: dict[str, Any]) -> str:
     L += [f"| {r['case_ref']} | {r[p['a']]} | {r[p['b']]} | {r['difference_in_effects_caught']:+d} |" for r in p["per_case"]]
     L += ["", f"{p['a']} caught more effects in {p['cases_a_better']} of {p['n']} incident cases, the same number in "
           f"{p['cases_equal']}, fewer in {p['cases_b_better']}. With n = {p['n']} this is a descriptive result.", ""]
+    pilot = doc.get("ai_pilot")
+    if pilot:
+        ms = pilot.get("model_settings") or {}
+        pp = pilot["paired"]
+        L += ["## AI pilot (real model)", "",
+              f"- Run `{pilot['run_id']}` at commit `{pilot['git_commit']}`"
+              + (" (**uncommitted source changes were present**)" if pilot.get("git_dirty") else "")
+              + f" · {pilot['system_runs_started']} system-runs started · evidence regenerated from the declared seeds.",
+              f"- Model: `{ms.get('lead_model')}` for lead and specialists · effort `{ms.get('effort')}` · caps per "
+              f"investigation: {ms.get('caps')} · human review: {ms.get('human_review')} · refusal fallback: {ms.get('refusal_fallback')}.",
+              "- B1+ is one agent with the same checks and evidence tools. ALIBI is the lead plus integrity-auditor and "
+              "skeptic. Same model, effort and budget. **n = 4 cases, one run each: descriptive only.**", "",
+              "| System | Completed | Stopped by budget | Errors | Effects caught | Final precision | Cover-ups | Account identified | "
+              "Benign false alerts | Unsupported named attributions | Model calls | Tokens in / out | Est. cost | Median time |",
+              "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+        for s in doc["systems"]:
+            a = s.get("aggregate")
+            if s.get("suite") != pilot["suite"] or not a:
+                continue
+            L.append(f"| **{s['id']}** | {s['completed']}/{s['n_cases']} | {s.get('censored', 0)} | {s['errors']} | {_r(a['step_recall'])} | "
+                     f"{_r(a['final_precision'])} | {_r(a['coverup_detected'])} | {_r(a['account_identification'])} | "
+                     f"{_r(a['benign_false_alert'])} | {a['unsupported_named_attribution']} | {a['llm_calls']} | "
+                     f"{a['tokens_in']:,} / {a['tokens_out']:,} | ${a['cost_estimate_usd']:.2f} | {a['median_wall_seconds']} s |")
+        L += ["", f"Paired, effects caught per incident case ({pp['a']} vs {pp['b']}):", "",
+              f"| Case | {pp['a']} | {pp['b']} | {pp['a']} − {pp['b']} |", "|---|---|---|---|"]
+        L += [f"| {r['case_ref']} | {r[pp['a']]} | {r[pp['b']]} | {r['difference_in_effects_caught']:+d} |" for r in pp["per_case"]]
+        L += ["", f"{pp['a']} caught more effects in {pp['cases_a_better']} of {pp['n']} incident cases, the same number in "
+              f"{pp['cases_equal']}, fewer in {pp['cases_b_better']}. Cost and time are the measured differences to weigh "
+              "against that. Estimated cost uses list prices with conservative cache multipliers; the provider's console is "
+              "the authority on actual spend.", ""]
+
     L += ["## Per case", "",
           "| Case | Group | Seed | Events | Scorable effects | System | Recall | Final precision | Raw proposals (incident) | "
           "Accepted | False final claims | Cover-up | Account | Benign false alert |", "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
@@ -366,7 +398,7 @@ def render_markdown(doc: dict[str, Any]) -> str:
         c = by_case[r["case_ref"]]
         if r["status"] != "completed":
             L.append(f"| {c['case_ref']} | {c['group']} | {c['seed']} | {c['events']} | {c['scorable_effects']} | {r['system_id']} | "
-                     f"ERROR: {r['error']} | | | | | | | |")
+                     f"{r['status'].upper()}: {r['error']} | | | | | | | |")
             continue
         s = r["score"]
         L.append(f"| {c['case_ref']} | {c['group']} | {c['seed']} | {c['events']} | {c['scorable_effects']} | {r['system_id']} | "
@@ -383,7 +415,14 @@ def render_markdown(doc: dict[str, Any]) -> str:
 def write_outputs(doc: dict[str, Any]) -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     RESULTS_PATH.write_text(json.dumps(doc, indent=1) + "\n", encoding="utf-8")
-    REPORT_MD.write_text(render_markdown(doc), encoding="utf-8")
+    write_report()
+
+
+def write_report() -> None:
+    """Regenerate docs/benchmark.md from the saved machine-readable results (offline + pilot if present)."""
+    doc = combined_results()
+    if doc is not None:
+        REPORT_MD.write_text(render_markdown(doc), encoding="utf-8")
 
 
 # --------------------------------------------------------------------------- AI pilot (needs a real runtime)
@@ -460,7 +499,18 @@ def run_ai_pilot(settings: Settings, *, runner_factory: Any = None, work_dir: Pa
                         report = verifier.verify_report(report, store, manifest)
                         report = lock_report(report, "skipped_for_benchmark", by_human=False)
                         row["censored"] = any(q.startswith("Incomplete run") for q in report.open_questions)
+                        row["stop_note"] = next((q for q in report.open_questions if q.startswith("Incomplete run")), None)
                         row["score"] = scoring.score_report(report, key, store).model_dump(mode="json")
+                        if runner_factory is None:  # real runs only: every result points at a saved, locked report
+                            tag = f"{case['case_ref']}-{system_id.replace('+', 'plus')}"
+                            (PILOT_DIR / "reports").mkdir(parents=True, exist_ok=True)
+                            (PILOT_DIR / "reports" / f"{tag}.report.json").write_text(report.model_dump_json(indent=1), encoding="utf-8")
+                            row["report_file"] = f"benchmarks/{PILOT_SUITE}/reports/{tag}.report.json"
+                            transcript = ctx.case_dir / "transcript.json"
+                            if transcript.exists():  # tool traces are kept locally (gitignored), not published
+                                (PILOT_DIR / "transcripts").mkdir(parents=True, exist_ok=True)
+                                (PILOT_DIR / "transcripts" / f"{tag}.transcript.json").write_text(
+                                    transcript.read_text(encoding="utf-8"), encoding="utf-8")
                 except ValueError:
                     raise  # a non-live result must never be recorded: stop the pilot loudly
                 except Exception as exc:  # noqa: BLE001 - provider errors are results too
@@ -485,8 +535,16 @@ def run_ai_pilot(settings: Settings, *, runner_factory: Any = None, work_dir: Pa
             "git_commit": _git_commit(), "git_dirty": _git_dirty(), "scorer_version": scoring.SCORER_VERSION,
             "evidence_origin": "SIM", "cases": case_rows, "systems": systems, "runs": runs,
             "paired": paired_differences(runs, "ALIBI", "B1+"), "system_runs_started": used,
-            "notes": [f"AI pilot: {len(cases)} predeclared cases x 2 systems. A smoke comparison, not a population "
-                      "estimate. B1+ and ALIBI share model settings and the per-case budget."]}
+            "model_settings": {"lead_model": settings.lead_model, "subagent_model": settings.subagent_model or settings.lead_model,
+                               "effort": settings.effort, "max_tokens_per_call": settings.max_tokens_per_call,
+                               "caps": {"max_calls": settings.caps.max_calls, "max_input_tokens": settings.caps.max_input_tokens,
+                                        "max_output_tokens": settings.caps.max_output_tokens, "max_seconds": settings.caps.max_seconds},
+                               "price_in_per_mtok": settings.price_in_per_mtok, "price_out_per_mtok": settings.price_out_per_mtok,
+                               "refusal_fallback": "off", "human_review": "skipped_for_benchmark"},
+            "notes": [f"AI pilot: {len(cases)} predeclared cases x 2 systems on the same model, effort and per-case budget. "
+                      "A smoke comparison with n = 4 per system, not a population estimate. One run per cell: model "
+                      "output varies between runs and that variance was not measured.",
+                      "B1 and B2 (the arms without the contradiction checks) were not run."]}
 
 
 def write_pilot(doc: dict[str, Any]) -> Path:
@@ -508,6 +566,7 @@ def combined_results(offline_path: Path | None = None, pilot_path: Path | None =
         ran = {s["id"]: s for s in pilot["systems"] if s["status"] == "RUN"}
         doc["systems"] = [ran.get(s["id"], s) for s in doc["systems"]]
         doc["runs"] = doc["runs"] + pilot["runs"]
-        doc["notes"] = doc["notes"] + pilot["notes"]
-        doc["ai_pilot"] = {k: pilot[k] for k in ("suite", "run_id", "generated_at", "git_commit", "paired", "system_runs_started")}
+        doc["notes"] = [n for n in doc["notes"] if not (ran and n.startswith("AI arms were not run"))] + pilot["notes"]
+        doc["ai_pilot"] = {k: pilot.get(k) for k in ("suite", "run_id", "generated_at", "git_commit", "git_dirty", "paired",
+                                                     "system_runs_started", "model_settings", "cases")}
     return doc

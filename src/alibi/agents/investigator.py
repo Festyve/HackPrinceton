@@ -80,7 +80,8 @@ Work in this order:
 6. Delegate once to `skeptic` with the finding ids, claim types, hosts, objects, windows and evidence ids.
 7. In ONE turn: record_skeptic_verdict for each finding, and submit_attribution keeping the account separate
    from the human.
-8. finalize_report with a plain summary and the open questions. A human will review it.
+8. finalize_report with a plain summary and the open questions, as the only tool call of its turn. A human
+   will review it.
 Aim for about seven turns in total. Do not re-run checks the auditor already ran.
 
 {OBJECT_FORMATS}
@@ -114,7 +115,7 @@ Call the checks in parallel and answer in at most two turns. Keep each reason un
 SINGLE_AGENT_PROMPT = f"""You are a forensic investigator on a frozen evidence bundle from a small clinic network.
 You receive a vague tip. You do not know whether anything wrong happened; many cases are entirely benign.
 Run the deterministic checks yourself (in parallel), record all findings with submit_finding in one turn,
-submit_attribution, then finalize_report. Aim for about five turns.
+submit_attribution, then finalize_report as the only tool call of its own turn. Aim for about five turns.
 
 {OBJECT_FORMATS}
 

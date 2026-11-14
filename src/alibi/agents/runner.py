@@ -136,6 +136,8 @@ class AgentRunner:
                 raise Cancelled()
             state = graph.get_state(self._config(ctx))
             awaiting = bool(state.next)
+            if awaiting:
+                self._apply_calls_held_by_review(ctx, toolbox, state.values.get("messages") or [])
             if not awaiting and stop_reason is None and not toolbox.finalized:
                 stop_reason = "the investigator ended without requesting review"
             self._export_notes(ctx, state.values.get("files") or {})
@@ -146,6 +148,16 @@ class AgentRunner:
                            "summary": stop_reason or f"{len(toolbox.findings)} finding(s) submitted for review"})
         wall = max(0.0, time.perf_counter() - t0 - ctx.paced_seconds)
         return self._report(ctx, toolbox, ledger, wall, stop_reason)
+
+    def _apply_calls_held_by_review(self, ctx: RunContext, toolbox: CaseToolbox, messages: list[Any]) -> None:
+        """If the model batched report tools with finalize_report, apply them so the draft is complete."""
+        last = next((m for m in reversed(messages) if isinstance(m, AIMessage)), None)
+        if last is None or not any(tc["name"] == "finalize_report" for tc in last.tool_calls):
+            return
+        role = "lead-investigator" if self.architecture == "alibi" else "single-agent"
+        for tc in last.tool_calls:
+            if tc["name"] != "finalize_report":
+                toolbox.apply_pending(role, tc["name"], dict(tc.get("args") or {}))
 
     def _observe(self, ctx: RunContext, toolbox: CaseToolbox, msg: Any, pending_tasks: dict[str, str]) -> None:
         """Turn graph updates into audience events. Only real tool calls are reported."""

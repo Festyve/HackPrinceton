@@ -32,3 +32,6 @@ web/.vite/
 # test/browser output
 test-results/
 playwright-report/
+
+# raw model tool traces from benchmark runs stay local
+benchmarks/*/transcripts/

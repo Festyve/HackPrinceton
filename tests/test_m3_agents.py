@@ -476,3 +476,80 @@ def test_a_model_refusal_is_recorded_and_surfaced_not_retried_or_rerouted():
     assert "cyber" in str(err.value)
     assert (led.state["llm_calls"], led.state["refusals"], led.state["errors"]) == (1, 1, 1)
     assert led.state["tokens_in"] == 500  # a refused call is still accounted for
+
+
+class _Batcher(BaseChatModel):
+    """TEST DOUBLE: a single agent that submits its attribution in the same turn as finalize_report."""
+
+    turns: list = []
+
+    @property
+    def _llm_type(self) -> str:
+        return "batcher-test-double"
+
+    def bind_tools(self, tools, **kw):
+        return self
+
+    def _generate(self, messages, stop=None, run_manager=None, **kw) -> ChatResult:
+        n = sum(isinstance(m, AIMessage) for m in messages)
+        if n < len(self.turns):
+            calls = [{"name": name, "args": args, "id": f"b-{n}-{i}", "type": "tool_call"} for i, (name, args) in enumerate(self.turns[n])]
+            return ChatResult(generations=[ChatGeneration(message=AIMessage(content="", tool_calls=calls))])
+        return ChatResult(generations=[ChatGeneration(message=AIMessage(content="acknowledged"))])
+
+
+def test_report_tools_batched_with_finalize_are_in_the_draft_and_not_run_twice(coverup, store_for):
+    st, events = store_for(coverup), []
+    key = load_answer_key(coverup)
+    br = run_br(st, load_manifest(coverup))
+    transfer = next(f for f in br.findings if f.claim_type == "policy_violating_transfer")
+    finding_args = {"claim_type": transfer.claim_type, "category": transfer.category, "host": transfer.host,
+                    "t_start": transfer.t_start.isoformat(), "t_end": transfer.t_end.isoformat(),
+                    "object_or_session": transfer.object_or_session, "evidence_ids": transfer.evidence_ids,
+                    "rationale": "bulk transfer to a destination that is not approved"}
+    attribution_args = {"statement": "Account used; human operator not established.",
+                        "account_used": key.attribution.account_used, "human_identity": "insufficient_evidence"}
+    turns = [[("check_transfer_sessions", {})],
+             [("submit_finding", finding_args), ("submit_attribution", attribution_args),
+              ("finalize_report", {"summary": "one supported allegation", "open_questions": []})]]
+    runner = AgentRunner("agent-fixture", SETTINGS, architecture="single-agent")
+    runner._models = lambda ledger: {"lead-investigator": gateway.wrap(_Batcher(turns=turns), ledger, "lead-investigator")}  # type: ignore[method-assign]
+    ctx = _ctx(coverup, st, events, case_id=f"t-batch-{uuid.uuid4().hex[:6]}")
+    report = runner.run(ctx)
+    # the review pause held the whole turn, yet the draft a human reviews is complete
+    assert report.attribution.account_used == key.attribution.account_used
+    assert report.attribution.human_identity == "insufficient_evidence" and len(report.findings) == 1
+    assert report.summary == "one supported allegation"
+    box = CaseToolbox(st, ctx.manifest, ctx.case_dir / "draft_state.json")
+    assert box.finalized is False  # finalize_report itself was NOT applied: it still needs the reviewer
+    n_before = [d["tool"] for t, d in events if t == "tool"]
+    assert n_before.count("submit_attribution") == 1 and n_before.count("submit_finding") == 1
+    runner2 = AgentRunner("agent-fixture", SETTINGS, architecture="single-agent")
+    runner2._models = runner._models  # type: ignore[method-assign]
+    runner2.resume(ctx, "accept")
+    after = [d["tool"] for t, d in events if t == "tool"]
+    assert after.count("submit_attribution") == 1 and after.count("submit_finding") == 1  # not run or reported twice
+    assert after[-1] == "finalize_report"
+    assert CaseToolbox(st, ctx.manifest, ctx.case_dir / "draft_state.json").finalized is True
+
+
+def test_object_format_is_enforced_for_incident_allegations(coverup, store_for):
+    from alibi.agents.tools import check_object_format
+
+    for claim, good in (("local_log_removal", "/var/log/auth.log"), ("data_staging", "/home/a/Downloads/x.db"),
+                        ("policy_violating_transfer", "10.20.9.87:8080"), ("policy_violating_transfer", "workstation#91")):
+        check_object_format(claim, "incident_allegation", good)
+    for claim, bad in (("local_log_removal", "/var/log/auth.log line seq 35 (session opened)"),
+                       ("data_staging", "/home/a/x.db (20944103 bytes)"),
+                       ("policy_violating_transfer", "xfer-2 10.20.1.21 -> 10.20.9.87:8080")):
+        with pytest.raises(ValueError) as err:
+            check_object_format(claim, "incident_allegation", bad)
+        assert "must be exactly" in str(err.value)
+    check_object_format("collection_gap", "unresolved", "anything goes for notes")
+    box = CaseToolbox(store_for(coverup), load_manifest(coverup))
+    tool = next(t for t in box.tools_for("lead-investigator") if t.name == "submit_finding")
+    out = json.loads(tool.invoke({"claim_type": "policy_violating_transfer", "category": "incident_allegation",
+                                  "host": "workstation", "t_start": "2026-11-10T12:00:00+00:00",
+                                  "t_end": "2026-11-10T12:01:00+00:00", "evidence_ids": [], "rationale": "x",
+                                  "object_or_session": "sent to 10.20.9.87 over port 8080"}))
+    assert "must be exactly the destination as IP:PORT" in out["error"] and box.findings == {}

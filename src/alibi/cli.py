@@ -215,6 +215,7 @@ def _cmd_pilot(args: argparse.Namespace) -> int:
         print(f"{exc}\nNo model call was made.", file=sys.stderr)
         return 2
     out = bench.write_pilot(doc)
+    bench.write_report()
     for s in doc["systems"]:
         a = s["aggregate"]
         print(f"  {s['id']:<6} completed {s['completed']}/{s['n_cases']} errors {s['errors']} censored {s['censored']} "
