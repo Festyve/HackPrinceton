@@ -48,3 +48,15 @@ Bytes are copied verbatim and made read-only. Lines a parser does not understand
 ## For a capture that needs new parsing
 
 Formats the normalizer does not read need their own parser. Add it with the capture code, reuse `load_capture` for the manifest and file checks, and hand the frozen episode to `Orchestrator.import_case` or build the case the same way it does. A controlled capture that has a trusted record of what its fixture did can supply scoped ground truth later; until that is designed, imported evidence is unscored rather than given an invented answer key.
+
+## Paste into the capture agent
+
+```text
+Deliver captured evidence that ALIBI can import. Read docs/importing.md and docs/next-run/DANIEL.md. You own capture/, src/alibi/capture/, tests/test_capture*.py, docs/capture.md and your fixtures; do not edit src/alibi/importing.py, contracts.py, the orchestrator, the API or the CLI. Ask Eric for a schema change instead.
+
+The receiving side already exists: `uv run alibi import <directory>` takes a directory of original raw files plus capture.json (format alibi-capture/1, described in docs/importing.md), checks every path, size and SHA-256, copies the bytes verbatim and creates an unscored case. Your capture only has to produce such a directory. `alibi.importing.write_capture_manifest()` writes capture.json from files on disk; pass origin "DOCKER" only for artifacts a real process in a container produced, and state coverage_start, coverage_end and known_gaps where collection started late or paused.
+
+Lay artifacts out at locations the normalizer reads (listed in docs/importing.md). If your process logs in another format, add the parser in src/alibi/capture/ and tell Eric the entry point; do not rewrite the raw files to look like simulator output. Keep the record of what your fixture did (which line it removed, when) on your side, outside the capture directory: capture.json is refused if it carries anything that looks like ground truth.
+
+Commit a small captured fixture directory (complete, missing-local-record, benign-gap), tests that import each one, and docs/capture.md with the exact commands. Push codex/daniel-capture.
+```
