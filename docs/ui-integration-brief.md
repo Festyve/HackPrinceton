@@ -2,7 +2,7 @@
 
 For whoever owns `web/`. The backend routes below exist on `codex/alibi-build` and `codex/eric-phase2`, are tested, and return the payloads saved in [`docs/api-examples/`](api-examples/). The full reference is [`docs/api.md`](api.md). Nothing here needs a backend change; ask Eric if a field is missing instead of inventing one in a component.
 
-**A working version of items 1 to 5 and 9 is on the branch `codex/eric-ui-wiring`** (one new file, `web/src/phase2.tsx`, small mounts in `App.tsx`, `workbench.tsx` and `panels.tsx`, styles appended, seven browser tests in `tests/test_browser_phase2.py`). Take it, change it or replace it; it is not merged into `codex/alibi-build`.
+**A working version of all nine items is on the branch `codex/eric-ui-wiring`** (one new file, `web/src/phase2.tsx`, small mounts in `App.tsx`, `workbench.tsx`, `panels.tsx` and `bench.tsx`, styles appended, ten browser tests in `tests/test_browser_phase2.py`; three assertions in `tests/test_browser.py` that pinned the old placeholders are changed there). Take it, change it or replace it; it is not merged into `codex/alibi-build`.
 
 The merged interface currently shows two honest placeholders: `question-composer` ("Open-ended questions are unavailable in this server version") in `web/src/workbench.tsx`, and `source-experiment-unavailable`. Both can now become real.
 

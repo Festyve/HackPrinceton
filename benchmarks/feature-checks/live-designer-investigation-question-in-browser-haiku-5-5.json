@@ -1,0 +1,105 @@
+{
+ "kind": "feature-check",
+ "what": "through the built case board (browser), on a real model: design an environment, generate a case in it with nothing placed by the operator, investigate it in fast mode, ask one question, unseal",
+ "note": "One run. A feature check, not an evaluation result: it shows what happened once. The interface is the UI fallback on branch codex/eric-ui-wiring, which is not merged into the default branch.",
+ "generated_at": "2026-11-14T13:24:54.968808+00:00",
+ "ui_branch": "codex/eric-ui-wiring",
+ "ui_commit": "b172bb0",
+ "backend_commit": "47c4fd7",
+ "browser": "Google Chrome, headless, driven by Playwright",
+ "model": "anthropic:claude-haiku-5-5",
+ "mode_selected_by_default": "fast",
+ "design": {
+  "seconds": 1.8,
+  "label": "Environment chosen by a model (anthropic:claude-haiku-5-5) from fixed options. It planned no incident; any incident steps are a pre-authored scripted scenario.",
+  "preview": [
+   "Shared workstation: a normal day.",
+   "Routine condition: an extra scheduled log rotation that discards the older log generation, in the midday.",
+   "No incident is part of a design. An operator may place a pre-authored, scripted incident scenario in this environment; that choice is not made by the model."
+  ],
+  "operator_choice": "none"
+ },
+ "investigation": {
+  "seconds_in_the_browser": 24.3,
+  "state": "Awaiting review",
+  "badges": [
+   "Live model",
+   "Simulated evidence",
+   "LIVE \u00b7 fresh case"
+  ],
+  "mode": "Fast investigation \u00b7 one agent",
+  "model": "anthropic:claude-haiku-5-5",
+  "title": "Designed environment \u00b7 exercise 1",
+  "seed_shown": 1,
+  "findings": [
+   {
+    "claim_type": "retention_explained_absence",
+    "category": "benign_explanation",
+    "status": "verified"
+   },
+   {
+    "claim_type": "retention_explained_absence",
+    "category": "benign_explanation",
+    "status": "verified"
+   },
+   {
+    "claim_type": "policy_consistent_transfer",
+    "category": "benign_explanation",
+    "status": "proposed"
+   },
+   {
+    "claim_type": "policy_consistent_transfer",
+    "category": "benign_explanation",
+    "status": "verified"
+   }
+  ],
+  "incident_allegations_accepted": 0,
+  "person_named": null,
+  "human_identity": "insufficient_evidence",
+  "usage": {
+   "llm_calls": 6,
+   "tokens_in": 131914,
+   "tokens_out": 5265,
+   "cost_estimate_usd": 0.007711,
+   "wall_seconds": 23.401
+  },
+  "error": null
+ },
+ "question": {
+  "seconds_in_the_browser": 6.9,
+  "status": "answered",
+  "heading": "Did any bulk transfer in this evidence go to a destination that is not approved? | Live model | Answered",
+  "answer_first_words": "No. In this bundle, the only flow at or above the 5 MB bulk threshold is an 18.2 MB transfer from records to 10.20.0.45:873 (stor-nas-01), which is on the approved list. No bulk transfer to an unapproved destination appears. Workstation curl uploads to lab-gw-",
+  "claims_by_support": {
+   "checked": 1,
+   "cited": 2,
+   "interpretation": 0,
+   "contradicted": 0,
+   "unsupported": 0
+  },
+  "usage": {
+   "llm_calls": 3,
+   "tokens_in": 26197,
+   "tokens_out": 1385,
+   "cost_estimate_usd": 0.002041
+  }
+ },
+ "after_unsealing": {
+  "case_kind": "benign",
+  "plan_label": "Scripted scenario \u00b7 no model chose these steps",
+  "environment_source": "model_designed",
+  "operator_placed": "none",
+  "incident_steps_chosen_by_model": false,
+  "benign_false_alert": false,
+  "unsupported_accepted_allegations": 0
+ },
+ "spend_ledger": {
+  "before_usd": 3.628263,
+  "after_usd": 3.638866,
+  "calls_before": 621,
+  "calls_after": 632,
+  "reserved_after_usd": 0,
+  "unreconciled_after_usd": 0.0
+ },
+ "browser_console_errors": []
+}
