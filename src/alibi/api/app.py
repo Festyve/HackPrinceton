@@ -378,6 +378,12 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
     def source_experiment(case_id: str) -> dict:
         return orch.source_experiment(case_id)
 
+    @app.get("/api/cases/{case_id}/trace")
+    def investigation_trace(case_id: str) -> dict:
+        """The investigation as recorded: the plan and each change to it, every tool call, each delegation, and the
+        case file's writes and reads. Built from the event log; summaries are the tools' own, not model thoughts."""
+        return orch.investigation_trace(case_id)
+
     # ------------------------------------------------------------------ worker lab
     @app.get("/api/lab/options")
     def lab_options() -> dict:
