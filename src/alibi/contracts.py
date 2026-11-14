@@ -278,6 +278,7 @@ class EvidencePointer(Strict):
     artifact_logical: str  # e.g. "workstation:/var/log/auth.log", "tap:flows", "collector"
     raw_sha256: str  # sha256 of the exact raw line as generated
     role: Literal["direct", "collector_copy", "removed_local"] = "direct"
+    ts: datetime | None = None
 
 
 class TruthEffect(Strict):
