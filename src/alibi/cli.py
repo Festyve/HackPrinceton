@@ -266,6 +266,47 @@ def _cmd_calibrate(args: argparse.Namespace) -> int:
     return 0 if doc["passed"] else 1
 
 
+def _cmd_eval(args: argparse.Namespace) -> int:
+    """The phase-two paired evaluation: declare, check, preflight (none of which call a model) or run."""
+    from alibi import evaluation
+    from alibi.runners import RuntimeBlocked
+
+    settings = load_settings()
+    try:
+        if args.declare:
+            print(f"declared: {evaluation.declare()}")
+            return 0
+        if args.check:
+            problems = evaluation.check_config()
+            for line in problems:
+                print(f"error: {line}", file=sys.stderr)
+            print("the declaration matches the code" if not problems else "the declaration and the code disagree")
+            return 1 if problems else 0
+        if args.preflight:
+            print(json.dumps(evaluation.preflight(settings), indent=2))
+            return 0
+        if args.dev_check:
+            doc = evaluation.run(settings, cases=evaluation.DEV_CASES, suite="paired-v2-dev", ceiling_usd=0.25)
+        elif args.run:
+            doc = evaluation.run(settings)
+            evaluation.REPORT_MD.write_text(evaluation.render_markdown(doc), encoding="utf-8")
+        else:
+            print("choose one of --declare, --check, --preflight, --dev-check, --run", file=sys.stderr)
+            return 2
+    except RuntimeBlocked as exc:
+        print(f"{exc}\nNo model call was made.", file=sys.stderr)
+        return 2
+    for r in doc["runs"]:
+        s = r["score"] or {}
+        rec = s.get("step_recall") or {}
+        u = s.get("usage") or {}
+        print(f"  {r['case_ref']} {r['system_id']:<6} {r['status']:<10} effects {rec.get('num')}/{rec.get('den')} "
+              f"accepted {s.get('final_accepted_incident')} raw {s.get('proposals_incident')} calls {u.get('llm_calls')} "
+              f"cost ${u.get('cost_estimate_usd')}" + (f"  [{r['stop_note'] or r['error']}]" if r.get("stop_note") or r.get("error") else ""))
+    print(f"suite {doc['suite']} run {doc['run_id']} · estimated cost ${doc['spend']['estimated_cost_usd']} · {doc['result_dir']}")
+    return 0
+
+
 def _cmd_pilot(args: argparse.Namespace) -> int:
     from alibi import bench
     from alibi.runners import RuntimeBlocked
@@ -346,7 +387,15 @@ def build_parser() -> argparse.ArgumentParser:
                    help="agent-fixture exercises the harness offline with the scripted policy (no model)")
     p.set_defaults(func=_cmd_calibrate)
 
-    p = sub.add_parser("pilot", help="the predeclared 8-system-run AI pilot (refused without a zero-charge runtime)")
+    p = sub.add_parser("eval", help="the phase-two paired evaluation: six systems, four new cases, no verifier feedback")
+    p.add_argument("--declare", action="store_true", help="write docs/evaluation-config-v2.json (before any run)")
+    p.add_argument("--check", action="store_true", help="verify the declaration still matches the code")
+    p.add_argument("--preflight", action="store_true", help="worst-case cost and limits; no model call")
+    p.add_argument("--dev-check", action="store_true", help="one development case through the four AI arms (not a result)")
+    p.add_argument("--run", action="store_true", help="run the declared matrix and write an immutable result directory")
+    p.set_defaults(func=_cmd_eval)
+
+    p = sub.add_parser("pilot", help="(refused: the first-run pilot is complete and kept as recorded)")
     p.set_defaults(func=_cmd_pilot)
 
     p = sub.add_parser("serve", help="serve the API and the built case board on localhost")
