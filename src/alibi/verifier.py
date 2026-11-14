@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any
 
-from alibi import checks
+from alibi import checks, checks_families
 from alibi.contracts import EvidenceManifest, Finding, InvestigationReport
 from alibi.evidence.store import EvidenceStore
 
@@ -37,6 +37,7 @@ class Observations:
     removal: list[dict[str, Any]] = field(default_factory=list)
     retention_ids: set[str] = field(default_factory=set)
     gap_ids: dict[str, dict[str, Any]] = field(default_factory=dict)
+    families: dict[str, Any] = field(default_factory=dict)  # phase-two observations; empty for first-run bundles
 
 
 def compute_observations(store: EvidenceStore, manifest: EvidenceManifest) -> Observations:
@@ -50,6 +51,7 @@ def compute_observations(store: EvidenceStore, manifest: EvidenceManifest) -> Ob
     for g in rec["heartbeat_gaps"]:
         obs.gap_ids[g["before_event_id"]] = g
         obs.gap_ids[g["after_event_id"]] = g
+    obs.families = checks_families.observations(store, manifest)
     return obs
 
 
@@ -65,6 +67,8 @@ def _staged_ids(so: dict[str, Any]) -> set[str]:
 
 def _predicate(f: Finding, cited: set[str], obs: Observations) -> tuple[str, str]:
     """Return (verdict, note) with verdict in supported | rejected | unresolved."""
+    if f.claim_type in checks_families.INCIDENT_CLAIMS:  # phase-two claim types have their own predicates
+        return checks_families.predicate(f, cited, obs.families)
     if f.claim_type == "local_log_removal":
         hits = [o for o in obs.removal if o["host"] == f.host and o["collector_event_id"] in cited]
         if hits:
@@ -104,6 +108,10 @@ def _predicate(f: Finding, cited: set[str], obs: Observations) -> tuple[str, str
         staged = [(t, t["staged_object"]) for t in rows if t["staged_object"]]
         hits = [(t, so) for t, so in staged if _staged_ids(so) & cited]
         if not hits:
+            # phase two: an object whose modification time was changed is identified by independent arrival records
+            alt = checks_families.staging_predicate(f, cited, obs.families)
+            if alt is not None:
+                return alt
             return "unresolved", "no cited record belongs to an object staged on this host ahead of a bulk transfer"
         bad = [(t, so) for t, so in hits if t["policy_status"] == "not_approved"]
         if not bad:
@@ -118,6 +126,8 @@ def _predicate(f: Finding, cited: set[str], obs: Observations) -> tuple[str, str
 
 def _note_predicate(f: Finding, cited: set[str], obs: Observations) -> bool:
     """Predicates for non-allegation notes (benign explanations, unresolved anomalies)."""
+    if f.claim_type in checks_families.NOTE_CLAIMS:
+        return checks_families.note_predicate(f, cited, obs.families)
     if f.claim_type == "retention_explained_absence":
         return bool(cited & obs.retention_ids)
     if f.claim_type == "policy_consistent_transfer":

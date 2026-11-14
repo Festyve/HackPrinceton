@@ -152,6 +152,16 @@ ClaimType = Literal[
     "policy_consistent_transfer",
     "account_use",
     "other",
+    # --- phase two (additive): remaining case families and bounded steps
+    "timestamp_alteration",  # a file's recorded modification time contradicts independent records
+    "forwarding_stopped",  # log forwarding stopped by a recorded command outside approved maintenance
+    "second_host_session",  # a session on one host opened from another monitored host, outside access policy
+    "sensor_stream_discrepancy",  # a local sensor stream disagrees with its independent reference
+    "shell_history_gap",  # note: recorded activity with no matching shell-history command
+    "metadata_change",  # note: a file's metadata changed after its recorded modification time
+    "temperature_excursion",  # note: readings outside the stated range, in agreement across sources
+    "sensor_maintenance",  # note: a discrepancy inside a stated maintenance or clock condition
+    "policy_consistent_access",  # note: cross-host access or a forwarding stop covered by a change record
 ]
 FindingCategory = Literal[
     "incident_allegation",  # asserts a scorable incident effect occurred
@@ -172,6 +182,10 @@ INCIDENT_CLAIM_TYPES: tuple[str, ...] = (
     "local_log_removal",
     "policy_violating_transfer",
     "data_staging",
+    "timestamp_alteration",
+    "forwarding_stopped",
+    "second_host_session",
+    "sensor_stream_discrepancy",
 )
 
 
@@ -280,7 +294,12 @@ class InvestigationReport(Strict):
 
 # --------------------------------------------------------------------------- private truth
 
-EffectType = Literal["data_staging", "policy_violating_transfer", "local_log_removal"]
+EffectType = Literal[
+    "data_staging", "policy_violating_transfer", "local_log_removal",
+    # --- phase two (additive)
+    "timestamp_alteration", "forwarding_stopped", "second_host_session", "sensor_stream_discrepancy",
+    "shell_history_removal",  # never observable in a capture: shell history has no independent copy
+]
 ExecutionStatus = Literal["succeeded", "failed", "partial"]
 
 

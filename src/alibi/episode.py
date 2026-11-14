@@ -48,7 +48,8 @@ from alibi.sim.scenario import CARDS, SCENARIO_VERSION, SimOutput, build_spec, o
 from alibi.sim.world import SIMULATOR_VERSION, sha256_text
 
 _ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{2,63}$")
-INDEPENDENT_KINDS = {"collector", "flow", "badge"}
+INDEPENDENT_KINDS = {"collector", "flow", "badge", "reference"}  # "reference": the cold-chain reference logger
+LOGIN_STEPS = ("login_as", "login_remote")  # the step that establishes which account a plan used
 
 
 class EpisodeError(RuntimeError):
@@ -185,6 +186,8 @@ def build_answer_key(episode_id: str, sim: SimOutput, canary: str, executed_plan
                 effect_id=effect_id, step_id=step_id, effect_type=r.effect_type, host=r.host,
                 object=r.affected_object or "", session=r.affected_session,
                 t_start=r.effect_window[0], t_end=r.effect_window[1],
+                # an effect no captured source can show is recorded but never scored
+                observable=getattr(r, "observable", True), unobservable_reason=getattr(r, "unobservable_reason", None),
                 evidence=[EvidencePointer(artifact_logical=t.artifact_logical, raw_sha256=sha256_text(t.raw),
                                           role=t.role, ts=t.ts) for t in r.traces],
             ))
@@ -201,7 +204,7 @@ def build_answer_key(episode_id: str, sim: SimOutput, canary: str, executed_plan
     if spec["case_kind"] == "incident":
         # Truth is what was executed: the account comes from the login step that actually succeeded,
         # not from what the scenario or a planning model intended.
-        logins = [r for r in sim.step_results if r.step == "login_as" and r.status == "succeeded"]
+        logins = [r for r in sim.step_results if r.step in LOGIN_STEPS and r.status == "succeeded"]
         used = logins[0].account_used if logins else None
         attribution = AttributionTruth(
             account_used=used, account_owner_person=f"person:{used}" if used else None,
@@ -266,6 +269,10 @@ def create_episode(*, seed: int, variant: str, runs_dir: Path, sealed_dir: Path,
             note = f"rotated generation .{gen} still present on the host at capture"
         elif kind == "flow":
             note = "simulated flow records from the tap position; not a packet capture"
+        elif kind == "reference":
+            note = "independent reference logger with its own probe and clock (not network-synchronised)"
+        elif kind == "sensor":
+            note = "readings as stored on the hub (the stream a dashboard shows); writable on the hub"
         sources.append(SourceInfo(
             artifact=artifact, host=role, source={"history": "shell_history"}.get(kind, kind), logical_file=logical,
             sha256=file_hashes[artifact], size_bytes=(paths.raw / artifact).stat().st_size,

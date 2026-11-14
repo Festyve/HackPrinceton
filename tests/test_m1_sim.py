@@ -248,7 +248,10 @@ def test_scripted_plans_pass_their_own_validation():
 
 def test_step_library_exposes_no_shell_or_code_execution():
     names = {n[4:] for n in dir(S.StepExecutor) if n.startswith("_do_")}
-    assert names == {"login_as", "stage_copy", "exfil_http", "delete_log_lines"}
+    assert names == {"login_as", "stage_copy", "exfil_http", "delete_log_lines",
+                     # phase two: still fixed state changes in the simulated world, nothing executable
+                     "login_remote", "export_dump", "second_host_session", "stop_forwarder", "clear_history",
+                     "timestomp", "falsify_readings"}
     src = (S.__file__ and open(S.__file__).read()) or ""
     for forbidden in ("subprocess", "os.system", "eval(", "exec(", "socket", "requests", "urllib", "httpx"):
         assert forbidden not in src, forbidden

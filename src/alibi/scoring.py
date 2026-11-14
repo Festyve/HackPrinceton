@@ -36,7 +36,10 @@ from alibi.verifier import is_accepted
 SCORER_VERSION = "1.0.0"
 TOLERANCE_S = 120
 MAX_WINDOW_S = 1800
-ANTI_FORENSIC_EFFECTS = ("local_log_removal",)
+ANTI_FORENSIC_EFFECTS = ("local_log_removal",
+                         # phase two: these effect types do not occur in a first-run case
+                         "timestamp_alteration", "forwarding_stopped")
+LOGIN_STEP_NAMES = ("login_as", "login_remote")
 _IP = re.compile(r"(\d+\.\d+\.\d+\.\d+)")
 
 
@@ -192,6 +195,9 @@ def score_report(report: InvestigationReport, key: AnswerKey, store: EvidenceSto
 
     if benign:
         account_ok, account_na = None, "no incident occurred; account identification is not applicable"
+    elif not any(s.step_name in LOGIN_STEP_NAMES for s in key.steps):
+        # phase two: an incident whose executed steps involved no account at all (e.g. a stored sensor record)
+        account_ok, account_na = None, "no account was used in the executed steps; account identification is not applicable"
     else:
         account_ok = report.attribution.account_used is not None and \
             report.attribution.account_used == key.attribution.account_used
