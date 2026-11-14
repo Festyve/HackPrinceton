@@ -3,7 +3,7 @@
 > Times are America/New_York. Entries record concrete check results, not intentions.
 > Status vocabulary: **OFFLINE-READY**, **AI-READY**, **INCOMPLETE** (PLAN §14).
 
-## Current state — second run, Saturday November 14, 14:40 ET
+## Current state — second run, Saturday November 14, 14:05 ET
 
 This block is the handoff. Everything below it is the build history, oldest first.
 
@@ -14,7 +14,7 @@ This block is the handoff. Everything below it is the build history, oldest firs
 | Demo selection | Recorded replays. For the pitch: **Inside job · cover-up** recorded on Claude Opus 5.5 (specialist mode) or on Claude Haiku 5.5 (fast mode, with two recorded question answers). Also recorded on Haiku: **Records heist** and **Cold chain**. No key or network needed. |
 | Model in use | `anthropic:claude-haiku-5-5`, effort low, for every role. Opus 5.5 recordings and pilot are from the first run and unchanged. |
 | Spend | Estimated **$3.652** of the **$20** cap across both runs (650 model calls). This run: about **$0.73**. Reserved: $0. Unreconciled: $0. Automatic calls stop at $19.50. `uv run alibi spend`. |
-| Tests | `uv run pytest` → **474 passed, none failed or skipped** at `4883834` (14:10): 453 offline, 21 in headless Chrome. Of the offline ones, 22 are on captured evidence. The UI fallback branch `codex/eric-ui-wiring` at `1b9216d`, with the capture work merged in, passes **494** in a separate clone with no `.env` (453 offline, 41 in headless Chrome, one of them on a captured case). A fresh clone of the default branch at `c0cf94e` (07:50) installed, built, passed every test and served the recorded demo with no key and no `.env`; that check has not been repeated since the capture merge. |
+| Tests | `uv run pytest` → **474 passed, none failed or skipped** at `4883834` (13:44): 453 offline, 21 in headless Chrome. Of the offline ones, 22 are on captured evidence. The UI fallback branch `codex/eric-ui-wiring` at `1b9216d`, with the capture work merged in, passes **494** in a separate clone with no `.env` (453 offline, 41 in headless Chrome, one of them on a captured case). A fresh clone of the default branch at `c0cf94e` (07:50) installed, built, passed every test and served the recorded demo with no key and no `.env`; that check has not been repeated since the capture merge. |
 | Recordings | `demo/replays/`: 4 real-model runs (1 Opus, 3 Haiku) and 2 scripted-fixture runs. All six reproduce their evidence byte for byte and replay offline. |
 | Measured results | `benchmarks/offline-v1`, `benchmarks/ai-pilot-v1` (first run, frozen); `benchmarks/paired-v2` and `benchmarks/paired-v2-rep1` (this run's evaluation and its replication; summary in `docs/evaluation-summary.md`); `benchmarks/paired-v2-repeat1` (eight cells run a second time; `docs/evaluation-v2-repeat1.md`); `benchmarks/calibration`, `benchmarks/feature-checks`, `benchmarks/paired-v2-dev` (operational checks). |
 
@@ -444,7 +444,7 @@ Phase-two model spend so far: about **$0.08** (ledger total $3.006 of the $20 ca
 - After the review fixes, one more real-model question was asked through the fallback interface in Chrome (the request now returns at once and the answer is polled): answered in 8.1 s, labeled "Live model", 3 claims confirmed by a check, 1 cited, 1 marked as interpretation; est. $0.0022. Ledger: $3.641080, 634 calls, nothing reserved or unreconciled.
 - A separate clone of the fallback branch (the reviewer's scratch clone, no `.env`, updated by `git pull` to `950829c`): build, then **471 tests passed, none failed or skipped**.
 
-### Captured evidence merged and integrated (12:06–14:40)
+### Captured evidence merged and integrated (12:06–14:05)
 
 - 12:06 `codex/daniel-capture` appeared with no commits of its own. 12:25 Daniel pushed `ce01304`: a disposable Docker capture (a test application and an independent collector), three frozen bundles (complete, missing-local-record, benign-gap), their tests and `docs/capture.md`. It touches only Daniel's paths. Read in full before merging. Merged unchanged as `f6e3dda` after his 35 capture and import tests and the whole offline suite passed on the merged tree.
 - Offline, through the pipeline: each bundle imports as DOCKER evidence, unscored; the deterministic runner reports one verified `local_log_removal` on missing-local-record and nothing on the other two; unsealing is refused (no answer key); review and export work; without the collector the removal claim can no longer be established.
