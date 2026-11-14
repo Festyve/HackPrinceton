@@ -1,0 +1,71 @@
+{
+ "kind": "feature-check",
+ "what": "one question asked through the built case board (browser), answered by a real model, on a recorded case",
+ "note": "One run. A feature check, not an evaluation result: it shows what happened once. The interface is the UI fallback on branch codex/eric-ui-wiring, which is not merged into the default branch.",
+ "generated_at": "2026-11-14T12:56:12.694935+00:00",
+ "ui_branch": "codex/eric-ui-wiring",
+ "ui_commit": "98a90a8",
+ "backend_commit": "fb8f9ff",
+ "browser": "Google Chrome, headless, driven by Playwright",
+ "case": {
+  "recording": "hero-coverup-fast-haiku-5-5",
+  "case_badge_before": "Recorded AI run",
+  "case_badge_after": "Recorded AI run",
+  "findings_before_and_after": 5,
+  "recorded_answers_already_on_the_case": 2
+ },
+ "question": "Which account was used for the transfer, and can this evidence say who was typing?",
+ "composer_text_before_asking": "A model answers from this case's evidence only. Each claim is checked against the records it cites. A question never changes the report.",
+ "answer": {
+  "status": "answered",
+  "label_shown": "Live model",
+  "opened_automatically": true,
+  "seconds_in_the_browser": 7.3,
+  "claims_by_support": {
+   "checked": 3,
+   "cited": 1,
+   "interpretation": 1,
+   "contradicted": 0,
+   "unsupported": 0
+  },
+  "says_who_was_typing": false,
+  "first_words": "The unapproved upload (20,948,102 bytes from workstation to 10.20.9.87:8080 at 12:41:24-12:41:37 UTC) overlaps only console session workstation#91, which was opened under account rhaddad."
+ },
+ "model": "anthropic:claude-haiku-5-5",
+ "usage": {
+  "llm_calls": 2,
+  "tokens_in": 19531,
+  "tokens_out": 1280,
+  "cost_estimate_usd": 0.002127,
+  "wall_seconds": 7.178
+ },
+ "spend_ledger": {
+  "before_usd": 3.515198,
+  "after_usd": 3.517326,
+  "calls_before": 541,
+  "calls_after": 543,
+  "reserved_after_usd": 0,
+  "unreconciled_after_usd": 0.0
+ },
+ "questions_on_the_case_after": [
+  [
+   "RECORDED_MODEL",
+   "answered"
+  ],
+  [
+   "RECORDED_MODEL",
+   "answered"
+  ],
+  [
+   "LIVE_MODEL",
+   "answered"
+  ]
+ ],
+ "browser_console_errors": [],
+ "reproduce": [
+  "git switch codex/eric-ui-wiring",
+  "npm --prefix web run build",
+  "./start.sh   # with a configured model",
+  "open the recording 'Inside job \u00b7 cover-up' (Haiku), type a question in 'Ask about this evidence'"
+ ]
+}
