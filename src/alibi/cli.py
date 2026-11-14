@@ -289,33 +289,44 @@ def _cmd_cases(args: argparse.Namespace) -> int:
     return 0
 
 
-def _cmd_run(args: argparse.Namespace) -> int:
-    """Create a case from a preset in the runs directory, investigate it and stop at human review."""
+def _investigate_to_review(orch: Any, case_id: str) -> int:
+    """Investigate a frozen case and stop at human review. Prints the drafted findings; 1 if it did not get there."""
     import time
 
-    settings = load_settings()
-    orch = _orchestrator()
-    rec = orch.create_case(preset_id=args.preset, runner_id=args.runner, investigation_mode=args.mode)
-    orch.start_investigation(rec.case_id)
-    deadline = time.time() + max(60.0, settings.caps.max_seconds + 60.0)
-    state = rec.state
+    orch.start_investigation(case_id)
+    deadline = time.time() + max(60.0, load_settings().caps.max_seconds + 60.0)
+    state = orch.record(case_id).state
     while time.time() < deadline:
-        state = orch.record(rec.case_id).state
+        state = orch.record(case_id).state
         if state in ("awaiting_review", "failed", "cancelled"):
             break
         time.sleep(0.1)
-    done = orch.record(rec.case_id)
-    print(f"case {rec.case_id}: {done.title} · {done.labels_text()} · state {state}")
+    done = orch.record(case_id)
+    print(f"case {case_id}: {done.title} · {done.labels_text()} · state {state}")
     if state != "awaiting_review":
         print(f"error: {done.error}", file=sys.stderr)
         return 1
-    report = orch.view(rec.case_id)["report"]
+    report = orch.view(case_id)["report"]
     for f in report["findings"]:
         print(f"  {f['category']:<22} {f['claim_type']:<28} {f['host']:<12} {f['status']}")
+    if not report["findings"]:
+        print("  no findings: nothing in this evidence is reported as an incident")
     print(f"  account: {report['attribution']['account_used']} · person: {report['attribution']['human_identity'].replace('_', ' ')}")
-    print(f"next: alibi ask {rec.case_id} \"...\" · alibi experiment {rec.case_id} --without collector · "
-          f"alibi review {rec.case_id} accept")
+    print(f"next: alibi ask {case_id} \"...\" · alibi experiment {case_id} --without collector · "
+          f"alibi review {case_id} accept")
     return 0
+
+
+def _cmd_run(args: argparse.Namespace) -> int:
+    """Create a case from a preset in the runs directory, investigate it and stop at human review."""
+    orch = _orchestrator()
+    rec = orch.create_case(preset_id=args.preset, runner_id=args.runner, investigation_mode=args.mode)
+    return _investigate_to_review(orch, rec.case_id)
+
+
+def _cmd_investigate(args: argparse.Namespace) -> int:
+    """Investigate a case that is already frozen (an imported capture, for example) and stop at human review."""
+    return _investigate_to_review(_orchestrator(), args.case_id)
 
 
 def _cmd_review(args: argparse.Namespace) -> int:
@@ -384,7 +395,7 @@ def _cmd_experiment(args: argparse.Namespace) -> int:
     for line in cmp_["coverage"]["child"]["limits"]:
         print(f"  coverage limit: {line}")
     print("\nA claim that cannot be established here is unknown in this view. It is not shown to be false.")
-    print(f"To investigate the derived view: POST /api/cases/{child.case_id}/investigate, or open it in the case board.")
+    print(f"To investigate the derived view: alibi investigate {child.case_id}, or open it in the case board.")
     return 0
 
 
@@ -410,8 +421,8 @@ def _cmd_import(args: argparse.Namespace) -> int:
                                   for s in view["manifest"]["sources"]],
                       "events": view["manifest"]["event_count"],
                       "unparsed_or_errors": len(view["manifest"]["normalization_errors"]),
-                      "next": f"open it in the case board, or POST /api/cases/{rec.case_id}/investigate"}, indent=2))
-    return 0
+                      "next": f"alibi investigate {rec.case_id}, or open it in the case board"}, indent=2))
+    return _investigate_to_review(orch, rec.case_id) if args.investigate else 0
 
 
 def _eval_report(evaluation: Any, suite: str, doc: dict[str, Any]) -> str:
@@ -601,7 +612,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--title", default=None)
     p.add_argument("--runner", default=None, help="deterministic | agent-fixture | agent-live (default: runtime default)")
     p.add_argument("--mode", default=None, choices=["fast", "specialist"])
+    p.add_argument("--investigate", action="store_true", help="investigate it straight away and stop at human review")
     p.set_defaults(func=_cmd_import)
+
+    p = sub.add_parser("investigate", help="investigate a case that is already frozen and stop at human review")
+    p.add_argument("case_id")
+    p.set_defaults(func=_cmd_investigate)
 
     p = sub.add_parser("eval", help="the phase-two paired evaluation: six systems, four new cases, no verifier feedback")
     p.add_argument("--declare", action="store_true", help="write docs/evaluation-config-v2.json (before any run)")

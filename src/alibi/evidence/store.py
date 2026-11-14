@@ -29,8 +29,13 @@ MAX_LIMIT = 50
 
 
 def _naive(dt: datetime) -> str:
-    """UTC wall time without offset: the DB stores naive UTC timestamps."""
-    return utc(dt).strftime("%Y-%m-%d %H:%M:%S")
+    """UTC wall time without offset: the DB stores naive UTC timestamps.
+
+    Sub-second precision is kept when the record has it (captured logs do; simulated ones never do), so two
+    records inside one second keep their real order. A whole-second time is written exactly as before.
+    """
+    dt = utc(dt)
+    return dt.strftime("%Y-%m-%d %H:%M:%S.%f" if dt.microsecond else "%Y-%m-%d %H:%M:%S")
 
 
 def build_store(db_path: Path, events: list[Event]) -> None:
@@ -139,7 +144,10 @@ class EvidenceStore:
             clauses.append("ts >= CAST(? AS TIMESTAMP)")
             params.append(_naive(filters["t_start"]))
         if filters.get("t_end") is not None:
-            clauses.append("ts <= CAST(? AS TIMESTAMP)")
+            # times are shown to the second, so an upper bound given to the second means "through that second":
+            # a record at 12:00:05.3 is inside a window that ends at 12:00:05
+            whole_second = utc(filters["t_end"]).microsecond == 0
+            clauses.append("ts < CAST(? AS TIMESTAMP) + INTERVAL 1 SECOND" if whole_second else "ts <= CAST(? AS TIMESTAMP)")
             params.append(_naive(filters["t_end"]))
         return (" WHERE " + " AND ".join(clauses)) if clauses else "", params
 

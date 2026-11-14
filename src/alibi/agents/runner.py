@@ -28,6 +28,7 @@ from alibi.agents.scripted import SCRIPTED_MODEL_ID, ScriptedPolicyModel
 from alibi.agents.tools import CaseToolbox
 from alibi.config import Settings
 from alibi.contracts import AttributionAssessment, InvestigationReport
+from alibi.importing import is_imported
 from alibi.runners import Cancelled, RunContext
 
 _SAFE_NOTE = re.compile(r"[^A-Za-z0-9._-]+")
@@ -128,7 +129,8 @@ class AgentRunner:
         try:
             graph = self._build(ctx, toolbox, ledger, conn)
             tip = ctx.manifest.operational_context.get("tip", "")
-            brief = (f"Evidence bundle {ctx.manifest.bundle_id} is frozen and ready. Tip from the clinic: \"{tip}\" "
+            asked_by = "Request" if is_imported(ctx.manifest) else "Tip from the clinic"
+            brief = (f"Evidence bundle {ctx.manifest.bundle_id} is frozen and ready. {asked_by}: \"{tip}\" "
                      "Establish what the evidence supports, then submit a report for human review.")
             ctx.emit("agent", {"agent": self.lead_role, "status": "started", "task": "investigate the frozen bundle"})
             pending_tasks: dict[str, str] = {}

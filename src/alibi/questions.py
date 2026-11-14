@@ -43,6 +43,7 @@ from alibi.contracts import (
     iso,
 )
 from alibi.evidence.store import EvidenceStore
+from alibi.importing import is_imported, neutral_framing
 
 MAX_QUESTION_CHARS = 1000
 MAX_MODEL_CALLS = 3
@@ -386,7 +387,8 @@ def run_exchange(model: Any, question: str, store: EvidenceStore, manifest: Evid
     tools = _tools(store, manifest, report, trace, sink)
     by_name = {t.name: t for t in tools}
     bound = model.bind_tools(tools)
-    system = QA_SYSTEM + (FAMILY_KINDS_NOTE if checks_families.applies(manifest) else "")
+    system = (neutral_framing(QA_SYSTEM) if is_imported(manifest) else QA_SYSTEM) \
+        + (FAMILY_KINDS_NOTE if checks_families.applies(manifest) else "")
     messages: list[Any] = [SystemMessage(system),
                            HumanMessage(json.dumps(build_context(question, manifest, report), default=str))]
     why_not = ""  # the most recent reason a turn did not produce an answer, for an honest failure message

@@ -276,9 +276,41 @@ def attribution_from(xfer: dict[str, Any], presence: dict[str, Any] | None,
     return AttributionAssessment(
         account_used=account, session_ref=session_ref, human_identity="insufficient_evidence",
         supporting_evidence_ids=support, contrary_evidence_ids=list((presence or {}).get("badge_event_ids", [])),
-        assumptions=["badge-to-account assignments in the supplied directory are current"],
+        assumptions=[BADGE_ASSUMPTION],
         limits=limits, statement=statement,
     )
+
+
+SESSION_QUESTION = "Who had access to the credential used in the linked session?"
+DESTINATION_QUESTION = "Was the destination known to anyone at the clinic?"
+BADGE_ASSUMPTION = "badge-to-account assignments in the supplied directory are current"
+TRANSFER_CLAIMS = ("policy_violating_transfer", "data_staging")
+
+
+def report_for_imported(report: Any, manifest: Any) -> Any:
+    """The same report, without the template parts that only make sense inside a known scenario.
+
+    Imported evidence has no scenario behind it. A templated question is kept only when the evidence gives it a
+    subject (a linked session, an account, a transfer), and the badge-directory assumption only when a badge
+    source is in the bundle. Text a model wrote is never touched: only the exact template strings are matched.
+    Simulated cases never pass through here, so their reports are unchanged.
+    """
+    att: AttributionAssessment = report.attribution
+    questions: list[str] = []
+    for q in report.open_questions:
+        if q == SESSION_QUESTION:
+            if att.session_ref:
+                questions.append(q)
+            elif att.account_used:
+                questions.append(f"Who had access to the account {att.account_used} when these records were written?")
+        elif q == DESTINATION_QUESTION:
+            if any(f.claim_type in TRANSFER_CLAIMS for f in report.findings):
+                questions.append("Was the destination of the transfer known to the organization?")
+        else:
+            questions.append(q)
+    if not any(src.source == "badge" for src in manifest.sources):
+        att = att.model_copy(update={"assumptions": [a for a in att.assumptions if a != BADGE_ASSUMPTION]})
+    return report.model_copy(update={"attribution": att, "open_questions": questions})
 
 
 def number_findings(findings: list[Finding], prefix: str = "F") -> list[Finding]:
@@ -308,8 +340,7 @@ def compose(rec: dict[str, Any], xfer: dict[str, Any], presence: dict[str, Any] 
         "summary": (f"{n_inc} incident allegation(s), {len(findings) - n_inc} benign explanation(s)/open note(s). "
                     + attribution.statement
                     + (" Some checks could not be run on this bundle; what they would have shown is unknown." if limits else "")),
-        "open_questions": ([] if n_inc == len(fam_inc) else ["Who had access to the credential used in the linked session?",
-                                                             "Was the destination known to anyone at the clinic?"])
+        "open_questions": ([] if n_inc == len(fam_inc) else [SESSION_QUESTION, DESTINATION_QUESTION])
         + (["Which of the two temperature records was changed, when, and who could write to the hub's stored readings?"]
            if any(f.claim_type == "sensor_stream_discrepancy" for f in fam_inc) else [])
         + [f"Coverage limit: {x}" for x in limits],
