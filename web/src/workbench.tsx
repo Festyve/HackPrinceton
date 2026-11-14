@@ -20,7 +20,7 @@ export const humanState = (state: string) =>
 export const originLabel = (origin?: string) =>
   ({
     SIM: "Simulated evidence",
-    DOCKER: "Captured Linux evidence",
+    DOCKER: "Captured evidence · Docker containers",
     HYBRID: "Mixed evidence",
   })[origin ?? ""] ??
   origin ??

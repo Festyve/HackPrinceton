@@ -619,3 +619,25 @@ def test_two_designed_cases_look_the_same_whatever_the_operator_placed(server, p
         assert case["title"].startswith("Designed environment · exercise ")
     assert seen[0] == seen[1]
     assert page.errors == []
+
+
+def test_a_captured_case_is_labeled_as_captured_and_unscored_and_has_nothing_to_unseal(server, page):
+    """Evidence written by running processes (tests/fixtures/capture/, docs/capture.md), imported from a terminal."""
+    from pathlib import Path
+
+    base, orch = server
+    rec = orch.import_case(str(Path(__file__).parent / "fixtures" / "capture" / "missing-local-record"), runner_id="deterministic")
+    orch.start_investigation(rec.case_id)
+    page.goto(f"{base}/#case={rec.case_id}")
+    wait_state(page, "awaiting_review")
+    assert page.inner_text(tid("badge-evidence")) == "Captured evidence · Docker containers"
+    assert "no model inference" in page.inner_text(tid("badge-inference"))
+    assert page.inner_text(tid("case-eyebrow")).lower().endswith("· imported evidence, unscored")  # shown in capitals
+    # the one finding is about the host's own log, and nothing on the page speaks of the simulated clinic
+    body = page.inner_text("body")
+    assert "/var/log/records-app/access.log" in body and "clinic" not in body.lower()
+    page.click(tid("btn-accept"))
+    wait_state(page, "report_locked")
+    page.wait_for_selector(tid("report-export"))
+    assert page.locator(tid("btn-unseal")).count() == 0  # there is no answer key, so no control offers one
+    assert page.errors == []
