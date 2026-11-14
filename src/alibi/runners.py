@@ -84,11 +84,15 @@ class DeterministicRunner:
 
     def run(self, ctx: RunContext) -> InvestigationReport:
         t0 = time.perf_counter()
-        ctx.emit("todo", {"items": [
-            {"text": "Reconcile host logs with collector copies", "status": "in_progress"},
-            {"text": "Correlate bulk transfers with policy and sessions", "status": "pending"},
-            {"text": "Assess account use vs. physical presence", "status": "pending"},
-            {"text": "Draft report for review", "status": "pending"}]})
+        steps = ["Reconcile host logs with collector copies", "Correlate bulk transfers with policy and sessions",
+                 "Assess account use vs. physical presence", "Draft report for review"]
+
+        def todo(done: int) -> None:
+            ctx.emit("todo", {"items": [
+                {"text": t, "status": "completed" if i < done else ("in_progress" if i == done else "pending")}
+                for i, t in enumerate(steps)]})
+
+        todo(0)
         ctx.emit("agent", {"agent": "deterministic-checks", "status": "started", "task": "run the registered checks"})
         ctx.pace()
         t = time.perf_counter()
@@ -97,6 +101,7 @@ class DeterministicRunner:
         ctx.emit("tool", {"agent": "deterministic-checks", "tool": "check_local_vs_collector", "args": {},
                           "result_summary": summary, "evidence_ids": ids[:8], "ok": True,
                           "ms": int((time.perf_counter() - t) * 1000)})
+        todo(1)
         ctx.pace()
         t = time.perf_counter()
         xfer = checks.correlate_transfers(ctx.store, ctx.manifest)
@@ -104,6 +109,7 @@ class DeterministicRunner:
         ctx.emit("tool", {"agent": "deterministic-checks", "tool": "check_transfer_sessions", "args": {},
                           "result_summary": summary, "evidence_ids": ids[:8], "ok": True,
                           "ms": int((time.perf_counter() - t) * 1000)})
+        todo(2)
         ctx.pace()
         linked = [x for x in xfer["transfers"] if x["policy_status"] == "not_approved"
                   and x["session_link"] == "single_overlapping_session"]
@@ -117,6 +123,7 @@ class DeterministicRunner:
                               "evidence_ids": presence.get("badge_event_ids", []), "ok": True,
                               "ms": int((time.perf_counter() - t) * 1000)})
             ctx.pace()
+        todo(3)
         findings = baselines.number_findings(
             baselines.findings_from_reconcile(rec) + baselines.findings_from_transfers(xfer), "F")
         attribution = baselines.attribution_from(xfer, presence, findings)
