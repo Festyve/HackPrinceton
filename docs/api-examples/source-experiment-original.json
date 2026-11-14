@@ -1,0 +1,153 @@
+{
+  "role": "original",
+  "case_id": "case-4a5e87e9a157",
+  "bundle_id": "bndl-646e90a648ad486f",
+  "children": [
+    {
+      "child_case_id": "case-b1dcc9e931f1",
+      "title": "Inside job \u00b7 cover-up \u00b7 without collector collector",
+      "state": "frozen",
+      "excluded_sources": [
+        {
+          "artifact": "collector/var/log/collected/collected.log",
+          "host": "collector",
+          "lines": 10555,
+          "source": "collector",
+          "source_id": "src-d98d25b744e4",
+          "tamper_exposure": "independent_witness"
+        }
+      ],
+      "bundle_id": "bndl-709aad43a6afeaf9"
+    }
+  ],
+  "sources": [
+    {
+      "source_id": "src-d98d25b744e4",
+      "artifact": "collector/var/log/collected/collected.log",
+      "host": "collector",
+      "source": "collector",
+      "tamper_exposure": "independent_witness",
+      "lines": 10555
+    },
+    {
+      "source_id": "src-02455a76a43e",
+      "artifact": "iot-hub/badge/door-staff-1.jsonl",
+      "host": "iot-hub",
+      "source": "badge",
+      "tamper_exposure": "independent_witness",
+      "lines": 16
+    },
+    {
+      "source_id": "src-f299af066990",
+      "artifact": "iot-hub/var/log/mosquitto/mosquitto.log",
+      "host": "iot-hub",
+      "source": "mqtt",
+      "tamper_exposure": "host_local_writable",
+      "lines": 16
+    },
+    {
+      "source_id": "src-98858acd91e7",
+      "artifact": "records/fs_stat.tsv",
+      "host": "records",
+      "source": "fs_stat",
+      "tamper_exposure": "host_local_writable",
+      "lines": 4
+    },
+    {
+      "source_id": "src-9cbe937ed462",
+      "artifact": "records/home/adm-vrao/.bash_history",
+      "host": "records",
+      "source": "shell_history",
+      "tamper_exposure": "host_local_writable",
+      "lines": 6
+    },
+    {
+      "source_id": "src-b90e981d4e90",
+      "artifact": "records/var/log/auth.log",
+      "host": "records",
+      "source": "auth",
+      "tamper_exposure": "host_local_writable",
+      "lines": 4
+    },
+    {
+      "source_id": "src-8922227937a0",
+      "artifact": "records/var/log/records-app/access.log",
+      "host": "records",
+      "source": "app",
+      "tamper_exposure": "host_local_writable",
+      "lines": 549
+    },
+    {
+      "source_id": "src-038c15a3a2b0",
+      "artifact": "records/var/log/syslog",
+      "host": "records",
+      "source": "syslog",
+      "tamper_exposure": "host_local_writable",
+      "lines": 13
+    },
+    {
+      "source_id": "src-f626a26ebf1e",
+      "artifact": "tap/flows.jsonl",
+      "host": "tap",
+      "source": "flow",
+      "tamper_exposure": "independent_witness",
+      "lines": 1382
+    },
+    {
+      "source_id": "src-e610a4c3e747",
+      "artifact": "workstation/fs_stat.tsv",
+      "host": "workstation",
+      "source": "fs_stat",
+      "tamper_exposure": "host_local_writable",
+      "lines": 42
+    },
+    {
+      "source_id": "src-5859941f3515",
+      "artifact": "workstation/home/adm-vrao/.bash_history",
+      "host": "workstation",
+      "source": "shell_history",
+      "tamper_exposure": "host_local_writable",
+      "lines": 4
+    },
+    {
+      "source_id": "src-2cffe55b446f",
+      "artifact": "workstation/home/mreyes/.bash_history",
+      "host": "workstation",
+      "source": "shell_history",
+      "tamper_exposure": "host_local_writable",
+      "lines": 136
+    },
+    {
+      "source_id": "src-3783852c7abc",
+      "artifact": "workstation/home/rhaddad/.bash_history",
+      "host": "workstation",
+      "source": "shell_history",
+      "tamper_exposure": "host_local_writable",
+      "lines": 176
+    },
+    {
+      "source_id": "src-a858312af65d",
+      "artifact": "workstation/var/log/auth.log",
+      "host": "workstation",
+      "source": "auth",
+      "tamper_exposure": "host_local_writable",
+      "lines": 32
+    },
+    {
+      "source_id": "src-aa39e04866ac",
+      "artifact": "workstation/var/log/auth.log.1",
+      "host": "workstation",
+      "source": "auth",
+      "tamper_exposure": "host_local_writable",
+      "lines": 14
+    },
+    {
+      "source_id": "src-ab459130a063",
+      "artifact": "workstation/var/log/syslog",
+      "host": "workstation",
+      "source": "syslog",
+      "tamper_exposure": "host_local_writable",
+      "lines": 16
+    }
+  ]
+}

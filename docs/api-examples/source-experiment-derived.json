@@ -1,0 +1,232 @@
+{
+  "role": "derived",
+  "case_id": "case-b1dcc9e931f1",
+  "parent_case_id": "case-4a5e87e9a157",
+  "child_state": "frozen",
+  "excluded_sources": [
+    {
+      "artifact": "collector/var/log/collected/collected.log",
+      "host": "collector",
+      "lines": 10555,
+      "source": "collector",
+      "source_id": "src-d98d25b744e4",
+      "tamper_exposure": "independent_witness"
+    }
+  ],
+  "parent_bundle_id": "bndl-646e90a648ad486f",
+  "parent_raw_bundle_sha256": "646e90a648ad486f1b8f81a173ce6b4a865ba8edebef63ce98a367ddbff31444",
+  "child_bundle_id": "bndl-709aad43a6afeaf9",
+  "child_raw_bundle_sha256": "709aad43a6afeaf9e744cd8922c99c087f627af8675da033be398351248125d0",
+  "sources_remaining": 15,
+  "events_remaining": 2247,
+  "events_original": 12802,
+  "parent_state": "awaiting_review",
+  "parent_report": {
+    "report_id": "rep-case-4a5e87e9a157",
+    "locked": false,
+    "report_sha256": null,
+    "system_id": "BR",
+    "inference_mode": "NO_MODEL_BASELINE"
+  },
+  "comparison": {
+    "method": "each claim of the original report is re-checked against the reduced evidence with the same deterministic predicates; no model is involved and no ground truth is read",
+    "coverage": {
+      "parent": {
+        "local_vs_collector": "6 forwarded logs compared: 1 line(s) unexplainedly absent on the host, 183 explained by rotation, 0 collection gap(s)",
+        "transfers": "2 bulk transfer(s): 1 to a non-approved destination, 1 consistent with policy",
+        "limits": [],
+        "files_not_assessable": []
+      },
+      "child": {
+        "local_vs_collector": "0 forwarded logs compared: 0 line(s) unexplainedly absent on the host, 0 explained by rotation, 0 collection gap(s); 6 log(s) NOT assessable (a needed source is not in this bundle: unknown, not clean); collection gaps not measurable for iot-hub, records, workstation (no heartbeat data)",
+        "transfers": "2 bulk transfer(s): 1 to a non-approved destination, 1 consistent with policy",
+        "limits": [
+          "No collector copy is in this bundle. Host-log completeness is unknown; it is not confirmed.",
+          "No heartbeat data for iot-hub, records, workstation: collection gaps there cannot be measured, so the absence of a reported gap means nothing."
+        ],
+        "files_not_assessable": [
+          {
+            "host": "workstation",
+            "file": "/var/log/auth.log",
+            "reason": "this bundle has no collector copy, so the host's own log cannot be compared with an independent one. Its completeness is unknown."
+          },
+          {
+            "host": "workstation",
+            "file": "/var/log/syslog",
+            "reason": "this bundle has no collector copy, so the host's own log cannot be compared with an independent one. Its completeness is unknown."
+          },
+          {
+            "host": "records",
+            "file": "/var/log/auth.log",
+            "reason": "this bundle has no collector copy, so the host's own log cannot be compared with an independent one. Its completeness is unknown."
+          },
+          {
+            "host": "records",
+            "file": "/var/log/syslog",
+            "reason": "this bundle has no collector copy, so the host's own log cannot be compared with an independent one. Its completeness is unknown."
+          },
+          {
+            "host": "records",
+            "file": "/var/log/records-app/access.log",
+            "reason": "this bundle has no collector copy, so the host's own log cannot be compared with an independent one. Its completeness is unknown."
+          },
+          {
+            "host": "iot-hub",
+            "file": "/var/log/mosquitto/mosquitto.log",
+            "reason": "this bundle has no collector copy, so the host's own log cannot be compared with an independent one. Its completeness is unknown."
+          }
+        ]
+      }
+    },
+    "claims": [
+      {
+        "finding_id": "F-01",
+        "claim_type": "local_log_removal",
+        "category": "incident_allegation",
+        "host": "workstation",
+        "object_or_session": "/var/log/auth.log",
+        "parent": {
+          "status": "verified",
+          "verification_status": "supported_observation"
+        },
+        "child": {
+          "verification_status": "unresolved_interpretation",
+          "establishable": false,
+          "state": "cannot_be_established_here"
+        },
+        "change": "loses_support",
+        "reason": "the comparison this claim rests on cannot be run on this bundle: this bundle has no collector copy, so the host's own log cannot be compared with an independent one. Its completeness is unknown.",
+        "evidence_ids_remaining": [
+          "ev_0b6a6ca7baef",
+          "ev_8488241a1c07"
+        ],
+        "evidence_ids_withheld": [
+          "ev_0e5ae1caaa5a"
+        ]
+      },
+      {
+        "finding_id": "F-02",
+        "claim_type": "data_staging",
+        "category": "incident_allegation",
+        "host": "workstation",
+        "object_or_session": "/home/rhaddad/Downloads/upd-4c2e.pkg",
+        "parent": {
+          "status": "verified",
+          "verification_status": "supported_observation"
+        },
+        "child": {
+          "verification_status": "supported_observation",
+          "establishable": true,
+          "state": "supported"
+        },
+        "change": "retains_support",
+        "reason": "the deterministic check still supports this from the remaining evidence (1 of its cited record(s) are in a withheld source)",
+        "evidence_ids_remaining": [
+          "ev_a12bc7a76943",
+          "ev_66d914361c18",
+          "ev_998986d214f2",
+          "ev_071fec869d89"
+        ],
+        "evidence_ids_withheld": [
+          "ev_d75c1233140a"
+        ]
+      },
+      {
+        "finding_id": "F-03",
+        "claim_type": "policy_violating_transfer",
+        "category": "incident_allegation",
+        "host": "workstation",
+        "object_or_session": "10.20.9.87:8080",
+        "parent": {
+          "status": "verified",
+          "verification_status": "supported_observation"
+        },
+        "child": {
+          "verification_status": "supported_observation",
+          "establishable": true,
+          "state": "supported"
+        },
+        "change": "retains_support",
+        "reason": "the deterministic check still supports this from the remaining evidence (1 of its cited record(s) are in a withheld source)",
+        "evidence_ids_remaining": [
+          "ev_9017ed847e2a",
+          "ev_0a089a849682"
+        ],
+        "evidence_ids_withheld": [
+          "ev_0e5ae1caaa5a"
+        ]
+      },
+      {
+        "finding_id": "F-04",
+        "claim_type": "retention_explained_absence",
+        "category": "benign_explanation",
+        "host": "records",
+        "object_or_session": "/var/log/records-app/access.log",
+        "parent": {
+          "status": "verified",
+          "verification_status": "supported_observation"
+        },
+        "child": {
+          "verification_status": "structurally_valid",
+          "establishable": false,
+          "state": "cannot_be_established_here"
+        },
+        "change": "loses_support",
+        "reason": "references resolve; no allegation is made",
+        "evidence_ids_remaining": [
+          "ev_4358af94bbef"
+        ],
+        "evidence_ids_withheld": [
+          "ev_c3170af88304",
+          "ev_a184daed3bf5",
+          "ev_dfd91d9ff553",
+          "ev_a3849bd631f7",
+          "ev_62987e45e4c2",
+          "ev_703d13366f13"
+        ]
+      },
+      {
+        "finding_id": "F-05",
+        "claim_type": "policy_consistent_transfer",
+        "category": "benign_explanation",
+        "host": "records",
+        "object_or_session": "10.20.0.45:873",
+        "parent": {
+          "status": "verified",
+          "verification_status": "supported_observation"
+        },
+        "child": {
+          "verification_status": "supported_observation",
+          "establishable": true,
+          "state": "supported"
+        },
+        "change": "retains_support",
+        "reason": "the deterministic check still supports this from the remaining evidence",
+        "evidence_ids_remaining": [
+          "ev_e4db63a910f0"
+        ],
+        "evidence_ids_withheld": []
+      }
+    ],
+    "attribution": {
+      "session_ref": "workstation#91",
+      "account_used": "rhaddad",
+      "parent_observation": "console_session_while_holder_badged_out",
+      "child_observation": "session_not_found",
+      "change": "weakened",
+      "child_statement": "The session cannot be examined in this evidence view.",
+      "evidence_ids_remaining": [
+        "ev_49c33f246bbb",
+        "ev_afa5b9d9811b"
+      ],
+      "note": "Account activity identifies a credential, not a person, with or without this source."
+    },
+    "summary": {
+      "retains_support": 3,
+      "loses_support": 2,
+      "never_supported": 0,
+      "claims_total": 5,
+      "reading": "loses_support means the claim cannot be established from this evidence view. It does not mean the event did not happen."
+    }
+  }
+}

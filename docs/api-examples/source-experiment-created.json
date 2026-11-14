@@ -1,0 +1,116 @@
+{
+  "child_case_id": "case-b1dcc9e931f1",
+  "parent_case_id": "case-4a5e87e9a157",
+  "parent_bundle_id": "bndl-646e90a648ad486f",
+  "parent_raw_bundle_sha256": "646e90a648ad486f1b8f81a173ce6b4a865ba8edebef63ce98a367ddbff31444",
+  "child_bundle_id": "bndl-709aad43a6afeaf9",
+  "child_raw_bundle_sha256": "709aad43a6afeaf9e744cd8922c99c087f627af8675da033be398351248125d0",
+  "excluded_sources": [
+    {
+      "artifact": "collector/var/log/collected/collected.log",
+      "host": "collector",
+      "lines": 10555,
+      "source": "collector",
+      "source_id": "src-d98d25b744e4",
+      "tamper_exposure": "independent_witness"
+    }
+  ],
+  "sources_remaining": 15,
+  "events_remaining": 2247,
+  "events_original": 12802,
+  "coverage": {
+    "parent": {
+      "local_vs_collector": "6 forwarded logs compared: 1 line(s) unexplainedly absent on the host, 183 explained by rotation, 0 collection gap(s)",
+      "transfers": "2 bulk transfer(s): 1 to a non-approved destination, 1 consistent with policy",
+      "limits": [],
+      "files_not_assessable": []
+    },
+    "child": {
+      "local_vs_collector": "0 forwarded logs compared: 0 line(s) unexplainedly absent on the host, 0 explained by rotation, 0 collection gap(s); 6 log(s) NOT assessable (a needed source is not in this bundle: unknown, not clean); collection gaps not measurable for iot-hub, records, workstation (no heartbeat data)",
+      "transfers": "2 bulk transfer(s): 1 to a non-approved destination, 1 consistent with policy",
+      "limits": [
+        "No collector copy is in this bundle. Host-log completeness is unknown; it is not confirmed.",
+        "No heartbeat data for iot-hub, records, workstation: collection gaps there cannot be measured, so the absence of a reported gap means nothing."
+      ],
+      "files_not_assessable": [
+        {
+          "host": "workstation",
+          "file": "/var/log/auth.log",
+          "reason": "this bundle has no collector copy, so the host's own log cannot be compared with an independent one. Its completeness is unknown."
+        },
+        {
+          "host": "workstation",
+          "file": "/var/log/syslog",
+          "reason": "this bundle has no collector copy, so the host's own log cannot be compared with an independent one. Its completeness is unknown."
+        },
+        {
+          "host": "records",
+          "file": "/var/log/auth.log",
+          "reason": "this bundle has no collector copy, so the host's own log cannot be compared with an independent one. Its completeness is unknown."
+        },
+        {
+          "host": "records",
+          "file": "/var/log/syslog",
+          "reason": "this bundle has no collector copy, so the host's own log cannot be compared with an independent one. Its completeness is unknown."
+        },
+        {
+          "host": "records",
+          "file": "/var/log/records-app/access.log",
+          "reason": "this bundle has no collector copy, so the host's own log cannot be compared with an independent one. Its completeness is unknown."
+        },
+        {
+          "host": "iot-hub",
+          "file": "/var/log/mosquitto/mosquitto.log",
+          "reason": "this bundle has no collector copy, so the host's own log cannot be compared with an independent one. Its completeness is unknown."
+        }
+      ]
+    }
+  },
+  "case": {
+    "case_id": "case-b1dcc9e931f1",
+    "state": "frozen",
+    "detail": "evidence view frozen and hashed; nothing is carried over from the original case",
+    "created_at": "2026-11-14T09:39:49.325361+00:00",
+    "updated_at": "2026-11-14T09:39:49.326178+00:00",
+    "preset_id": "hero-coverup",
+    "title": "Inside job \u00b7 cover-up \u00b7 without collector collector",
+    "card_id": "inside-job",
+    "difficulty": "L2",
+    "seed": 9023,
+    "runner_id": "deterministic",
+    "investigation_mode": null,
+    "evidence_origin": "SIM",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "playback": "LIVE",
+    "model_id": null,
+    "bundle_id": "bndl-709aad43a6afeaf9",
+    "error": null,
+    "replay_of": null,
+    "recorded_at": null,
+    "review_decision": null,
+    "review_note": "",
+    "timings": {
+      "derive_s": 0.131
+    },
+    "parent_case_id": "case-4a5e87e9a157",
+    "excluded_sources": [
+      {
+        "artifact": "collector/var/log/collected/collected.log",
+        "host": "collector",
+        "lines": 10555,
+        "source": "collector",
+        "source_id": "src-d98d25b744e4",
+        "tamper_exposure": "independent_witness"
+      }
+    ],
+    "labels": {
+      "evidence_origin": "SIM",
+      "inference": "NO_MODEL_BASELINE",
+      "inference_label": "Deterministic baseline \u00b7 no model inference",
+      "playback": "LIVE",
+      "model_id": null,
+      "investigation_mode": null,
+      "investigation_mode_label": "Deterministic checks \u00b7 no agent"
+    }
+  }
+}

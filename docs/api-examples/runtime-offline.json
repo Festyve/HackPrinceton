@@ -1,0 +1,68 @@
+{
+  "runtime_mode": "offline",
+  "llm_max_usd": 0.0,
+  "bench_max_system_runs": 0,
+  "live_provider_kind": null,
+  "lead_model": null,
+  "subagent_model": null,
+  "adversary_model": null,
+  "live_block_reason": "RUNTIME_MODE is offline (default). No network model calls are made.",
+  "effort": "low",
+  "max_tokens_per_call": 3000,
+  "dev_ceiling_usd": 0.0,
+  "spend_limit_in_force_usd": 0.0,
+  "demo_reserve_open": false,
+  "price_in_per_mtok": null,
+  "price_out_per_mtok": null,
+  "caps": {
+    "max_calls": 16,
+    "max_input_tokens": 200000,
+    "max_output_tokens": 10000,
+    "max_seconds": 180.0,
+    "max_input_tokens_per_call": 40000,
+    "tool_result_max_records": 50,
+    "tool_result_max_bytes": 8192
+  },
+  "paid_overage_authorized_usd": 0,
+  "live_inference": "BLOCKED",
+  "default_inference_mode": "SCRIPTED_FIXTURE",
+  "inference_labels": {
+    "LIVE_MODEL": "Live model",
+    "RECORDED_MODEL": "Recorded AI run",
+    "SCRIPTED_FIXTURE": "Scripted fixture \u00b7 no model inference",
+    "NO_MODEL_BASELINE": "Deterministic baseline \u00b7 no model inference"
+  },
+  "frontend_built": true,
+  "capabilities": {
+    "investigation_modes": {
+      "available": [
+        "fast",
+        "specialist"
+      ],
+      "labels": {
+        "fast": "Fast investigation \u00b7 one agent",
+        "specialist": "Specialist review \u00b7 lead, auditor and skeptic"
+      },
+      "default": "specialist",
+      "note": "fast is the default for a live model; the scripted fixture defaults to specialist"
+    },
+    "live_model": {
+      "configured": false,
+      "model_id": null,
+      "note": "configured does not mean a successful model call has been observed"
+    },
+    "source_experiments": {
+      "endpoint": true,
+      "max_excluded_sources": 20,
+      "note": "derives a new evidence view with chosen sources withheld; the comparison of the original claims is deterministic and needs no model. A fresh investigation of the view is a separate run"
+    },
+    "questions": {
+      "endpoint": true,
+      "model_answers": "BLOCKED",
+      "max_question_chars": 1000,
+      "max_model_calls": 3,
+      "max_questions_per_case": 20,
+      "note": "no model is configured: a question returns status 'unavailable'; the predefined, labeled explanations remain available"
+    }
+  }
+}

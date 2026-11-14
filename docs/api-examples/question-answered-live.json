@@ -1,0 +1,123 @@
+{
+  "schema_version": "1.0.0",
+  "question_id": "q-1b88e06bba",
+  "case_id": "case-deea15d2e60a",
+  "bundle_id": "bndl-646e90a648ad486f",
+  "question": "What links the missing log line to the transfer?",
+  "status": "answered",
+  "answer": "The link is workstation session 91, opened under account rhaddad. The collector retained its login line (seq 35, 12:38:28), but that line is absent from workstation's own auth.log, and no rotation explains the gap. The same session overlaps the non-approved 20.9 MB transfer to 10.20.9.87:8080 (12:41:24\u201312:41:37). A curl upload of upd-4c2e.pkg from that session's shell is logged, and the file was staged in Downloads just before. The account is identified; the operator is not.",
+  "claims": [
+    {
+      "text": "The collector retained the login line for rhaddad session 91 on workstation at 2026-11-10T12:38:28, but it is absent from workstation's local auth.log.",
+      "evidence_ids": [
+        "ev_0e5ae1caaa5a",
+        "ev_0b6a6ca7baef",
+        "ev_8488241a1c07"
+      ],
+      "support": "checked",
+      "kind": "line_missing_locally",
+      "basis": "the local-versus-collector check reports the cited collector record as absent from the host's own log, with local records before and after it"
+    },
+    {
+      "text": "Workstation session 91 (account rhaddad, console) is the only session overlapping the transfer of 20,948,102 bytes to 10.20.9.87:8080, which is not on the approved list.",
+      "evidence_ids": [
+        "ev_9017ed847e2a",
+        "ev_0e5ae1caaa5a"
+      ],
+      "support": "checked",
+      "kind": "transfer_not_approved",
+      "basis": "the transfer check lists the cited transfer as not approved: destination 10.20.9.87 is not on the approved bulk-destination list (10.20.0.45, 10.20.8.20)"
+    },
+    {
+      "text": "The shell history in session window records curl uploading /home/rhaddad/Downloads/upd-4c2e.pkg to 10.20.9.87:8080 at 12:41:24.",
+      "evidence_ids": [
+        "ev_0a089a849682"
+      ],
+      "support": "cited",
+      "kind": "record",
+      "basis": "the cited records exist in this bundle; that they say this was not machine-checked"
+    },
+    {
+      "text": "The 20,944,103-byte file upd-4c2e.pkg was staged in rhaddad's Downloads at 12:40:19, after a records export of patients_full at 12:40:15, and before the transfer.",
+      "evidence_ids": [
+        "ev_a12bc7a76943",
+        "ev_66d914361c18",
+        "ev_d75c1233140a"
+      ],
+      "support": "checked",
+      "kind": "staged_before_transfer",
+      "basis": "the cited records belong to an object the transfer check found staged before a bulk transfer"
+    },
+    {
+      "text": "The session belongs to account rhaddad, whose badge B-3201 had last tapped out at 12:31:46, so the account holder's presence at the console is doubtful; the operator is not identified.",
+      "evidence_ids": [
+        "ev_0e5ae1caaa5a"
+      ],
+      "support": "checked",
+      "kind": "session_account",
+      "basis": "the cited login record belongs to session workstation#91 of account rhaddad. An account is a credential, not a person"
+    }
+  ],
+  "limitations": [
+    "Flow records show byte counts between addresses, not content; the file's contents are not verified.",
+    "The link rests on time overlap and a single session; it does not show who typed the commands.",
+    "The credential holder, remote versus console origin details, and the destination's ownership are not established.",
+    "The missing line is judged from the collector copy and bracketing local records only.",
+    "Account activity identifies a credential, not the person using it. This evidence does not establish who that was, and does not clear anyone."
+  ],
+  "follow_up_evidence": [],
+  "dropped_evidence_ids": [],
+  "trace": [
+    {
+      "tool": "check_local_vs_collector",
+      "args": {
+        "host": "workstation",
+        "file": "/var/log/auth.log"
+      },
+      "result_summary": "1 forwarded logs compared: 1 line(s) unexplainedly absent on the host, 0 explained by rotation, 0 collection gap(s)",
+      "ok": true
+    },
+    {
+      "tool": "check_transfer_sessions",
+      "args": {},
+      "result_summary": "2 bulk transfer(s): 1 to a non-approved destination, 1 consistent with policy",
+      "ok": true
+    },
+    {
+      "tool": "get_events",
+      "args": {
+        "ids": [
+          "ev_0e5ae1caaa5a",
+          "ev_0b6a6ca7baef",
+          "ev_8488241a1c07",
+          "ev_9017ed847e2a",
+          "ev_0a089a849682",
+          "ev_a12bc7a76943",
+          "ev_66d914361c18",
+          "ev_d75c1233140a"
+        ]
+      },
+      "result_summary": "8 of 8 id(s) resolved",
+      "ok": true
+    }
+  ],
+  "inference_mode": "LIVE_MODEL",
+  "inference_label": "Live model",
+  "model_id": "anthropic:claude-haiku-5-5",
+  "usage": {
+    "llm_calls": 2,
+    "tokens_in": 19058,
+    "tokens_out": 1624,
+    "tokens_cache_read": 7522,
+    "cost_estimate_usd": 0.002329,
+    "wall_seconds": 8.021,
+    "tool_calls": 0,
+    "scripted_turns": 0,
+    "retries": 0,
+    "errors": 0,
+    "timed_out": false
+  },
+  "error": null,
+  "asked_at": "2026-11-14T09:39:50.844850Z",
+  "answered_at": "2026-11-14T09:39:58.872313Z"
+}

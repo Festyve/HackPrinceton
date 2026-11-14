@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0.0",
+  "question_id": "q-f173f06a06",
+  "case_id": "case-4a5e87e9a157",
+  "bundle_id": "bndl-646e90a648ad486f",
+  "question": "What links the missing log line to the transfer?",
+  "status": "unavailable",
+  "answer": "",
+  "claims": [],
+  "limitations": [
+    "No model is configured on this server, so this question was not answered. The predefined evidence explanations (labeled as such, no model inference) remain available for this case."
+  ],
+  "follow_up_evidence": [],
+  "dropped_evidence_ids": [],
+  "trace": [],
+  "inference_mode": "NO_MODEL_BASELINE",
+  "inference_label": "No model answer \u00b7 live inference is not configured",
+  "model_id": null,
+  "usage": {
+    "llm_calls": 0,
+    "tokens_in": 0,
+    "tokens_out": 0,
+    "tokens_cache_read": 0,
+    "cost_estimate_usd": 0.0,
+    "wall_seconds": null,
+    "tool_calls": 0,
+    "scripted_turns": 0,
+    "retries": 0,
+    "errors": 0,
+    "timed_out": false
+  },
+  "error": null,
+  "asked_at": "2026-11-14T09:39:49.167043Z",
+  "answered_at": "2026-11-14T09:39:49.180999Z"
+}

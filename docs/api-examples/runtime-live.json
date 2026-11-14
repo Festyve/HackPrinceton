@@ -1,0 +1,68 @@
+{
+  "runtime_mode": "live",
+  "llm_max_usd": 20.0,
+  "bench_max_system_runs": 0,
+  "live_provider_kind": "included_credits",
+  "lead_model": "anthropic:claude-haiku-5-5",
+  "subagent_model": "anthropic:claude-haiku-5-5",
+  "adversary_model": "anthropic:claude-haiku-5-5",
+  "live_block_reason": null,
+  "effort": "low",
+  "max_tokens_per_call": 3000,
+  "dev_ceiling_usd": 19.5,
+  "spend_limit_in_force_usd": 19.5,
+  "demo_reserve_open": false,
+  "price_in_per_mtok": 0.1,
+  "price_out_per_mtok": 0.5,
+  "caps": {
+    "max_calls": 24,
+    "max_input_tokens": 300000,
+    "max_output_tokens": 20000,
+    "max_seconds": 240.0,
+    "max_input_tokens_per_call": 40000,
+    "tool_result_max_records": 50,
+    "tool_result_max_bytes": 8192
+  },
+  "paid_overage_authorized_usd": 0,
+  "live_inference": "CONFIGURED",
+  "default_inference_mode": "LIVE_MODEL",
+  "inference_labels": {
+    "LIVE_MODEL": "Live model",
+    "RECORDED_MODEL": "Recorded AI run",
+    "SCRIPTED_FIXTURE": "Scripted fixture \u00b7 no model inference",
+    "NO_MODEL_BASELINE": "Deterministic baseline \u00b7 no model inference"
+  },
+  "frontend_built": true,
+  "capabilities": {
+    "investigation_modes": {
+      "available": [
+        "fast",
+        "specialist"
+      ],
+      "labels": {
+        "fast": "Fast investigation \u00b7 one agent",
+        "specialist": "Specialist review \u00b7 lead, auditor and skeptic"
+      },
+      "default": "fast",
+      "note": "fast is the default for a live model; the scripted fixture defaults to specialist"
+    },
+    "live_model": {
+      "configured": true,
+      "model_id": "anthropic:claude-haiku-5-5",
+      "note": "configured does not mean a successful model call has been observed"
+    },
+    "source_experiments": {
+      "endpoint": true,
+      "max_excluded_sources": 20,
+      "note": "derives a new evidence view with chosen sources withheld; the comparison of the original claims is deterministic and needs no model. A fresh investigation of the view is a separate run"
+    },
+    "questions": {
+      "endpoint": true,
+      "model_answers": "CONFIGURED",
+      "max_question_chars": 1000,
+      "max_model_calls": 3,
+      "max_questions_per_case": 20,
+      "note": "answers come from a model with read-only access to this case's evidence and report"
+    }
+  }
+}

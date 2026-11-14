@@ -1,0 +1,40 @@
+{
+  "case": {
+    "case_id": "case-e0faa363c644",
+    "state": "investigating",
+    "detail": "investigator working on the frozen evidence",
+    "created_at": "2026-11-14T09:39:48.928321+00:00",
+    "updated_at": "2026-11-14T09:39:49.163198+00:00",
+    "preset_id": "hero-coverup",
+    "title": "Inside job \u00b7 cover-up",
+    "card_id": "inside-job",
+    "difficulty": "L2",
+    "seed": 9023,
+    "runner_id": "agent-fixture",
+    "investigation_mode": "fast",
+    "evidence_origin": "SIM",
+    "inference_mode": "SCRIPTED_FIXTURE",
+    "playback": "LIVE",
+    "model_id": "scripted-fixture-policy-v1 (no model)",
+    "bundle_id": "bndl-646e90a648ad486f",
+    "error": null,
+    "replay_of": null,
+    "recorded_at": null,
+    "review_decision": null,
+    "review_note": "",
+    "timings": {
+      "generate_s": 0.234
+    },
+    "parent_case_id": null,
+    "excluded_sources": [],
+    "labels": {
+      "evidence_origin": "SIM",
+      "inference": "SCRIPTED_FIXTURE",
+      "inference_label": "Scripted fixture \u00b7 no model inference",
+      "playback": "LIVE",
+      "model_id": "scripted-fixture-policy-v1 (no model)",
+      "investigation_mode": "fast",
+      "investigation_mode_label": "Fast investigation \u00b7 one agent"
+    }
+  }
+}
