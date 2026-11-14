@@ -51,6 +51,12 @@
       "model_id": "anthropic:claude-haiku-5-5",
       "note": "configured does not mean a successful model call has been observed"
     },
+    "capture_import": {
+      "cli": "uv run alibi import <capture directory>",
+      "http": false,
+      "scored": false,
+      "note": "imports a directory with capture.json and its raw files as an unscored case; not offered over HTTP because it reads a local path. No captured evidence ships with this build"
+    },
     "scenario_designer": {
       "endpoint": true,
       "model": "CONFIGURED",
@@ -70,6 +76,10 @@
         "json"
       ],
       "note": "available once a report is locked; never contains the sealed answer"
+    },
+    "sensor_streams": {
+      "endpoint": true,
+      "note": "for a cold-chain case: the stored readings beside the independent reference logger, with the deterministic comparison. Evidence only, no model"
     },
     "source_experiments": {
       "endpoint": true,

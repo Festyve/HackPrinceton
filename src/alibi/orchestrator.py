@@ -346,6 +346,11 @@ class Orchestrator:
             },
             "report_export": {"endpoint": True, "formats": ["markdown", "json"],
                               "note": "available once a report is locked; never contains the sealed answer"},
+            "sensor_streams": {
+                "endpoint": True,
+                "note": "for a cold-chain case: the stored readings beside the independent reference logger, with the "
+                        "deterministic comparison. Evidence only, no model",
+            },
             "source_experiments": {
                 "endpoint": True, "max_excluded_sources": source_experiment.MAX_EXCLUDED,
                 "note": "derives a new evidence view with chosen sources withheld; the comparison of the original "
@@ -839,6 +844,12 @@ class Orchestrator:
         store, paths = self._store(case_id)
         with store:
             return evidence_views.compare_local_collector(store, load_manifest(paths), host, file, focus, radius)
+
+    def evidence_sensor_streams(self, case_id: str) -> dict[str, Any]:
+        """The two temperature records of a cold-chain bundle, from this case's own evidence only."""
+        store, paths = self._store(case_id)
+        with store:
+            return evidence_views.sensor_streams(store, load_manifest(paths))
 
     def evidence_timeline(self, case_id: str) -> dict[str, Any]:
         store, paths = self._store(case_id)

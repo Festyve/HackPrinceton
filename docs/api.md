@@ -111,6 +111,22 @@ Errors: unknown id or an id that is not a manifest source id, withholding every 
 
 Examples: `manifest-sources.json`, `source-experiment-created.json`, `source-experiment-derived.json`, `source-experiment-original.json`, `source-experiment-child-reveal.json`, `source-experiment-error-400.json`.
 
+## Two temperature records
+
+`GET /api/cases/{id}/evidence/sensor-streams` — for a cold-chain case, the readings stored on the hub beside the independent reference logger. Read from the case's own evidence; no model is involved and nothing sealed is in it.
+
+| Field | Meaning |
+|---|---|
+| `applicable` | `false` for a case that states no cold-chain policy; then only `status: "not_applicable"` and `status_reason` |
+| `status` | `consistent`, `discrepancy_explained`, `discrepancy_unexplained`, or `not_assessable` when one of the two records is not in the bundle |
+| `series[]` | `key` (`stored`, `reference`), `label`, `present`, `host`, `artifacts`, `tamper_exposure`, and `points[]` of `event_id`, `ts`, `temp_c`, `seq` |
+| `permitted_range_c`, `maintenance_windows[]` | the stated policy: the range, and each window's `id`, `start`, `end`, `note` |
+| `discrepancies[]` | intervals where the reference disagrees with every nearby stored reading: `start`, `end`, both temperature ranges, `classification` (`unexplained`, `explained_maintenance`, `isolated_reading`) and the record ids on both sides |
+| `excursions[]` | intervals where the reference left the permitted range, with `local_agrees` |
+| `coverage_limits`, `assumptions`, `limits` | what could not be checked, what the comparison assumes, and what it cannot show |
+
+Every `event_id` opens through `GET …/evidence/events` like any other citation. In a derived case with the reference logger withheld, its series is empty and marked `present: false`, and `status` is `not_assessable`. `capabilities.sensor_streams` in `GET /api/runtime` announces the endpoint. Example: `sensor-streams-cold-chain.json` (points shortened).
+
 ## Coverage fields in existing responses
 
 - `GET /api/cases/{id}/evidence/compare` adds `status_reason` and `heartbeat_coverage`; `status` can be `not_assessable`; each row has `reason` when its status is `inconclusive`.

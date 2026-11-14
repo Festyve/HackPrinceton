@@ -1,0 +1,255 @@
+{
+  "applicable": true,
+  "status": "discrepancy_unexplained",
+  "status_reason": null,
+  "sensor": "fridge-01",
+  "permitted_range_c": [
+    2.0,
+    8.0
+  ],
+  "maintenance_windows": [
+    {
+      "id": "CAL-7868",
+      "kind": "probe_calibration",
+      "start": "2026-11-10T08:29:34+00:00",
+      "end": "2026-11-10T08:39:34+00:00",
+      "note": "the hub's probe is taken out for an ice-point check; its readings are not refrigerator temperatures during this window and its counter restarts afterwards"
+    }
+  ],
+  "stated": {
+    "local_stream": "readings stored on the IoT hub and shown on the ward dashboard; the store is writable on the hub",
+    "reference_independence": "a separate battery logger with its own probe in the same refrigerator; it is not connected to the hub and cannot be written from it",
+    "reference_clock": "not network-synchronised; its clock may differ from the hub by up to 120 s",
+    "excursion_rule": "two or more consecutive reference readings outside the permitted range",
+    "note": "A temperature record describes the refrigerator. It does not show why it warmed or who handled the record."
+  },
+  "clock_allowance_s": 150.0,
+  "temperature_tolerance_c": 0.8,
+  "series": [
+    {
+      "key": "stored",
+      "source": "sensor",
+      "label": "Readings stored on the hub",
+      "present": true,
+      "host": "iot-hub",
+      "artifacts": [
+        "iot-hub/sensors/fridge-01.jsonl"
+      ],
+      "tamper_exposure": "host_local_writable",
+      "total_points": 540,
+      "truncated": false,
+      "points": [
+        {
+          "event_id": "ev_3fcdc8e2526b",
+          "ts": "2026-11-10T06:21:20+00:00",
+          "temp_c": 4.6,
+          "seq": 1
+        },
+        {
+          "event_id": "ev_18c2c6720525",
+          "ts": "2026-11-10T06:22:20+00:00",
+          "temp_c": 4.8,
+          "seq": 2
+        },
+        {
+          "event_id": "ev_a0a827a78e76",
+          "ts": "2026-11-10T06:23:20+00:00",
+          "temp_c": 4.6,
+          "seq": 3
+        },
+        {
+          "...": "534 more points omitted from this example"
+        },
+        {
+          "event_id": "ev_4351385b1552",
+          "ts": "2026-11-10T15:18:20+00:00",
+          "temp_c": 4.6,
+          "seq": 399
+        },
+        {
+          "event_id": "ev_1af80658b977",
+          "ts": "2026-11-10T15:19:20+00:00",
+          "temp_c": 4.5,
+          "seq": 400
+        },
+        {
+          "event_id": "ev_c05a555214aa",
+          "ts": "2026-11-10T15:20:20+00:00",
+          "temp_c": 4.5,
+          "seq": 401
+        }
+      ]
+    },
+    {
+      "key": "reference",
+      "source": "reference",
+      "label": "Independent reference logger",
+      "present": true,
+      "host": "reference",
+      "artifacts": [
+        "reference/coldchain/logger-01.csv"
+      ],
+      "tamper_exposure": "independent_witness",
+      "total_points": 108,
+      "truncated": false,
+      "points": [
+        {
+          "event_id": "ev_0b532450bd0e",
+          "ts": "2026-11-10T06:24:05+00:00",
+          "temp_c": 4.9,
+          "seq": 1
+        },
+        {
+          "event_id": "ev_991b39a12ff6",
+          "ts": "2026-11-10T06:29:05+00:00",
+          "temp_c": 5.1,
+          "seq": 2
+        },
+        {
+          "event_id": "ev_e79931494113",
+          "ts": "2026-11-10T06:34:05+00:00",
+          "temp_c": 5.4,
+          "seq": 3
+        },
+        {
+          "...": "102 more points omitted from this example"
+        },
+        {
+          "event_id": "ev_80b4db8732d0",
+          "ts": "2026-11-10T15:09:05+00:00",
+          "temp_c": 5.6,
+          "seq": 106
+        },
+        {
+          "event_id": "ev_a32e3582a7db",
+          "ts": "2026-11-10T15:14:05+00:00",
+          "temp_c": 5.3,
+          "seq": 107
+        },
+        {
+          "event_id": "ev_f6c54ce9de26",
+          "ts": "2026-11-10T15:19:05+00:00",
+          "temp_c": 5.0,
+          "seq": 108
+        }
+      ]
+    }
+  ],
+  "discrepancies": [
+    {
+      "discrepancy_id": "disc-1",
+      "start": "2026-11-10T08:34:05+00:00",
+      "end": "2026-11-10T08:34:05+00:00",
+      "reference_readings": 1,
+      "reference_event_ids": [
+        "ev_d4061da4e30e"
+      ],
+      "local_event_ids": [
+        "ev_d5d4317a5932",
+        "ev_dfc2ece0094c",
+        "ev_ec339ae6967e",
+        "ev_d09c4490088d",
+        "..."
+      ],
+      "local_start": "2026-11-10T08:32:20+00:00",
+      "local_end": "2026-11-10T08:36:20+00:00",
+      "reference_range_c": [
+        5.3,
+        5.3
+      ],
+      "local_range_c": [
+        0.1,
+        0.4
+      ],
+      "max_difference_c": 4.9,
+      "reference_out_of_range": false,
+      "local_out_of_range": true,
+      "classification": "explained_maintenance",
+      "maintenance_id": "CAL-7868"
+    },
+    {
+      "discrepancy_id": "disc-2",
+      "start": "2026-11-10T11:54:05+00:00",
+      "end": "2026-11-10T12:14:05+00:00",
+      "reference_readings": 5,
+      "reference_event_ids": [
+        "ev_f7fe7bdb5eea",
+        "ev_945bcfc48184",
+        "ev_deeb64355b24",
+        "ev_fda3f5464459",
+        "..."
+      ],
+      "local_event_ids": [
+        "ev_b9db27bf4d8f",
+        "ev_70bd6004200f",
+        "ev_f8b98a85974b",
+        "ev_0c14b3352e0e",
+        "..."
+      ],
+      "local_start": "2026-11-10T11:52:20+00:00",
+      "local_end": "2026-11-10T12:16:20+00:00",
+      "reference_range_c": [
+        8.3,
+        12.0
+      ],
+      "local_range_c": [
+        4.5,
+        7.5
+      ],
+      "max_difference_c": 6.6,
+      "reference_out_of_range": true,
+      "local_out_of_range": false,
+      "classification": "unexplained",
+      "maintenance_id": null
+    }
+  ],
+  "excursions": [
+    {
+      "excursion_id": "exc-1",
+      "start": "2026-11-10T11:54:05+00:00",
+      "end": "2026-11-10T12:14:05+00:00",
+      "peak_c": 12.0,
+      "reference_event_ids": [
+        "ev_f7fe7bdb5eea",
+        "ev_945bcfc48184",
+        "ev_deeb64355b24",
+        "ev_fda3f5464459",
+        "..."
+      ],
+      "local_agrees": false,
+      "local_event_ids": [
+        "ev_b9db27bf4d8f",
+        "ev_70bd6004200f",
+        "ev_f8b98a85974b",
+        "ev_0c14b3352e0e",
+        "..."
+      ]
+    }
+  ],
+  "sequence": {
+    "local_gaps": [],
+    "local_restarts": [
+      {
+        "event_id": "ev_34f7362f052f",
+        "at": "2026-11-10T08:40:20+00:00",
+        "in_maintenance_window": true
+      }
+    ]
+  },
+  "publish_counter": {
+    "status": "match",
+    "collector_publish_records": 540,
+    "local_readings": 540
+  },
+  "coverage_limits": [],
+  "assumptions": [
+    "the reference logger is not reachable from the hub",
+    "the two clocks differ by no more than the stated 120 s",
+    "the two probes agree within 0.8 C when they measure the same air"
+  ],
+  "limits": [
+    "a discrepancy shows that the two records disagree; it does not show which one was changed, when, why or by whom",
+    "temperature alone says nothing about intent"
+  ],
+  "produced_by": "deterministic check sensor_stream_comparison 1.0.0 \u00b7 no model inference"
+}

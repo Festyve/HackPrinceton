@@ -279,6 +279,10 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
                          focus: str | None = None, radius: int = Query(5, ge=1, le=30)) -> dict:
         return orch.evidence_compare(case_id, host, file, focus, radius)
 
+    @app.get("/api/cases/{case_id}/evidence/sensor-streams")
+    def evidence_sensor_streams(case_id: str) -> dict:
+        return orch.evidence_sensor_streams(case_id)
+
     @app.get("/api/cases/{case_id}/evidence/timeline")
     def evidence_timeline(case_id: str) -> dict:
         return orch.evidence_timeline(case_id)

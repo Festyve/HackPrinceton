@@ -16,8 +16,9 @@ The merged interface currently shows two honest placeholders: `question-composer
 | 6 | Spend in the Details drawer | `GET /api/spend` | `configured` | — |
 | 7 | New results | `paired_v2` in `GET /api/benchmark` | not `null` | `benchmarks/paired-v2/*/results.json` |
 | 8 | Environment designer | `POST /api/scenario-designs`, then `POST /api/cases` with `design_id` | `runtime.capabilities.scenario_designer` | `scenario-design-live.json`, `scenario-design-default-offline.json`, `case-created-from-design.json` |
+| 9 | Cold chain: two temperature records | `GET /api/cases/{id}/evidence/sensor-streams` | `applicable` in the response (`card.id === "cold-chain"`) | `sensor-streams-cold-chain.json` |
 
-Items 1 to 4 are the demo. 5 to 8 are worth doing only after those work.
+Items 1 to 4 are the demo. 5 to 9 are worth doing only after those work. Item 9 is what makes the cold-chain case legible: plot both `series` against time with `permitted_range_c` as a band, shade `maintenance_windows`, and mark `discrepancies` whose `classification` is `unexplained`. Word it as "the two records disagree", never as "the readings were falsified".
 
 ## Rules that keep the labels honest
 

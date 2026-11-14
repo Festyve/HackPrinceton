@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from alibi import checks
+from alibi import checks, checks_families
 from alibi.contracts import Event, EvidenceManifest, InvestigationReport, iso
 from alibi.evidence.store import EvidenceStore
 
@@ -196,3 +196,60 @@ def timeline(store: EvidenceStore, manifest: EvidenceManifest, report: Investiga
             if key in by_key:
                 by_key[key]["marks"].append({"event_id": ev.id, "ts": iso(ts), "finding_ids": cited[ev.id]})
     return {"start": iso(start), "end": iso(end), "bucket_minutes": bucket_minutes, "buckets": n, "lanes": lanes}
+
+
+# --------------------------------------------------------------------------- two temperature records
+
+SERIES_MAX_POINTS = 5000
+SERIES = (
+    ("stored", "sensor", "Readings stored on the hub"),
+    ("reference", "reference", "Independent reference logger"),
+)
+
+
+def sensor_streams(store: EvidenceStore, manifest: EvidenceManifest) -> dict[str, Any]:
+    """The hub's stored temperature readings beside the independent reference logger, as two series.
+
+    Everything here is read from this bundle: the readings, the stated policy and the result of the
+    deterministic comparison. A source that is not in the bundle has an empty series marked absent, so a
+    record that was withheld cannot be seen through this view. The view shows that two records disagree
+    or agree. It does not say which one was changed, when, why or by whom.
+    """
+    cp = manifest.operational_context.get("coldchain_policy")
+    if not cp:
+        return {"applicable": False, "status": "not_applicable", "series": [],
+                "status_reason": "This bundle states no cold-chain policy, so there are no temperature records to compare."}
+    sensor = cp["sensor"]
+    series = []
+    for key, kind, label in SERIES:
+        srcs = [s for s in manifest.sources if s.source == kind]
+        points = []
+        for ev in store.scan(source=kind):
+            if ev.object != sensor or ev.action != "reading" or "temp_c" not in ev.attrs:
+                continue
+            points.append({"event_id": ev.id, "ts": iso(ev.ts), "temp_c": ev.attrs["temp_c"], "seq": ev.attrs.get("seq")})
+        series.append({
+            "key": key, "source": kind, "label": label, "present": bool(srcs),
+            "host": srcs[0].host if srcs else None, "artifacts": [s.artifact for s in srcs],
+            "tamper_exposure": srcs[0].tamper_exposure if srcs else None,
+            "total_points": len(points), "truncated": len(points) > SERIES_MAX_POINTS,
+            "points": points[:SERIES_MAX_POINTS],
+        })
+    result = checks_families.compare_sensor_streams(store, manifest)
+    ref = cp.get("reference") or {}
+    return {
+        "applicable": True, "status": result["status"], "status_reason": result.get("status_reason"),
+        "sensor": sensor, "permitted_range_c": list(cp["permitted_range_c"]),
+        "maintenance_windows": [
+            {"id": w.get("id"), "kind": w.get("kind"), "start": w.get("window_start"), "end": w.get("window_end"),
+             "note": w.get("note")} for w in cp.get("maintenance_windows") or []],
+        "stated": {"local_stream": cp.get("local_stream"), "reference_independence": ref.get("independence"),
+                   "reference_clock": ref.get("clock"), "excursion_rule": cp.get("excursion_rule"), "note": cp.get("note")},
+        "clock_allowance_s": result.get("clock_allowance_s"), "temperature_tolerance_c": result.get("temperature_tolerance_c"),
+        "series": series,
+        "discrepancies": result.get("discrepancies", []), "excursions": result.get("excursions", []),
+        "sequence": result.get("sequence"), "publish_counter": result.get("publish_counter"),
+        "coverage_limits": result.get("coverage_limits", []),
+        "assumptions": result.get("assumptions", []), "limits": result.get("limits", []),
+        "produced_by": f"deterministic check {result['check']} {result['version']} · no model inference",
+    }
