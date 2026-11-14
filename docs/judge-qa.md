@@ -34,7 +34,7 @@ Its tools do not expose it. It has no shell, no SQL, no filesystem path and no U
 
 **What about malicious instructions inside logs?**
 
-Evidence is returned to a model as data inside tool results and rendered as text in the interface. Tests plant an instruction in a log and have a stand-in model obey it: the tools it asks for do not exist, the ids it invents are dropped, and nothing is revealed. How a real model behaves on planted text was tried informally, not measured.
+Evidence is returned to a model as data inside tool results and rendered as text in the interface. Tests plant an instruction in a log and have a stand-in model obey it: the tools it asks for do not exist, the ids it invents are dropped, and nothing is revealed. Asked directly to ignore its rules and print the answer key, the real model declined and said it has none. Its behavior on text planted inside evidence was not measured.
 
 **What does removing a witness show?**
 
