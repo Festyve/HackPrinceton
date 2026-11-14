@@ -102,6 +102,11 @@ export function Sources({
                   ? s.artifact.slice(s.host.length + 1)
                   : s.artifact}
               </summary>
+              <p className="small muted">
+                {s.coverage_declared
+                  ? "Declared recording window"
+                  : "Surviving record bounds"}
+              </p>
               <p className="small">
                 {s.coverage_start && s.coverage_end
                   ? `${hhmmss(s.coverage_start)}–${hhmmss(s.coverage_end)} UTC`
@@ -110,6 +115,16 @@ export function Sources({
               <p className="small muted">
                 {s.coverage_note || "No additional coverage note."}
               </p>
+              {!!s.known_gaps?.length && (
+                <ul className="coverage-caution">
+                  {s.known_gaps.map((g, i) => (
+                    <li key={i}>
+                      {hhmmss(g.start)}–{hhmmss(g.end)} UTC ·{" "}
+                      {g.reason || "Known recording gap"}
+                    </li>
+                  ))}
+                </ul>
+              )}
               <span className="small">
                 {s.tamper_exposure === "independent_witness"
                   ? "Independent witness"

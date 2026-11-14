@@ -81,6 +81,7 @@ export default function App() {
   const [showLibrary, setShowLibrary] = useState(false);
   const [selectedHost, setSelectedHost] = useState<string | null>(null);
   const [disconnected, setDisconnected] = useState(false);
+  const [attaching, setAttaching] = useState(false);
   const rawRequest = useRef(0);
 
   const esRef = useRef<EventSource | null>(null);
@@ -117,6 +118,7 @@ export default function App() {
     lastSeqRef.current = 0;
     rawRequest.current += 1;
     setView(null);
+    setAttaching(false);
     setRun(emptyRun());
     setRaw(null);
     setReviewMsg(null);
@@ -195,9 +197,11 @@ export default function App() {
             setDisconnected(false);
             feed(j.events);
             const v = await refetch(id, gen);
+            if (gen !== genRef.current) return;
             if (v && TERMINAL.has(v.case.state)) return;
             openStream(id, gen);
           } catch (e) {
+            if (gen !== genRef.current) return;
             if (e instanceof ApiError && e.status === 404) {
               clearCase();
               setErr("That case no longer exists.");
@@ -216,6 +220,9 @@ export default function App() {
       closeStream();
       const gen = genRef.current;
       caseIdRef.current = id;
+      setAttaching(true);
+      setView(null);
+      setShowDetails(false);
       lastSeqRef.current = 0;
       rawRequest.current += 1;
       setRun(emptyRun());
@@ -245,6 +252,8 @@ export default function App() {
             "That case no longer exists (it was reset or the server restarted).",
           );
         } else setErr(e instanceof Error ? e.message : String(e));
+      } finally {
+        if (gen === genRef.current) setAttaching(false);
       }
     },
     [closeStream, feed, openStream, clearCase],
@@ -281,6 +290,7 @@ export default function App() {
   const doRun = (choice = selected) =>
     guard("run", async () => {
       if (!choice) return;
+      setTab("case");
       const v =
         choice.kind === "preset"
           ? await api.createCase(choice.id)
@@ -366,7 +376,12 @@ export default function App() {
   const reviewPhase = state === "awaiting_review" || state === "report_locked";
   return (
     <EvidenceCtx.Provider value={openEvidence}>
-      <div className="app" data-testid="app-root">
+      <div
+        className="app"
+        data-testid="app-root"
+        data-case-id={c?.case_id ?? ""}
+        aria-busy={attaching || busy === "run"}
+      >
         <header className="hdr">
           <button
             className="wordmark"
@@ -504,6 +519,12 @@ export default function App() {
         {tab === "benchmark" ? (
           <main className="single">
             <BenchmarkTab />
+          </main>
+        ) : attaching && !view ? (
+          <main className="single">
+            <p role="status">
+              Opening the saved case and restoring its evidence…
+            </p>
           </main>
         ) : !view ? (
           <main className="single">

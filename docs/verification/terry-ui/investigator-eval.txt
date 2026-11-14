@@ -1,0 +1,7 @@
+PASS ordinary-transfer: fixture None/None; keyword None/None
+PASS ordinary-rotation: fixture None/None; keyword None/None
+PASS suspicious-transfer: fixture 2/2; keyword 2/2
+PASS missing-record: fixture 3/3; keyword 2/3
+PASS incomplete-collection: fixture None/None; keyword None/None
+PASS failed-interference: fixture 0/0; keyword 0/0
+Wrote test-results/investigator-eval.json

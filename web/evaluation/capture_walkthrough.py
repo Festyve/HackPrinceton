@@ -28,6 +28,7 @@ FIXTURES = ROOT / "web" / "fixtures"
 def wait_review(pg):
     pg.wait_for_function("document.querySelector('[data-testid=case-state]')?.textContent === 'Awaiting review'")
     pg.wait_for_selector('[data-testid="compare-table"]')
+    pg.wait_for_selector('[data-testid="timeline"] .lane')
 
 
 def main():
@@ -75,8 +76,14 @@ def main():
                     pg.click('[data-testid="preset-hero-coverup"]')
                     pg.click('[data-testid="btn-run"]')
                     pg.wait_for_function("document.querySelector('[data-testid=case-state]')?.textContent === 'Investigating'")
+                    pg.wait_for_function("document.querySelector('.investigation-progress')?.textContent.match(/[1-9][0-9]* tool events received/)")
                     shot("02-investigation")
                     wait_review(pg)
+                    pg.click('[data-testid="btn-reset"]')
+                    pg.wait_for_selector('[data-testid="btn-recorded-demo"]')
+                    pg.click('[data-testid="btn-recorded-demo"]')
+                    wait_review(pg)
+                    assert "Recorded AI run" in pg.inner_text('[data-testid="badge-inference"]')
                     shot("03-review")
                     if width == 1440:
                         case_id = pg.url.split("case=")[1]

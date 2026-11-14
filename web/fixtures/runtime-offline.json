@@ -9,6 +9,9 @@
   "live_block_reason": "RUNTIME_MODE is offline (default). No network model calls are made.",
   "effort": "low",
   "max_tokens_per_call": 3000,
+  "dev_ceiling_usd": 0.0,
+  "spend_limit_in_force_usd": 0.0,
+  "demo_reserve_open": false,
   "price_in_per_mtok": null,
   "price_out_per_mtok": null,
   "caps": {
@@ -16,6 +19,7 @@
     "max_input_tokens": 200000,
     "max_output_tokens": 10000,
     "max_seconds": 180.0,
+    "max_input_tokens_per_call": 40000,
     "tool_result_max_records": 50,
     "tool_result_max_bytes": 8192
   },

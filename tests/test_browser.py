@@ -392,13 +392,17 @@ def test_direct_recorded_action_and_library_switch_preserve_cases(server, page):
     first_url = page.url
     assert "Recorded AI run" in page.inner_text(tid("badge-inference"))
     assert "REPLAY" in page.inner_text(tid("badge-playback"))
+    page.click(tid("tab-benchmark"))
     page.get_by_role("button", name="Case library", exact=True).click()
     page.locator('dialog [data-testid="preset-sealed-control"]').click()
     page.locator('dialog button:has-text("Open selected case")').click()
     page.wait_for_function("old => location.href !== old", arg=first_url)
     wait_state(page, "awaiting_review")
     assert page.url != first_url
+    page.wait_for_selector(tid("compare-table"))
     page.goto(first_url)
+    first_id = first_url.split("case=")[1]
+    page.wait_for_function("id => document.querySelector('[data-testid=app-root]')?.dataset.caseId === id", arg=first_id)
     wait_state(page, "awaiting_review")
     assert "Recorded AI run" in page.inner_text(tid("badge-inference"))
     assert page.errors == []
@@ -465,4 +469,24 @@ def test_stopped_investigations_show_actionable_state(server, page, state, messa
     assert message in page.inner_text(tid("error-banner"))
     assert "Investigation ended before review" in page.inner_text("body")
     assert page.locator(tid("btn-reset")).is_enabled()
+    assert page.errors == []
+
+
+def test_missing_collector_displays_not_assessable(server, page, tmp_path):
+    from alibi.evidence_views import compare_local_collector
+    from .helpers import auth_open, mini_case
+
+    store, manifest = mini_case(tmp_path, {"workstation/var/log/auth.log": [auth_open("10:00:00", "ann", 1)]})
+    try:
+        actual_response = compare_local_collector(store, manifest, "workstation", "/var/log/auth.log")
+    finally:
+        store.close()
+    assert actual_response["status"] == "not_assessable"
+    # Explicit development fixture: the payload is produced by the real comparison API logic.
+    page.route("**/evidence/compare?*", lambda route: route.fulfill(json=actual_response))
+    base, _ = server
+    run_case(page, base)
+    page.get_by_text("Not assessable · a required source is unavailable", exact=True).wait_for()
+    assert "no collector copy" in page.inner_text(tid("comparison-status-reason"))
+    assert "No unexplained gap" not in page.inner_text("body")
     assert page.errors == []

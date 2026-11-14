@@ -1,36 +1,36 @@
 {
   "case": {
-    "case_id": "case-0d99acae3297",
+    "case_id": "case-167b2759b40e",
     "state": "awaiting_review",
     "detail": "report drafted; waiting for a human to accept or reject it",
-    "created_at": "2026-11-14T09:13:01.006935+00:00",
-    "updated_at": "2026-11-14T09:13:03.702533+00:00",
+    "created_at": "2026-11-14T09:23:05.678275+00:00",
+    "updated_at": "2026-11-14T09:23:08.782287+00:00",
     "preset_id": "hero-coverup",
     "title": "Inside job \u00b7 cover-up",
     "card_id": "inside-job",
     "difficulty": "L2",
     "seed": 9023,
-    "runner_id": "agent-fixture",
+    "runner_id": "agent-live",
     "evidence_origin": "SIM",
-    "inference_mode": "SCRIPTED_FIXTURE",
-    "playback": "LIVE",
-    "model_id": "scripted-fixture-policy-v1 (no model)",
+    "inference_mode": "RECORDED_MODEL",
+    "playback": "REPLAY",
+    "model_id": "anthropic:claude-opus-5-5",
     "bundle_id": "bndl-646e90a648ad486f",
     "error": null,
-    "replay_of": null,
-    "recorded_at": null,
+    "replay_of": "hero-coverup-live-opus-5-5",
+    "recorded_at": "2026-11-14T07:00:06.181543+00:00",
     "review_decision": null,
     "review_note": "",
     "timings": {
-      "generate_s": 0.319,
-      "investigate_s": 0.75
+      "generate_s": 0.377,
+      "investigate_s": 76.772
     },
     "labels": {
       "evidence_origin": "SIM",
-      "inference": "SCRIPTED_FIXTURE",
-      "inference_label": "Scripted fixture \u00b7 no model inference",
-      "playback": "LIVE",
-      "model_id": "scripted-fixture-policy-v1 (no model)"
+      "inference": "RECORDED_MODEL",
+      "inference_label": "Recorded AI run",
+      "playback": "REPLAY",
+      "model_id": "anthropic:claude-opus-5-5"
     }
   },
   "card": {
@@ -62,6 +62,8 @@
         "coverage_start": "2026-11-10T06:15:02Z",
         "coverage_end": "2026-11-10T15:14:58Z",
         "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
         "forwarded_to_collector": false
       },
       {
@@ -77,6 +79,8 @@
         "coverage_start": "2026-11-10T06:50:06Z",
         "coverage_end": "2026-11-10T15:06:02Z",
         "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
         "forwarded_to_collector": false
       },
       {
@@ -92,6 +96,8 @@
         "coverage_start": "2026-11-10T06:50:06Z",
         "coverage_end": "2026-11-10T15:06:02Z",
         "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
         "forwarded_to_collector": true
       },
       {
@@ -107,6 +113,8 @@
         "coverage_start": null,
         "coverage_end": null,
         "coverage_note": "point-in-time metadata snapshot taken at capture end",
+        "coverage_declared": false,
+        "known_gaps": [],
         "forwarded_to_collector": false
       },
       {
@@ -122,6 +130,8 @@
         "coverage_start": "2026-11-10T07:46:19Z",
         "coverage_end": "2026-11-10T07:48:19Z",
         "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
         "forwarded_to_collector": false
       },
       {
@@ -137,6 +147,8 @@
         "coverage_start": "2026-11-10T07:45:49Z",
         "coverage_end": "2026-11-10T07:55:28Z",
         "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
         "forwarded_to_collector": true
       },
       {
@@ -152,6 +164,8 @@
         "coverage_start": "2026-11-10T09:00:54Z",
         "coverage_end": "2026-11-10T14:59:44Z",
         "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
         "forwarded_to_collector": true
       },
       {
@@ -167,6 +181,8 @@
         "coverage_start": "2026-11-10T06:21:53Z",
         "coverage_end": "2026-11-10T14:23:32Z",
         "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
         "forwarded_to_collector": true
       },
       {
@@ -182,6 +198,8 @@
         "coverage_start": "2026-11-10T06:15:43Z",
         "coverage_end": "2026-11-10T15:14:46Z",
         "coverage_note": "simulated flow records from the tap position; not a packet capture",
+        "coverage_declared": false,
+        "known_gaps": [],
         "forwarded_to_collector": false
       },
       {
@@ -197,6 +215,8 @@
         "coverage_start": null,
         "coverage_end": null,
         "coverage_note": "point-in-time metadata snapshot taken at capture end",
+        "coverage_declared": false,
+        "known_gaps": [],
         "forwarded_to_collector": false
       },
       {
@@ -212,6 +232,8 @@
         "coverage_start": "2026-11-10T13:00:25Z",
         "coverage_end": "2026-11-10T13:01:18Z",
         "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
         "forwarded_to_collector": false
       },
       {
@@ -227,6 +249,8 @@
         "coverage_start": "2026-11-10T08:00:42Z",
         "coverage_end": "2026-11-10T14:09:30Z",
         "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
         "forwarded_to_collector": false
       },
       {
@@ -242,6 +266,8 @@
         "coverage_start": "2026-11-10T06:28:21Z",
         "coverage_end": "2026-11-10T14:33:46Z",
         "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
         "forwarded_to_collector": false
       },
       {
@@ -257,6 +283,8 @@
         "coverage_start": "2026-11-10T09:00:39Z",
         "coverage_end": "2026-11-10T14:34:50Z",
         "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
         "forwarded_to_collector": true
       },
       {
@@ -272,6 +300,8 @@
         "coverage_start": "2026-11-10T06:27:00Z",
         "coverage_end": "2026-11-10T08:53:44Z",
         "coverage_note": "rotated generation .1 still present on the host at capture",
+        "coverage_declared": false,
+        "known_gaps": [],
         "forwarded_to_collector": true
       },
       {
@@ -287,11 +317,13 @@
         "coverage_start": "2026-11-10T06:37:07Z",
         "coverage_end": "2026-11-10T14:53:20Z",
         "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
         "forwarded_to_collector": true
       }
     ],
     "raw_bundle_sha256": "646e90a648ad486f1b8f81a173ce6b4a865ba8edebef63ce98a367ddbff31444",
-    "derived_db_sha256": "443ab10d656cb977d2160ca0bc1ea2636592f05e6cd853d6acd408f8cc4d5a06",
+    "derived_db_sha256": "eb97f1491b318ebcebd23399d314d0bd33c337df72adfbb78753f8196164fedf",
     "event_count": 12802,
     "normalization_errors": [],
     "operational_context": {
@@ -498,19 +530,19 @@
   },
   "report": {
     "schema_version": "1.0.0",
-    "report_id": "rep-case-0d99acae3297",
+    "report_id": "rep-case-167b2759b40e",
     "bundle_id": "bndl-646e90a648ad486f",
-    "system_id": "ALIBI-FIXTURE",
-    "system_label": "DeepAgents graph (lead + integrity-auditor + skeptic) driven by a scripted fixture policy; no model inference",
-    "inference_mode": "SCRIPTED_FIXTURE",
-    "model_id": "scripted-fixture-policy-v1 (no model)",
+    "system_id": "ALIBI",
+    "system_label": "ALIBI: lead + integrity-auditor + skeptic with deterministic checks",
+    "inference_mode": "RECORDED_MODEL",
+    "model_id": "anthropic:claude-opus-5-5",
     "findings": [
       {
         "id": "F-04399b",
         "claim_type": "local_log_removal",
         "category": "incident_allegation",
-        "attack_id": "T1685.006",
-        "technique_family": "Host log lines removed (closest ATT&CK entry: Clear Linux or Mac System Logs)",
+        "attack_id": null,
+        "technique_family": null,
         "host": "workstation",
         "actor_claimed": null,
         "account_used": "rhaddad",
@@ -520,36 +552,32 @@
         "evidence_ids": [
           "ev_0e5ae1caaa5a",
           "ev_0b6a6ca7baef",
-          "ev_8488241a1c07"
+          "ev_8488241a1c07",
+          "ev_1048c86a75f0",
+          "ev_0582ac2d6dd5"
         ],
         "counterevidence_ids": [],
-        "check_refs": [
-          "local_vs_collector"
-        ],
-        "confidence": 0.8,
-        "rationale": "1 line(s) of /var/log/auth.log on workstation were received by the collector but are absent from the host's own copy, after the host's retention boundary (2026-11-10T06:15:00+00:00, basis: capture_start) and bracketed by later local records. Retained line: 2026-11-10T12:38:28+00:00 ws-nurse-01 login[2297]: pam_unix(login:session): session opened for user rhaddad on tty1 (session 91) Session(s): workstation#91.",
-        "assumptions": [
-          "the collector is not writable from the monitored host",
-          "the forwarder delivered the line before it disappeared locally"
-        ],
+        "check_refs": [],
+        "confidence": 0.85,
+        "rationale": "Collector holds auth.log seq 35 (session 91 open, rhaddad, tty1) absent from local auth.log though bracketing lines exist; rotation at 09:00:01 does not explain it; no heartbeat gaps.",
+        "assumptions": [],
         "alternative_explanations": [
-          "a local log-agent or filesystem fault dropped the line",
-          "an administrator edited the file without recording it"
+          "Local write/flush failure"
         ],
         "status": "verified",
         "verification_status": "supported_observation",
         "verifier_notes": [
           "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
         ],
-        "skeptic_note": "Tried log rotation: the line postdates the host's retention boundary (2026-11-10T06:15:00+00:00) and later local records bracket it, so rotation does not explain it. Tried a collection gap: the collector did receive the line. A local agent or filesystem fault cannot be excluded.",
+        "skeptic_note": "Bracketed missing line after rotation boundary; no gaps.",
         "produced_by": "lead-investigator"
       },
       {
         "id": "F-c88b20",
         "claim_type": "data_staging",
         "category": "incident_allegation",
-        "attack_id": "T1074.001",
-        "technique_family": "Local data staging",
+        "attack_id": null,
+        "technique_family": null,
         "host": "workstation",
         "actor_claimed": null,
         "account_used": "rhaddad",
@@ -564,23 +592,17 @@
           "ev_071fec869d89"
         ],
         "counterevidence_ids": [],
-        "check_refs": [
-          "transfer_session_correlation"
-        ],
-        "confidence": 0.7,
-        "rationale": "/home/rhaddad/Downloads/upd-4c2e.pkg (20,944,103 bytes, owner rhaddad) was written on workstation shortly before the non-approved transfer and matches its size; the records application logged a bulk export of 'patients_full' to this host.",
-        "assumptions": [
-          "matching size and timing indicate the same object; content was not inspected"
-        ],
-        "alternative_explanations": [
-          "an unrelated file of similar size"
-        ],
+        "check_refs": [],
+        "confidence": 0.85,
+        "rationale": "patients_full export pulled to workstation and staged as 20,944,103-byte file, matching outbound transfer size.",
+        "assumptions": [],
+        "alternative_explanations": [],
         "status": "verified",
         "verification_status": "supported_observation",
         "verifier_notes": [
           "an object of matching size was written on this host shortly before a non-approved bulk transfer"
         ],
-        "skeptic_note": "Tried routine exports: this object matches the size of the non-approved transfer and was written minutes before it. Matching size is not proof of identical content.",
+        "skeptic_note": "Export-linked file matching transfer size.",
         "produced_by": "lead-investigator"
       },
       {
@@ -588,7 +610,7 @@
         "claim_type": "policy_violating_transfer",
         "category": "incident_allegation",
         "attack_id": null,
-        "technique_family": "Transfer to a non-approved destination (exfiltration mapping is context-dependent)",
+        "technique_family": null,
         "host": "workstation",
         "actor_claimed": null,
         "account_used": "rhaddad",
@@ -598,26 +620,24 @@
         "evidence_ids": [
           "ev_9017ed847e2a",
           "ev_0a089a849682",
-          "ev_0e5ae1caaa5a"
+          "ev_0e5ae1caaa5a",
+          "ev_8488241a1c07",
+          "ev_e77eb85e1660"
         ],
         "counterevidence_ids": [],
-        "check_refs": [
-          "transfer_session_correlation"
-        ],
-        "confidence": 0.8,
-        "rationale": "20,948,102 bytes left workstation for 10.20.9.87:8080 between 2026-11-10T12:41:24+00:00 and 2026-11-10T12:41:37+00:00. destination 10.20.9.87 is not on the approved bulk-destination list (10.20.0.45, 10.20.8.20). It overlaps exactly one session on workstation: workstation#91 (account rhaddad, console; login record seen in: collector copy).",
-        "assumptions": [
-          "the supplied destination policy is complete and current"
-        ],
+        "check_refs": [],
+        "confidence": 0.9,
+        "rationale": "Tap: 20,948,102 bytes workstation to non-approved 10.20.9.87:8080 within session workstation#91, with linked command.",
+        "assumptions": [],
         "alternative_explanations": [
-          "an approved destination missing from the supplied policy"
+          "Unlisted approved system; flows show no content"
         ],
         "status": "verified",
         "verification_status": "supported_observation",
         "verifier_notes": [
           "bulk transfer to a destination not on the approved list, cited via the flow record"
         ],
-        "skeptic_note": "Tried the scheduled backup and lab submissions: this destination is not on the approved list and the volume is above the bulk threshold. A flow record does not show content, and the policy list could be incomplete.",
+        "skeptic_note": "20.9MB to non-approved destination in session #91.",
         "produced_by": "lead-investigator"
       },
       {
@@ -633,30 +653,26 @@
         "t_end": "2026-11-10T08:59:13Z",
         "object_or_session": "/var/log/records-app/access.log",
         "evidence_ids": [
+          "ev_703d13366f13",
+          "ev_4358af94bbef",
           "ev_c3170af88304",
           "ev_a184daed3bf5",
           "ev_dfd91d9ff553",
           "ev_a3849bd631f7",
-          "ev_62987e45e4c2",
-          "ev_703d13366f13",
-          "ev_4358af94bbef"
+          "ev_62987e45e4c2"
         ],
         "counterevidence_ids": [],
-        "check_refs": [
-          "local_vs_collector"
-        ],
-        "confidence": 0.9,
-        "rationale": "183 line(s) of /var/log/records-app/access.log on records exist only at the collector, and all of them predate the host's retention boundary at 2026-11-10T09:00:04+00:00 (log rotation). Their absence from the host is expected, not suspicious.",
-        "assumptions": [
-          "the rotation record and the stated retention policy are accurate"
-        ],
+        "check_refs": [],
+        "confidence": 0.95,
+        "rationale": "183 missing local lines all predate the 09:00:04 rotation; keep 0 with off-host archive.",
+        "assumptions": [],
         "alternative_explanations": [],
         "status": "verified",
         "verification_status": "supported_observation",
         "verifier_notes": [
           "a deterministic check supports this observation; it is not an incident allegation"
         ],
-        "skeptic_note": "Not an allegation. The benign or open reading stands; nothing here needs a suspect.",
+        "skeptic_note": "Pre-rotation lines, keep 0 policy.",
         "produced_by": "lead-investigator"
       },
       {
@@ -675,11 +691,9 @@
           "ev_e4db63a910f0"
         ],
         "counterevidence_ids": [],
-        "check_refs": [
-          "transfer_session_correlation"
-        ],
+        "check_refs": [],
         "confidence": 0.9,
-        "rationale": "20,949,303 bytes from records to 10.20.0.45:873. destination 10.20.0.45 is an approved bulk destination: stor-nas-01 (backup and log archive).",
+        "rationale": "20,949,303 bytes to approved backup stor-nas-01.",
         "assumptions": [],
         "alternative_explanations": [],
         "status": "verified",
@@ -687,7 +701,7 @@
         "verifier_notes": [
           "a deterministic check supports this observation; it is not an incident allegation"
         ],
-        "skeptic_note": "Not an allegation. The benign or open reading stands; nothing here needs a suspect.",
+        "skeptic_note": "Approved backup destination.",
         "produced_by": "lead-investigator"
       }
     ],
@@ -698,44 +712,46 @@
       "named_person_accused": null,
       "named_person_exonerated": null,
       "supporting_evidence_ids": [
-        "ev_0e5ae1caaa5a"
+        "ev_0e5ae1caaa5a",
+        "ev_9017ed847e2a",
+        "ev_a12bc7a76943",
+        "ev_0a089a849682"
       ],
       "contrary_evidence_ids": [
         "ev_49c33f246bbb",
         "ev_afa5b9d9811b"
       ],
-      "assumptions": [
-        "badge-to-account assignments in the supplied directory are current"
-      ],
+      "assumptions": [],
       "limits": [
-        "an account identifies a credential, not the person typing",
-        "badge readers record badge taps, not people; tailgating and shared badges are not visible",
-        "this check cannot establish who operated the session and cannot clear anyone"
+        "Account is a credential, not a person; shared-station credentials were found written down before",
+        "Badge B-3201 had tapped out at 12:31:46, before the session; badges miss tailgating",
+        "Flows show no content"
       ],
-      "statement": "Account used: rhaddad. Human operator not established. Account rhaddad opened a console session at 2026-11-10T12:38:28+00:00 while the badge assigned to that account (B-3201) had last tapped out at 2026-11-10T12:31:46+00:00. This is inconsistent with the account holder sitting at the console, but it does not identify who was.",
+      "statement": "Account used: rhaddad (console session workstation#91). Human operator not established.",
       "review_status": "pending",
       "approved_by_human": false,
       "approved_at": null
     },
-    "summary": "3 incident allegation(s), 2 benign explanation(s)/open note(s). Account used: rhaddad. Human operator not established. Account rhaddad opened a console session at 2026-11-10T12:38:28+00:00 while the badge assigned to that account (B-3201) had last tapped out at 2026-11-10T12:31:46+00:00. This is inconsistent with the account holder sitting at the console, but it does not identify who was.",
+    "summary": "Incident supported on workstation, console session #91 (account rhaddad), 2026-11-10: at 12:38:28 the session-open line was removed from local /var/log/auth.log while the collector retained it (F-04399b); 12:40:15-19 a patients_full export was staged as /home/rhaddad/Downloads/upd-4c2e.pkg, 20,944,103 bytes (F-c88b20); 12:41:24-37 ~20.9MB sent to non-approved 10.20.9.87:8080 (F-e409cc). Benign: records access.log absence 06:28-08:59 explained by rotation/off-host archive (F-2aa970); 12:11 backup to approved 10.20.0.45:873 (F-fae12e). Attribution: account rhaddad used; human operator not established (badge B-3201 tapped out at 12:31:46, before the session).",
     "open_questions": [
-      "Who had access to the credential used in the linked session?",
-      "Was the destination known to anyone at the clinic?"
+      "What is 10.20.9.87 and is it an unlisted approved system?",
+      "Who was physically at the workstation console at 12:38-12:42 (CCTV, written-down credentials)?",
+      "Content of the transferred data cannot be confirmed from flow records."
     ],
     "usage": {
-      "llm_calls": 0,
-      "tokens_in": 0,
-      "tokens_out": 0,
-      "tokens_cache_read": 0,
-      "cost_estimate_usd": 0.0,
-      "wall_seconds": 0.75,
-      "tool_calls": 17,
-      "scripted_turns": 17,
+      "llm_calls": 11,
+      "tokens_in": 109772,
+      "tokens_out": 8047,
+      "tokens_cache_read": 73116,
+      "cost_estimate_usd": 0.373438,
+      "wall_seconds": 76.772,
+      "tool_calls": 19,
+      "scripted_turns": 0,
       "retries": 0,
       "errors": 0,
       "timed_out": false
     },
-    "created_at": "2026-11-14T09:13:03.701540Z",
+    "created_at": "2026-11-14T06:59:06.085498Z",
     "locked": false,
     "locked_at": null,
     "report_sha256": null,
@@ -755,6 +771,9 @@
     "live_block_reason": "RUNTIME_MODE is offline (default). No network model calls are made.",
     "effort": "low",
     "max_tokens_per_call": 3000,
+    "dev_ceiling_usd": 0.0,
+    "spend_limit_in_force_usd": 0.0,
+    "demo_reserve_open": false,
     "price_in_per_mtok": null,
     "price_out_per_mtok": null,
     "caps": {
@@ -762,6 +781,7 @@
       "max_input_tokens": 200000,
       "max_output_tokens": 10000,
       "max_seconds": 180.0,
+      "max_input_tokens_per_call": 40000,
       "tool_result_max_records": 50,
       "tool_result_max_bytes": 8192
     },

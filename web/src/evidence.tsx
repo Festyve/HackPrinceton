@@ -151,6 +151,7 @@ function CompareTable({
     return data.rows.slice(Math.max(0, first - 1), first + 2);
   }, [data, all]);
 
+  const notAssessable = data?.status === "not_assessable";
   const missing = data?.counts.retained_by_collector ?? 0;
   const unresolved =
     (data?.counts.local_only ?? 0) +
@@ -169,15 +170,29 @@ function CompareTable({
         <>
           <p
             className={
-              "headline " + (missing ? "bad" : unresolved ? "amber" : "ok")
+              "headline " +
+              (notAssessable
+                ? "amber"
+                : missing
+                  ? "bad"
+                  : unresolved
+                    ? "amber"
+                    : "ok")
             }
           >
-            {missing
-              ? `Discrepancy · ${missing} missing host entr${missing === 1 ? "y" : "ies"}`
-              : unresolved
-                ? `Unresolved coverage · ${unresolved} unmatched record${unresolved === 1 ? "" : "s"}`
-                : "No unexplained gap in these paired records"}
+            {notAssessable
+              ? "Not assessable · a required source is unavailable"
+              : missing
+                ? `Discrepancy · ${missing} missing host entr${missing === 1 ? "y" : "ies"}`
+                : unresolved
+                  ? `Unresolved coverage · ${unresolved} unmatched record${unresolved === 1 ? "" : "s"}`
+                  : "No unexplained gap in these paired records"}
           </p>
+          {data.status_reason && (
+            <p className="small muted" data-testid="comparison-status-reason">
+              {data.status_reason}
+            </p>
+          )}
           <details className="comparison-coverage">
             <summary>Coverage and record counts</summary>
             <p className="small muted">
@@ -282,6 +297,9 @@ function CompareTable({
                         {hhmmss(r.ts)}
                         <div className={"tag s-" + m.cls}>
                           {m.glyph} {m.word}
+                          {r.reason && (
+                            <span className="row-reason">{r.reason}</span>
+                          )}
                         </div>
                       </td>
                       {hostCell}
@@ -303,7 +321,7 @@ function CompareTable({
             <button onClick={() => setAll(!all)}>
               {all
                 ? "Show only the discrepancy and context"
-                : `Show all ${data.rows.length} rows`}
+                : `Show all ${data.rows.length} loaded rows`}
             </button>
           </div>
           {data.legend && (
