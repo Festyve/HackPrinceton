@@ -7,6 +7,7 @@ import type {
   CaseView,
   ExcludedSource,
   ExperimentClaim,
+  PairedSummary,
   QuestionAnswer,
   Runtime,
   SensorPoint,
@@ -893,6 +894,107 @@ export function TemperatureRecords({
           : "A temperature record describes the refrigerator, not who handled the record."}{" "}
         {data.produced_by}
       </p>
+    </section>
+  );
+}
+
+// --------------------------------------------------------------------------- second-run evaluation
+
+const frac = (r?: { num?: number | null; den?: number | null } | null) =>
+  r && r.den ? r.num + "/" + r.den : "n/a";
+
+/** The six systems summed over the declared evaluation suites. Every number comes from the server. */
+export function EvaluationSummary({ s }: { s: PairedSummary }) {
+  const lost = s.correct_findings_not_counted ?? [];
+  const cases = s.suites.reduce((n, x) => n + x.cases, 0);
+  return (
+    <section className="evaluation" data-testid="evaluation-summary">
+      <h2>
+        Six systems on {cases} new cases{" "}
+        <small className="mono">{s.suites.map((x) => x.suite).join(" + ")}</small>
+      </h2>
+      <p className="small muted">
+        {s.incident_cases} incident cases and {s.benign_cases} benign controls ·
+        simulated evidence ·{" "}
+        {s.inference === "LIVE_MODEL" ? "real model runs" : s.inference} on{" "}
+        <span className="mono">{s.model}</span> · one run per cell
+        {s.verifier_feedback_during_investigation === false &&
+          " · no system was told whether a finding was supported while it investigated"}
+      </p>
+      <div className="tablewrap">
+        <table data-testid="evaluation-table">
+          <thead>
+            <tr>
+              <th>System</th>
+              <th>Incident effects established</th>
+              <th>Cover-ups found</th>
+              <th>Benign cases with an accepted allegation</th>
+              <th>Runs stopped by a budget cap</th>
+              <th>Est. cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            {s.systems
+              .filter((x) => x.aggregate)
+              .map((x) => (
+                <tr key={x.id} data-system={x.id}>
+                  <td>
+                    <b>{x.id}</b>
+                    <div className="small muted">{x.label}</div>
+                  </td>
+                  <td>{frac(x.aggregate?.step_recall)}</td>
+                  <td>{frac(x.aggregate?.coverup_detected)}</td>
+                  <td>{frac(x.aggregate?.benign_false_alert)}</td>
+                  <td>
+                    {x.censored} of {x.cells}
+                  </td>
+                  <td>
+                    {x.aggregate?.cost_estimate_usd
+                      ? "$" + x.aggregate.cost_estimate_usd.toFixed(2)
+                      : "–"}
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="note">{s.note}</p>
+      {lost.length > 0 && (
+        <details className="benchmark-details">
+          <summary>
+            {lost.length} correct finding{lost.length === 1 ? "" : "s"} that did
+            not count
+          </summary>
+          <p className="small muted">
+            These matched something that happened, but were not accepted in the
+            locked report, so they earned nothing.
+          </p>
+          <div className="tablewrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Case</th>
+                  <th>System</th>
+                  <th>Finding</th>
+                  <th>Why it did not count</th>
+                  <th>What the check said</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lost.map((x, i) => (
+                  <tr key={i}>
+                    <td>{x.case_ref}</td>
+                    <td>{x.system_id}</td>
+                    <td>{CLAIM_TITLES[x.claim_type] ?? words(x.claim_type)}</td>
+                    <td>{words(x.status)}</td>
+                    <td>{words(x.check_result)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      )}
     </section>
   );
 }

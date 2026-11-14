@@ -396,8 +396,40 @@ export interface BenchSystem {
     tokens_out?: number | null;
   };
 }
+export interface PairedSummary {
+  suites: Array<{ suite: string; run_id: string; cases: number }>;
+  systems: Array<{
+    id: string;
+    label: string;
+    cells: number;
+    censored: number;
+    aggregate: null | {
+      step_recall?: Ratio | null;
+      coverup_detected?: Ratio | null;
+      benign_false_alert?: Ratio | null;
+      false_claims_final?: number | null;
+      unsupported_named_attribution?: number | null;
+      cost_estimate_usd?: number | null;
+    };
+  }>;
+  note?: string;
+  model?: string | null;
+  inference?: string | null;
+  incident_cases?: number;
+  benign_cases?: number;
+  verifier_feedback_during_investigation?: boolean;
+  correct_findings_not_counted?: Array<{
+    suite: string;
+    case_ref: string;
+    system_id: string;
+    claim_type: string;
+    status: string;
+    check_result: string;
+  }>;
+}
 export interface Benchmark {
   available: boolean;
+  paired_summary?: PairedSummary | null;
   reason?: string;
   suite?: string;
   generated_at?: string;

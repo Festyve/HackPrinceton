@@ -1942,3 +1942,12 @@ details li {
     max-width: 60%;
   }
 }
+.evaluation {
+  margin-bottom: 34px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+}
+.evaluation td:not(:first-child),
+.evaluation th:not(:first-child) {
+  font-variant-numeric: tabular-nums;
+}

@@ -233,3 +233,22 @@ def test_a_derived_view_is_not_unsealed_before_the_original_report_is_locked(ser
     wait_state(page, "scored")
     page.wait_for_selector(tid("score-panel"))
     assert page.errors == []
+
+
+def test_the_benchmark_tab_shows_the_six_system_evaluation_with_its_limits(server, page):
+    base, _ = server
+    page.goto(base + "/")
+    page.click(tid("tab-benchmark"))
+    page.wait_for_selector(tid("evaluation-table"))
+    row = lambda system: page.locator(f'{tid("evaluation-table")} tr[data-system="{system}"]').inner_text()  # noqa: E731
+    # the committed measurements, as the server reports them
+    assert "16/16" in row("BR") and "15/16" in row("B1+") and "12/16" in row("ALIBI") and "10/16" in row("B1")
+    assert "3 of 6" in row("B1") and "0 of 6" in row("B1+")
+    text = page.inner_text(tid("evaluation-summary"))
+    assert "one run per cell" in text.lower() and "not an accuracy estimate" in text.lower()
+    assert "claude-haiku-5-5" in text and "simulated evidence" in text
+    assert "no system was told whether a finding was supported" in text
+    assert "correct finding" in text  # the findings that were right but did not count are listed, not hidden
+    # the first-run results are still there, named as the first run
+    assert page.locator(tid("benchmark-summary")).count() == 1 and "First run" in page.inner_text(".bench")
+    assert page.errors == []
