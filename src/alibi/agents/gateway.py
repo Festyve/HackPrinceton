@@ -61,7 +61,15 @@ class BudgetExceeded(RuntimeError):
 
 
 class LedgerError(BudgetExceeded):
-    """The cumulative ledger cannot be read or written. Nothing is spent while that is true."""
+    """The cumulative ledger cannot be read or written. Nothing is spent while that is true.
+
+    The message names the ledger file but not its directory: the text is shown to API clients and stored with
+    cases and questions. The full path is on `.path`, for an operator at the command line.
+    """
+
+    def __init__(self, message: str, path: Path | None = None) -> None:
+        super().__init__(message)
+        self.path = path
 
 
 class ModelRefused(RuntimeError):
@@ -165,19 +173,20 @@ class GlobalSpend:
                         try:
                             raw = self.path.read_text(encoding="utf-8").strip()
                         except UnicodeDecodeError as exc:
-                            raise LedgerError(f"spend ledger {self.path} is not text; refusing to spend until it is "
-                                              "repaired") from exc
+                            raise LedgerError(f"spend ledger {self.path.name} is not text; refusing to spend until it is "
+                                              "repaired", self.path) from exc
                         if not raw:
-                            raise LedgerError(f"spend ledger {self.path} is empty; refusing to treat it as zero spend")
+                            raise LedgerError(f"spend ledger {self.path.name} is empty; refusing to treat it as zero spend",
+                                              self.path)
                         try:
                             loaded = json.loads(raw)
                         except ValueError as exc:
-                            raise LedgerError(f"spend ledger {self.path} is unreadable ({type(exc).__name__}); "
-                                              "refusing to spend until it is repaired") from exc
+                            raise LedgerError(f"spend ledger {self.path.name} is unreadable ({type(exc).__name__}); "
+                                              "refusing to spend until it is repaired", self.path) from exc
                         problem = self._invalid(loaded)
                         if problem:
-                            raise LedgerError(f"spend ledger {self.path} is damaged ({problem}); refusing to spend "
-                                              "until it is repaired. It was not treated as zero spend")
+                            raise LedgerError(f"spend ledger {self.path.name} is damaged ({problem}); refusing to spend "
+                                              "until it is repaired. It was not treated as zero spend", self.path)
                         state = self._migrate(loaded)
                     else:
                         state = self._fresh()
@@ -195,7 +204,8 @@ class GlobalSpend:
                 finally:
                     fcntl.flock(lock, fcntl.LOCK_UN)
         except OSError as exc:
-            raise LedgerError(f"spend ledger {self.path} cannot be used: {exc}") from exc
+            raise LedgerError(f"spend ledger {self.path.name} cannot be used: {type(exc).__name__}: "
+                              f"{exc.strerror or 'the file system refused'}", self.path) from exc
 
     @staticmethod
     def _committed(state: dict[str, Any]) -> float:

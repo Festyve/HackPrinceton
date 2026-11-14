@@ -196,8 +196,9 @@ def test_who_did_it_is_answered_as_an_account_never_a_person(live):
     cid, view = _case(c)
     _, _, by = _ids(view)
     login = view["report"]["attribution"]["supporting_evidence_ids"][0]
+    account = view["report"]["attribution"]["account_used"]
     use(_fake([_answer(answer="The account used was the one in the linked session. Who typed is not established.",
-                       claims=[{"text": "The session belongs to this account.", "evidence_ids": [login],
+                       claims=[{"text": f"The session belongs to account {account}.", "evidence_ids": [login],
                                 "kind": "session_account"}])]))
     q = _ask(c, cid, text="Who did it?")
     assert q["claims"][0]["support"] == "checked" and "credential, not a person" in q["claims"][0]["basis"]
@@ -421,8 +422,26 @@ def test_claim_checks_agree_with_the_deterministic_checks(coverup, make_episode,
     assert check("transfer_not_approved", [ok["flow_event_id"]]) == "contradicted"
     assert check("transfer_approved", [ok["flow_event_id"]]) == "checked"
     assert check("staged_before_transfer", [bad["staged_object"]["fs_stat_event_id"]]) == "checked"
-    assert check("session_account", bad["sessions"][0]["login_event_ids"]) == "checked"
     assert check("session_account", [bad["flow_event_id"]]) == "unsupported"
+    # a login record supports a sentence only about the account and session it records
+    logins = bad["sessions"][0]["login_event_ids"]
+    rec = st.get(logins)[0]
+    number = str(rec.attrs["session_id"]).rsplit("#", 1)[-1]
+    other = sorted({str(e.actor) for e in st.scan(action="login") if e.actor and e.actor != rec.actor})[0]
+    said = lambda text: questions.check_claim("session_account", set(logins), obs, st, text)  # noqa: E731
+    assert said(f"Session {number} was opened by account {rec.actor}.")[0] == "checked"
+    assert said(f"The session belongs to {rec.actor}.")[0] == "checked"
+    wrong, why = said(f"Session {number} was opened by account {other}.")
+    assert wrong == "contradicted" and other in why and str(rec.actor) in why
+    assert said(f"Session {int(number) + 500} belongs to account {rec.actor}.")[0] == "contradicted"
+    assert said("The session was opened from the console.")[0] == "cited"  # names no account: nothing to check it against
+    assert said(f"Accounts {rec.actor} and {other} shared the session.")[0] == "cited"
+    assert said(f"The session belongs to {rec.actor}2.")[0] == "cited"  # a longer name is not this account
+    answer = questions.validate_answer(
+        {"status": "answered", "answer": "x", "claims": [
+            {"text": f"Session {number} was opened by account {other}.", "evidence_ids": logins, "kind": "session_account"}]},
+        "which account?", st, m)
+    assert answer["claims"][0].support == "contradicted" and answer["status"] == "insufficient_evidence"
     assert check("record", [removed]) == "cited" and check("record", []) == "unsupported"
     assert check("interpretation", []) == "interpretation"
     rot = make_episode(3, "benign_rotation")
@@ -486,3 +505,28 @@ def test_claims_about_the_new_case_families_are_checked_against_their_own_checks
     assert q2["status"] == "failed" and q2["claims"] == [] and q2["answer"] == ""
     assert any("invalid answer" in str(m.content) for m in plain.seen[-1])
     assert questions.FAMILY_CLAIM_KINDS[:4] == checks_families.INCIDENT_CLAIMS
+
+
+def test_the_labels_saved_with_recorded_answers_are_what_the_current_checks_give(tmp_path):
+    """A recorded answer is replayed with the support labels it was given when it was recorded. Those labels must
+    still be what the checks say about the same claims and the same evidence, or the recording has gone stale."""
+    from alibi.orchestrator import REPLAY_DIR
+
+    settings = replace(load_settings({}, dotenv=False), runs_dir=tmp_path / "runs", sealed_dir=tmp_path / "sealed")
+    orch = Orchestrator(settings, pace_s=0.0)
+    checked = 0
+    for f in sorted(REPLAY_DIR.glob("*/recording.json")):
+        saved = json.loads(f.read_text(encoding="utf-8")).get("questions") or []
+        if not saved:
+            continue
+        rec = orch.open_replay(f.parent.name)
+        paths = orch._paths(rec.case_id)
+        with EvidenceStore(paths.db) as st:
+            obs = verifier.compute_observations(st, load_manifest(paths))
+            for q in saved:
+                for claim in q.get("claims") or []:
+                    got = questions.check_claim(claim.get("kind") or "record", set(claim.get("evidence_ids") or []), obs, st,
+                                                claim.get("text") or "")[0]
+                    assert got == claim["support"], (f.parent.name, claim["text"])
+                    checked += 1
+    assert checked >= 20

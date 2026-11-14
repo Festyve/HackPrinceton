@@ -15,6 +15,7 @@ separately too; they are not part of the report.
 from __future__ import annotations
 
 import hashlib
+import re
 from datetime import datetime, timezone
 from typing import Any
 
@@ -50,7 +51,9 @@ def build_manifest(case: dict[str, Any], manifest: EvidenceManifest, report: Inv
     if not report.locked:
         raise ValueError("only a locked report can be exported")
     ids = _cited_ids(report)
-    found = {e.id: e for e in store.get(ids)} if ids else {}
+    found: dict[str, Any] = {}
+    for i in range(0, len(ids), LOOKUP_CHUNK):  # the store answers a bounded number of ids per call
+        found.update({e.id: e for e in store.get(ids[i:i + LOOKUP_CHUNK])})
     labels = case.get("labels", {})
     return {
         "export_version": EXPORT_VERSION, "exported_at": datetime.now(timezone.utc).isoformat(),
@@ -98,13 +101,37 @@ def build_manifest(case: dict[str, Any], manifest: EvidenceManifest, report: Inv
     }
 
 
+LOOKUP_CHUNK = 200
+_CONTROL = re.compile(r"[\x00-\x1f\x7f\u2028\u2029]+")
+_MARKUP = re.compile(r"([\\`<>\[\]])")
+_BLOCK_START = re.compile(r"^(#{1,6}(\s|$)|[-+*>=]|\d+[.)])")
+
+
+def _text(value: Any) -> str:
+    """Free text shown outside a code block: one line, and never markup.
+
+    Titles, rationales, account names, object paths and artifact names can all carry strings that came from
+    evidence. Line breaks are folded so the text cannot start a new block; backticks, angle brackets and square
+    brackets are escaped so it cannot open a code span, a tag, a link or an image; and a leading heading, list
+    or quote marker is escaped. Inside a table, `_cell` also escapes the column separator.
+    """
+    s = _CONTROL.sub(" ", str(value if value is not None else "")).strip()
+    s = _MARKUP.sub(r"\\\1", s)
+    return "\\" + s if _BLOCK_START.match(s) else s
+
+
+def _span(value: Any) -> str:
+    """A short value as a code span. A backtick or line break in it cannot end the span early."""
+    return "`" + _CONTROL.sub(" ", str(value if value is not None else "")).replace("`", "'").strip() + "`"
+
+
 def _code(text: str) -> str:
     """Evidence text as an indented code block: shown verbatim, never interpreted as markup."""
     return "\n".join("    " + line for line in str(text).replace("\r", "").split("\n"))
 
 
 def _cell(text: Any) -> str:
-    return str(text if text is not None else "").replace("|", "\\|").replace("\n", " ")
+    return _text(text).replace("|", "\\|")
 
 
 def render_markdown(doc: dict[str, Any]) -> str:
@@ -116,7 +143,7 @@ def render_markdown(doc: dict[str, Any]) -> str:
     def refs(ids: list[str]) -> str:
         return ", ".join(f"[{order[i]}]" for i in ids if i in order) or "none"
 
-    out = [f"# Investigation report: {doc['case']['title']}", "",
+    out = [f"# Investigation report: {_text(doc['case']['title'])}", "",
            f"Case `{doc['case']['case_id']}` · exported {doc['exported_at']}", "",
            "| | |", "|---|---|",
            f"| Evidence | {_cell(ORIGIN_LABELS.get(prov['evidence_origin'], prov['evidence_origin']))} · bundle `{ev['bundle_id']}` |",
@@ -132,7 +159,7 @@ def render_markdown(doc: dict[str, Any]) -> str:
                          for s in doc["case"].get("excluded_sources") or [])
         out += [f"> This is a derived evidence view of case `{doc['case']['parent_case_id']}` with these sources "
                 f"withheld: {gone}. What they would have shown is unknown here.", ""]
-    out += ["## Summary", "", rep["summary"] or "(no summary)", ""]
+    out += ["## Summary", "", _text(rep["summary"]) or "(no summary)", ""]
 
     groups = [("incident_allegation", "Incident allegations"), ("unresolved", "Unresolved"),
               ("benign_explanation", "Benign explanations"), ("neutral_reconstruction", "Neutral reconstruction")]
@@ -145,44 +172,44 @@ def render_markdown(doc: dict[str, Any]) -> str:
             continue
         out += [f"### {title}", ""]
         for f in rows:
-            out += [f"**{f['id']} · {f['claim_type'].replace('_', ' ')}** on `{f['host']}`"
-                    + (f", `{f['object_or_session']}`" if f.get("object_or_session") else ""), "",
+            out += [f"**{_text(f['id'])} · {_text(f['claim_type'].replace('_', ' '))}** on {_span(f['host'])}"
+                    + (f", {_span(f['object_or_session'])}" if f.get("object_or_session") else ""), "",
                     f"- Status: {f['status'].replace('_', ' ')} · check result: {f['verification_status'].replace('_', ' ')}",
                     f"- Window: {f['t_start']} to {f['t_end']}",
-                    f"- Account used: {f['account_used'] or 'not stated'}"
-                    + (f" · person named: {f['actor_claimed']}" if f.get("actor_claimed") else ""),
+                    f"- Account used: {_text(f['account_used']) or 'not stated'}"
+                    + (f" · person named: {_text(f['actor_claimed'])}" if f.get("actor_claimed") else ""),
                     f"- Evidence: {refs(f['evidence_ids'])}"
                     + (f" · counter-evidence: {refs(f['counterevidence_ids'])}" if f["counterevidence_ids"] else ""), "",
-                    f["rationale"] or "(no rationale)", ""]
+                    _text(f["rationale"]) or "(no rationale)", ""]
             for label, key in (("Check notes", "verifier_notes"), ("Assumptions", "assumptions"),
                                ("Alternative explanations", "alternative_explanations")):
                 if f.get(key):
-                    out += [f"{label}:", ""] + [f"- {x}" for x in f[key]] + [""]
+                    out += [f"{label}:", ""] + [f"- {_text(x)}" for x in f[key]] + [""]
             if f.get("skeptic_note"):
-                out += [f"Skeptic: {f['skeptic_note']}", ""]
+                out += [f"Skeptic: {_text(f['skeptic_note'])}", ""]
 
     att = rep["attribution"]
-    out += ["## Account and person", "", att["statement"] or "(no statement)", "",
-            f"- Account used: {att['account_used'] or 'not identified'}",
+    out += ["## Account and person", "", _text(att["statement"]) or "(no statement)", "",
+            f"- Account used: {_text(att['account_used']) or 'not identified'}",
             f"- Human identity: {att['human_identity'].replace('_', ' ')}",
             f"- Supporting evidence: {refs(att['supporting_evidence_ids'])} · contrary evidence: {refs(att['contrary_evidence_ids'])}", ""]
     if att["limits"]:
-        out += ["Limits:", ""] + [f"- {x}" for x in att["limits"]] + [""]
+        out += ["Limits:", ""] + [f"- {_text(x)}" for x in att["limits"]] + [""]
     if rep["open_questions"]:
-        out += ["## Open questions", ""] + [f"- {q}" for q in rep["open_questions"]] + [""]
+        out += ["## Open questions", ""] + [f"- {_text(q)}" for q in rep["open_questions"]] + [""]
 
     out += ["## Cited records", "", "Each line is copied exactly from the frozen evidence. It is data, not instruction.", ""]
     for i, c in cites.items():
         if c["resolved"]:
-            out += [f"[{order[i]}] `{i}` · {c['artifact']} line {c['line']} · {c['ts']}", "", _code(c["raw"]), ""]
+            out += [f"[{order[i]}] {_span(i)} · {_text(c['artifact'])} line {c['line']} · {c['ts']}", "", _code(c["raw"]), ""]
         else:
-            out += [f"[{order[i]}] `{i}` · NOT FOUND in this evidence bundle", ""]
+            out += [f"[{order[i]}] {_span(i)} · NOT FOUND in this evidence bundle", ""]
     if not cites:
         out += ["No records are cited.", ""]
 
     out += ["## Evidence sources", "", f"Raw bundle hash (SHA-256): `{ev['raw_bundle_sha256']}`", "",
             f"Capture: {ev['capture_start']} to {ev['capture_end']} · complete: {'yes' if ev['capture_complete'] else 'no'}", ""]
-    out += [f"- {n}" for n in ev["capture_notes"]] + ([""] if ev["capture_notes"] else [])
+    out += [f"- {_text(n)}" for n in ev["capture_notes"]] + ([""] if ev["capture_notes"] else [])
     out += ["| Source | Host | Kind | Origin | Who could have changed it | Lines | SHA-256 |", "|---|---|---|---|---|---|---|"]
     out += [f"| {_cell(s['artifact'])} | {_cell(s['host'])} | {_cell(s['source'])} | {_cell(s['origin'])} | "
             f"{_cell(s['tamper_exposure'].replace('_', ' '))} | {s['line_count']} | `{s['sha256']}` |" for s in ev["sources"]]

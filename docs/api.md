@@ -54,7 +54,7 @@ Each claim has `support`, decided by trusted code, not by the model:
 
 | `support` | Meaning |
 |---|---|
-| `checked` | a deterministic check agrees with the claim for the cited records |
+| `checked` | a deterministic check agrees with the claim for the cited records. A claim about which account a session belongs to is `checked` only when the account and session it names are the ones in the cited login record; naming another is `contradicted` |
 | `contradicted` | a deterministic check disagrees |
 | `cited` | the cited records exist in this bundle; that they say this was not machine-checked |
 | `interpretation` | the model's reading, offered as such |
@@ -89,6 +89,10 @@ Every manifest source has a `source_id` (`manifest.sources[].source_id`, e.g. `s
 ```
 
 Returns `child_case_id`, both bundle ids and raw hashes, `excluded_sources`, event counts, and `coverage` for the original and the derived view. The derived case starts `frozen` with an empty case directory. It is an ordinary case: investigate, question, review and reveal it through the usual routes. A fresh investigation is a separate run and is not started unless `autostart` is true.
+
+A derived case shares its original's answer. `POST /api/cases/{child}/reveal` returns **409** until the original case's report is locked (or the original has been reset), so nobody can see the answer while the original report can still be changed.
+
+`client_token` is matched only against experiments of the same original case: a retry returns the same derived case, and two requests that arrive together with one token make one case.
 
 `GET /api/cases/{id}/source-experiment`
 
@@ -162,7 +166,7 @@ A model chooses an ordinary operating environment from fixed options. It plans n
 
 `GET /api/scenario-designs/{design_id}` returns it again. The same `client_token` returns the same design without a second model call.
 
-`POST /api/cases` with `design_id` (and optionally `design_fixture`: `none`, `inside-job-plain`, `inside-job-coverup`) generates a case in that environment, offline. Its title and difficulty (`sealed`) are the same whether or not a fixture was placed in it. After the reveal, `reveal.truth.environment_provenance` shows what was requested, what the simulator realized, and `incident_steps_chosen_by_model: false`; `plan_label` stays "Scripted scenario · no model chose these steps". A refused design cannot become a case (**409**).
+`POST /api/cases` with `design_id` (and optionally `design_fixture`: `none`, `inside-job-plain`, `inside-job-coverup`) generates a case in that environment, offline. Its title, difficulty (`sealed`) and `seed` (the design seed) are the same whether or not a fixture was placed in it. The evidence is generated from a fixed design, so someone who generates all three variants themselves can still compare hashes; the case record does not give it away. After the reveal, `reveal.truth.environment_provenance` shows what was requested, what the simulator realized, and `incident_steps_chosen_by_model: false`; `plan_label` stays "Scripted scenario · no model chose these steps". A refused design cannot become a case (**409**).
 
 ## More cases and results
 

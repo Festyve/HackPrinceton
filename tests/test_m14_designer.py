@@ -144,10 +144,20 @@ def test_an_operator_may_place_a_scripted_incident_in_a_designed_environment_and
     crime = c.post("/api/cases", json={"design_id": d["design_id"], "design_fixture": "inside-job-coverup",
                                        "runner": "deterministic"}).json()["case"]
     # before the reveal the two are indistinguishable from the outside
-    same = ("title", "difficulty", "card_id", "preset_id")
+    same = ("title", "difficulty", "card_id", "preset_id", "seed")
     assert {k: plain[k] for k in same} == {k: crime[k] for k in same}
+    # ... including the seed. The realization seed differs between an ordinary day and a placed incident (design
+    # seed 11 gives two different ones), so the public record carries the design seed, the same for both.
+    design = designer.EnvironmentDesign.model_validate(d["design"])
+    real_plain = designer.realize(design, 11, "none")[1]["seed"]
+    real_crime = designer.realize(design, 11, "inside-job-coverup")[1]["seed"]
+    assert real_plain != real_crime and plain["seed"] == crime["seed"] == 11
     v = _wait(c, crime["case_id"])
     assert "fixture" not in json.dumps(v) and "incident_coverup" not in json.dumps(v)
+    for case, real in ((plain, real_plain), (crime, real_crime)):
+        public = json.dumps(_wait(c, case["case_id"])) + json.dumps(c.get(f"/api/cases/{case['case_id']}/events.json").json())
+        public += json.dumps(c.get("/api/cases").json())
+        assert str(real) not in public
     c.post(f"/api/cases/{crime['case_id']}/review", json={"decision": "accept"})
     truth = c.post(f"/api/cases/{crime['case_id']}/reveal").json()["reveal"]["truth"]
     assert truth["case_kind"] == "incident" and truth["plan_source"] == "scripted_scenario"
