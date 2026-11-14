@@ -84,9 +84,12 @@ export function WitnessPanel({
         </h4>
         <p className="small muted">
           Derived from another case with {n} file{n === 1 ? "" : "s"} withheld.{" "}
-          {gone
-            ? exp?.note
-            : "Deriving this view did not change the original evidence or its report."}
+          {/* until the server has answered, say neither: the original may have been reset */}
+          {exp == null
+            ? ""
+            : gone
+              ? exp.note
+              : "Deriving this view did not change the original evidence or its report."}
         </p>
         {!gone && (
           <button

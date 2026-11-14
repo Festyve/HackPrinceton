@@ -590,12 +590,14 @@ def test_a_reduced_view_whose_original_was_reset_says_so_and_claims_nothing_abou
     page.wait_for_selector(tid("experiment-comparison"))
     wait_state(page, "awaiting_review")
     open_sources(page)
-    assert "did not change the original evidence" in page.inner_text(tid("source-experiment"))
+    page.wait_for_selector(f'{tid("source-experiment")} :text("did not change the original evidence")')
     assert page.request.post(f"{base}/api/cases/{original}/reset").ok
     page.reload()
     wait_state(page, "awaiting_review")
     page.wait_for_selector(f'{tid("experiment-comparison")} :text("no longer exists")')
     open_sources(page)
+    # the panel asks the server when it opens; wait for that answer instead of reading whatever is there first
+    page.wait_for_selector(f'{tid("source-experiment")} :text("no longer exists")')
     side = page.inner_text(tid("source-experiment"))
     assert "no longer exists" in side and "did not change the original" not in side
     assert page.locator(tid("btn-open-original")).count() == 0  # a button that could only lead to an error
