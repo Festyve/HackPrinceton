@@ -3,18 +3,18 @@
 > Times are America/New_York. Entries record concrete check results, not intentions.
 > Status vocabulary: **OFFLINE-READY**, **AI-READY**, **INCOMPLETE** (PLAN §14).
 
-## Current state — second run, Saturday November 14, 05:50 ET
+## Current state — second run, Saturday November 14, 06:00 ET
 
 This block is the handoff. Everything below it is the build history, oldest first.
 
 | | |
 |---|---|
-| Branch and commit | `codex/eric-phase2`, pushed. The commit is the tip of that branch (this file is updated with each slice). |
+| Branch and commit | `codex/eric-phase2`, pushed, and the default branch `codex/alibi-build` fast-forwarded to the same tested tree. The commit is the tip of those branches (this file is updated with each slice). |
 | Launch | `uv sync --frozen && ./start.sh`, then http://127.0.0.1:8000. `./start.sh --port 8010` if the port is busy. |
 | Demo selection | Recorded replays. For the pitch: **Inside job · cover-up** recorded on Claude Opus 5.5 (specialist mode) or on Claude Haiku 5.5 (fast mode, with two recorded question answers). Also recorded on Haiku: **Records heist** and **Cold chain**. No key or network needed. |
 | Model in use | `anthropic:claude-haiku-5-5`, effort low, for every role. Opus 5.5 recordings and pilot are from the first run and unchanged. |
 | Spend | Estimated **$3.357** of the **$20** cap across both runs (427 model calls). This run: about **$0.43**. Reserved: $0. Unreconciled: $0. Automatic calls stop at $19.50. `uv run alibi spend`. |
-| Tests | `uv run pytest` → **394 passed**: 373 offline, 21 in headless Chrome. |
+| Tests | `uv run pytest` → **410 passed**: 389 offline, 21 in headless Chrome. A fresh clone of the branch also installs, builds, passes the offline tests and serves the recorded demo with no key. |
 | Recordings | `demo/replays/`: 4 real-model runs (1 Opus, 3 Haiku) and 2 scripted-fixture runs. All six reproduce their evidence byte for byte and replay offline. |
 | Measured results | `benchmarks/offline-v1`, `benchmarks/ai-pilot-v1` (first run, frozen); `benchmarks/paired-v2` (this run's evaluation); `benchmarks/calibration`, `benchmarks/feature-checks`, `benchmarks/paired-v2-dev` (operational checks). |
 
@@ -31,7 +31,7 @@ This block is the handoff. Everything below it is the build history, oldest firs
 
 **What is not done, and who has it** (details in [BLOCKERS.md](BLOCKERS.md))
 
-- **Capture from real Linux processes is not integrated.** `codex/daniel-capture` has not been pushed. Every bundle is simulated. (Daniel, then Eric to wire it in.)
+- **No captured evidence exists in this build.** `codex/daniel-capture` has not been pushed. Every bundle is simulated. The receiving side is built and tested: `uv run alibi import <directory>` freezes a capture as an unscored case ([`docs/importing.md`](docs/importing.md)). (Daniel to deliver the capture; Eric to merge it.)
 - **The UI does not yet call the new routes** (questions, source experiment, export, mode choice, new presets, designer, new results). The backend is ready and documented in [`docs/api.md`](docs/api.md). (Terry.)
 - **The adversary planner stays disabled** after the model's refusal. Not worked around. Every incident is a scripted scenario.
 - Not verified: a second machine, the venue projector, any model other than Opus 5.5 and Haiku 5.5, run-to-run variance.
@@ -353,3 +353,5 @@ Phase-two model spend so far: about **$0.08** (ledger total $3.006 of the $20 ca
 - README, architecture, API reference, claims, judge answers, demo script and Devpost copy rewritten to what is built and measured.
 - Redacted secret scan: no credential-like string in any tracked file or in any commit on any branch; `.env` and `.alibi/` were never committed.
 - Real-model check of the source-removal experiment: `benchmarks/feature-checks/source-experiment-haiku-5-5.json`.
+- Fresh-clone check (05:50): cloned the branch into an empty directory, `uv sync --frozen`, `npm ci`, build, 373 offline tests passed, `./start.sh --port 8017` served the UI; over HTTP both hero recordings replayed as "Recorded AI run", unsealed 3/3, exported, and the collector-removal comparison and an offline question behaved as documented. Default runtime there: offline, nothing spendable.
+- Unscored import mode for captured evidence (`8fa26b9`, test fix `d283dda`). One commit, `8fa26b9`, was pushed with a failing label test because the commit was not gated on the test run; it was fixed in the next commit eight minutes later. The tip is green.
