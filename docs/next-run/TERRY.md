@@ -1,5 +1,7 @@
 # Terry: redesign the evidence workbench
 
+> **Historical handoff — superseded November 14 afternoon.** Use [../../PRODUCT.md](../../PRODUCT.md) and [the current owner instructions](../overhaul/START_HERE.md) for this continuation. This file preserves the previous plan/demo; its schedule, setup tasks and product direction must not override the current contract.
+
 You own the entire frontend and the way the investigation is presented. This is substantial product work, not a CSS cleanup. Start now; work against existing APIs while Eric adds the interfaces in CONTRACTS.md.
 
 ## Direction

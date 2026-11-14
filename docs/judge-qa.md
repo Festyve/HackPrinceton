@@ -1,5 +1,7 @@
 # Judge questions
 
+> **Historical handoff — superseded November 14 afternoon.** Use [../PRODUCT.md](../PRODUCT.md) and [the current owner instructions](overhaul/START_HERE.md) for this continuation. This file preserves the previous plan/demo; its schedule, setup tasks and product direction must not override the current contract.
+
 **Where is the AI?**
 
 Three places, all run on real models: the investigator that reconstructs a case, the question answering over a case, and a designer that picks an ordinary operating environment from fixed options. The committed recordings are saved runs of Claude Opus 5.5 and Claude Haiku 5.5. A replay is labeled "Recorded AI run"; it is not live inference. The incident itself is always a scripted scenario.

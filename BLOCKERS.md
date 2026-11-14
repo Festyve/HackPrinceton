@@ -1,5 +1,7 @@
 # Remaining owner actions
 
+> **Overhaul routing, November 14 afternoon:** current requirements and pending release gates are in [PRODUCT](PRODUCT.md), [STATUS](docs/overhaul/STATUS.md) and [ACCEPTANCE](docs/overhaul/ACCEPTANCE.md). The repository is public; the old visibility action is complete. The user confirmed the existing $20 cumulative cap. Entries below describe the previous build and remain as history, not instructions to repeat completed work. The new feature freeze is Saturday 23:00 ET.
+
 Status on November 14 during the second run. This file lists what a person still has to do and what is waiting on someone else. Completed work is in [PROGRESS.md](PROGRESS.md).
 
 | Item | Owner | Next action |

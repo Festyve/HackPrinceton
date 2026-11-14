@@ -1,5 +1,7 @@
 # Daniel: real evidence and independent evaluation
 
+> **Historical handoff — superseded November 14 afternoon.** Use [../../PRODUCT.md](../../PRODUCT.md) and [the current owner instructions](../overhaul/START_HERE.md) for this continuation. This file preserves the previous plan/demo; its schedule, setup tasks and product direction must not override the current contract.
+
 Your job is to make ALIBI prove something outside its own simulator. You own a real Linux capture, its importer, and a hard-case test set. This is a separate technical deliverable, not general QA.
 
 Read CONTRACTS.md. Work on codex/daniel-capture. Own capture/, src/alibi/capture/, tests/test_capture*.py, docs/capture.md and sanitized fixtures. Eric owns shared contracts, API and CLI; give him your entry point and any requested schema changes.

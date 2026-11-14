@@ -1,5 +1,7 @@
 # Start the second run
 
+> **Historical handoff — superseded November 14 afternoon.** Use [../../PRODUCT.md](../../PRODUCT.md) and [the current owner instructions](../overhaul/START_HERE.md) for this continuation. This file preserves the previous plan/demo; its schedule, setup tasks and product direction must not override the current contract.
+
 The first build stays intact. This pack adds a concrete continuation, a full UI brief, a real technical assignment for Daniel, and a schedule through the hard deadline.
 
 ## Send Eric this

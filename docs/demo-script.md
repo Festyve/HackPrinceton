@@ -1,5 +1,7 @@
 # Two-minute demonstration
 
+> **Historical handoff — superseded November 14 afternoon.** Use [../PRODUCT.md](../PRODUCT.md) and [the current owner instructions](overhaul/START_HERE.md) for this continuation. This file preserves the previous plan/demo; its schedule, setup tasks and product direction must not override the current contract.
+
 Everything below works offline from a fresh start. Use the **Recorded AI run** for the timed pitch: it is a saved investigation by a real model and needs no key or network. A fresh live investigation is for a judge who asks, not for the two minutes.
 
 Start with `./start.sh`, open http://127.0.0.1:8000 and keep the benign control ready in a second tab. Test once with Wi-Fi off.

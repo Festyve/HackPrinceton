@@ -1,5 +1,7 @@
 # API setup for the second run
 
+> **Historical handoff — superseded November 14 afternoon.** Use [../../PRODUCT.md](../../PRODUCT.md) and [the current owner instructions](../overhaul/START_HERE.md) for this continuation. This file preserves the previous plan/demo; its schedule, setup tasks and product direction must not override the current contract.
+
 **Confirmed limit: $20 total across both runs** (Eric raised it from $5 on November 14). Not another $20: the $2.92 spent in the first run counts. Preserve `.alibi/spend.json`; never reset, replace, or bypass it. About $17.08 remains under the cap, $16.58 before the development ceiling. Reconcile before calling a model.
 
 ## Eric's setup

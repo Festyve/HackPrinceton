@@ -1,9 +1,19 @@
 # Progress
 
+## Product-definition handoff — Saturday November 14, afternoon
+
+The team's governing specification is now [PRODUCT.md](PRODUCT.md). [Start here](docs/overhaul/START_HERE.md) contains exact Eric/Terry setup and full prompts; [TEAM](docs/overhaul/TEAM.md) replaces the old schedule. This commit changes documentation only and preserves the application and historical measurements.
+
+Next work: productive model-driven workers, seeded rogue transitions, executed action tapes, explicit resource comparisons, adaptive DeepAgent case-file work, and Terry's reel-inspired UI. [STATUS](docs/overhaul/STATUS.md) distinguishes completed infrastructure from missing behaviors. [ACCEPTANCE](docs/overhaul/ACCEPTANCE.md) starts new gates pending.
+
+Rayan confirmed **$20 cumulative**, including prior spend; keep the $19.50 automatic cutoff and existing ledger. Repository visibility was checked and is public. Eric's recorded decision about the current key stands. No paid model calls or new application tests were run by this documentation pass. Previous test counts below are historical reports.
+
+Previous plans remain below for provenance; they do not override the new product definition. The audit baseline is default-branch `6e7d322`, with reusable UI wiring at `1b9216d`.
+
 > Times are America/New_York. Entries record concrete check results, not intentions.
 > Status vocabulary: **OFFLINE-READY**, **AI-READY**, **INCOMPLETE** (PLAN §14).
 
-## Current state — second run, Saturday November 14, 14:05 ET
+## Previous implementation handoff — second run, Saturday November 14, 14:05 ET
 
 This block is the handoff. Everything below it is the build history, oldest first.
 

@@ -1,5 +1,7 @@
 # ALIBI evidence workbench
 
+> **Historical handoff — superseded November 14 afternoon.** Use [../PRODUCT.md](../PRODUCT.md) and [the current owner instructions](overhaul/START_HERE.md) for this continuation. This file preserves the previous plan/demo; its schedule, setup tasks and product direction must not override the current contract.
+
 Direction selected November 14, 2026. Reference collection was time-boxed to under 20 minutes; no brand assets, hosted fonts, component library or stock imagery is used.
 
 - [GOV.UK editorial paragraphs](https://design-system.service.gov.uk/styles/paragraphs/): one clear lead, short paragraphs, strong hierarchy and restrained small type. ALIBI adapts the editorial rhythm to a compact evidence desk, using system sans and a local Georgia case title rather than the licensed GOV.UK font.

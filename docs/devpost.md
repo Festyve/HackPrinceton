@@ -1,5 +1,7 @@
 # Devpost copy
 
+> **Historical handoff — superseded November 14 afternoon.** Use [../PRODUCT.md](../PRODUCT.md) and [the current owner instructions](overhaul/START_HERE.md) for this continuation. This file preserves the previous plan/demo; its schedule, setup tasks and product direction must not override the current contract.
+
 Copy for the submission, matching the build on `codex/eric-phase2`. Every number is from a saved run in `benchmarks/`.
 
 ## Inspiration

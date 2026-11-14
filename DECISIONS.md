@@ -1,5 +1,9 @@
 # Decisions
 
+## November 14 afternoon — product-definition continuation
+
+The team made PRODUCT.md the governing scope: productive AI workers, seeded objective changes, an outside DeepAgent investigator and explicit resource experiments. Preserve the completed engine and all historical measurements. Documentation-only handoff; no new feature is marked implemented. Rayan confirmed the existing $20 cumulative cap. Terry owns the new UI using the supplied reel; Daniel owns independent cases and experiment validation. The implementation choices and acceptance gates are in docs/overhaul/.
+
 One line per decision: **decision** · reason · how to reverse.
 
 ## Process and repository

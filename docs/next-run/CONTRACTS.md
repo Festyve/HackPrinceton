@@ -1,5 +1,7 @@
 # Phase-two interfaces and file ownership
 
+> **Historical handoff — superseded November 14 afternoon.** Use [../../PRODUCT.md](../../PRODUCT.md) and [the current owner instructions](../overhaul/START_HERE.md) for this continuation. This file preserves the previous plan/demo; its schedule, setup tasks and product direction must not override the current contract.
+
 These were the **target contracts** written before the second run. **They are now implemented.** The reference for what exists, with real example payloads, is [`docs/api.md`](../api.md) and `docs/api-examples/`; build against that. Where this page and `docs/api.md` differ, `docs/api.md` is what the server does. Existing routes and fields are backward compatible.
 
 ## Product API
