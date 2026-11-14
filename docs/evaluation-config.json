@@ -8,7 +8,7 @@
     "verifier": "1.0.0",
     "scorer": "1.0.0",
     "b0": "1.0.0",
-    "br": "1.0.0"
+    "br": "1.0.1"
   },
   "seed_splits": {
     "development": "seeds 1-40: hand-inspected while building; used by the automated tests",

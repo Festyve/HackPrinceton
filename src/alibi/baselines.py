@@ -21,7 +21,7 @@ from alibi.contracts import AttributionAssessment, EvidenceManifest, Finding, In
 from alibi.evidence.store import EvidenceStore
 
 B0_VERSION = "1.0.0"
-BR_VERSION = "1.0.0"
+BR_VERSION = "1.0.1"  # 1.0.1: ATT&CK label corrected (T1070.002 -> T1685.006); no rule or threshold changed
 
 # ----------------------------------------------------------------------------- B0
 
@@ -127,7 +127,8 @@ def findings_from_reconcile(rec: dict[str, Any], produced_by: str = "BR") -> lis
             sessions = sorted({r["session_id"] for r in rows if r["session_id"]})
             out.append(Finding(
                 id="", claim_type="local_log_removal", category="incident_allegation",
-                attack_id="T1070.002", technique_family="Indicator removal: host log lines removed",
+                attack_id="T1685.006",
+                technique_family="Host log lines removed (closest ATT&CK entry: Clear Linux or Mac System Logs)",
                 host=host, account_used=accounts[0] if len(accounts) == 1 else None,
                 t_start=min(ts), t_end=max(ts), object_or_session=file,
                 evidence_ids=[r["collector_event_id"] for r in rows] + list(dict.fromkeys(brackets)),

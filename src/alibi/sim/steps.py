@@ -41,7 +41,9 @@ ATTACK_META: dict[str, dict[str, str | None]] = {
         "attack_id": None,
         "label": "Transfer to a non-approved destination over HTTP (exfiltration mapping is context-dependent)",
     },
-    "delete_log_lines": {"attack_id": "T1070.002", "label": "Indicator Removal: Clear Linux or Mac System Logs"},
+    # Verified 2026-11-14 against attack.mitre.org: the former T1070.002 now redirects to T1685.006.
+    # Closest entry only: the simulated step removes selected lines, it does not clear a whole log.
+    "delete_log_lines": {"attack_id": "T1685.006", "label": "Disable or Modify Tools: Clear Linux or Mac System Logs"},
 }
 
 
