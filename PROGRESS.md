@@ -247,3 +247,11 @@ No model call was made in this stage. Spend is unchanged: an estimated **$2.9224
 - **Tests:** `uv run pytest` → 206 passed (197 offline, 9 in headless Chrome). New: `tests/test_budget_gateway.py` (44 tests) and 9 coverage tests in `tests/test_m2_checks.py`.
 - **Commands that do not call a model:** `uv run alibi runtime`, `uv run alibi spend`, `uv run alibi smoke --count-only`.
 - **Not yet done from the continuation:** stages 2–6 (fast/specialist modes and Haiku calibration, cited questions, source-removal experiment, capture and UI integration, new case families, six-arm evaluation, export, final docs).
+
+## Terry UI — November 14, 2026, verified local handoff
+
+- Implemented the evidence-workbench redesign on `codex/terry-ui` (`98623d8` initial slice), preserving the existing case flow and recording. Integrated Eric's published branch through `0de232d` via `ad62bd8`; consumed his generated coverage fields without editing the generator output.
+- Verified production build; 197 integrated non-browser tests; 21 browser tests plus the final case-switch regression; six development-case investigator regression gates with networking denied and zero model calls. Preserved official benchmarks, saved model outputs, scoring and truth isolation.
+- Fourteen screenshots cover seven real offline states at 1280×720 and 1440×900. Native modal keyboard behavior, narrow layout, source/coverage selection, provenance, citations, refresh, reconnect, lock-before-reveal, hostile text and two resets are covered.
+- Handoff, exact launch/reproduction commands, source references, verification output and a 60-second walkthrough are in `docs/terry-ui-handoff.md`. Questions, immutable source experiments, report export and captured-Linux integration still require the backend/capture contracts; their absence is shown honestly in the UI. Actual projector/second-machine verification remains external.
+- No paid runtime inference, spend-ledger reset or Codex banked reset was used.

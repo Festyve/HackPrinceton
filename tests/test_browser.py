@@ -87,7 +87,7 @@ def page(browser):
 
 def wait_state(pg, state: str, timeout=45_000) -> None:
     pg.wait_for_function("s => document.querySelector('[data-testid=\"case-state\"]')?.textContent === s",
-                         arg=state, timeout=timeout)
+                         arg={"created":"Preparing case", "generating":"Generating evidence", "frozen":"Evidence frozen", "investigating":"Investigating", "awaiting_review":"Awaiting review", "report_locked":"Report locked", "scored":"Revealed", "failed":"Investigation stopped", "cancelled":"Cancelled"}.get(state, state), timeout=timeout)
 
 
 def run_case(pg, base: str, preset: str = "hero-coverup") -> None:
@@ -112,7 +112,7 @@ def test_hero_flow_in_the_browser_and_reset_twice(server, page):
     base, _ = server
     page.goto(base + "/")
     page.wait_for_selector(tid("preset-hero-coverup"))
-    assert page.inner_text(tid("runtime-status")).strip().endswith("Live AI: BLOCKED")
+    assert "Offline replay available" in page.inner_text(tid("badge-inference"))
     shot(page, "01-start")
     for attempt in (1, 2):
         page.click(tid("preset-hero-coverup"))
@@ -120,7 +120,7 @@ def test_hero_flow_in_the_browser_and_reset_twice(server, page):
         wait_state(page, "awaiting_review")
         # honest labels, verbatim
         assert "Scripted fixture · no model inference" in page.inner_text(tid("badge-inference"))
-        assert "SIM" in page.inner_text(tid("badge-evidence")) and "LIVE" in page.inner_text(tid("badge-playback"))
+        assert "Simulated evidence" in page.inner_text(tid("badge-evidence")) and "LIVE" in page.inner_text(tid("badge-playback"))
         # the discrepancy is on screen without scrolling at 1280x720
         page.wait_for_selector(tid("compare-row-retained"))
         row = page.inner_text(tid("compare-row-retained"))
@@ -135,10 +135,11 @@ def test_hero_flow_in_the_browser_and_reset_twice(server, page):
         page.wait_for_selector(tid("raw-focus-line"))
         assert len(page.inner_text(tid("raw-focus-line")).strip()) > 20
         assert "collector" in page.inner_text(tid("raw-viewer")) or "auth.log" in page.inner_text(tid("raw-viewer"))
+        page.keyboard.press("Escape")
         # early reveal is refused by the server while the report is unlocked
         case_id = page.evaluate("() => /case=([^&]+)/.exec(location.hash)[1]")
         status = page.evaluate("id => fetch(`/api/cases/${id}/reveal`, {method: 'POST'}).then(r => r.status)", case_id)
-        assert status == 409 and page.inner_text(tid("case-state")) == "awaiting_review"
+        assert status == 409 and page.inner_text(tid("case-state")) == "Awaiting review"
         page.errors[:] = [e for e in page.errors if "409" not in e]  # that refusal was requested on purpose
         assert page.locator(tid("btn-unseal")).count() == 0 and page.locator(tid("score-panel")).count() == 0
         page.click(tid("btn-accept"))
@@ -146,6 +147,7 @@ def test_hero_flow_in_the_browser_and_reset_twice(server, page):
         page.click(tid("btn-unseal"))
         wait_state(page, "scored")
         page.wait_for_selector(tid("score-panel"))
+        page.locator('summary:has-text("Detailed scoring")').click()
         assert page.inner_text(tid("score-recall")).startswith("3/3")
         panel = page.inner_text(tid("score-panel"))
         assert "controlled simulation" in panel and "no model chose these steps" in panel
@@ -192,6 +194,7 @@ def test_sealed_control_case_shows_no_incident(server, page):
     wait_state(page, "report_locked")
     page.click(tid("btn-unseal"))
     wait_state(page, "scored")
+    page.locator('summary:has-text("Detailed scoring")').click()
     panel = page.inner_text(tid("score-panel"))
     assert "No incident occurred in this case" in panel and "N/A" in panel
     shot(page, "04-control-score")
@@ -207,7 +210,7 @@ def test_predefined_explanations_cite_evidence(server, page):
     page.click(tid("explain-missing-line"))
     assert "retention boundary" in page.inner_text(tid("explain-answer"))
     assert page.locator(f'{tid("explain-answer")} [data-testid^="chip-"]').count() >= 3
-    assert page.locator('input[type="text"], textarea').count() == 0  # no free-text chat box
+    assert page.locator('input[type="text"]').is_disabled()  # unavailable capability is explained, never a fake answer
     shot(page, "05-explain")
 
 
@@ -228,7 +231,7 @@ def test_hostile_evidence_is_rendered_as_text(server, page):
     assert '<script>window.__alibi_pwned=1</script>' in table  # shown literally
     assert page.locator(f'{tid("compare-table")} script, {tid("compare-table")} img').count() == 0
     assert page.evaluate("() => window.__alibi_pwned") is None
-    assert page.inner_text(tid("case-state")) == "awaiting_review"  # nothing obeyed the text
+    assert page.inner_text(tid("case-state")) == "Awaiting review"  # nothing obeyed the text
     shot(page, "06-hostile-evidence")
     assert page.errors == []
 
@@ -237,9 +240,11 @@ def test_benchmark_tab_renders_results_or_says_why_not(server, page):
     base, _ = server
     page.goto(base + "/")
     page.click(tid("tab-benchmark"))
-    page.wait_for_selector(f'{tid("benchmark-table")}, {tid("benchmark-unavailable")}')
+    page.wait_for_selector(f'{tid("benchmark-summary")}, {tid("benchmark-unavailable")}')
     text = page.inner_text("body")
-    if page.locator(tid("benchmark-table")).count():
+    if page.locator(tid("benchmark-summary")).count():
+        page.locator('summary:has-text("All metrics")').click()
+        text = page.inner_text("body")
         assert "NOT RUN" in text and "B0" in text and "BR" in text  # AI arms never show as zeros
     else:
         assert "alibi bench" in text
@@ -278,6 +283,7 @@ def test_recorded_fixture_replays_in_the_browser_with_replay_labels(server, page
     wait_state(page, "report_locked")
     page.click(tid("btn-unseal"))
     wait_state(page, "scored")
+    page.locator('summary:has-text("Detailed scoring")').click()
     assert page.inner_text(tid("score-recall")).startswith("3/3")
     shot(page, "08-replay-score")
 
@@ -297,7 +303,7 @@ def test_recorded_real_run_replays_as_a_recorded_ai_run_never_as_live(server, pa
     page.wait_for_selector(tid(f"replay-{real[0]}"))
     card = page.inner_text(tid(f"replay-{real[0]}"))
     assert "REPLAY" in card and "Recorded AI run" in card and "claude" in card
-    assert page.inner_text(tid("runtime-status")).strip().endswith("Live AI: BLOCKED")  # nothing live is available here
+    assert "Offline replay available" in page.inner_text(tid("badge-inference"))  # nothing live is available here
     page.click(tid(f"replay-{real[0]}"))
     page.click(tid("btn-run"))
     wait_state(page, "awaiting_review", timeout=90_000)
@@ -311,8 +317,176 @@ def test_recorded_real_run_replays_as_a_recorded_ai_run_never_as_live(server, pa
     wait_state(page, "report_locked")
     page.click(tid("btn-unseal"))
     wait_state(page, "scored")
+    page.locator('summary:has-text("Detailed scoring")').click()
     panel = page.inner_text(tid("score-panel"))
     assert page.inner_text(tid("score-recall")).startswith("3/3")
     assert "llm_calls" in panel and " 0 llm_calls" not in panel  # the recorded run's real usage is shown
     shot(page, "10-recorded-ai-score")
+    assert page.errors == []
+
+
+@pytest.mark.parametrize("width,height", [(1280, 720), (1440, 900), (390, 844)])
+def test_workbench_layout_and_unavailable_capabilities(server, browser, width, height):
+    base, _ = server
+    ctx = browser.new_context(viewport={"width": width, "height": height}, reduced_motion="reduce")
+    pg = ctx.new_page()
+    # The browser must be usable with all external networking denied.
+    blocked = []
+    def local_only(route):
+        if route.request.url.startswith(base + "/"):
+            route.continue_()
+        else:
+            blocked.append(route.request.url)
+            route.abort()
+    ctx.route("**/*", local_only)
+    run_case(pg, base)
+    pg.wait_for_selector(tid("compare-row-retained"))
+    assert pg.evaluate("document.documentElement.scrollWidth <= innerWidth")
+    if width >= 1280:
+        for selector in (tid("compare-row-retained"), tid("btn-accept")):
+            box = pg.locator(selector).first.bounding_box()
+            assert box and box["x"] >= 0 and box["x"] + box["width"] <= width
+            assert box["y"] >= 0 and box["y"] + box["height"] <= height
+    assert pg.locator("#case-question").is_disabled()
+    assert "unavailable in this server version" in pg.inner_text(tid("question-composer"))
+    assert "unavailable" in pg.inner_text(tid("source-experiment-unavailable"))
+    assert "confidence (uncalibrated)" not in pg.inner_text("body")
+    assert blocked == []
+    if SHOTS:
+        pg.screenshot(path=str(SHOTS / f"workbench-{width}x{height}.png"), full_page=width < 760)
+    ctx.close()
+
+
+def test_source_selection_and_modal_keyboard_return(server, page):
+    base, _ = server
+    run_case(page, base)
+    page.click(tid("source-records"))
+    assert "records" in page.inner_text(tid("source-detail"))
+    assert page.locator(tid("source-records")).get_attribute("aria-pressed") == "true"
+    page.locator(".source-artifact summary").first.click()
+    page.locator(".source-open").first.click()
+    page.wait_for_selector(tid("raw-focus-line"))
+    assert "records" in page.inner_text(tid("raw-viewer"))
+    page.keyboard.press("Escape")
+    page.click(tid("source-workstation"))
+    page.wait_for_selector(tid("compare-row-retained"))
+    page.locator(tid("btn-details")).focus()
+    page.click(tid("btn-details"))
+    page.wait_for_selector("dialog[open]")
+    assert "Live AI unavailable" in page.inner_text(tid("runtime-status"))
+    for _ in range(12):
+        page.keyboard.press("Tab")
+        assert page.evaluate("document.querySelector('dialog[open]').contains(document.activeElement)")
+    page.keyboard.press("Escape")
+    assert page.locator("dialog[open]").count() == 0
+    assert page.locator(tid("btn-details")).evaluate("el => el === document.activeElement")
+    assert page.errors == []
+
+
+def test_direct_recorded_action_and_library_switch_preserve_cases(server, page):
+    base, _ = server
+    page.goto(base + "/")
+    page.wait_for_selector(tid("btn-recorded-demo"))
+    page.click(tid("btn-recorded-demo"))
+    wait_state(page, "awaiting_review", timeout=90_000)
+    first_url = page.url
+    assert "Recorded AI run" in page.inner_text(tid("badge-inference"))
+    assert "REPLAY" in page.inner_text(tid("badge-playback"))
+    page.click(tid("tab-benchmark"))
+    page.get_by_role("button", name="Case library", exact=True).click()
+    page.locator('dialog [data-testid="preset-sealed-control"]').click()
+    page.locator('dialog button:has-text("Open selected case")').click()
+    page.wait_for_function("old => location.href !== old", arg=first_url)
+    wait_state(page, "awaiting_review")
+    assert page.url != first_url
+    page.wait_for_selector(tid("compare-table"))
+    page.goto(first_url)
+    first_id = first_url.split("case=")[1]
+    page.wait_for_function("id => document.querySelector('[data-testid=app-root]')?.dataset.caseId === id", arg=first_id)
+    wait_state(page, "awaiting_review")
+    assert "Recorded AI run" in page.inner_text(tid("badge-inference"))
+    assert page.errors == []
+
+
+def test_empty_library_and_library_connection_error(server, page):
+    base, _ = server
+    page.route("**/api/presets", lambda route: route.fulfill(json={"presets": [], "replays": []}))
+    page.goto(base + "/")
+    page.get_by_text("No cases available", exact=True).wait_for()
+    assert page.locator(tid("btn-run")).is_disabled()
+    page.unroute("**/api/presets")
+    page.route("**/api/presets", lambda route: route.fulfill(status=503, json={"error": "Server unavailable"}))
+    page.reload()
+    page.get_by_role("alert").wait_for()
+    assert "Could not load the case library" in page.inner_text("body")
+    assert "Reload to reconnect" in page.inner_text("body")
+
+
+def test_connection_interruption_preserves_report_and_recovers(server, page):
+    base, orch = server
+    rec = orch.create_case(preset_id="hero-coverup")
+    orch.start_investigation(rec.case_id)
+    # A closed SSE response exercises the real reconnect + JSON polling fallback.
+    page.route("**/events?*", lambda route: route.fulfill(status=200, content_type="text/event-stream", body="retry: 1500\n\n"))
+    page.goto(f"{base}/#case={rec.case_id}")
+    wait_state(page, "awaiting_review")
+    page.locator(tid("connection-status")).wait_for()
+    assert page.locator('[data-testid^="finding-"]').count() == 5
+    assert "preserved" in page.inner_text(tid("connection-status"))
+    page.unroute("**/events?*")
+    page.locator(tid("connection-status")).wait_for(state="hidden")
+    assert page.locator('[data-testid^="finding-"]').count() == 5
+    assert rec.case_id in page.url
+
+
+def test_incomplete_collection_is_unresolved_not_a_coverup(server, page):
+    base, orch = server
+    rec = orch.create_case_from_spec(build_spec(25, "benign_collection_gap"), title="Incomplete evidence")
+    orch.start_investigation(rec.case_id)
+    page.goto(f"{base}/#case={rec.case_id}")
+    wait_state(page, "awaiting_review")
+    page.get_by_text("Unresolved coverage", exact=False).wait_for()
+    assert "0 incident allegations" in page.inner_text("body")
+    assert "Collection gap (cause unknown)" in page.inner_text("body")
+    assert page.locator(tid("compare-row-retained")).count() == 0
+    assert page.get_by_role("button", name="Export", exact=True).count() == 0
+    assert page.errors == []
+
+
+@pytest.mark.parametrize("state,message", [
+    ("failed", "Provider unavailable; the saved evidence is preserved"),
+    ("failed", "Budget exhausted; no further model calls are allowed"),
+    ("cancelled", "Cancelled by the operator"),
+])
+def test_stopped_investigations_show_actionable_state(server, page, state, message):
+    base, orch = server
+    rec = orch.create_case(preset_id="hero-plain")
+    record = orch.record(rec.case_id)
+    record.error = message
+    orch._set_state(record, state, message)
+    page.goto(f"{base}/#case={rec.case_id}")
+    wait_state(page, state)
+    assert message in page.inner_text(tid("error-banner"))
+    assert "Investigation ended before review" in page.inner_text("body")
+    assert page.locator(tid("btn-reset")).is_enabled()
+    assert page.errors == []
+
+
+def test_missing_collector_displays_not_assessable(server, page, tmp_path):
+    from alibi.evidence_views import compare_local_collector
+    from .helpers import auth_open, mini_case
+
+    store, manifest = mini_case(tmp_path, {"workstation/var/log/auth.log": [auth_open("10:00:00", "ann", 1)]})
+    try:
+        actual_response = compare_local_collector(store, manifest, "workstation", "/var/log/auth.log")
+    finally:
+        store.close()
+    assert actual_response["status"] == "not_assessable"
+    # Explicit development fixture: the payload is produced by the real comparison API logic.
+    page.route("**/evidence/compare?*", lambda route: route.fulfill(json=actual_response))
+    base, _ = server
+    run_case(page, base)
+    page.get_by_text("Not assessable · a required source is unavailable", exact=True).wait_for()
+    assert "no collector copy" in page.inner_text(tid("comparison-status-reason"))
+    assert "No unexplained gap" not in page.inner_text("body")
     assert page.errors == []

@@ -1,0 +1,790 @@
+{
+  "case": {
+    "case_id": "case-167b2759b40e",
+    "state": "awaiting_review",
+    "detail": "report drafted; waiting for a human to accept or reject it",
+    "created_at": "2026-11-14T09:23:05.678275+00:00",
+    "updated_at": "2026-11-14T09:23:08.782287+00:00",
+    "preset_id": "hero-coverup",
+    "title": "Inside job \u00b7 cover-up",
+    "card_id": "inside-job",
+    "difficulty": "L2",
+    "seed": 9023,
+    "runner_id": "agent-live",
+    "evidence_origin": "SIM",
+    "inference_mode": "RECORDED_MODEL",
+    "playback": "REPLAY",
+    "model_id": "anthropic:claude-opus-5-5",
+    "bundle_id": "bndl-646e90a648ad486f",
+    "error": null,
+    "replay_of": "hero-coverup-live-opus-5-5",
+    "recorded_at": "2026-11-14T07:00:06.181543+00:00",
+    "review_decision": null,
+    "review_note": "",
+    "timings": {
+      "generate_s": 0.377,
+      "investigate_s": 76.772
+    },
+    "labels": {
+      "evidence_origin": "SIM",
+      "inference": "RECORDED_MODEL",
+      "inference_label": "Recorded AI run",
+      "playback": "REPLAY",
+      "model_id": "anthropic:claude-opus-5-5"
+    }
+  },
+  "card": {
+    "id": "inside-job",
+    "title": "Inside job",
+    "tip": "Review records access and transfers during this shift; establish what the evidence supports.",
+    "audience_setup": "Someone uses another staff member's account at the shared nurse station to copy the synthetic patient database out of the clinic network."
+  },
+  "manifest": {
+    "bundle_id": "bndl-646e90a648ad486f",
+    "schema_version": "1.0.0",
+    "normalizer_version": "1.0.0",
+    "evidence_origin": "SIM",
+    "capture_start": "2026-11-10T06:15:00Z",
+    "capture_end": "2026-11-10T15:15:00Z",
+    "capture_complete": true,
+    "capture_notes": [],
+    "sources": [
+      {
+        "artifact": "collector/var/log/collected/collected.log",
+        "host": "collector",
+        "source": "collector",
+        "logical_file": "/var/log/collected/collected.log",
+        "sha256": "5e35e5ae5671c46fbef74f68b08e51018f84a6d5fb05bfcda3103ffc6b14e741",
+        "size_bytes": 958376,
+        "line_count": 10555,
+        "origin": "SIM",
+        "tamper_exposure": "independent_witness",
+        "coverage_start": "2026-11-10T06:15:02Z",
+        "coverage_end": "2026-11-10T15:14:58Z",
+        "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
+        "forwarded_to_collector": false
+      },
+      {
+        "artifact": "iot-hub/badge/door-staff-1.jsonl",
+        "host": "iot-hub",
+        "source": "badge",
+        "logical_file": null,
+        "sha256": "b31961aa469c78f0bdcbcdf4b569d6b625d2b5c117c2718ec6c5d182444abbdd",
+        "size_bytes": 1592,
+        "line_count": 16,
+        "origin": "SIM",
+        "tamper_exposure": "independent_witness",
+        "coverage_start": "2026-11-10T06:50:06Z",
+        "coverage_end": "2026-11-10T15:06:02Z",
+        "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
+        "forwarded_to_collector": false
+      },
+      {
+        "artifact": "iot-hub/var/log/mosquitto/mosquitto.log",
+        "host": "iot-hub",
+        "source": "mqtt",
+        "logical_file": "/var/log/mosquitto/mosquitto.log",
+        "sha256": "7e2a40ad34ff389dc162ec9e6e40195df7472a6c2ace5be3d9327eaf9170710a",
+        "size_bytes": 2400,
+        "line_count": 16,
+        "origin": "SIM",
+        "tamper_exposure": "host_local_writable",
+        "coverage_start": "2026-11-10T06:50:06Z",
+        "coverage_end": "2026-11-10T15:06:02Z",
+        "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
+        "forwarded_to_collector": true
+      },
+      {
+        "artifact": "records/fs_stat.tsv",
+        "host": "records",
+        "source": "fs_stat",
+        "logical_file": null,
+        "sha256": "7d954505835d1206485c1532f00d06c2a5b57f2bf3a7c293e9702c67f954514d",
+        "size_bytes": 350,
+        "line_count": 4,
+        "origin": "SIM",
+        "tamper_exposure": "host_local_writable",
+        "coverage_start": null,
+        "coverage_end": null,
+        "coverage_note": "point-in-time metadata snapshot taken at capture end",
+        "coverage_declared": false,
+        "known_gaps": [],
+        "forwarded_to_collector": false
+      },
+      {
+        "artifact": "records/home/adm-vrao/.bash_history",
+        "host": "records",
+        "source": "shell_history",
+        "logical_file": null,
+        "sha256": "e140600880510590bd40651598991d214c72d51379692717b959c3be1456c3cb",
+        "size_bytes": 124,
+        "line_count": 6,
+        "origin": "SIM",
+        "tamper_exposure": "host_local_writable",
+        "coverage_start": "2026-11-10T07:46:19Z",
+        "coverage_end": "2026-11-10T07:48:19Z",
+        "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
+        "forwarded_to_collector": false
+      },
+      {
+        "artifact": "records/var/log/auth.log",
+        "host": "records",
+        "source": "auth",
+        "logical_file": "/var/log/auth.log",
+        "sha256": "18865d607286b1fdd71f139b70b3f0478002cbe17f5451d8f824973bbbeb9bf8",
+        "size_bytes": 527,
+        "line_count": 4,
+        "origin": "SIM",
+        "tamper_exposure": "host_local_writable",
+        "coverage_start": "2026-11-10T07:45:49Z",
+        "coverage_end": "2026-11-10T07:55:28Z",
+        "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
+        "forwarded_to_collector": true
+      },
+      {
+        "artifact": "records/var/log/records-app/access.log",
+        "host": "records",
+        "source": "app",
+        "logical_file": "/var/log/records-app/access.log",
+        "sha256": "7843232dfb3fbaf54496aed6163ff0ff0c493fb76f4a252e913e806749a21c2e",
+        "size_bytes": 78710,
+        "line_count": 549,
+        "origin": "SIM",
+        "tamper_exposure": "host_local_writable",
+        "coverage_start": "2026-11-10T09:00:54Z",
+        "coverage_end": "2026-11-10T14:59:44Z",
+        "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
+        "forwarded_to_collector": true
+      },
+      {
+        "artifact": "records/var/log/syslog",
+        "host": "records",
+        "source": "syslog",
+        "logical_file": "/var/log/syslog",
+        "sha256": "6588de746250a1cfcbe9273cce640883325b744c71d61217e7298488284c2280",
+        "size_bytes": 1433,
+        "line_count": 13,
+        "origin": "SIM",
+        "tamper_exposure": "host_local_writable",
+        "coverage_start": "2026-11-10T06:21:53Z",
+        "coverage_end": "2026-11-10T14:23:32Z",
+        "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
+        "forwarded_to_collector": true
+      },
+      {
+        "artifact": "tap/flows.jsonl",
+        "host": "tap",
+        "source": "flow",
+        "logical_file": null,
+        "sha256": "1f36023928d2d472ce5436f5df3c97cd1727b8882892bb73fbab8b0a62630d85",
+        "size_bytes": 251385,
+        "line_count": 1382,
+        "origin": "SIM",
+        "tamper_exposure": "independent_witness",
+        "coverage_start": "2026-11-10T06:15:43Z",
+        "coverage_end": "2026-11-10T15:14:46Z",
+        "coverage_note": "simulated flow records from the tap position; not a packet capture",
+        "coverage_declared": false,
+        "known_gaps": [],
+        "forwarded_to_collector": false
+      },
+      {
+        "artifact": "workstation/fs_stat.tsv",
+        "host": "workstation",
+        "source": "fs_stat",
+        "logical_file": null,
+        "sha256": "22eaadf9fb4be2ce65fc701c6f24073d0e870af0d2e8d3dbdea3210fc38d0b94",
+        "size_bytes": 4701,
+        "line_count": 42,
+        "origin": "SIM",
+        "tamper_exposure": "host_local_writable",
+        "coverage_start": null,
+        "coverage_end": null,
+        "coverage_note": "point-in-time metadata snapshot taken at capture end",
+        "coverage_declared": false,
+        "known_gaps": [],
+        "forwarded_to_collector": false
+      },
+      {
+        "artifact": "workstation/home/adm-vrao/.bash_history",
+        "host": "workstation",
+        "source": "shell_history",
+        "logical_file": null,
+        "sha256": "107192811178e335340f31ae0fab2f38d211e95ce3fd8df4bf095e0d18982eb0",
+        "size_bytes": 58,
+        "line_count": 4,
+        "origin": "SIM",
+        "tamper_exposure": "host_local_writable",
+        "coverage_start": "2026-11-10T13:00:25Z",
+        "coverage_end": "2026-11-10T13:01:18Z",
+        "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
+        "forwarded_to_collector": false
+      },
+      {
+        "artifact": "workstation/home/mreyes/.bash_history",
+        "host": "workstation",
+        "source": "shell_history",
+        "logical_file": null,
+        "sha256": "b40b8115c7c4766c680ccbc93a3aab16ae123f1f6018bd31fabf15d3027aea7b",
+        "size_bytes": 3657,
+        "line_count": 136,
+        "origin": "SIM",
+        "tamper_exposure": "host_local_writable",
+        "coverage_start": "2026-11-10T08:00:42Z",
+        "coverage_end": "2026-11-10T14:09:30Z",
+        "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
+        "forwarded_to_collector": false
+      },
+      {
+        "artifact": "workstation/home/rhaddad/.bash_history",
+        "host": "workstation",
+        "source": "shell_history",
+        "logical_file": null,
+        "sha256": "6d7dee5319dcf4f4cba36c95e42f09f15b711704cfaacaf08dafa427cc780e8d",
+        "size_bytes": 5116,
+        "line_count": 176,
+        "origin": "SIM",
+        "tamper_exposure": "host_local_writable",
+        "coverage_start": "2026-11-10T06:28:21Z",
+        "coverage_end": "2026-11-10T14:33:46Z",
+        "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
+        "forwarded_to_collector": false
+      },
+      {
+        "artifact": "workstation/var/log/auth.log",
+        "host": "workstation",
+        "source": "auth",
+        "logical_file": "/var/log/auth.log",
+        "sha256": "90a7929fa50fc57bff85ea4896e0ccaf71e45bdfa26486bba410fc60c0fc09e4",
+        "size_bytes": 3992,
+        "line_count": 32,
+        "origin": "SIM",
+        "tamper_exposure": "host_local_writable",
+        "coverage_start": "2026-11-10T09:00:39Z",
+        "coverage_end": "2026-11-10T14:34:50Z",
+        "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
+        "forwarded_to_collector": true
+      },
+      {
+        "artifact": "workstation/var/log/auth.log.1",
+        "host": "workstation",
+        "source": "auth",
+        "logical_file": "/var/log/auth.log",
+        "sha256": "82f8ca28170ce08814ee3e63d5af2498d82f000c2095a21db8f441d27818b90f",
+        "size_bytes": 1750,
+        "line_count": 14,
+        "origin": "SIM",
+        "tamper_exposure": "host_local_writable",
+        "coverage_start": "2026-11-10T06:27:00Z",
+        "coverage_end": "2026-11-10T08:53:44Z",
+        "coverage_note": "rotated generation .1 still present on the host at capture",
+        "coverage_declared": false,
+        "known_gaps": [],
+        "forwarded_to_collector": true
+      },
+      {
+        "artifact": "workstation/var/log/syslog",
+        "host": "workstation",
+        "source": "syslog",
+        "logical_file": "/var/log/syslog",
+        "sha256": "f86056a17b853ad00f41c83af6ac5274bcb5c457b91618a5d7899d21941454f8",
+        "size_bytes": 1690,
+        "line_count": 16,
+        "origin": "SIM",
+        "tamper_exposure": "host_local_writable",
+        "coverage_start": "2026-11-10T06:37:07Z",
+        "coverage_end": "2026-11-10T14:53:20Z",
+        "coverage_note": "",
+        "coverage_declared": false,
+        "known_gaps": [],
+        "forwarded_to_collector": true
+      }
+    ],
+    "raw_bundle_sha256": "646e90a648ad486f1b8f81a173ce6b4a865ba8edebef63ce98a367ddbff31444",
+    "derived_db_sha256": "eb97f1491b318ebcebd23399d314d0bd33c337df72adfbb78753f8196164fedf",
+    "event_count": 12802,
+    "normalization_errors": [],
+    "operational_context": {
+      "accounts": [
+        {
+          "account": "rhaddad",
+          "badge": "B-3201",
+          "role": "nurse"
+        },
+        {
+          "account": "mreyes",
+          "badge": "B-1949",
+          "role": "nurse"
+        },
+        {
+          "account": "adm-vrao",
+          "badge": "B-3004",
+          "role": "it-admin"
+        },
+        {
+          "account": "fd-alvarez",
+          "badge": null,
+          "role": "front desk"
+        },
+        {
+          "account": "fd-moss",
+          "badge": null,
+          "role": "front desk"
+        },
+        {
+          "account": "svc-backup",
+          "badge": null,
+          "role": "service account"
+        }
+      ],
+      "attribution_note": "An account name identifies a credential, not a person. Console credentials at the shared station have been found written down before; badge readers can miss tailgating.",
+      "clock_note": "All sources record UTC in this simulated world; no clock skew is modeled.",
+      "logging_policy": {
+        "forwarded_files": [
+          {
+            "file": "/var/log/auth.log",
+            "host": "workstation"
+          },
+          {
+            "file": "/var/log/syslog",
+            "host": "workstation"
+          },
+          {
+            "file": "/var/log/auth.log",
+            "host": "records"
+          },
+          {
+            "file": "/var/log/syslog",
+            "host": "records"
+          },
+          {
+            "file": "/var/log/records-app/access.log",
+            "host": "records"
+          },
+          {
+            "file": "/var/log/mosquitto/mosquitto.log",
+            "host": "iot-hub"
+          }
+        ],
+        "heartbeat_interval_s": 10,
+        "host_local_sources": [
+          "auth.log",
+          "syslog",
+          "records-app access.log",
+          "shell history",
+          "file metadata"
+        ],
+        "independent_witnesses": [
+          "collector",
+          "tap",
+          "badge reader"
+        ],
+        "not_forwarded": [
+          "shell histories",
+          "file metadata snapshots"
+        ],
+        "rotation": [
+          {
+            "file": "/var/log/auth.log",
+            "host": "workstation",
+            "keep": 1,
+            "note": "one rotated generation (.1) stays on the host; older generations are discarded"
+          },
+          {
+            "file": "/var/log/records-app/access.log",
+            "host": "records",
+            "keep": 0,
+            "note": "the rotated segment is archived off-host and is not part of a local capture"
+          }
+        ]
+      },
+      "network_inventory": [
+        {
+          "ip": "10.20.1.21",
+          "name": "ws-nurse-01",
+          "role": "workstation"
+        },
+        {
+          "ip": "10.20.0.10",
+          "name": "rec-srv-01",
+          "role": "records"
+        },
+        {
+          "ip": "10.20.0.30",
+          "name": "iot-hub-01",
+          "role": "iot-hub"
+        },
+        {
+          "ip": "10.20.0.40",
+          "name": "logcol-01",
+          "role": "collector"
+        },
+        {
+          "ip": "10.20.0.45",
+          "name": "stor-nas-01",
+          "role": "backup-nas"
+        },
+        {
+          "ip": "10.20.8.20",
+          "name": "lab-gw-01",
+          "role": "lab-gw"
+        },
+        {
+          "ip": "10.20.0.250",
+          "name": "vpn-gw-01",
+          "role": "vpn-gw"
+        },
+        {
+          "ip": "10.20.1.90",
+          "name": "adm-lt-01",
+          "role": "admin-laptop"
+        },
+        {
+          "ip": "10.20.1.60",
+          "name": "prn-01",
+          "role": "printer"
+        },
+        {
+          "ip": "10.20.0.1",
+          "name": "gw-01",
+          "role": "gateway"
+        },
+        {
+          "ip": "10.20.9.10",
+          "name": "upd-mirror-01",
+          "role": "update-mirror"
+        },
+        {
+          "ip": "10.20.1.31",
+          "name": "fd-term-01",
+          "role": "front-desk terminal"
+        },
+        {
+          "ip": "10.20.1.32",
+          "name": "fd-term-02",
+          "role": "front-desk terminal"
+        },
+        {
+          "note": "devices in this range are not individually inventoried",
+          "range": "10.20.9.0/24",
+          "role": "vendor/partner DMZ"
+        }
+      ],
+      "other_badges": [
+        {
+          "badge": "B-3554",
+          "holder": "facilities staff (no system account)"
+        },
+        {
+          "badge": "B-5551",
+          "holder": "pharmacy staff (no system account)"
+        }
+      ],
+      "remote_access_policy": {
+        "allowed": true,
+        "note": "Staff may work remotely. Badge records do not cover remote sessions.",
+        "via": "vpn-gw-01 (10.20.0.250)"
+      },
+      "site": "Northside Clinic (synthetic)",
+      "tip": "Review records access and transfers during this shift; establish what the evidence supports.",
+      "transfer_policy": {
+        "approved_bulk_destinations": [
+          {
+            "ip": "10.20.0.45",
+            "name": "stor-nas-01",
+            "purpose": "backup and log archive"
+          },
+          {
+            "ip": "10.20.8.20",
+            "name": "lab-gw-01",
+            "purpose": "laboratory and registry submissions"
+          }
+        ],
+        "bulk_threshold_bytes": 5000000,
+        "note": "In this scenario a bulk outbound transfer of clinic data to any other destination violates policy."
+      }
+    },
+    "integrity_note": "Hashes support integrity checking after capture. They do not prove the original source was truthful and are not a legal chain of custody."
+  },
+  "report": {
+    "schema_version": "1.0.0",
+    "report_id": "rep-case-167b2759b40e",
+    "bundle_id": "bndl-646e90a648ad486f",
+    "system_id": "ALIBI",
+    "system_label": "ALIBI: lead + integrity-auditor + skeptic with deterministic checks",
+    "inference_mode": "RECORDED_MODEL",
+    "model_id": "anthropic:claude-opus-5-5",
+    "findings": [
+      {
+        "id": "F-04399b",
+        "claim_type": "local_log_removal",
+        "category": "incident_allegation",
+        "attack_id": null,
+        "technique_family": null,
+        "host": "workstation",
+        "actor_claimed": null,
+        "account_used": "rhaddad",
+        "t_start": "2026-11-10T12:38:28Z",
+        "t_end": "2026-11-10T12:38:28Z",
+        "object_or_session": "/var/log/auth.log",
+        "evidence_ids": [
+          "ev_0e5ae1caaa5a",
+          "ev_0b6a6ca7baef",
+          "ev_8488241a1c07",
+          "ev_1048c86a75f0",
+          "ev_0582ac2d6dd5"
+        ],
+        "counterevidence_ids": [],
+        "check_refs": [],
+        "confidence": 0.85,
+        "rationale": "Collector holds auth.log seq 35 (session 91 open, rhaddad, tty1) absent from local auth.log though bracketing lines exist; rotation at 09:00:01 does not explain it; no heartbeat gaps.",
+        "assumptions": [],
+        "alternative_explanations": [
+          "Local write/flush failure"
+        ],
+        "status": "verified",
+        "verification_status": "supported_observation",
+        "verifier_notes": [
+          "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+        ],
+        "skeptic_note": "Bracketed missing line after rotation boundary; no gaps.",
+        "produced_by": "lead-investigator"
+      },
+      {
+        "id": "F-c88b20",
+        "claim_type": "data_staging",
+        "category": "incident_allegation",
+        "attack_id": null,
+        "technique_family": null,
+        "host": "workstation",
+        "actor_claimed": null,
+        "account_used": "rhaddad",
+        "t_start": "2026-11-10T12:40:15Z",
+        "t_end": "2026-11-10T12:40:19Z",
+        "object_or_session": "/home/rhaddad/Downloads/upd-4c2e.pkg",
+        "evidence_ids": [
+          "ev_a12bc7a76943",
+          "ev_66d914361c18",
+          "ev_d75c1233140a",
+          "ev_998986d214f2",
+          "ev_071fec869d89"
+        ],
+        "counterevidence_ids": [],
+        "check_refs": [],
+        "confidence": 0.85,
+        "rationale": "patients_full export pulled to workstation and staged as 20,944,103-byte file, matching outbound transfer size.",
+        "assumptions": [],
+        "alternative_explanations": [],
+        "status": "verified",
+        "verification_status": "supported_observation",
+        "verifier_notes": [
+          "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+        ],
+        "skeptic_note": "Export-linked file matching transfer size.",
+        "produced_by": "lead-investigator"
+      },
+      {
+        "id": "F-e409cc",
+        "claim_type": "policy_violating_transfer",
+        "category": "incident_allegation",
+        "attack_id": null,
+        "technique_family": null,
+        "host": "workstation",
+        "actor_claimed": null,
+        "account_used": "rhaddad",
+        "t_start": "2026-11-10T12:41:24Z",
+        "t_end": "2026-11-10T12:41:37Z",
+        "object_or_session": "10.20.9.87:8080",
+        "evidence_ids": [
+          "ev_9017ed847e2a",
+          "ev_0a089a849682",
+          "ev_0e5ae1caaa5a",
+          "ev_8488241a1c07",
+          "ev_e77eb85e1660"
+        ],
+        "counterevidence_ids": [],
+        "check_refs": [],
+        "confidence": 0.9,
+        "rationale": "Tap: 20,948,102 bytes workstation to non-approved 10.20.9.87:8080 within session workstation#91, with linked command.",
+        "assumptions": [],
+        "alternative_explanations": [
+          "Unlisted approved system; flows show no content"
+        ],
+        "status": "verified",
+        "verification_status": "supported_observation",
+        "verifier_notes": [
+          "bulk transfer to a destination not on the approved list, cited via the flow record"
+        ],
+        "skeptic_note": "20.9MB to non-approved destination in session #91.",
+        "produced_by": "lead-investigator"
+      },
+      {
+        "id": "F-2aa970",
+        "claim_type": "retention_explained_absence",
+        "category": "benign_explanation",
+        "attack_id": null,
+        "technique_family": null,
+        "host": "records",
+        "actor_claimed": null,
+        "account_used": null,
+        "t_start": "2026-11-10T06:28:22Z",
+        "t_end": "2026-11-10T08:59:13Z",
+        "object_or_session": "/var/log/records-app/access.log",
+        "evidence_ids": [
+          "ev_703d13366f13",
+          "ev_4358af94bbef",
+          "ev_c3170af88304",
+          "ev_a184daed3bf5",
+          "ev_dfd91d9ff553",
+          "ev_a3849bd631f7",
+          "ev_62987e45e4c2"
+        ],
+        "counterevidence_ids": [],
+        "check_refs": [],
+        "confidence": 0.95,
+        "rationale": "183 missing local lines all predate the 09:00:04 rotation; keep 0 with off-host archive.",
+        "assumptions": [],
+        "alternative_explanations": [],
+        "status": "verified",
+        "verification_status": "supported_observation",
+        "verifier_notes": [
+          "a deterministic check supports this observation; it is not an incident allegation"
+        ],
+        "skeptic_note": "Pre-rotation lines, keep 0 policy.",
+        "produced_by": "lead-investigator"
+      },
+      {
+        "id": "F-fae12e",
+        "claim_type": "policy_consistent_transfer",
+        "category": "benign_explanation",
+        "attack_id": null,
+        "technique_family": null,
+        "host": "records",
+        "actor_claimed": null,
+        "account_used": null,
+        "t_start": "2026-11-10T12:11:04Z",
+        "t_end": "2026-11-10T12:11:10Z",
+        "object_or_session": "10.20.0.45:873",
+        "evidence_ids": [
+          "ev_e4db63a910f0"
+        ],
+        "counterevidence_ids": [],
+        "check_refs": [],
+        "confidence": 0.9,
+        "rationale": "20,949,303 bytes to approved backup stor-nas-01.",
+        "assumptions": [],
+        "alternative_explanations": [],
+        "status": "verified",
+        "verification_status": "supported_observation",
+        "verifier_notes": [
+          "a deterministic check supports this observation; it is not an incident allegation"
+        ],
+        "skeptic_note": "Approved backup destination.",
+        "produced_by": "lead-investigator"
+      }
+    ],
+    "attribution": {
+      "account_used": "rhaddad",
+      "session_ref": "workstation#91",
+      "human_identity": "insufficient_evidence",
+      "named_person_accused": null,
+      "named_person_exonerated": null,
+      "supporting_evidence_ids": [
+        "ev_0e5ae1caaa5a",
+        "ev_9017ed847e2a",
+        "ev_a12bc7a76943",
+        "ev_0a089a849682"
+      ],
+      "contrary_evidence_ids": [
+        "ev_49c33f246bbb",
+        "ev_afa5b9d9811b"
+      ],
+      "assumptions": [],
+      "limits": [
+        "Account is a credential, not a person; shared-station credentials were found written down before",
+        "Badge B-3201 had tapped out at 12:31:46, before the session; badges miss tailgating",
+        "Flows show no content"
+      ],
+      "statement": "Account used: rhaddad (console session workstation#91). Human operator not established.",
+      "review_status": "pending",
+      "approved_by_human": false,
+      "approved_at": null
+    },
+    "summary": "Incident supported on workstation, console session #91 (account rhaddad), 2026-11-10: at 12:38:28 the session-open line was removed from local /var/log/auth.log while the collector retained it (F-04399b); 12:40:15-19 a patients_full export was staged as /home/rhaddad/Downloads/upd-4c2e.pkg, 20,944,103 bytes (F-c88b20); 12:41:24-37 ~20.9MB sent to non-approved 10.20.9.87:8080 (F-e409cc). Benign: records access.log absence 06:28-08:59 explained by rotation/off-host archive (F-2aa970); 12:11 backup to approved 10.20.0.45:873 (F-fae12e). Attribution: account rhaddad used; human operator not established (badge B-3201 tapped out at 12:31:46, before the session).",
+    "open_questions": [
+      "What is 10.20.9.87 and is it an unlisted approved system?",
+      "Who was physically at the workstation console at 12:38-12:42 (CCTV, written-down credentials)?",
+      "Content of the transferred data cannot be confirmed from flow records."
+    ],
+    "usage": {
+      "llm_calls": 11,
+      "tokens_in": 109772,
+      "tokens_out": 8047,
+      "tokens_cache_read": 73116,
+      "cost_estimate_usd": 0.373438,
+      "wall_seconds": 76.772,
+      "tool_calls": 19,
+      "scripted_turns": 0,
+      "retries": 0,
+      "errors": 0,
+      "timed_out": false
+    },
+    "created_at": "2026-11-14T06:59:06.085498Z",
+    "locked": false,
+    "locked_at": null,
+    "report_sha256": null,
+    "review_history": [],
+    "verifier_version": "1.0.0"
+  },
+  "reveal": null,
+  "last_seq": 55,
+  "runtime": {
+    "runtime_mode": "offline",
+    "llm_max_usd": 0.0,
+    "bench_max_system_runs": 0,
+    "live_provider_kind": null,
+    "lead_model": null,
+    "subagent_model": null,
+    "adversary_model": null,
+    "live_block_reason": "RUNTIME_MODE is offline (default). No network model calls are made.",
+    "effort": "low",
+    "max_tokens_per_call": 3000,
+    "dev_ceiling_usd": 0.0,
+    "spend_limit_in_force_usd": 0.0,
+    "demo_reserve_open": false,
+    "price_in_per_mtok": null,
+    "price_out_per_mtok": null,
+    "caps": {
+      "max_calls": 16,
+      "max_input_tokens": 200000,
+      "max_output_tokens": 10000,
+      "max_seconds": 180.0,
+      "max_input_tokens_per_call": 40000,
+      "tool_result_max_records": 50,
+      "tool_result_max_bytes": 8192
+    },
+    "paid_overage_authorized_usd": 0
+  }
+}
