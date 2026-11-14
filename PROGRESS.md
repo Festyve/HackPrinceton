@@ -54,7 +54,7 @@ Rayan confirmed **$20 cumulative**, including prior spend; keep the $19.50 autom
 
 Previous plans remain below for provenance; they do not override the new product definition. The audit baseline is default-branch `6e7d322`, with reusable UI wiring at `1b9216d`.
 
-## Overhaul handoff — Eric's session, Saturday November 14, 17:04 ET
+## Overhaul handoff — Eric's session, Saturday November 14, 18:02 ET
 
 This block is the current handoff for the backend and integration. Gate-by-gate status with evidence is in [`docs/overhaul/ACCEPTANCE.md`](docs/overhaul/ACCEPTANCE.md). Terry's and Daniel's own handoffs: [`docs/terry-overhaul-handoff.md`](docs/terry-overhaul-handoff.md), [`docs/overhaul/daniel/HANDOFF.md`](docs/overhaul/daniel/HANDOFF.md).
 
@@ -65,7 +65,7 @@ This block is the current handoff for the backend and integration. Gate-by-gate 
 | Demo selection | Recorded lab runs, real model, replay offline: **lab-run-a-three-agents-haiku-5-5**, **lab-run-b-one-agent-haiku-5-5**, **lab-run-c-one-agent-haiku-5-5**. The clinic recordings from the earlier runs remain. Notes for each are in [`docs/demo-script.md`](docs/demo-script.md). |
 | Model in use | `anthropic:claude-haiku-5-5`, effort low, for the workers' ordinary work and every investigator role. |
 | Spend | Estimated **$3.922** of the **$20** cap (1062 model calls). The overhaul: about **$0.27**. Reserved: $0. Unreconciled: $0. Automatic calls stop at $19.50. `uv run alibi spend`. |
-| Tests | `uv run pytest` → **584 passed, none failed or skipped** at `1d64b2c`: 527 offline, 57 in headless Chrome. |
+| Tests | `uv run pytest` → **651 passed, none failed or skipped** at `ebd608e`: 594 offline, 57 in headless Chrome. |
 | Recordings | `demo/replays/`: 7 real-model runs (1 Opus, 6 Haiku) and 2 scripted-fixture runs. All reproduce their evidence and replay offline. |
 | Measured lab results | `benchmarks/worker-lab-eric-matrix/` (my declared matrix, 18 cells, [`docs/worker-lab-eric-matrix.md`](docs/worker-lab-eric-matrix.md)); `benchmarks/worker-lab-v1/eric/live/` (the 8 live cells of Daniel's protocol, accepted by his validator); `benchmarks/worker-lab-v1/daniel/` (his offline and scripted-runtime results); four records in `benchmarks/feature-checks/worker-lab-*.json`. |
 
@@ -84,6 +84,7 @@ This block is the current handoff for the backend and integration. Gate-by-gate 
 - **A model does not choose the fault actions (P2).** They follow a scripted policy, by Eric's decision on November 14, and every lab run is labeled so. Not attempted.
 - **The investigator's behaviors are seen, not shown to be reliable (P4).** The plan was rewritten after a result in 3 of 7 saved three-agent traces. The skeptic downgraded a correct finding in 4 of those 7. Three agents did not do better than one in any comparison made.
 - **No recorded human usability review (P9)** and no ≤120 second demo yet.
+- **One known way to tell an incident from a control before the lock remains (P3):** the cumulative spend ledger moves by a different number of calls. Four others were found by an independent review and closed. A comparison that was created but not yet investigated is not protected by the rule that holds the answer back.
 - One run per cell everywhere. Nothing here is a detection rate.
 - Daniel's dependent-lead case (`wl-39f2`) was missed by the deterministic checks, by one agent and by three.
 
@@ -91,7 +92,7 @@ This block is the current handoff for the backend and integration. Gate-by-gate 
 
 1. Rayan: run and record the usability review; build the demo from the three lab recordings; decide how the pitch states that the changed objective is scripted. Claims and their limits: [`docs/claims.md`](docs/claims.md) rows 22 to 28.
 2. Daniel: look at `benchmarks/worker-lab-v1/eric/live/` (results, locked reports, every request the investigator was sent); run the release smoke on the integrated commit.
-3. Terry: further interface work on `codex/terry-overhaul`; Eric's session merges it and brings the default branch along after the tests pass.
+3. Terry: the interface items in [`BLOCKERS.md`](BLOCKERS.md) (first row), most visibly the cut-off recorded answer at 1440×900 and the trace panel's handling of `trace/2`; further interface work on `codex/terry-overhaul`; Eric's session merges it and brings the default branch along after the tests pass.
 4. Eric: nothing is waiting on a decision. The current key stays, as decided.
 
 > Times are America/New_York. Entries record concrete check results, not intentions.
@@ -583,3 +584,5 @@ Phase-two model spend so far: about **$0.08** (ledger total $3.006 of the $20 ca
 - Ledger at 17:29: $3.922419, 1062 calls, nothing reserved or unreconciled.
 - Three helpers ran in parallel from 17:07 to about 17:45: an independent review of the lab code, a browser smoke test of the lab screens, and an audit of these documents against the artifacts. The review reproduced four ways to tell an incident from a control before the lock and a resume path that lifted the per-run caps (details in `DECISIONS.md`); all are fixed and tested. The smoke test found the fresh lab flows clean and listed interface defects for Terry (`BLOCKERS.md`). The three lab recordings were renamed `lab-run-a-…`, `lab-run-b-…`, `lab-run-c-…` with neutral titles and notes; the recorded runs themselves are byte-identical.
 - Ledger at 17:44: $3.922419, 1062 calls, nothing reserved or unreconciled.
+- `ebd608e`: the review's fixes (sealing, comparisons, resume limits, recordings renamed), the trace derivation (`trace/2`), the matrix and batch scripts, the worker labels in an exported lab report, and these documents corrected against the artifacts. One of Terry's browser tests made a permissions comparison before the lock; it now checks that the panel shows the refusal, locks both reports and continues. `uv run pytest` → **651 passed** (594 offline, 57 in a browser). No model call was made for any of this.
+- Ledger at 18:02: $3.922419, 1062 calls, nothing reserved or unreconciled.
