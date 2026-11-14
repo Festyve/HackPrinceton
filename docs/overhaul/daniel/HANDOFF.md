@@ -78,7 +78,8 @@ and npm dependencies were installed. The documented
 startup command served the product in offline mode with no key. Recorded
 replay reached review. The Docker import exposed three exact citations,
 locked on review, exported Markdown and refused reveal as expected.
-See [smoke observations](owner-reproduction/observations.json).
+The full regression suite passed all 523 tests on this commit.
+[Smoke observations](owner-reproduction/observations.json)
 Eric’s later commit `30d8375` also passed the same clean checkout smoke.
 Its matrix declaration passed `scripts/run_lab_matrix.py --check` with 18
 cells, including 12 live cells, and a declared maximum estimate of $0.822.
