@@ -1151,8 +1151,9 @@ class Orchestrator:
                 "attribution": key.attribution.model_dump(mode="json"),
             }
             if "lab" in ep.scenario_spec:
-                truth["plan_label"] = ("Worker lab · the changed objective followed a scripted policy; no model chose "
-                                       "a fault action")
+                truth["plan_label"] = (
+                    "Worker lab · the changed objective followed a scripted policy; no model chose a fault action"
+                    if ep.scenario_spec["lab"]["transition"] else "Worker lab control · no worker's objective was changed")
                 truth["lab"] = lab_engine.execution_record(ep.scenario_spec)
             payload = {"score": score.model_dump(mode="json"), "truth": truth}
             if rec.parent_case_id:

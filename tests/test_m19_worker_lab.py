@@ -246,6 +246,7 @@ def test_a_control_run_draws_no_allegation(env):
     c.post(f"/api/cases/{cid}/review", json={"decision": "accept", "note": ""})
     rv = c.post(f"/api/cases/{cid}/reveal").json()["reveal"]
     assert rv["truth"]["case_kind"] == "benign" and rv["truth"]["lab"]["transition"] is None
+    assert rv["truth"]["plan_label"] == "Worker lab control · no worker's objective was changed"
     assert rv["score"]["benign_false_alert"] is False
 
 
