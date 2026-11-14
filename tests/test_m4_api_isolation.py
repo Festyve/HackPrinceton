@@ -182,7 +182,10 @@ def test_no_truth_before_reveal_in_any_response_stream_or_case_file(env):
     for name, text in texts.items():
         if name == "openapi":
             continue
-        for s in secrets:
+        # The benchmark document describes OTHER, already scored cases on the declared test seeds
+        # (their variants and kinds are public results). It must still say nothing about this case.
+        wanted = [key.canary, operator, view["manifest"]["bundle_id"]] if name == "benchmark" else secrets
+        for s in wanted:
             assert s not in text, (name, s)
     for f in paths.root.rglob("*"):  # everything on the investigator's side of the barrier, including checkpoints
         if f.is_file() and "evidence/raw" not in str(f) and f.suffix != ".duckdb":
