@@ -1,0 +1,190 @@
+{
+ "kind": "feature-check",
+ "what": "source-removal experiment with a fresh real-model investigation of the reduced view",
+ "note": "One run on the demo case. A feature check, not an evaluation result.",
+ "generated_at": "2026-11-14T10:41:39.603870+00:00",
+ "model": "anthropic:claude-haiku-5-5",
+ "mode": "fast",
+ "original": {
+  "state": "awaiting_review",
+  "claims": [
+   {
+    "claim_type": "local_log_removal",
+    "category": "incident_allegation",
+    "status": "verified",
+    "verification_status": "supported_observation"
+   },
+   {
+    "claim_type": "data_staging",
+    "category": "incident_allegation",
+    "status": "verified",
+    "verification_status": "supported_observation"
+   },
+   {
+    "claim_type": "policy_violating_transfer",
+    "category": "incident_allegation",
+    "status": "verified",
+    "verification_status": "supported_observation"
+   },
+   {
+    "claim_type": "policy_consistent_transfer",
+    "category": "benign_explanation",
+    "status": "verified",
+    "verification_status": "supported_observation"
+   }
+  ],
+  "usage": {
+   "llm_calls": 6,
+   "tokens_in": 121867,
+   "tokens_out": 4979,
+   "tokens_cache_read": 97335,
+   "cost_estimate_usd": 0.006529,
+   "wall_seconds": 26.85,
+   "tool_calls": 14,
+   "scripted_turns": 0,
+   "retries": 0,
+   "errors": 0,
+   "timed_out": false
+  }
+ },
+ "withheld": [
+  "collector"
+ ],
+ "deterministic_comparison": [
+  {
+   "claim_type": "local_log_removal",
+   "category": "incident_allegation",
+   "change": "loses_support",
+   "reason": "the comparison this claim rests on cannot be run on this bundle: this bundle has no collector copy, so the host's own log cannot be compared with an independent one. Its completeness is unknown."
+  },
+  {
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "change": "retains_support",
+   "reason": "the deterministic check still supports this from the remaining evidence (1 of its cited record(s) are in a withheld source)"
+  },
+  {
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "change": "retains_support",
+   "reason": "the deterministic check still supports this from the remaining evidence (1 of its cited record(s) are in a withheld source)"
+  },
+  {
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "change": "retains_support",
+   "reason": "the deterministic check still supports this from the remaining evidence"
+  }
+ ],
+ "attribution_change": null,
+ "fresh_investigation_of_reduced_view": {
+  "state": "awaiting_review",
+  "claims": [
+   {
+    "claim_type": "data_staging",
+    "category": "incident_allegation",
+    "status": "verified",
+    "verification_status": "supported_observation"
+   },
+   {
+    "claim_type": "policy_violating_transfer",
+    "category": "incident_allegation",
+    "status": "verified",
+    "verification_status": "supported_observation"
+   },
+   {
+    "claim_type": "collection_gap",
+    "category": "unresolved",
+    "status": "proposed",
+    "verification_status": "structurally_valid"
+   },
+   {
+    "claim_type": "retention_explained_absence",
+    "category": "benign_explanation",
+    "status": "proposed",
+    "verification_status": "structurally_valid"
+   },
+   {
+    "claim_type": "policy_consistent_transfer",
+    "category": "benign_explanation",
+    "status": "verified",
+    "verification_status": "supported_observation"
+   }
+  ],
+  "usage": {
+   "llm_calls": 8,
+   "tokens_in": 203757,
+   "tokens_out": 6633,
+   "tokens_cache_read": 166460,
+   "cost_estimate_usd": 0.009643,
+   "wall_seconds": 31.286,
+   "tool_calls": 18,
+   "scripted_turns": 0,
+   "retries": 0,
+   "errors": 0,
+   "timed_out": false
+  },
+  "open_questions": [
+   "Session workstation#91 (rhaddad, logout 12:45:08): its opening login record was not found in the workstation auth log. Determine whether it was a console or VPN login, and whether the auth log is complete (no collector copy exists).",
+   "Who physically or remotely operated rhaddad at 12:40-12:41? Badge records cannot establish this, and remote sessions are not covered by badge data. Check the vpn-gw-01 logs and interview the account holder, noting that credentials may have been shared or written down.",
+   "Identify the owner and purpose of destination 10.20.9.87:8080; it is not on the approved list.",
+   "Confirm the staged package upd-4c2e.pkg was removed or retained and whether the upload was received at 10.20.9.87.",
+   "No collector copies exist for any host, so host-log completeness is unverified; no local log removal is claimed."
+  ],
+  "any_withheld_record_id_in_report_or_events": false,
+  "account_used": "rhaddad",
+  "human_identity": "insufficient_evidence"
+ },
+ "scoring_of_reduced_view": {
+  "effects_total_original": 3,
+  "effects_with_records_in_this_view": 2,
+  "effects_with_no_record_in_this_view": 1,
+  "caught": 2,
+  "recall_conditional": {
+   "num": 2,
+   "den": 2,
+   "value": 1.0,
+   "meaning": "of the effects that still have a record in this view"
+  },
+  "recall_of_all_original": {
+   "num": 2,
+   "den": 3,
+   "value": 0.6666666666666666,
+   "meaning": "of every effect that was observable in the original evidence"
+  },
+  "effects": [
+   {
+    "effect_id": "e1",
+    "effect_type": "data_staging",
+    "host": "workstation",
+    "records_in_original": 4,
+    "records_in_this_view": 4,
+    "observable_in_original": true,
+    "observable_in_this_view": true,
+    "outcome": "caught"
+   },
+   {
+    "effect_id": "e2",
+    "effect_type": "policy_violating_transfer",
+    "host": "workstation",
+    "records_in_original": 2,
+    "records_in_this_view": 2,
+    "observable_in_original": true,
+    "observable_in_this_view": true,
+    "outcome": "caught"
+   },
+   {
+    "effect_id": "e3",
+    "effect_type": "local_log_removal",
+    "host": "workstation",
+    "records_in_original": 1,
+    "records_in_this_view": 0,
+    "observable_in_original": true,
+    "observable_in_this_view": false,
+    "outcome": "no_record_in_this_view"
+   }
+  ],
+  "note": "Fewer effects are observable here because evidence was withheld, not because less happened. 'not_established' means a record remains but the report did not establish the effect; 'no_record_in_this_view' means nothing the step produced is in this evidence."
+ },
+ "estimated_cost_usd": 0.016172
+}
