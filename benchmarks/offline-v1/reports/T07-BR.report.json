@@ -1,0 +1,253 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-BR-bndl-de8e9639d3ec6bfb",
+ "bundle_id": "bndl-de8e9639d3ec6bfb",
+ "system_id": "BR",
+ "system_label": "BR · deterministic contradiction checks, templated findings",
+ "inference_mode": "NO_MODEL_BASELINE",
+ "model_id": null,
+ "findings": [
+  {
+   "id": "BR-01",
+   "claim_type": "local_log_removal",
+   "category": "incident_allegation",
+   "attack_id": "T1070.002",
+   "technique_family": "Indicator removal: host log lines removed",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "mreyes",
+   "t_start": "2026-11-10T11:07:47Z",
+   "t_end": "2026-11-10T11:07:47Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_fd7e7698b99e",
+    "ev_d42745470415",
+    "ev_e3692b19fa58"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "local_vs_collector"
+   ],
+   "confidence": 0.8,
+   "rationale": "1 line(s) of /var/log/auth.log on workstation were received by the collector but are absent from the host's own copy, after the host's retention boundary (2026-11-10T06:14:00+00:00, basis: capture_start) and bracketed by later local records. Retained line: 2026-11-10T11:07:47+00:00 ws-nurse-01 login[2538]: pam_unix(login:session): session opened for user mreyes on tty1 (session 43) Session(s): workstation#43.",
+   "assumptions": [
+    "the collector is not writable from the monitored host",
+    "the forwarder delivered the line before it disappeared locally"
+   ],
+   "alternative_explanations": [
+    "a local log-agent or filesystem fault dropped the line",
+    "an administrator edited the file without recording it"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-02",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": "T1074.001",
+   "technique_family": "Local data staging",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "mreyes",
+   "t_start": "2026-11-10T11:09:35Z",
+   "t_end": "2026-11-10T11:09:39Z",
+   "object_or_session": "/var/tmp/.pkg-cache/sess-91ac.db",
+   "evidence_ids": [
+    "ev_57e2738708c1",
+    "ev_584f595c6de4",
+    "ev_8121c65ee774",
+    "ev_d1d892848ca9",
+    "ev_1de66286e5af"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.7,
+   "rationale": "/var/tmp/.pkg-cache/sess-91ac.db (23,173,090 bytes, owner mreyes) was written on workstation shortly before the non-approved transfer and matches its size; the records application logged a bulk export of 'patients_full' to this host.",
+   "assumptions": [
+    "matching size and timing indicate the same object; content was not inspected"
+   ],
+   "alternative_explanations": [
+    "an unrelated file of similar size"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-03",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": "Transfer to a non-approved destination (exfiltration mapping is context-dependent)",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "mreyes",
+   "t_start": "2026-11-10T11:10:52Z",
+   "t_end": "2026-11-10T11:11:07Z",
+   "object_or_session": "10.20.9.14:8080",
+   "evidence_ids": [
+    "ev_190f02a24293",
+    "ev_9b1c94512543",
+    "ev_fd7e7698b99e"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.8,
+   "rationale": "23,176,572 bytes left workstation for 10.20.9.14:8080 between 2026-11-10T11:10:52+00:00 and 2026-11-10T11:11:07+00:00. destination 10.20.9.14 is not on the approved bulk-destination list (10.20.0.45, 10.20.8.20). It overlaps exactly one session on workstation: workstation#43 (account mreyes, console; login record seen in: collector copy).",
+   "assumptions": [
+    "the supplied destination policy is complete and current"
+   ],
+   "alternative_explanations": [
+    "an approved destination missing from the supplied policy"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-04",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:20:45Z",
+   "t_end": "2026-11-10T08:50:45Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_2740c1300f79",
+    "ev_d22ec0956e6e",
+    "ev_012aee9defb6",
+    "ev_5d6a88319e88",
+    "ev_759e7e80d7d2",
+    "ev_a3e9a33b34f4",
+    "ev_549fabc51ff3"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "local_vs_collector"
+   ],
+   "confidence": 0.9,
+   "rationale": "174 line(s) of /var/log/records-app/access.log on records exist only at the collector, and all of them predate the host's retention boundary at 2026-11-10T08:51:04+00:00 (log rotation). Their absence from the host is expected, not suspicious.",
+   "assumptions": [
+    "the rotation record and the stated retention policy are accurate"
+   ],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-05",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T12:14:04Z",
+   "t_end": "2026-11-10T12:14:11Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_28611870bc1c"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.9,
+   "rationale": "23,178,290 bytes from records to 10.20.0.45:873. destination 10.20.0.45 is an approved bulk destination: stor-nas-01 (backup and log archive).",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  }
+ ],
+ "attribution": {
+  "account_used": "mreyes",
+  "session_ref": "workstation#43",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_fd7e7698b99e"
+  ],
+  "contrary_evidence_ids": [
+   "ev_f0de151b61fc",
+   "ev_40c7711bed42"
+  ],
+  "assumptions": [
+   "badge-to-account assignments in the supplied directory are current"
+  ],
+  "limits": [
+   "an account identifies a credential, not the person typing",
+   "badge readers record badge taps, not people; tailgating and shared badges are not visible",
+   "this check cannot establish who operated the session and cannot clear anyone"
+  ],
+  "statement": "Account used: mreyes. Human operator not established. Account mreyes opened a console session at 2026-11-10T11:07:47+00:00; the badge assigned to that account (B-4763) was inside the building. That is compatible with the holder using it and equally with anyone else who had the credential.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "3 incident allegation(s), 2 benign explanation(s)/open note(s). Account used: mreyes. Human operator not established. Account mreyes opened a console session at 2026-11-10T11:07:47+00:00; the badge assigned to that account (B-4763) was inside the building. That is compatible with the holder using it and equally with anyone else who had the credential.",
+ "open_questions": [
+  "Who had access to the credential used in the linked session?",
+  "Was the destination known to anyone at the clinic?"
+ ],
+ "usage": {
+  "llm_calls": 0,
+  "tokens_in": 0,
+  "tokens_out": 0,
+  "tokens_cache_read": 0,
+  "cost_estimate_usd": 0.0,
+  "wall_seconds": 0.083626,
+  "tool_calls": 0,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": "2026-11-14T06:17:25.461636Z",
+ "locked": true,
+ "locked_at": "2026-11-14T06:17:25.546484Z",
+ "report_sha256": "83f6846cd6a56d1c06a4f15e57d1ebe2fc99b4d439827726879ff49122a3422e",
+ "review_history": [
+  {
+   "at": "2026-11-14T06:17:25.546484Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.0.0"
+}

@@ -1,0 +1,216 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-BR-bndl-6d83f9a2aa5e2a07",
+ "bundle_id": "bndl-6d83f9a2aa5e2a07",
+ "system_id": "BR",
+ "system_label": "BR · deterministic contradiction checks, templated findings",
+ "inference_mode": "NO_MODEL_BASELINE",
+ "model_id": null,
+ "findings": [
+  {
+   "id": "BR-01",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": "T1074.001",
+   "technique_family": "Local data staging",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "kcole",
+   "t_start": "2026-11-10T11:02:35Z",
+   "t_end": "2026-11-10T11:02:38Z",
+   "object_or_session": "/var/tmp/.pkg-cache/rx-7f3.db",
+   "evidence_ids": [
+    "ev_c88a8f95c288",
+    "ev_53db09bd2101",
+    "ev_1a758cd0dde5",
+    "ev_d61f629f9853",
+    "ev_791bcc5269fc"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.7,
+   "rationale": "/var/tmp/.pkg-cache/rx-7f3.db (17,899,771 bytes, owner kcole) was written on workstation shortly before the non-approved transfer and matches its size; the records application logged a bulk export of 'patients_full' to this host.",
+   "assumptions": [
+    "matching size and timing indicate the same object; content was not inspected"
+   ],
+   "alternative_explanations": [
+    "an unrelated file of similar size"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-02",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": "Transfer to a non-approved destination (exfiltration mapping is context-dependent)",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "kcole",
+   "t_start": "2026-11-10T11:05:32Z",
+   "t_end": "2026-11-10T11:05:43Z",
+   "object_or_session": "10.20.9.52:8080",
+   "evidence_ids": [
+    "ev_6314e36661e1",
+    "ev_ecfeacbe5abe",
+    "ev_8921a4a7da77",
+    "ev_bedcfddefa19"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.8,
+   "rationale": "17,903,297 bytes left workstation for 10.20.9.52:8080 between 2026-11-10T11:05:32+00:00 and 2026-11-10T11:05:43+00:00. destination 10.20.9.52 is not on the approved bulk-destination list (10.20.0.45, 10.20.8.20). It overlaps exactly one session on workstation: workstation#53 (account kcole, console; login record seen in: local log, collector copy).",
+   "assumptions": [
+    "the supplied destination policy is complete and current"
+   ],
+   "alternative_explanations": [
+    "an approved destination missing from the supplied policy"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-03",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:22:44Z",
+   "t_end": "2026-11-10T08:51:59Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_b612bea286ac",
+    "ev_766bebfe3b1a",
+    "ev_b947cb6c4c86",
+    "ev_f880b3f377e8",
+    "ev_d1b3484aa49d",
+    "ev_c153148da759",
+    "ev_dda6a47b7207"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "local_vs_collector"
+   ],
+   "confidence": 0.9,
+   "rationale": "162 line(s) of /var/log/records-app/access.log on records exist only at the collector, and all of them predate the host's retention boundary at 2026-11-10T08:52:04+00:00 (log rotation). Their absence from the host is expected, not suspicious.",
+   "assumptions": [
+    "the rotation record and the stated retention policy are accurate"
+   ],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-04",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T12:03:04Z",
+   "t_end": "2026-11-10T12:03:09Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_1f56de30813f"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.9,
+   "rationale": "17,904,971 bytes from records to 10.20.0.45:873. destination 10.20.0.45 is an approved bulk destination: stor-nas-01 (backup and log archive).",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  }
+ ],
+ "attribution": {
+  "account_used": "kcole",
+  "session_ref": "workstation#53",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_8921a4a7da77",
+   "ev_bedcfddefa19"
+  ],
+  "contrary_evidence_ids": [
+   "ev_16beb0ce11e1",
+   "ev_dc36e69ead9f"
+  ],
+  "assumptions": [
+   "badge-to-account assignments in the supplied directory are current"
+  ],
+  "limits": [
+   "an account identifies a credential, not the person typing",
+   "badge readers record badge taps, not people; tailgating and shared badges are not visible",
+   "this check cannot establish who operated the session and cannot clear anyone"
+  ],
+  "statement": "Account used: kcole. Human operator not established. Account kcole opened a console session at 2026-11-10T11:01:07+00:00 while the badge assigned to that account (B-3827) had last tapped out at 2026-11-10T10:52:08+00:00. This is inconsistent with the account holder sitting at the console, but it does not identify who was.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "2 incident allegation(s), 2 benign explanation(s)/open note(s). Account used: kcole. Human operator not established. Account kcole opened a console session at 2026-11-10T11:01:07+00:00 while the badge assigned to that account (B-3827) had last tapped out at 2026-11-10T10:52:08+00:00. This is inconsistent with the account holder sitting at the console, but it does not identify who was.",
+ "open_questions": [
+  "Who had access to the credential used in the linked session?",
+  "Was the destination known to anyone at the clinic?"
+ ],
+ "usage": {
+  "llm_calls": 0,
+  "tokens_in": 0,
+  "tokens_out": 0,
+  "tokens_cache_read": 0,
+  "cost_estimate_usd": 0.0,
+  "wall_seconds": 0.089732,
+  "tool_calls": 0,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": "2026-11-14T06:17:23.275532Z",
+ "locked": true,
+ "locked_at": "2026-11-14T06:17:23.366476Z",
+ "report_sha256": "66f0365dca577d6884200ec811e5f7db369f83fe3180dca90422d1e3f901bb16",
+ "review_history": [
+  {
+   "at": "2026-11-14T06:17:23.366476Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.0.0"
+}

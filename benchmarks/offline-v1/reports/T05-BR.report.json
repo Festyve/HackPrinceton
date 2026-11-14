@@ -1,0 +1,253 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-BR-bndl-8f72b187cf81b29a",
+ "bundle_id": "bndl-8f72b187cf81b29a",
+ "system_id": "BR",
+ "system_label": "BR · deterministic contradiction checks, templated findings",
+ "inference_mode": "NO_MODEL_BASELINE",
+ "model_id": null,
+ "findings": [
+  {
+   "id": "BR-01",
+   "claim_type": "local_log_removal",
+   "category": "incident_allegation",
+   "attack_id": "T1070.002",
+   "technique_family": "Indicator removal: host log lines removed",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:21:09Z",
+   "t_end": "2026-11-10T11:21:09Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_6d741cbf4f67",
+    "ev_b1a7f1da1490",
+    "ev_182fa7aa522f"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "local_vs_collector"
+   ],
+   "confidence": 0.8,
+   "rationale": "1 line(s) of /var/log/auth.log on workstation were received by the collector but are absent from the host's own copy, after the host's retention boundary (2026-11-10T06:23:00+00:00, basis: capture_start) and bracketed by later local records. Retained line: 2026-11-10T11:21:09+00:00 ws-nurse-01 login[2260]: pam_unix(login:session): session opened for user jpark on tty1 (session 34) Session(s): workstation#34.",
+   "assumptions": [
+    "the collector is not writable from the monitored host",
+    "the forwarder delivered the line before it disappeared locally"
+   ],
+   "alternative_explanations": [
+    "a local log-agent or filesystem fault dropped the line",
+    "an administrator edited the file without recording it"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-02",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": "T1074.001",
+   "technique_family": "Local data staging",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:23:09Z",
+   "t_end": "2026-11-10T11:23:12Z",
+   "object_or_session": "/var/tmp/.pkg-cache/rx-7f3.db",
+   "evidence_ids": [
+    "ev_79b08729ba33",
+    "ev_643d6effbd5d",
+    "ev_788cb6e4f77a",
+    "ev_7ad9443e2abe",
+    "ev_972365bb5c98"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.7,
+   "rationale": "/var/tmp/.pkg-cache/rx-7f3.db (17,351,921 bytes, owner jpark) was written on workstation shortly before the non-approved transfer and matches its size; the records application logged a bulk export of 'patients_full' to this host.",
+   "assumptions": [
+    "matching size and timing indicate the same object; content was not inspected"
+   ],
+   "alternative_explanations": [
+    "an unrelated file of similar size"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-03",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": "Transfer to a non-approved destination (exfiltration mapping is context-dependent)",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:26:27Z",
+   "t_end": "2026-11-10T11:26:38Z",
+   "object_or_session": "10.20.9.70:8080",
+   "evidence_ids": [
+    "ev_e08cdbed489b",
+    "ev_bd1d719bb513",
+    "ev_6d741cbf4f67"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.8,
+   "rationale": "17,355,073 bytes left workstation for 10.20.9.70:8080 between 2026-11-10T11:26:27+00:00 and 2026-11-10T11:26:38+00:00. destination 10.20.9.70 is not on the approved bulk-destination list (10.20.0.45, 10.20.8.20). It overlaps exactly one session on workstation: workstation#34 (account jpark, console; login record seen in: collector copy).",
+   "assumptions": [
+    "the supplied destination policy is complete and current"
+   ],
+   "alternative_explanations": [
+    "an approved destination missing from the supplied policy"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-04",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:29:44Z",
+   "t_end": "2026-11-10T09:01:59Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_fcde7f76683e",
+    "ev_b2516a149d4d",
+    "ev_f265e42ef1e7",
+    "ev_7700269dc87f",
+    "ev_f2d84c482208",
+    "ev_3bf8e8339432",
+    "ev_1f24d8b04517"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "local_vs_collector"
+   ],
+   "confidence": 0.9,
+   "rationale": "179 line(s) of /var/log/records-app/access.log on records exist only at the collector, and all of them predate the host's retention boundary at 2026-11-10T09:02:04+00:00 (log rotation). Their absence from the host is expected, not suspicious.",
+   "assumptions": [
+    "the rotation record and the stated retention policy are accurate"
+   ],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-05",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T12:08:04Z",
+   "t_end": "2026-11-10T12:08:09Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_b91e92edd632"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.9,
+   "rationale": "17,357,121 bytes from records to 10.20.0.45:873. destination 10.20.0.45 is an approved bulk destination: stor-nas-01 (backup and log archive).",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  }
+ ],
+ "attribution": {
+  "account_used": "jpark",
+  "session_ref": "workstation#34",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_6d741cbf4f67"
+  ],
+  "contrary_evidence_ids": [
+   "ev_ca9a76399702",
+   "ev_e4d63d12bd3a"
+  ],
+  "assumptions": [
+   "badge-to-account assignments in the supplied directory are current"
+  ],
+  "limits": [
+   "an account identifies a credential, not the person typing",
+   "badge readers record badge taps, not people; tailgating and shared badges are not visible",
+   "this check cannot establish who operated the session and cannot clear anyone"
+  ],
+  "statement": "Account used: jpark. Human operator not established. Account jpark opened a console session at 2026-11-10T11:21:09+00:00; the badge assigned to that account (B-1911) was inside the building. That is compatible with the holder using it and equally with anyone else who had the credential.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "3 incident allegation(s), 2 benign explanation(s)/open note(s). Account used: jpark. Human operator not established. Account jpark opened a console session at 2026-11-10T11:21:09+00:00; the badge assigned to that account (B-1911) was inside the building. That is compatible with the holder using it and equally with anyone else who had the credential.",
+ "open_questions": [
+  "Who had access to the credential used in the linked session?",
+  "Was the destination known to anyone at the clinic?"
+ ],
+ "usage": {
+  "llm_calls": 0,
+  "tokens_in": 0,
+  "tokens_out": 0,
+  "tokens_cache_read": 0,
+  "cost_estimate_usd": 0.0,
+  "wall_seconds": 0.096554,
+  "tool_calls": 0,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": "2026-11-14T06:17:24.377668Z",
+ "locked": true,
+ "locked_at": "2026-11-14T06:17:24.475475Z",
+ "report_sha256": "84666c6877fbfab8f5545b2c389e37f4d74c75530776ff1b6bdd6d53a9c321fe",
+ "review_history": [
+  {
+   "at": "2026-11-14T06:17:24.475475Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.0.0"
+}

@@ -1,0 +1,253 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-BR-bndl-faa4d064f0290fe1",
+ "bundle_id": "bndl-faa4d064f0290fe1",
+ "system_id": "BR",
+ "system_label": "BR · deterministic contradiction checks, templated findings",
+ "inference_mode": "NO_MODEL_BASELINE",
+ "model_id": null,
+ "findings": [
+  {
+   "id": "BR-01",
+   "claim_type": "local_log_removal",
+   "category": "incident_allegation",
+   "attack_id": "T1070.002",
+   "technique_family": "Indicator removal: host log lines removed",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T11:08:02Z",
+   "t_end": "2026-11-10T11:08:02Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_77a712c771cd",
+    "ev_26d658655a21",
+    "ev_1a2861f2e03b"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "local_vs_collector"
+   ],
+   "confidence": 0.8,
+   "rationale": "1 line(s) of /var/log/auth.log on workstation were received by the collector but are absent from the host's own copy, after the host's retention boundary (2026-11-10T06:19:00+00:00, basis: capture_start) and bracketed by later local records. Retained line: 2026-11-10T11:08:02+00:00 ws-nurse-01 login[2329]: pam_unix(login:session): session opened for user rhaddad on tty1 (session 83) Session(s): workstation#83.",
+   "assumptions": [
+    "the collector is not writable from the monitored host",
+    "the forwarder delivered the line before it disappeared locally"
+   ],
+   "alternative_explanations": [
+    "a local log-agent or filesystem fault dropped the line",
+    "an administrator edited the file without recording it"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-02",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": "T1074.001",
+   "technique_family": "Local data staging",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T11:09:06Z",
+   "t_end": "2026-11-10T11:09:09Z",
+   "object_or_session": "/var/tmp/.pkg-cache/upd-4c2e.pkg",
+   "evidence_ids": [
+    "ev_25adfae287ab",
+    "ev_3db050570e93",
+    "ev_7f09a423f35c",
+    "ev_0fe8a7604c04",
+    "ev_9d31ffdff609"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.7,
+   "rationale": "/var/tmp/.pkg-cache/upd-4c2e.pkg (19,399,975 bytes, owner rhaddad) was written on workstation shortly before the non-approved transfer and matches its size; the records application logged a bulk export of 'patients_full' to this host.",
+   "assumptions": [
+    "matching size and timing indicate the same object; content was not inspected"
+   ],
+   "alternative_explanations": [
+    "an unrelated file of similar size"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-03",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": "Transfer to a non-approved destination (exfiltration mapping is context-dependent)",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T11:12:16Z",
+   "t_end": "2026-11-10T11:12:28Z",
+   "object_or_session": "10.20.9.72:8080",
+   "evidence_ids": [
+    "ev_18f58ea7ea35",
+    "ev_d678571051eb",
+    "ev_77a712c771cd"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.8,
+   "rationale": "19,403,787 bytes left workstation for 10.20.9.72:8080 between 2026-11-10T11:12:16+00:00 and 2026-11-10T11:12:28+00:00. destination 10.20.9.72 is not on the approved bulk-destination list (10.20.0.45, 10.20.8.20). It overlaps exactly one session on workstation: workstation#83 (account rhaddad, console; login record seen in: collector copy).",
+   "assumptions": [
+    "the supplied destination policy is complete and current"
+   ],
+   "alternative_explanations": [
+    "an approved destination missing from the supplied policy"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-04",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:29:49Z",
+   "t_end": "2026-11-10T09:12:49Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_30e0879391da",
+    "ev_71825fa9bbf4",
+    "ev_1a6ab3678c5d",
+    "ev_2ace50ddc2c9",
+    "ev_eb9c66e1f660",
+    "ev_1c1d810429b4",
+    "ev_c06b885f48c7"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "local_vs_collector"
+   ],
+   "confidence": 0.9,
+   "rationale": "201 line(s) of /var/log/records-app/access.log on records exist only at the collector, and all of them predate the host's retention boundary at 2026-11-10T09:13:04+00:00 (log rotation). Their absence from the host is expected, not suspicious.",
+   "assumptions": [
+    "the rotation record and the stated retention policy are accurate"
+   ],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-05",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:51:04Z",
+   "t_end": "2026-11-10T11:51:10Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_bd3e264244dc"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.9,
+   "rationale": "19,405,175 bytes from records to 10.20.0.45:873. destination 10.20.0.45 is an approved bulk destination: stor-nas-01 (backup and log archive).",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  }
+ ],
+ "attribution": {
+  "account_used": "rhaddad",
+  "session_ref": "workstation#83",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_77a712c771cd"
+  ],
+  "contrary_evidence_ids": [
+   "ev_760479eda50c",
+   "ev_f505fd58fa03"
+  ],
+  "assumptions": [
+   "badge-to-account assignments in the supplied directory are current"
+  ],
+  "limits": [
+   "an account identifies a credential, not the person typing",
+   "badge readers record badge taps, not people; tailgating and shared badges are not visible",
+   "this check cannot establish who operated the session and cannot clear anyone"
+  ],
+  "statement": "Account used: rhaddad. Human operator not established. Account rhaddad opened a console session at 2026-11-10T11:08:02+00:00 while the badge assigned to that account (B-5260) had last tapped out at 2026-11-10T11:01:19+00:00. This is inconsistent with the account holder sitting at the console, but it does not identify who was.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "3 incident allegation(s), 2 benign explanation(s)/open note(s). Account used: rhaddad. Human operator not established. Account rhaddad opened a console session at 2026-11-10T11:08:02+00:00 while the badge assigned to that account (B-5260) had last tapped out at 2026-11-10T11:01:19+00:00. This is inconsistent with the account holder sitting at the console, but it does not identify who was.",
+ "open_questions": [
+  "Who had access to the credential used in the linked session?",
+  "Was the destination known to anyone at the clinic?"
+ ],
+ "usage": {
+  "llm_calls": 0,
+  "tokens_in": 0,
+  "tokens_out": 0,
+  "tokens_cache_read": 0,
+  "cost_estimate_usd": 0.0,
+  "wall_seconds": 0.103259,
+  "tool_calls": 0,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": "2026-11-14T06:17:24.914121Z",
+ "locked": true,
+ "locked_at": "2026-11-14T06:17:25.019252Z",
+ "report_sha256": "8f9b031d08f35516aa0cab43b79e54f1923a2fe3fe39b0a54d97ac1569475942",
+ "review_history": [
+  {
+   "at": "2026-11-14T06:17:25.019252Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.0.0"
+}

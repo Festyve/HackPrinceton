@@ -1,0 +1,163 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-BR-bndl-2cd6c099234d468b",
+ "bundle_id": "bndl-2cd6c099234d468b",
+ "system_id": "BR",
+ "system_label": "BR · deterministic contradiction checks, templated findings",
+ "inference_mode": "NO_MODEL_BASELINE",
+ "model_id": null,
+ "findings": [
+  {
+   "id": "BR-01",
+   "claim_type": "collection_gap",
+   "category": "unresolved",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:54:52Z",
+   "t_end": "2026-11-10T11:58:22Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_7f8939732ac0",
+    "ev_24996cf5d732",
+    "ev_137773a88dc4"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "local_vs_collector",
+    "heartbeat_gaps"
+   ],
+   "confidence": 0.6,
+   "rationale": "1 line(s) of /var/log/auth.log exist on workstation but never reached the collector, during a 210 s heartbeat gap (cause: unknown). This is a collection gap. The evidence does not show why collection stopped.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "forwarder maintenance or restart",
+    "transport loss",
+    "collector outage",
+    "deliberate interruption"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-02",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:18:44Z",
+   "t_end": "2026-11-10T08:47:50Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_eb96313ce762",
+    "ev_0db2b6e4283d",
+    "ev_271537d81501",
+    "ev_b09dba63fe84",
+    "ev_fc39ab7d1a59",
+    "ev_4b8b2bc809bc",
+    "ev_a0f9fa121e20"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "local_vs_collector"
+   ],
+   "confidence": 0.9,
+   "rationale": "183 line(s) of /var/log/records-app/access.log on records exist only at the collector, and all of them predate the host's retention boundary at 2026-11-10T08:48:04+00:00 (log rotation). Their absence from the host is expected, not suspicious.",
+   "assumptions": [
+    "the rotation record and the stated retention policy are accurate"
+   ],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-03",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:46:04Z",
+   "t_end": "2026-11-10T11:46:11Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_f2c7ce0f5524"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.9,
+   "rationale": "21,813,927 bytes from records to 10.20.0.45:873. destination 10.20.0.45 is an approved bulk destination: stor-nas-01 (backup and log archive).",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  }
+ ],
+ "attribution": {
+  "account_used": null,
+  "session_ref": null,
+  "human_identity": "not_assessed",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [],
+  "statement": "No incident is alleged from this evidence, so there is no attribution to assess.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "0 incident allegation(s), 3 benign explanation(s)/open note(s). No incident is alleged from this evidence, so there is no attribution to assess.",
+ "open_questions": [],
+ "usage": {
+  "llm_calls": 0,
+  "tokens_in": 0,
+  "tokens_out": 0,
+  "tokens_cache_read": 0,
+  "cost_estimate_usd": 0.0,
+  "wall_seconds": 0.087638,
+  "tool_calls": 0,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": "2026-11-14T06:17:28.169086Z",
+ "locked": true,
+ "locked_at": "2026-11-14T06:17:28.257492Z",
+ "report_sha256": "9cd90be52611e976ca71b74cffe2d9fbc1cad34851d496a5460158da0271320b",
+ "review_history": [
+  {
+   "at": "2026-11-14T06:17:28.257492Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.0.0"
+}

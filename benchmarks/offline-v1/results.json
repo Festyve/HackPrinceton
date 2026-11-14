@@ -1,0 +1,4644 @@
+{
+ "suite": "offline-v1",
+ "run_id": "20261114T061721Z",
+ "generated_at": "2026-11-14T06:17:28.361226+00:00",
+ "git_commit": "6827f89",
+ "scorer_version": "1.0.0",
+ "verifier_version": "1.0.0",
+ "simulator_version": "1.0.0",
+ "scenario_version": "1.0.0",
+ "evidence_origin": "SIM",
+ "config_file": "docs/evaluation-config.json",
+ "package_versions": {
+  "alibi": "0.1.0",
+  "deepagents": "0.7.38",
+  "langgraph": "1.2.22",
+  "langchain": "1.5.0",
+  "langchain-core": "1.8.0",
+  "duckdb": "2.0.0",
+  "fastapi": "0.162.7",
+  "pydantic": "2.14.3"
+ },
+ "hardware": {
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "python": "3.13.15"
+ },
+ "runtime": {
+  "mode": "offline",
+  "live_inference": "BLOCKED",
+  "live_block_reason": "RUNTIME_MODE is offline (default). No network model calls are made.",
+  "llm_max_usd": 0.0,
+  "bench_max_system_runs": 0,
+  "model_calls_made": 0
+ },
+ "cases": [
+  {
+   "case_ref": "T01",
+   "variant": "incident_plain",
+   "seed": 101,
+   "group": "straightforward incident",
+   "kind": "incident",
+   "bundle_id": "bndl-2ef68c85c7b51c20",
+   "raw_bundle_sha256": "2ef68c85c7b51c206cf5c13b56d370b92a4d6599051d0237461cd8b61125a6da",
+   "events": 12719,
+   "scorable_effects": 2,
+   "unobservable_effects": 0,
+   "failed_or_partial_steps": 0,
+   "system_order": [
+    "BR",
+    "B0"
+   ]
+  },
+  {
+   "case_ref": "T02",
+   "variant": "incident_plain",
+   "seed": 102,
+   "group": "straightforward incident",
+   "kind": "incident",
+   "bundle_id": "bndl-7b554aad640f523c",
+   "raw_bundle_sha256": "7b554aad640f523c3d091684022162c794a13659efdeba222360e0d20ec43df7",
+   "events": 12711,
+   "scorable_effects": 2,
+   "unobservable_effects": 0,
+   "failed_or_partial_steps": 0,
+   "system_order": [
+    "BR",
+    "B0"
+   ]
+  },
+  {
+   "case_ref": "T03",
+   "variant": "incident_plain",
+   "seed": 103,
+   "group": "straightforward incident",
+   "kind": "incident",
+   "bundle_id": "bndl-6d83f9a2aa5e2a07",
+   "raw_bundle_sha256": "6d83f9a2aa5e2a0709c90ee6a19487c6e8302e09229374df9021adad2fd3c09b",
+   "events": 12734,
+   "scorable_effects": 2,
+   "unobservable_effects": 0,
+   "failed_or_partial_steps": 0,
+   "system_order": [
+    "B0",
+    "BR"
+   ]
+  },
+  {
+   "case_ref": "T04",
+   "variant": "incident_plain",
+   "seed": 104,
+   "group": "straightforward incident",
+   "kind": "incident",
+   "bundle_id": "bndl-ec06c6f85e96ca2d",
+   "raw_bundle_sha256": "ec06c6f85e96ca2db941dd37f084b85cbf3769030ba022b8c4efb1c43df892a5",
+   "events": 12704,
+   "scorable_effects": 2,
+   "unobservable_effects": 0,
+   "failed_or_partial_steps": 0,
+   "system_order": [
+    "BR",
+    "B0"
+   ]
+  },
+  {
+   "case_ref": "T05",
+   "variant": "incident_coverup",
+   "seed": 105,
+   "group": "cover-up incident",
+   "kind": "incident",
+   "bundle_id": "bndl-8f72b187cf81b29a",
+   "raw_bundle_sha256": "8f72b187cf81b29a7aafddc68898ad289146a6a1821c2572af3e3ef42d58784e",
+   "events": 12753,
+   "scorable_effects": 3,
+   "unobservable_effects": 0,
+   "failed_or_partial_steps": 0,
+   "system_order": [
+    "B0",
+    "BR"
+   ]
+  },
+  {
+   "case_ref": "T06",
+   "variant": "incident_coverup",
+   "seed": 106,
+   "group": "cover-up incident",
+   "kind": "incident",
+   "bundle_id": "bndl-faa4d064f0290fe1",
+   "raw_bundle_sha256": "faa4d064f0290fe136225225b961db15fe94e119c4d4da39d61676dec2e4ef5d",
+   "events": 12704,
+   "scorable_effects": 3,
+   "unobservable_effects": 0,
+   "failed_or_partial_steps": 1,
+   "system_order": [
+    "B0",
+    "BR"
+   ]
+  },
+  {
+   "case_ref": "T07",
+   "variant": "incident_coverup",
+   "seed": 107,
+   "group": "cover-up incident",
+   "kind": "incident",
+   "bundle_id": "bndl-de8e9639d3ec6bfb",
+   "raw_bundle_sha256": "de8e9639d3ec6bfbfe702b31775b32149ae36e6d5752416d4bdabc77e15b476f",
+   "events": 12727,
+   "scorable_effects": 3,
+   "unobservable_effects": 0,
+   "failed_or_partial_steps": 0,
+   "system_order": [
+    "B0",
+    "BR"
+   ]
+  },
+  {
+   "case_ref": "T08",
+   "variant": "incident_coverup",
+   "seed": 108,
+   "group": "cover-up incident",
+   "kind": "incident",
+   "bundle_id": "bndl-ceb8e79cfa1580a8",
+   "raw_bundle_sha256": "ceb8e79cfa1580a8021e706c833b9830ae926bb1305afe792dc3a7801d76042e",
+   "events": 12721,
+   "scorable_effects": 3,
+   "unobservable_effects": 0,
+   "failed_or_partial_steps": 0,
+   "system_order": [
+    "BR",
+    "B0"
+   ]
+  },
+  {
+   "case_ref": "T09",
+   "variant": "benign_rotation",
+   "seed": 109,
+   "group": "benign control: forced log rotation",
+   "kind": "benign",
+   "bundle_id": "bndl-5e5b5ec67633e67d",
+   "raw_bundle_sha256": "5e5b5ec67633e67de4db618f30e2fdc0f3d165b993d54bcfbf885f4836d16a68",
+   "events": 12749,
+   "scorable_effects": 0,
+   "unobservable_effects": 0,
+   "failed_or_partial_steps": 0,
+   "system_order": [
+    "B0",
+    "BR"
+   ]
+  },
+  {
+   "case_ref": "T10",
+   "variant": "benign_approved_transfer",
+   "seed": 110,
+   "group": "benign control: approved bulk transfer",
+   "kind": "benign",
+   "bundle_id": "bndl-6b86c8203b2372ed",
+   "raw_bundle_sha256": "6b86c8203b2372ed40f0c42b97ebebec41dc609eb2beaa61ecc943e87e80f995",
+   "events": 12800,
+   "scorable_effects": 0,
+   "unobservable_effects": 0,
+   "failed_or_partial_steps": 0,
+   "system_order": [
+    "BR",
+    "B0"
+   ]
+  },
+  {
+   "case_ref": "T11",
+   "variant": "benign_remote_login",
+   "seed": 111,
+   "group": "benign control: legitimate remote login",
+   "kind": "benign",
+   "bundle_id": "bndl-70dfa7ac0c275aa1",
+   "raw_bundle_sha256": "70dfa7ac0c275aa188d2d3345f00a62baa944ea45c6c02c7bff9048a4f520abc",
+   "events": 12799,
+   "scorable_effects": 0,
+   "unobservable_effects": 0,
+   "failed_or_partial_steps": 0,
+   "system_order": [
+    "BR",
+    "B0"
+   ]
+  },
+  {
+   "case_ref": "T12",
+   "variant": "benign_collection_gap",
+   "seed": 112,
+   "group": "benign control: incomplete collection",
+   "kind": "benign",
+   "bundle_id": "bndl-2cd6c099234d468b",
+   "raw_bundle_sha256": "2cd6c099234d468b4eb28bb89a53e6a8dfd4162dd9221ac821d7dee4d7a9c34a",
+   "events": 12829,
+   "scorable_effects": 0,
+   "unobservable_effects": 0,
+   "failed_or_partial_steps": 0,
+   "system_order": [
+    "B0",
+    "BR"
+   ]
+  }
+ ],
+ "systems": [
+  {
+   "id": "B0",
+   "label": "Fixed keyword/regex recipe over the same evidence",
+   "kind": "offline",
+   "priority": "P0",
+   "purpose": "Measures improvement over this specific search recipe",
+   "inference": "NO_MODEL_BASELINE",
+   "status": "RUN",
+   "status_detail": "",
+   "model_id": null,
+   "n_cases": 12,
+   "completed": 12,
+   "errors": 0,
+   "aggregate": {
+    "step_recall": {
+     "num": 16,
+     "den": 20,
+     "value": 0.8
+    },
+    "incident_cases_fully_reconstructed": {
+     "num": 4,
+     "den": 8,
+     "value": 0.5
+    },
+    "median_case_recall": 0.8333333333333333,
+    "proposal_precision": {
+     "num": 16,
+     "den": 172,
+     "value": 0.09302325581395349
+    },
+    "final_precision": {
+     "num": 16,
+     "den": 16,
+     "value": 1.0
+    },
+    "coverup_detected": {
+     "num": 0,
+     "den": 4,
+     "value": 0.0
+    },
+    "account_identification": {
+     "num": 0,
+     "den": 8,
+     "value": 0.0
+    },
+    "benign_false_alert": {
+     "num": 0,
+     "den": 4,
+     "value": 0.0
+    },
+    "benign_raw_alert": {
+     "num": 4,
+     "den": 4,
+     "value": 1.0
+    },
+    "raw_incident_proposals": 172,
+    "raw_incident_proposals_in_benign_cases": 53,
+    "false_claims_final": 0,
+    "unsupported_named_attribution": 0,
+    "false_accusations": 0,
+    "abstained": {
+     "num": 12,
+     "den": 12,
+     "value": 1.0
+    },
+    "evidence_reference_validity": {
+     "num": 198,
+     "den": 198,
+     "value": 1.0
+    },
+    "median_wall_seconds": 0.017,
+    "wall_seconds_range": [
+     0.016,
+     0.028
+    ],
+    "llm_calls": 0,
+    "tokens_in": 0,
+    "tokens_out": 0,
+    "cost_estimate_usd": 0.0
+   }
+  },
+  {
+   "id": "BR",
+   "label": "Deterministic contradiction checks, templated findings, no model",
+   "kind": "offline",
+   "priority": "P0",
+   "purpose": "Shows what the engineering alone accomplishes",
+   "inference": "NO_MODEL_BASELINE",
+   "status": "RUN",
+   "status_detail": "",
+   "model_id": null,
+   "n_cases": 12,
+   "completed": 12,
+   "errors": 0,
+   "aggregate": {
+    "step_recall": {
+     "num": 20,
+     "den": 20,
+     "value": 1.0
+    },
+    "incident_cases_fully_reconstructed": {
+     "num": 8,
+     "den": 8,
+     "value": 1.0
+    },
+    "median_case_recall": 1.0,
+    "proposal_precision": {
+     "num": 20,
+     "den": 20,
+     "value": 1.0
+    },
+    "final_precision": {
+     "num": 20,
+     "den": 20,
+     "value": 1.0
+    },
+    "coverup_detected": {
+     "num": 4,
+     "den": 4,
+     "value": 1.0
+    },
+    "account_identification": {
+     "num": 8,
+     "den": 8,
+     "value": 1.0
+    },
+    "benign_false_alert": {
+     "num": 0,
+     "den": 4,
+     "value": 0.0
+    },
+    "benign_raw_alert": {
+     "num": 0,
+     "den": 4,
+     "value": 0.0
+    },
+    "raw_incident_proposals": 20,
+    "raw_incident_proposals_in_benign_cases": 0,
+    "false_claims_final": 0,
+    "unsupported_named_attribution": 0,
+    "false_accusations": 0,
+    "abstained": {
+     "num": 12,
+     "den": 12,
+     "value": 1.0
+    },
+    "evidence_reference_validity": {
+     "num": 216,
+     "den": 216,
+     "value": 1.0
+    },
+    "median_wall_seconds": 0.09,
+    "wall_seconds_range": [
+     0.075,
+     0.114
+    ],
+    "llm_calls": 0,
+    "tokens_in": 0,
+    "tokens_out": 0,
+    "cost_estimate_usd": 0.0
+   }
+  },
+  {
+   "id": "B1",
+   "label": "Single agent, generic evidence tools only",
+   "kind": "ai",
+   "priority": "P1",
+   "purpose": "Original single-agent baseline",
+   "inference": null,
+   "status": "NOT_RUN",
+   "status_detail": "NOT RUN \u2014 runtime unavailable",
+   "model_id": null,
+   "n_cases": 0,
+   "completed": 0,
+   "errors": 0,
+   "aggregate": null,
+   "blocker": "RUNTIME_MODE is offline (default). No network model calls are made."
+  },
+  {
+   "id": "B1+",
+   "label": "Single agent with the same checks and evidence as ALIBI",
+   "kind": "ai",
+   "priority": "first AI comparison",
+   "purpose": "Isolates the contribution of delegation",
+   "inference": null,
+   "status": "NOT_RUN",
+   "status_detail": "NOT RUN \u2014 runtime unavailable",
+   "model_id": null,
+   "n_cases": 0,
+   "completed": 0,
+   "errors": 0,
+   "aggregate": null,
+   "blocker": "RUNTIME_MODE is offline (default). No network model calls are made."
+  },
+  {
+   "id": "B2",
+   "label": "ALIBI architecture without contradiction checks",
+   "kind": "ai",
+   "priority": "P1",
+   "purpose": "Original ablation",
+   "inference": null,
+   "status": "NOT_RUN",
+   "status_detail": "NOT RUN \u2014 runtime unavailable",
+   "model_id": null,
+   "n_cases": 0,
+   "completed": 0,
+   "errors": 0,
+   "aggregate": null,
+   "blocker": "RUNTIME_MODE is offline (default). No network model calls are made."
+  },
+  {
+   "id": "ALIBI",
+   "label": "Lead + integrity-auditor + skeptic + checks",
+   "kind": "ai",
+   "priority": "first AI comparison",
+   "purpose": "Full product",
+   "inference": null,
+   "status": "NOT_RUN",
+   "status_detail": "NOT RUN \u2014 runtime unavailable",
+   "model_id": null,
+   "n_cases": 0,
+   "completed": 0,
+   "errors": 0,
+   "aggregate": null,
+   "blocker": "RUNTIME_MODE is offline (default). No network model calls are made."
+  }
+ ],
+ "runs": [
+  {
+   "system_id": "BR",
+   "case_ref": "T01",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-BR-bndl-2ef68c85c7b51c20",
+    "episode_id": "bench-t01-20261114t061721z",
+    "system_id": "BR",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 21,
+     "den": 21,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 0,
+     "den": 2,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "coverup_detected": null,
+    "coverup_detected_na_reason": "no successful anti-forensic effect in this case",
+    "account_identification_correct": true,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 4,
+    "proposals_incident": 2,
+    "final_accepted_incident": 2,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [
+     {
+      "finding_id": "BR-01",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "BR-02",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "BR-01",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-02",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-03",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "BR-04",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/tmp/.font-unix/cache-0a91.bin",
+      "t_start": "2026-11-10T12:18:25Z",
+      "t_end": "2026-11-10T12:18:30Z",
+      "outcome": "caught",
+      "finding_id": "BR-01",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.27:8080",
+      "t_start": "2026-11-10T12:19:31Z",
+      "t_end": "2026-11-10T12:19:45Z",
+      "outcome": "caught",
+      "finding_id": "BR-02",
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.089757,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "1ac4ad9d2ccb7dc9b8398903108fac83590c47a9cf0d53a9ff2b3959322f5f19",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T01-BR.report.json"
+  },
+  {
+   "system_id": "B0",
+   "case_ref": "T01",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-B0-bndl-2ef68c85c7b51c20",
+    "episode_id": "bench-t01-20261114t061721z",
+    "system_id": "B0",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 2,
+     "den": 15,
+     "value": 0.13333333333333333,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 18,
+     "den": 18,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 2,
+     "den": 15,
+     "value": 0.13333333333333333,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 13,
+     "den": 15,
+     "value": 0.8666666666666667,
+     "na_reason": null
+    },
+    "coverup_detected": null,
+    "coverup_detected_na_reason": "no successful anti-forensic effect in this case",
+    "account_identification_correct": false,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 15,
+    "proposals_incident": 15,
+    "final_accepted_incident": 2,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [
+     {
+      "finding_id": "B0-12",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "B0-14",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "B0-01",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-02",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-03",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-04",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-05",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-06",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-07",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-08",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-09",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-10",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-11",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-12",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "B0-13",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-14",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "B0-15",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/tmp/.font-unix/cache-0a91.bin",
+      "t_start": "2026-11-10T12:18:25Z",
+      "t_end": "2026-11-10T12:18:30Z",
+      "outcome": "caught",
+      "finding_id": "B0-12",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.27:8080",
+      "t_start": "2026-11-10T12:19:31Z",
+      "t_end": "2026-11-10T12:19:45Z",
+      "outcome": "caught",
+      "finding_id": "B0-14",
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.027905,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "2767e28c9f214b02e1d7f79d27bbafe08eb63a37e63e881cbe0c3bf44f5880ac",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T01-B0.report.json"
+  },
+  {
+   "system_id": "BR",
+   "case_ref": "T02",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-BR-bndl-7b554aad640f523c",
+    "episode_id": "bench-t02-20261114t061721z",
+    "system_id": "BR",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 21,
+     "den": 21,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 0,
+     "den": 2,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "coverup_detected": null,
+    "coverup_detected_na_reason": "no successful anti-forensic effect in this case",
+    "account_identification_correct": true,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 4,
+    "proposals_incident": 2,
+    "final_accepted_incident": 2,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [
+     {
+      "finding_id": "BR-01",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "BR-02",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "BR-01",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-02",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-03",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "BR-04",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/home/sdubois/Downloads/idx-3e08.bin",
+      "t_start": "2026-11-10T10:54:30Z",
+      "t_end": "2026-11-10T10:54:34Z",
+      "outcome": "caught",
+      "finding_id": "BR-01",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.42:8080",
+      "t_start": "2026-11-10T10:57:24Z",
+      "t_end": "2026-11-10T10:57:36Z",
+      "outcome": "caught",
+      "finding_id": "BR-02",
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.090643,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "163cc3fec8d8690059aca1357a6015c6236e235a534902ed01aa92fa18f97924",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T02-BR.report.json"
+  },
+  {
+   "system_id": "B0",
+   "case_ref": "T02",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-B0-bndl-7b554aad640f523c",
+    "episode_id": "bench-t02-20261114t061721z",
+    "system_id": "B0",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 2,
+     "den": 12,
+     "value": 0.16666666666666666,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 14,
+     "den": 14,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 2,
+     "den": 12,
+     "value": 0.16666666666666666,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 10,
+     "den": 12,
+     "value": 0.8333333333333334,
+     "na_reason": null
+    },
+    "coverup_detected": null,
+    "coverup_detected_na_reason": "no successful anti-forensic effect in this case",
+    "account_identification_correct": false,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 12,
+    "proposals_incident": 12,
+    "final_accepted_incident": 2,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [
+     {
+      "finding_id": "B0-06",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "B0-08",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "B0-01",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-02",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-03",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-04",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-05",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-06",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "B0-07",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-08",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "B0-09",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-10",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-11",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-12",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/home/sdubois/Downloads/idx-3e08.bin",
+      "t_start": "2026-11-10T10:54:30Z",
+      "t_end": "2026-11-10T10:54:34Z",
+      "outcome": "caught",
+      "finding_id": "B0-06",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.42:8080",
+      "t_start": "2026-11-10T10:57:24Z",
+      "t_end": "2026-11-10T10:57:36Z",
+      "outcome": "caught",
+      "finding_id": "B0-08",
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.017111,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "fa26c4c0a4f6261564455879975aea8f59cf2cdef493ae7c03a6364cb8d153a9",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T02-B0.report.json"
+  },
+  {
+   "system_id": "B0",
+   "case_ref": "T03",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-B0-bndl-6d83f9a2aa5e2a07",
+    "episode_id": "bench-t03-20261114t061721z",
+    "system_id": "B0",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 2,
+     "den": 19,
+     "value": 0.10526315789473684,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 21,
+     "den": 21,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 2,
+     "den": 19,
+     "value": 0.10526315789473684,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 17,
+     "den": 19,
+     "value": 0.8947368421052632,
+     "na_reason": null
+    },
+    "coverup_detected": null,
+    "coverup_detected_na_reason": "no successful anti-forensic effect in this case",
+    "account_identification_correct": false,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 19,
+    "proposals_incident": 19,
+    "final_accepted_incident": 2,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [
+     {
+      "finding_id": "B0-08",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "B0-10",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "B0-01",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-02",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-03",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-04",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-05",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-06",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-07",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-08",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "B0-09",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-10",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "B0-11",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-12",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-13",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-14",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-15",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-16",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-17",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-18",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-19",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/var/tmp/.pkg-cache/rx-7f3.db",
+      "t_start": "2026-11-10T11:02:34Z",
+      "t_end": "2026-11-10T11:02:38Z",
+      "outcome": "caught",
+      "finding_id": "B0-08",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.52:8080",
+      "t_start": "2026-11-10T11:05:32Z",
+      "t_end": "2026-11-10T11:05:43Z",
+      "outcome": "caught",
+      "finding_id": "B0-10",
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.027169,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "46fd4315b0569d52fe0cfd1f97f69e0c006c210e1e1cbf0d7eac5cedee34b668",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T03-B0.report.json"
+  },
+  {
+   "system_id": "BR",
+   "case_ref": "T03",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-BR-bndl-6d83f9a2aa5e2a07",
+    "episode_id": "bench-t03-20261114t061721z",
+    "system_id": "BR",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 21,
+     "den": 21,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 0,
+     "den": 2,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "coverup_detected": null,
+    "coverup_detected_na_reason": "no successful anti-forensic effect in this case",
+    "account_identification_correct": true,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 4,
+    "proposals_incident": 2,
+    "final_accepted_incident": 2,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [
+     {
+      "finding_id": "BR-01",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "BR-02",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "BR-01",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-02",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-03",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "BR-04",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/var/tmp/.pkg-cache/rx-7f3.db",
+      "t_start": "2026-11-10T11:02:34Z",
+      "t_end": "2026-11-10T11:02:38Z",
+      "outcome": "caught",
+      "finding_id": "BR-01",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.52:8080",
+      "t_start": "2026-11-10T11:05:32Z",
+      "t_end": "2026-11-10T11:05:43Z",
+      "outcome": "caught",
+      "finding_id": "BR-02",
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.089732,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "66f0365dca577d6884200ec811e5f7db369f83fe3180dca90422d1e3f901bb16",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T03-BR.report.json"
+  },
+  {
+   "system_id": "BR",
+   "case_ref": "T04",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-BR-bndl-ec06c6f85e96ca2d",
+    "episode_id": "bench-t04-20261114t061721z",
+    "system_id": "BR",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 21,
+     "den": 21,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 0,
+     "den": 2,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "coverup_detected": null,
+    "coverup_detected_na_reason": "no successful anti-forensic effect in this case",
+    "account_identification_correct": true,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 4,
+    "proposals_incident": 2,
+    "final_accepted_incident": 2,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [
+     {
+      "finding_id": "BR-01",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "BR-02",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "BR-01",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-02",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-03",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "BR-04",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/var/tmp/.pkg-cache/tmp-b77d.dat",
+      "t_start": "2026-11-10T12:26:45Z",
+      "t_end": "2026-11-10T12:26:49Z",
+      "outcome": "caught",
+      "finding_id": "BR-01",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.44:8080",
+      "t_start": "2026-11-10T12:29:03Z",
+      "t_end": "2026-11-10T12:29:14Z",
+      "outcome": "caught",
+      "finding_id": "BR-02",
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.114185,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "3782da7669373ec519cb944f1c27d4f75e8682785bce43c2d0e92a1c696e3a4e",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T04-BR.report.json"
+  },
+  {
+   "system_id": "B0",
+   "case_ref": "T04",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-B0-bndl-ec06c6f85e96ca2d",
+    "episode_id": "bench-t04-20261114t061721z",
+    "system_id": "B0",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 2,
+     "den": 13,
+     "value": 0.15384615384615385,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 15,
+     "den": 15,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 2,
+     "den": 13,
+     "value": 0.15384615384615385,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 11,
+     "den": 13,
+     "value": 0.8461538461538461,
+     "na_reason": null
+    },
+    "coverup_detected": null,
+    "coverup_detected_na_reason": "no successful anti-forensic effect in this case",
+    "account_identification_correct": false,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 13,
+    "proposals_incident": 13,
+    "final_accepted_incident": 2,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [
+     {
+      "finding_id": "B0-10",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "B0-12",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "B0-01",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-02",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-03",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-04",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-05",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-06",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-07",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-08",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-09",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-10",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "B0-11",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-12",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "B0-13",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/var/tmp/.pkg-cache/tmp-b77d.dat",
+      "t_start": "2026-11-10T12:26:45Z",
+      "t_end": "2026-11-10T12:26:49Z",
+      "outcome": "caught",
+      "finding_id": "B0-10",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.44:8080",
+      "t_start": "2026-11-10T12:29:03Z",
+      "t_end": "2026-11-10T12:29:14Z",
+      "outcome": "caught",
+      "finding_id": "B0-12",
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.016077,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "469439546b1e8822f3c2ac778887250452e392646d7c429dcc187c0edceffe3d",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T04-B0.report.json"
+  },
+  {
+   "system_id": "B0",
+   "case_ref": "T05",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-B0-bndl-8f72b187cf81b29a",
+    "episode_id": "bench-t05-20261114t061721z",
+    "system_id": "B0",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 2,
+     "den": 3,
+     "value": 0.6666666666666666,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 2,
+     "den": 13,
+     "value": 0.15384615384615385,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 15,
+     "den": 15,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 2,
+     "den": 13,
+     "value": 0.15384615384615385,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 11,
+     "den": 13,
+     "value": 0.8461538461538461,
+     "na_reason": null
+    },
+    "coverup_detected": false,
+    "coverup_detected_na_reason": null,
+    "account_identification_correct": false,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 13,
+    "proposals_incident": 13,
+    "final_accepted_incident": 2,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [
+     {
+      "finding_id": "B0-06",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "B0-08",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "B0-01",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-02",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-03",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-04",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-05",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-06",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "B0-07",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-08",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "B0-09",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-10",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-11",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-12",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-13",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/var/tmp/.pkg-cache/rx-7f3.db",
+      "t_start": "2026-11-10T11:23:08Z",
+      "t_end": "2026-11-10T11:23:12Z",
+      "outcome": "caught",
+      "finding_id": "B0-06",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.70:8080",
+      "t_start": "2026-11-10T11:26:27Z",
+      "t_end": "2026-11-10T11:26:38Z",
+      "outcome": "caught",
+      "finding_id": "B0-08",
+      "description": ""
+     },
+     {
+      "effect_id": "e3",
+      "effect_type": "local_log_removal",
+      "host": "workstation",
+      "object": "/var/log/auth.log",
+      "t_start": "2026-11-10T11:21:09Z",
+      "t_end": "2026-11-10T11:21:09Z",
+      "outcome": "missed",
+      "finding_id": null,
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.015645,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "cf4cfca3d9e3c4ca4b478067ddd894ecbcafa9919a9a2d1120c72527ddc25013",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T05-B0.report.json"
+  },
+  {
+   "system_id": "BR",
+   "case_ref": "T05",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-BR-bndl-8f72b187cf81b29a",
+    "episode_id": "bench-t05-20261114t061721z",
+    "system_id": "BR",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 22,
+     "den": 22,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 0,
+     "den": 3,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "coverup_detected": true,
+    "coverup_detected_na_reason": null,
+    "account_identification_correct": true,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 5,
+    "proposals_incident": 3,
+    "final_accepted_incident": 3,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [
+     {
+      "finding_id": "BR-01",
+      "effect_id": "e3",
+      "effect_type": "local_log_removal"
+     },
+     {
+      "finding_id": "BR-02",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "BR-03",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "BR-01",
+      "outcome": "matched",
+      "effect_id": "e3",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-02",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-03",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-04",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "BR-05",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/var/tmp/.pkg-cache/rx-7f3.db",
+      "t_start": "2026-11-10T11:23:08Z",
+      "t_end": "2026-11-10T11:23:12Z",
+      "outcome": "caught",
+      "finding_id": "BR-02",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.70:8080",
+      "t_start": "2026-11-10T11:26:27Z",
+      "t_end": "2026-11-10T11:26:38Z",
+      "outcome": "caught",
+      "finding_id": "BR-03",
+      "description": ""
+     },
+     {
+      "effect_id": "e3",
+      "effect_type": "local_log_removal",
+      "host": "workstation",
+      "object": "/var/log/auth.log",
+      "t_start": "2026-11-10T11:21:09Z",
+      "t_end": "2026-11-10T11:21:09Z",
+      "outcome": "caught",
+      "finding_id": "BR-01",
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.096554,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "84666c6877fbfab8f5545b2c389e37f4d74c75530776ff1b6bdd6d53a9c321fe",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T05-BR.report.json"
+  },
+  {
+   "system_id": "B0",
+   "case_ref": "T06",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-B0-bndl-faa4d064f0290fe1",
+    "episode_id": "bench-t06-20261114t061721z",
+    "system_id": "B0",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 2,
+     "den": 3,
+     "value": 0.6666666666666666,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 2,
+     "den": 18,
+     "value": 0.1111111111111111,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 20,
+     "den": 20,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 2,
+     "den": 18,
+     "value": 0.1111111111111111,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 16,
+     "den": 18,
+     "value": 0.8888888888888888,
+     "na_reason": null
+    },
+    "coverup_detected": false,
+    "coverup_detected_na_reason": null,
+    "account_identification_correct": false,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 18,
+    "proposals_incident": 18,
+    "final_accepted_incident": 2,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 1,
+    "matches": [
+     {
+      "finding_id": "B0-07",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "B0-09",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "B0-01",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-02",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-03",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-04",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-05",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-06",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-07",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "B0-08",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-09",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "B0-10",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-11",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-12",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-13",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-14",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-15",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-16",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-17",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-18",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/var/tmp/.pkg-cache/upd-4c2e.pkg",
+      "t_start": "2026-11-10T11:09:05Z",
+      "t_end": "2026-11-10T11:09:09Z",
+      "outcome": "caught",
+      "finding_id": "B0-07",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.72:8080",
+      "t_start": "2026-11-10T11:12:16Z",
+      "t_end": "2026-11-10T11:12:28Z",
+      "outcome": "caught",
+      "finding_id": "B0-09",
+      "description": ""
+     },
+     {
+      "effect_id": "e3",
+      "effect_type": "local_log_removal",
+      "host": "workstation",
+      "object": "/var/log/auth.log",
+      "t_start": "2026-11-10T11:08:02Z",
+      "t_end": "2026-11-10T11:08:02Z",
+      "outcome": "missed",
+      "finding_id": null,
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.015687,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "91e134b20b59694a252f0b54f023568c1a4af24d8eb7295a30742e9d665e44e6",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T06-B0.report.json"
+  },
+  {
+   "system_id": "BR",
+   "case_ref": "T06",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-BR-bndl-faa4d064f0290fe1",
+    "episode_id": "bench-t06-20261114t061721z",
+    "system_id": "BR",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 22,
+     "den": 22,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 0,
+     "den": 3,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "coverup_detected": true,
+    "coverup_detected_na_reason": null,
+    "account_identification_correct": true,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 5,
+    "proposals_incident": 3,
+    "final_accepted_incident": 3,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 1,
+    "matches": [
+     {
+      "finding_id": "BR-01",
+      "effect_id": "e3",
+      "effect_type": "local_log_removal"
+     },
+     {
+      "finding_id": "BR-02",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "BR-03",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "BR-01",
+      "outcome": "matched",
+      "effect_id": "e3",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-02",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-03",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-04",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "BR-05",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/var/tmp/.pkg-cache/upd-4c2e.pkg",
+      "t_start": "2026-11-10T11:09:05Z",
+      "t_end": "2026-11-10T11:09:09Z",
+      "outcome": "caught",
+      "finding_id": "BR-02",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.72:8080",
+      "t_start": "2026-11-10T11:12:16Z",
+      "t_end": "2026-11-10T11:12:28Z",
+      "outcome": "caught",
+      "finding_id": "BR-03",
+      "description": ""
+     },
+     {
+      "effect_id": "e3",
+      "effect_type": "local_log_removal",
+      "host": "workstation",
+      "object": "/var/log/auth.log",
+      "t_start": "2026-11-10T11:08:02Z",
+      "t_end": "2026-11-10T11:08:02Z",
+      "outcome": "caught",
+      "finding_id": "BR-01",
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.103259,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "8f9b031d08f35516aa0cab43b79e54f1923a2fe3fe39b0a54d97ac1569475942",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T06-BR.report.json"
+  },
+  {
+   "system_id": "B0",
+   "case_ref": "T07",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-B0-bndl-de8e9639d3ec6bfb",
+    "episode_id": "bench-t07-20261114t061721z",
+    "system_id": "B0",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 2,
+     "den": 3,
+     "value": 0.6666666666666666,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 2,
+     "den": 13,
+     "value": 0.15384615384615385,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 15,
+     "den": 15,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 2,
+     "den": 13,
+     "value": 0.15384615384615385,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 11,
+     "den": 13,
+     "value": 0.8461538461538461,
+     "na_reason": null
+    },
+    "coverup_detected": false,
+    "coverup_detected_na_reason": null,
+    "account_identification_correct": false,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 13,
+    "proposals_incident": 13,
+    "final_accepted_incident": 2,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [
+     {
+      "finding_id": "B0-03",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "B0-05",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "B0-01",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-02",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-03",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "B0-04",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-05",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "B0-06",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-07",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-08",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-09",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-10",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-11",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-12",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-13",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/var/tmp/.pkg-cache/sess-91ac.db",
+      "t_start": "2026-11-10T11:09:34Z",
+      "t_end": "2026-11-10T11:09:39Z",
+      "outcome": "caught",
+      "finding_id": "B0-03",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.14:8080",
+      "t_start": "2026-11-10T11:10:52Z",
+      "t_end": "2026-11-10T11:11:07Z",
+      "outcome": "caught",
+      "finding_id": "B0-05",
+      "description": ""
+     },
+     {
+      "effect_id": "e3",
+      "effect_type": "local_log_removal",
+      "host": "workstation",
+      "object": "/var/log/auth.log",
+      "t_start": "2026-11-10T11:07:47Z",
+      "t_end": "2026-11-10T11:07:47Z",
+      "outcome": "missed",
+      "finding_id": null,
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.015601,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "7cc0d26f0512ba8b0a08268d819de340ba1d04cf8423fce4749bd805cc1391bb",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T07-B0.report.json"
+  },
+  {
+   "system_id": "BR",
+   "case_ref": "T07",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-BR-bndl-de8e9639d3ec6bfb",
+    "episode_id": "bench-t07-20261114t061721z",
+    "system_id": "BR",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 22,
+     "den": 22,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 0,
+     "den": 3,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "coverup_detected": true,
+    "coverup_detected_na_reason": null,
+    "account_identification_correct": true,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 5,
+    "proposals_incident": 3,
+    "final_accepted_incident": 3,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [
+     {
+      "finding_id": "BR-01",
+      "effect_id": "e3",
+      "effect_type": "local_log_removal"
+     },
+     {
+      "finding_id": "BR-02",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "BR-03",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "BR-01",
+      "outcome": "matched",
+      "effect_id": "e3",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-02",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-03",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-04",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "BR-05",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/var/tmp/.pkg-cache/sess-91ac.db",
+      "t_start": "2026-11-10T11:09:34Z",
+      "t_end": "2026-11-10T11:09:39Z",
+      "outcome": "caught",
+      "finding_id": "BR-02",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.14:8080",
+      "t_start": "2026-11-10T11:10:52Z",
+      "t_end": "2026-11-10T11:11:07Z",
+      "outcome": "caught",
+      "finding_id": "BR-03",
+      "description": ""
+     },
+     {
+      "effect_id": "e3",
+      "effect_type": "local_log_removal",
+      "host": "workstation",
+      "object": "/var/log/auth.log",
+      "t_start": "2026-11-10T11:07:47Z",
+      "t_end": "2026-11-10T11:07:47Z",
+      "outcome": "caught",
+      "finding_id": "BR-01",
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.083626,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "83f6846cd6a56d1c06a4f15e57d1ebe2fc99b4d439827726879ff49122a3422e",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T07-BR.report.json"
+  },
+  {
+   "system_id": "BR",
+   "case_ref": "T08",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-BR-bndl-ceb8e79cfa1580a8",
+    "episode_id": "bench-t08-20261114t061721z",
+    "system_id": "BR",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 22,
+     "den": 22,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 3,
+     "den": 3,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 0,
+     "den": 3,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "coverup_detected": true,
+    "coverup_detected_na_reason": null,
+    "account_identification_correct": true,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 5,
+    "proposals_incident": 3,
+    "final_accepted_incident": 3,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [
+     {
+      "finding_id": "BR-01",
+      "effect_id": "e3",
+      "effect_type": "local_log_removal"
+     },
+     {
+      "finding_id": "BR-02",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "BR-03",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "BR-01",
+      "outcome": "matched",
+      "effect_id": "e3",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-02",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-03",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "BR-04",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "BR-05",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/tmp/.font-unix/tmp-b77d.dat",
+      "t_start": "2026-11-10T11:09:33Z",
+      "t_end": "2026-11-10T11:09:38Z",
+      "outcome": "caught",
+      "finding_id": "BR-02",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.54:8080",
+      "t_start": "2026-11-10T11:12:10Z",
+      "t_end": "2026-11-10T11:12:25Z",
+      "outcome": "caught",
+      "finding_id": "BR-03",
+      "description": ""
+     },
+     {
+      "effect_id": "e3",
+      "effect_type": "local_log_removal",
+      "host": "workstation",
+      "object": "/var/log/auth.log",
+      "t_start": "2026-11-10T11:08:26Z",
+      "t_end": "2026-11-10T11:08:26Z",
+      "outcome": "caught",
+      "finding_id": "BR-01",
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.088832,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "c9cf29dfb5a0bc499e350014c969efbc4367290fa05d2700b92262c5686399a7",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T08-BR.report.json"
+  },
+  {
+   "system_id": "B0",
+   "case_ref": "T08",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-B0-bndl-ceb8e79cfa1580a8",
+    "episode_id": "bench-t08-20261114t061721z",
+    "system_id": "B0",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "incident",
+    "step_recall": {
+     "num": 2,
+     "den": 3,
+     "value": 0.6666666666666666,
+     "na_reason": null
+    },
+    "proposal_precision": {
+     "num": 2,
+     "den": 16,
+     "value": 0.125,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 2,
+     "den": 2,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "evidence_reference_validity": {
+     "num": 19,
+     "den": 19,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 2,
+     "den": 16,
+     "value": 0.125,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 14,
+     "den": 16,
+     "value": 0.875,
+     "na_reason": null
+    },
+    "coverup_detected": false,
+    "coverup_detected_na_reason": null,
+    "account_identification_correct": false,
+    "account_identification_na_reason": null,
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": null,
+    "false_claims_final": 0,
+    "proposals_total": 16,
+    "proposals_incident": 16,
+    "final_accepted_incident": 2,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [
+     {
+      "finding_id": "B0-05",
+      "effect_id": "e1",
+      "effect_type": "data_staging"
+     },
+     {
+      "finding_id": "B0-07",
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer"
+     }
+    ],
+    "finding_outcomes": [
+     {
+      "finding_id": "B0-01",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-02",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-03",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-04",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-05",
+      "outcome": "matched",
+      "effect_id": "e1",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "B0-06",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-07",
+      "outcome": "matched",
+      "effect_id": "e2",
+      "reason": "matches one executed, successful effect"
+     },
+     {
+      "finding_id": "B0-08",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-09",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-10",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-11",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-12",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-13",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-14",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-15",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-16",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     }
+    ],
+    "effect_outcomes": [
+     {
+      "effect_id": "e1",
+      "effect_type": "data_staging",
+      "host": "workstation",
+      "object": "/tmp/.font-unix/tmp-b77d.dat",
+      "t_start": "2026-11-10T11:09:33Z",
+      "t_end": "2026-11-10T11:09:38Z",
+      "outcome": "caught",
+      "finding_id": "B0-05",
+      "description": ""
+     },
+     {
+      "effect_id": "e2",
+      "effect_type": "policy_violating_transfer",
+      "host": "workstation",
+      "object": "10.20.9.54:8080",
+      "t_start": "2026-11-10T11:12:10Z",
+      "t_end": "2026-11-10T11:12:25Z",
+      "outcome": "caught",
+      "finding_id": "B0-07",
+      "description": ""
+     },
+     {
+      "effect_id": "e3",
+      "effect_type": "local_log_removal",
+      "host": "workstation",
+      "object": "/var/log/auth.log",
+      "t_start": "2026-11-10T11:08:26Z",
+      "t_end": "2026-11-10T11:08:26Z",
+      "outcome": "missed",
+      "finding_id": null,
+      "description": ""
+     }
+    ],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.017402,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "540c9f78b32a3e461efea55175e0a27aae5cd2cd310642856ed2589f797dddef",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T08-B0.report.json"
+  },
+  {
+   "system_id": "B0",
+   "case_ref": "T09",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-B0-bndl-5e5b5ec67633e67d",
+    "episode_id": "bench-t09-20261114t061721z",
+    "system_id": "B0",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "benign",
+    "step_recall": {
+     "num": null,
+     "den": null,
+     "value": null,
+     "na_reason": "no-crime case: recall is not applicable"
+    },
+    "proposal_precision": {
+     "num": 0,
+     "den": 15,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was accepted"
+    },
+    "evidence_reference_validity": {
+     "num": 19,
+     "den": 19,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 0,
+     "den": 15,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 15,
+     "den": 15,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "coverup_detected": null,
+    "coverup_detected_na_reason": "no successful anti-forensic effect in this case",
+    "account_identification_correct": null,
+    "account_identification_na_reason": "no incident occurred; account identification is not applicable",
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": false,
+    "false_claims_final": 0,
+    "proposals_total": 15,
+    "proposals_incident": 15,
+    "final_accepted_incident": 0,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [],
+    "finding_outcomes": [
+     {
+      "finding_id": "B0-01",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-02",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-03",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-04",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-05",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-06",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-07",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-08",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-09",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-10",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-11",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-12",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a collector-retained line that is unexplainedly absent locally"
+     },
+     {
+      "finding_id": "B0-13",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-14",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-15",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     }
+    ],
+    "effect_outcomes": [],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.017239,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "a22eb76a7c280548fb48b81c0771ac61b0857ceff90d0cc487bf1c9c1cbb5fdb",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T09-B0.report.json"
+  },
+  {
+   "system_id": "BR",
+   "case_ref": "T09",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-BR-bndl-5e5b5ec67633e67d",
+    "episode_id": "bench-t09-20261114t061721z",
+    "system_id": "BR",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "benign",
+    "step_recall": {
+     "num": null,
+     "den": null,
+     "value": null,
+     "na_reason": "no-crime case: recall is not applicable"
+    },
+    "proposal_precision": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was proposed"
+    },
+    "final_precision": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was accepted"
+    },
+    "evidence_reference_validity": {
+     "num": 15,
+     "den": 15,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was proposed"
+    },
+    "verifier_rejection_rate": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was proposed"
+    },
+    "coverup_detected": null,
+    "coverup_detected_na_reason": "no successful anti-forensic effect in this case",
+    "account_identification_correct": null,
+    "account_identification_na_reason": "no incident occurred; account identification is not applicable",
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": false,
+    "false_claims_final": 0,
+    "proposals_total": 3,
+    "proposals_incident": 0,
+    "final_accepted_incident": 0,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [],
+    "finding_outcomes": [
+     {
+      "finding_id": "BR-01",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "BR-02",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "BR-03",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     }
+    ],
+    "effect_outcomes": [],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.078057,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "32d70db3193f57f467e96a2ed3e8b939542f4f9aae6f5e157f3aa5cbac51ee2b",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T09-BR.report.json"
+  },
+  {
+   "system_id": "BR",
+   "case_ref": "T10",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-BR-bndl-6b86c8203b2372ed",
+    "episode_id": "bench-t10-20261114t061721z",
+    "system_id": "BR",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "benign",
+    "step_recall": {
+     "num": null,
+     "den": null,
+     "value": null,
+     "na_reason": "no-crime case: recall is not applicable"
+    },
+    "proposal_precision": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was proposed"
+    },
+    "final_precision": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was accepted"
+    },
+    "evidence_reference_validity": {
+     "num": 10,
+     "den": 10,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was proposed"
+    },
+    "verifier_rejection_rate": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was proposed"
+    },
+    "coverup_detected": null,
+    "coverup_detected_na_reason": "no successful anti-forensic effect in this case",
+    "account_identification_correct": null,
+    "account_identification_na_reason": "no incident occurred; account identification is not applicable",
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": false,
+    "false_claims_final": 0,
+    "proposals_total": 3,
+    "proposals_incident": 0,
+    "final_accepted_incident": 0,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [],
+    "finding_outcomes": [
+     {
+      "finding_id": "BR-01",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "BR-02",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "BR-03",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     }
+    ],
+    "effect_outcomes": [],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.092294,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "72f8a192027cf46e3f5b8319cbf43eb8bfc09668a86dda3b1f9edd8a59fbf552",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T10-BR.report.json"
+  },
+  {
+   "system_id": "B0",
+   "case_ref": "T10",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-B0-bndl-6b86c8203b2372ed",
+    "episode_id": "bench-t10-20261114t061721z",
+    "system_id": "B0",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "benign",
+    "step_recall": {
+     "num": null,
+     "den": null,
+     "value": null,
+     "na_reason": "no-crime case: recall is not applicable"
+    },
+    "proposal_precision": {
+     "num": 0,
+     "den": 16,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was accepted"
+    },
+    "evidence_reference_validity": {
+     "num": 18,
+     "den": 18,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 0,
+     "den": 16,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 16,
+     "den": 16,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "coverup_detected": null,
+    "coverup_detected_na_reason": "no successful anti-forensic effect in this case",
+    "account_identification_correct": null,
+    "account_identification_na_reason": "no incident occurred; account identification is not applicable",
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": false,
+    "false_claims_final": 0,
+    "proposals_total": 16,
+    "proposals_incident": 16,
+    "final_accepted_incident": 0,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [],
+    "finding_outcomes": [
+     {
+      "finding_id": "B0-01",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-02",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-03",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-04",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-05",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-06",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-07",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "the staged object was sent to an approved destination; that is not an incident"
+     },
+     {
+      "finding_id": "B0-08",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-09",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "the cited transfer is consistent with policy: destination 10.20.8.20 is an approved bulk destination: lab-gw-01 (laboratory and registry submissions)"
+     },
+     {
+      "finding_id": "B0-10",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-11",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-12",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-13",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-14",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-15",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-16",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     }
+    ],
+    "effect_outcomes": [],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.015869,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "cb022663c845d0882c4679db8762e1ed9d7d7008c5553ed716724ced9de369b5",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T10-B0.report.json"
+  },
+  {
+   "system_id": "BR",
+   "case_ref": "T11",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-BR-bndl-70dfa7ac0c275aa1",
+    "episode_id": "bench-t11-20261114t061721z",
+    "system_id": "BR",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "benign",
+    "step_recall": {
+     "num": null,
+     "den": null,
+     "value": null,
+     "na_reason": "no-crime case: recall is not applicable"
+    },
+    "proposal_precision": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was proposed"
+    },
+    "final_precision": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was accepted"
+    },
+    "evidence_reference_validity": {
+     "num": 8,
+     "den": 8,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was proposed"
+    },
+    "verifier_rejection_rate": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was proposed"
+    },
+    "coverup_detected": null,
+    "coverup_detected_na_reason": "no successful anti-forensic effect in this case",
+    "account_identification_correct": null,
+    "account_identification_na_reason": "no incident occurred; account identification is not applicable",
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": false,
+    "false_claims_final": 0,
+    "proposals_total": 2,
+    "proposals_incident": 0,
+    "final_accepted_incident": 0,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [],
+    "finding_outcomes": [
+     {
+      "finding_id": "BR-01",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "BR-02",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     }
+    ],
+    "effect_outcomes": [],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.075224,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "7cf9a8c5f815c3d94c33bc1eb6b1e6de8d25691d930323061c9fef333eb65bb9",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T11-BR.report.json"
+  },
+  {
+   "system_id": "B0",
+   "case_ref": "T11",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-B0-bndl-70dfa7ac0c275aa1",
+    "episode_id": "bench-t11-20261114t061721z",
+    "system_id": "B0",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "benign",
+    "step_recall": {
+     "num": null,
+     "den": null,
+     "value": null,
+     "na_reason": "no-crime case: recall is not applicable"
+    },
+    "proposal_precision": {
+     "num": 0,
+     "den": 12,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was accepted"
+    },
+    "evidence_reference_validity": {
+     "num": 13,
+     "den": 13,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 0,
+     "den": 12,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 12,
+     "den": 12,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "coverup_detected": null,
+    "coverup_detected_na_reason": "no successful anti-forensic effect in this case",
+    "account_identification_correct": null,
+    "account_identification_na_reason": "no incident occurred; account identification is not applicable",
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": false,
+    "false_claims_final": 0,
+    "proposals_total": 12,
+    "proposals_incident": 12,
+    "final_accepted_incident": 0,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [],
+    "finding_outcomes": [
+     {
+      "finding_id": "B0-01",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-02",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-03",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-04",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-05",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-06",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-07",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-08",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-09",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-10",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-11",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-12",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     }
+    ],
+    "effect_outcomes": [],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.016129,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "e993db70cb888cf57299dc04dbe857c36dde2e0a2e6a077b373018d5e316f283",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T11-B0.report.json"
+  },
+  {
+   "system_id": "B0",
+   "case_ref": "T12",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-B0-bndl-2cd6c099234d468b",
+    "episode_id": "bench-t12-20261114t061721z",
+    "system_id": "B0",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "benign",
+    "step_recall": {
+     "num": null,
+     "den": null,
+     "value": null,
+     "na_reason": "no-crime case: recall is not applicable"
+    },
+    "proposal_precision": {
+     "num": 0,
+     "den": 10,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "final_precision": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was accepted"
+    },
+    "evidence_reference_validity": {
+     "num": 11,
+     "den": 11,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 0,
+     "den": 10,
+     "value": 0.0,
+     "na_reason": null
+    },
+    "verifier_rejection_rate": {
+     "num": 10,
+     "den": 10,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "coverup_detected": null,
+    "coverup_detected_na_reason": "no successful anti-forensic effect in this case",
+    "account_identification_correct": null,
+    "account_identification_na_reason": "no incident occurred; account identification is not applicable",
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": false,
+    "false_claims_final": 0,
+    "proposals_total": 10,
+    "proposals_incident": 10,
+    "final_accepted_incident": 0,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [],
+    "finding_outcomes": [
+     {
+      "finding_id": "B0-01",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-02",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-03",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-04",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-05",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-06",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-07",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record belongs to an object staged on this host ahead of a bulk transfer"
+     },
+     {
+      "finding_id": "B0-08",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-09",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     },
+     {
+      "finding_id": "B0-10",
+      "outcome": "rejected",
+      "effect_id": null,
+      "reason": "no cited record is a bulk transfer observed at the tap from this host, or the command that launched one"
+     }
+    ],
+    "effect_outcomes": [],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.016929,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "b6651d204630612ebe50520a429d4ed0be25378290d96d5341adf1e7148e16c7",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T12-B0.report.json"
+  },
+  {
+   "system_id": "BR",
+   "case_ref": "T12",
+   "status": "completed",
+   "error": null,
+   "score": {
+    "scorer_version": "1.0.0",
+    "report_id": "rep-BR-bndl-2cd6c099234d468b",
+    "episode_id": "bench-t12-20261114t061721z",
+    "system_id": "BR",
+    "inference_mode": "NO_MODEL_BASELINE",
+    "case_kind": "benign",
+    "step_recall": {
+     "num": null,
+     "den": null,
+     "value": null,
+     "na_reason": "no-crime case: recall is not applicable"
+    },
+    "proposal_precision": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was proposed"
+    },
+    "final_precision": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was accepted"
+    },
+    "evidence_reference_validity": {
+     "num": 11,
+     "den": 11,
+     "value": 1.0,
+     "na_reason": null
+    },
+    "supported_claim_rate": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was proposed"
+    },
+    "verifier_rejection_rate": {
+     "num": 0,
+     "den": 0,
+     "value": null,
+     "na_reason": "no incident allegation was proposed"
+    },
+    "coverup_detected": null,
+    "coverup_detected_na_reason": "no successful anti-forensic effect in this case",
+    "account_identification_correct": null,
+    "account_identification_na_reason": "no incident occurred; account identification is not applicable",
+    "attribution_abstained": true,
+    "unsupported_named_attribution": 0,
+    "false_accusation": false,
+    "named_attribution_correct": null,
+    "benign_false_alert": false,
+    "false_claims_final": 0,
+    "proposals_total": 3,
+    "proposals_incident": 0,
+    "final_accepted_incident": 0,
+    "unobservable_effects": 0,
+    "failed_or_partial_steps": 0,
+    "matches": [],
+    "finding_outcomes": [
+     {
+      "finding_id": "BR-01",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "unresolved; not scored as an incident claim"
+     },
+     {
+      "finding_id": "BR-02",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     },
+     {
+      "finding_id": "BR-03",
+      "outcome": "not_an_allegation",
+      "effect_id": null,
+      "reason": "benign explanation; not scored as an incident claim"
+     }
+    ],
+    "effect_outcomes": [],
+    "usage": {
+     "llm_calls": 0,
+     "tokens_in": 0,
+     "tokens_out": 0,
+     "tokens_cache_read": 0,
+     "cost_estimate_usd": 0.0,
+     "wall_seconds": 0.087638,
+     "tool_calls": 0,
+     "scripted_turns": 0,
+     "retries": 0,
+     "errors": 0,
+     "timed_out": false
+    },
+    "review_status": "skipped_for_benchmark",
+    "approved_by_human": false,
+    "report_sha256": "9cd90be52611e976ca71b74cffe2d9fbc1cad34851d496a5460158da0271320b",
+    "notes": [
+     "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."
+    ]
+   },
+   "report_file": "benchmarks/offline-v1/reports/T12-BR.report.json"
+  }
+ ],
+ "paired": {
+  "a": "BR",
+  "b": "B0",
+  "metric": "effects caught per incident case",
+  "per_case": [
+   {
+    "case_ref": "T01",
+    "BR": "2/2",
+    "B0": "2/2",
+    "difference_in_effects_caught": 0
+   },
+   {
+    "case_ref": "T02",
+    "BR": "2/2",
+    "B0": "2/2",
+    "difference_in_effects_caught": 0
+   },
+   {
+    "case_ref": "T03",
+    "BR": "2/2",
+    "B0": "2/2",
+    "difference_in_effects_caught": 0
+   },
+   {
+    "case_ref": "T04",
+    "BR": "2/2",
+    "B0": "2/2",
+    "difference_in_effects_caught": 0
+   },
+   {
+    "case_ref": "T05",
+    "BR": "3/3",
+    "B0": "2/3",
+    "difference_in_effects_caught": 1
+   },
+   {
+    "case_ref": "T06",
+    "BR": "3/3",
+    "B0": "2/3",
+    "difference_in_effects_caught": 1
+   },
+   {
+    "case_ref": "T07",
+    "BR": "3/3",
+    "B0": "2/3",
+    "difference_in_effects_caught": 1
+   },
+   {
+    "case_ref": "T08",
+    "BR": "3/3",
+    "B0": "2/3",
+    "difference_in_effects_caught": 1
+   }
+  ],
+  "cases_a_better": 4,
+  "cases_equal": 4,
+  "cases_b_better": 0,
+  "n": 8
+ },
+ "notes": [
+  "Controlled simulation benchmark: scores are agreement with executed steps in a synthetic world, not real-world forensic accuracy.",
+  "n is small (12 cases: 8 incidents, 4 benign controls). Results are descriptive; no significance is claimed.",
+  "BR's checks were developed against this simulator. Its score shows the checks work on the modeled world, not that they generalize.",
+  "B0's final precision benefits from the shared verifier, which filters its raw keyword hits. Its raw proposal counts are reported next to it for that reason.",
+  "In simulator v1 the adversary's staging and transfer commands stay in shell history, which favors the keyword baseline. Clearing history is a later difficulty level.",
+  "AI arms were not run: no zero-charge model runtime was available. They are not zero; they are unrun."
+ ],
+ "reproduce": [
+  "uv run alibi bench --check",
+  "uv run alibi bench"
+ ]
+}
