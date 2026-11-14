@@ -1,0 +1,2 @@
+2026-11-14T10:03:20+00:00 gw-01 delivery: request=D-301 src_port=50420 sink=archive state=accepted
+2026-11-14T10:03:22+00:00 gw-01 delivery: request=D-301 src_port=50420 sink=archive sent_bytes=6400000

@@ -1,5 +1,38 @@
 # Progress
 
+## Daniel’s worker-lab fixtures — Saturday November 14, 2026
+
+Commit `test: add independent worker-lab evidence fixtures` on
+`codex/daniel-overhaul`, based on `9069fc9`. Six frozen `SIM` snapshots cover a
+cross-source removal and transfer, an approved transfer, a local collection gap,
+a denied action, and a matched gateway pair with ambiguous worker attribution.
+The [fixture guide](tests/fixtures/daniel/worker-lab/README.md) describes the
+import path, scorer data and hashes. Existing Docker captures, capture checks,
+recordings and benchmark results were preserved.
+
+```sh
+npm --prefix web ci --no-audit --no-fund
+npm --prefix web run build
+env -u ANTHROPIC_API_KEY -u OPENAI_API_KEY PYTHON_DOTENV_DISABLED=1 \
+  RUNTIME_MODE=offline LLM_MAX_USD=0 PYTHONDONTWRITEBYTECODE=1 \
+  .venv/bin/python -m pytest -p no:cacheprovider -o addopts='' -q -ra
+```
+
+The build succeeded and all 486 tests passed, including Chrome and the 12 new
+fixture checks. The saved Docker verifier passed all three scenarios on a
+temporary copy of `capture/output/verification-20261114-01`. A keyless CLI
+investigation of the approved transfer reached human review with a verified
+benign explanation. App model calls and spend for this slice were zero.
+
+P3 fixture validation covered prompt builders, bound read tools, immutable raw
+copies and rejected scorer-file access. P6 citations resolved to exact raw
+lines and byte offsets. Imported snapshots remain unscored, so worker report
+locking and scoring still need integration. P7 controls produced zero incident
+allegations in the tested direct cases. The gateway pair passed a join across
+tool results, while adaptive model behavior was outside this check. The no-key
+checks contribute to P10. P1, P2, P4, P5, P8, P9 and the remaining release
+acceptance checks are pending.
+
 ## Product-definition handoff — Saturday November 14, afternoon
 
 The team's governing specification is now [PRODUCT.md](PRODUCT.md). [Start here](docs/overhaul/START_HERE.md) contains exact Eric/Terry setup and full prompts; [TEAM](docs/overhaul/TEAM.md) replaces the old schedule. This commit changes documentation only and preserves the application and historical measurements.

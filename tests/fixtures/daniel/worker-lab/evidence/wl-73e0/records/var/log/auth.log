@@ -1,0 +1,4 @@
+2026-11-14T10:00:55+00:00 rec-srv-01 pam: session opened for user svc-ingest on pts/1 (session 31)
+2026-11-14T10:01:30+00:00 rec-srv-01 pam: session opened for user svc-reports on pts/2 (session 32)
+2026-11-14T10:02:10+00:00 rec-srv-01 pam: session closed for user svc-ingest (session 31)
+2026-11-14T10:05:00+00:00 rec-srv-01 pam: session closed for user svc-reports (session 32)

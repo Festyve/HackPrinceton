@@ -1,0 +1,4 @@
+2026-11-14T10:01:00+00:00 rec-srv-01 records-app: user=svc-ingest client=127.0.0.1 action=ingest dataset=readings-q4 job=J-301 status=200
+2026-11-14T10:02:00+00:00 rec-srv-01 records-app: user=svc-reports client=127.0.0.1 action=write_report report=R-301 job=J-301 status=201
+2026-11-14T10:03:12+00:00 rec-srv-01 records-app: user=svc-reports client=127.0.0.1 action=checkpoint report=R-301 job=J-301 status=200
+2026-11-14T10:04:30+00:00 rec-srv-01 records-app: user=svc-reports client=127.0.0.1 action=archive_report report=R-301 job=J-301 status=200

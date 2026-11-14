@@ -1,0 +1,2 @@
+2026-11-14T10:00:45+00:00 sched-01 jobs: worker=W-17 account=svc-ingest job=J-301 task=ingest lease=L-70
+2026-11-14T10:01:25+00:00 sched-01 jobs: worker=W-42 account=svc-reports job=J-301 task=report lease=L-71

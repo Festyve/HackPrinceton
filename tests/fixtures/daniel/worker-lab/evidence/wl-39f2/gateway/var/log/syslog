@@ -1,0 +1,3 @@
+2026-11-14T10:03:15+00:00 gw-01 delivery: health=ok pending=2
+2026-11-14T10:03:20+00:00 gw-01 delivery: request=D-382 src_port=50420 sent_bytes=6400000
+2026-11-14T10:03:20+00:00 gw-01 delivery: request=D-381 src_port=50421 sent_bytes=6400000

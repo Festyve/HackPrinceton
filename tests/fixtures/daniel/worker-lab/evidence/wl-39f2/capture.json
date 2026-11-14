@@ -1,0 +1,121 @@
+{
+  "format": "alibi-capture/1",
+  "capture_id": "wl-39f2",
+  "captured_by": {
+    "name": "worker-lab-fixture"
+  },
+  "capture_start": "2026-11-14T10:00:00+00:00",
+  "capture_end": "2026-11-14T10:08:00+00:00",
+  "evidence_origin": "SIM",
+  "artifacts": [
+    {
+      "path": "collector/collected/collected.log",
+      "sha256": "09820cd07fc87b376e3b939195ea8a4782c996258d5cd827eb67a4444c9bc96b",
+      "size_bytes": 2075,
+      "origin": "SIM",
+      "coverage_start": "2026-11-14T10:00:00+00:00",
+      "coverage_end": "2026-11-14T10:08:00+00:00"
+    },
+    {
+      "path": "gateway/var/log/syslog",
+      "sha256": "05c98c79902e9faab126fc082a992d166ec8b7b170ea432647e4594737e5a547",
+      "size_bytes": 242,
+      "origin": "SIM",
+      "coverage_start": "2026-11-14T10:00:00+00:00",
+      "coverage_end": "2026-11-14T10:08:00+00:00",
+      "tamper_exposure": "independent_witness"
+    },
+    {
+      "path": "policy/var/log/syslog",
+      "sha256": "0e10ec8a5831d930cecf930a8f401942fabe9d83d8491aa39a8da161b72ca10f",
+      "size_bytes": 213,
+      "origin": "SIM",
+      "coverage_start": "2026-11-14T10:00:00+00:00",
+      "coverage_end": "2026-11-14T10:08:00+00:00",
+      "tamper_exposure": "independent_witness"
+    },
+    {
+      "path": "records/var/log/auth.log",
+      "sha256": "6408a941d6e280a0bc61f4f92ef64ac24918f1c0b45a750bbfc5e8298fb05c1e",
+      "size_bytes": 485,
+      "origin": "SIM",
+      "coverage_start": "2026-11-14T10:00:00+00:00",
+      "coverage_end": "2026-11-14T10:08:00+00:00"
+    },
+    {
+      "path": "records/var/log/records-app/access.log",
+      "sha256": "354903b5aebaaae5a3e6bbc7e673e5757eddd0c812d9e6fc2206e1d219fb2418",
+      "size_bytes": 1227,
+      "origin": "SIM",
+      "coverage_start": "2026-11-14T10:00:00+00:00",
+      "coverage_end": "2026-11-14T10:08:00+00:00",
+      "known_gaps": [],
+      "forwarded_to_collector": true
+    },
+    {
+      "path": "scheduler/var/log/syslog",
+      "sha256": "d8c44bf9c99d263ae315d38e6eab11f6fb6b86697788f26358a22a585f1a0237",
+      "size_bytes": 315,
+      "origin": "SIM",
+      "coverage_start": "2026-11-14T10:00:00+00:00",
+      "coverage_end": "2026-11-14T10:08:00+00:00",
+      "tamper_exposure": "independent_witness"
+    },
+    {
+      "path": "tap/flows.jsonl",
+      "sha256": "8038fae6c64ecddf5a85b796ddd8e5ff1c7e1b29e5ae134e308ac42a6b38e815",
+      "size_bytes": 378,
+      "origin": "SIM",
+      "coverage_start": "2026-11-14T10:00:00+00:00",
+      "coverage_end": "2026-11-14T10:08:00+00:00"
+    }
+  ],
+  "operational_context": {
+    "logging_policy": {
+      "forwarded_files": [
+        {
+          "host": "records",
+          "file": "/var/log/records-app/access.log"
+        }
+      ]
+    },
+    "network_inventory": [
+      {
+        "ip": "192.0.2.20",
+        "role": "records",
+        "name": "research records"
+      },
+      {
+        "ip": "192.0.2.30",
+        "role": "gateway",
+        "name": "delivery gateway"
+      }
+    ],
+    "transfer_policy": {
+      "bulk_threshold_bytes": 5000000,
+      "approved_bulk_destinations": [
+        {
+          "ip": "198.51.100.16",
+          "name": "review store",
+          "purpose": "review deliveries"
+        },
+        {
+          "ip": "198.51.100.28",
+          "name": "archive store",
+          "purpose": "archive deliveries"
+        }
+      ]
+    },
+    "accounts": [
+      {
+        "account": "svc-ingest",
+        "role": "ingest"
+      },
+      {
+        "account": "svc-delivery",
+        "role": "delivery queue"
+      }
+    ]
+  },
+  "notes": []
+}
