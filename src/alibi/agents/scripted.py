@@ -82,7 +82,17 @@ def auditor_policy(messages: list[BaseMessage]) -> AIMessage:
         "candidates": [c.model_dump(mode="json") for c in candidates],
         "attribution": attribution.model_dump(mode="json"),
         "problems": problems,
+        "coverage_limits": _limits(rec, xfer),
     }))
+
+
+def _limits(rec: Any, xfer: Any) -> list[str]:
+    """What the checks could not assess on this bundle. Empty when every needed source is present."""
+    return baselines.coverage_limits(rec if _usable(rec, "files") else {"files": []},
+                                     xfer if isinstance(xfer, dict) else {})
+
+
+_UNKNOWN = " Some checks could not be run on this bundle; what they would have shown is unknown."
 
 
 # --------------------------------------------------------------------------- skeptic
@@ -234,11 +244,13 @@ def lead_policy(messages: list[BaseMessage]) -> AIMessage:
     if called.count("write_todos") == 2:
         return _ai(role, messages, [("write_todos", _todos(5, 5))])
     if "finalize_report" not in called:
+        limits = [str(x) for x in (audit.get("coverage_limits") or [])] if isinstance(audit, dict) else []
         summary = (f"{n_inc} incident allegation(s), {len(candidates) - n_inc} benign explanation(s)/open note(s). "
-                   + str(attribution.get("statement", "")))
+                   + str(attribution.get("statement", "")) + (_UNKNOWN if limits else ""))
         questions = ["Who had access to the credential used in the linked session?",
                      "Was the destination known to anyone at the clinic?"] if n_inc else []
-        return _ai(role, messages, [("finalize_report", {"summary": summary, "open_questions": questions})])
+        questions += [f"Coverage limit: {x}"[:300] for x in limits]
+        return _ai(role, messages, [("finalize_report", {"summary": summary, "open_questions": questions[:8]})])
     last = messages[-1]
     approved = isinstance(last, ToolMessage) and "finalized" in str(last.content)
     return AIMessage(content="The reviewer accepted the report; it is frozen for scoring." if approved else
@@ -291,11 +303,13 @@ def single_policy(messages: list[BaseMessage]) -> AIMessage:
                         "contrary_evidence_ids", "limits", "assumptions") and v not in (None, [], "")}
         return _ai(role, messages, [("write_todos", _todos(3, 3, _SINGLE_TODOS)), ("submit_attribution", att)])
     if "finalize_report" not in called:
+        limits = _limits(rec, xfer)
         summary = (f"{n_inc} incident allegation(s), {len(candidates) - n_inc} benign explanation(s)/open note(s). "
-                   + attribution.statement)
+                   + attribution.statement + (_UNKNOWN if limits else ""))
         questions = ["Who had access to the credential used in the linked session?",
                      "Was the destination known to anyone at the clinic?"] if n_inc else []
-        return _ai(role, messages, [("finalize_report", {"summary": summary, "open_questions": questions})])
+        questions += [f"Coverage limit: {x}"[:300] for x in limits]
+        return _ai(role, messages, [("finalize_report", {"summary": summary, "open_questions": questions[:8]})])
     last = messages[-1]
     approved = isinstance(last, ToolMessage) and "finalized" in str(last.content)
     return AIMessage(content="The reviewer accepted the report; it is frozen for scoring." if approved else

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import time
 from pathlib import Path
 from typing import Any, Literal
@@ -26,6 +27,7 @@ from alibi.orchestrator import Conflict, NotFound, Orchestrator
 from alibi.runners import RuntimeBlocked
 
 WEB_DIST = REPO_ROOT / "web" / "dist"
+_SOURCE_ID = re.compile(r"src-[0-9a-f]{12}")
 BENCH_RESULTS = REPO_ROOT / "benchmarks" / "offline-v1" / "results.json"
 
 _NO_BUILD = """<!doctype html><meta charset="utf-8"><title>ALIBI</title>
@@ -56,6 +58,15 @@ class Review(BaseModel):
 class AskQuestion(BaseModel):
     question: str = Field(min_length=1, max_length=1000)
     client_token: str = Field(min_length=1, max_length=80)
+
+
+class SourceExperimentIn(BaseModel):
+    # ids from the case's public manifest (manifest.sources[].source_id). Never a path.
+    excluded_source_ids: list[str] = Field(min_length=1, max_length=20)
+    client_token: str = Field(min_length=1, max_length=80)
+    runner: Literal["deterministic", "agent-fixture", "agent-live"] | None = None
+    investigation_mode: Literal["fast", "specialist"] | None = None
+    autostart: bool = False  # a fresh investigation of the derived view is a separate, deliberate run
 
 
 class OpenReplay(BaseModel):
@@ -238,6 +249,27 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
     @app.get("/api/cases/{case_id}/explanations")
     def explanations(case_id: str) -> dict:
         return {"explanations": orch.explanations(case_id)}
+
+    # ------------------------------------------------------------------ source-removal experiment
+    @app.post("/api/cases/{case_id}/source-experiments")
+    def create_source_experiment(case_id: str, body: SourceExperimentIn) -> dict:
+        """Derive a new case from this one with the named sources withheld. The original is not modified."""
+        if any(not _SOURCE_ID.fullmatch(i) for i in body.excluded_source_ids):
+            raise ValueError("excluded_source_ids must be source_id values from this case's manifest")
+        rec = orch.create_source_experiment(case_id, body.excluded_source_ids, body.client_token,
+                                            runner_id=body.runner, investigation_mode=body.investigation_mode)
+        if body.autostart:
+            orch.start_investigation(rec.case_id)
+        exp = orch.source_experiment(rec.case_id)
+        return {"child_case_id": rec.case_id, "parent_case_id": case_id,
+                **{k: exp.get(k) for k in ("parent_bundle_id", "parent_raw_bundle_sha256", "child_bundle_id",
+                                           "child_raw_bundle_sha256", "excluded_sources", "sources_remaining",
+                                           "events_remaining", "events_original")},
+                "coverage": (exp.get("comparison") or {}).get("coverage"), "case": orch.view(rec.case_id)["case"]}
+
+    @app.get("/api/cases/{case_id}/source-experiment")
+    def source_experiment(case_id: str) -> dict:
+        return orch.source_experiment(case_id)
 
     # ------------------------------------------------------------------ questions about a case
     @app.post("/api/cases/{case_id}/questions")

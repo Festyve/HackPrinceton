@@ -235,6 +235,7 @@ export interface Score {
 
 /** Explicit trust/coverage metadata for one evidence source. */
 export interface SourceInfo {
+  source_id?: string;
   artifact: string;
   host: string;
   source: string;

@@ -349,4 +349,8 @@ def reproduce_raw_hash(paths: EpisodePaths) -> tuple[str, str]:
     """Re-run the saved scenario specification and return (saved, reproduced) raw bundle hashes."""
     ep = load_episode_manifest(paths)
     sim = simulate(ep.scenario_spec)
-    return ep.raw_bundle_sha256, bundle_hash(artifact_hashes(sim.artifacts))
+    hashes = artifact_hashes(sim.artifacts)
+    if ep.withheld_sources:  # a derived evidence view: the same scenario, minus the sources that were withheld
+        gone = {w["artifact"] for w in ep.withheld_sources}
+        hashes = {k: v for k, v in hashes.items() if k not in gone}
+    return ep.raw_bundle_sha256, bundle_hash(hashes)

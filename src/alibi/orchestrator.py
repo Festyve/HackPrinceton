@@ -25,7 +25,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from alibi import explain, evidence_views, questions
+from alibi import explain, evidence_views, questions, source_experiment
 from alibi.config import REPO_ROOT, Settings
 from alibi.contracts import INFERENCE_LABELS, InvestigationReport, QuestionAnswer
 from alibi.episode import (
@@ -133,6 +133,9 @@ class CaseRecord:
     review_decision: str | None = None
     review_note: str = ""
     timings: dict[str, float] = field(default_factory=dict)
+    # Set only for an evidence view derived from another case with some sources withheld.
+    parent_case_id: str | None = None
+    excluded_sources: list[dict[str, Any]] = field(default_factory=list)
 
     def public(self) -> dict[str, Any]:
         d = asdict(self)
@@ -281,6 +284,11 @@ class Orchestrator:
             },
             "live_model": {"configured": live, "model_id": self.settings.lead_model if live else None,
                            "note": "configured does not mean a successful model call has been observed"},
+            "source_experiments": {
+                "endpoint": True, "max_excluded_sources": source_experiment.MAX_EXCLUDED,
+                "note": "derives a new evidence view with chosen sources withheld; the comparison of the original "
+                        "claims is deterministic and needs no model. A fresh investigation of the view is a separate run",
+            },
             "questions": {
                 "endpoint": True, "model_answers": "CONFIGURED" if live else "BLOCKED",
                 "max_question_chars": questions.MAX_QUESTION_CHARS, "max_model_calls": questions.MAX_MODEL_CALLS,
@@ -559,6 +567,8 @@ class Orchestrator:
                 "attribution": key.attribution.model_dump(mode="json"),
             }
             payload = {"score": score.model_dump(mode="json"), "truth": truth}
+            if rec.parent_case_id:
+                payload["source_experiment"] = self._child_scoring(rec, paths, score, key)
             (paths.root / "score.json").write_text(json.dumps(payload["score"], indent=2), encoding="utf-8")
             (paths.root / "reveal.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
             self._log(case_id).append("reveal", {"summary": {
@@ -671,6 +681,117 @@ class Orchestrator:
         store, paths = self._store(case_id)
         with store:
             return explain.explanations(store, load_manifest(paths), self._report(paths))
+
+    # ------------------------------------------------------------------ source-removal experiment
+    _PARENT_STATES = ("frozen", "awaiting_review", "report_locked", "scored")
+
+    def create_source_experiment(self, case_id: str, excluded_source_ids: list[str], client_token: str, *,
+                                 runner_id: str | None = None, investigation_mode: str | None = None) -> CaseRecord:
+        """Derive a new case whose evidence is the original's with the named sources withheld.
+
+        The original case is only read. The new case starts frozen with an empty case directory and is
+        investigated, questioned, reviewed and revealed through the ordinary endpoints.
+        """
+        token = str(client_token or "").strip()
+        if not token or len(token) > 80:
+            raise ValueError("client_token is required (at most 80 characters); it makes a retried request safe")
+        with self._guard:
+            if token in self._tokens:
+                try:
+                    return self._load(self._tokens[token])  # a retry: the same derived case
+                except NotFound:
+                    self._tokens.pop(token, None)
+        with self._lock(case_id):
+            parent, ppaths = self._load(case_id), self._paths(case_id)
+            if parent.parent_case_id:
+                raise ValueError("this case is itself a derived evidence view; run the experiment from the original case")
+            if parent.state not in self._PARENT_STATES:
+                raise Conflict(f"the original case has no frozen evidence to derive from (state: {parent.state})",
+                               parent.state)
+            runner_id = runner_id or default_runner_id(self.settings)
+            mode = resolve_mode(runner_id, investigation_mode)
+            runner = get_runner(runner_id, self.settings, mode)
+            t0 = time.perf_counter()
+            child_id = f"case-{uuid.uuid4().hex[:12]}"
+            cpaths = self._paths(child_id)
+            try:
+                manifest = source_experiment.create_child_bundle(ppaths, cpaths, excluded_source_ids)
+            except Exception:
+                remove_episode(cpaths, self.runs_dir, self.sealed_dir)  # never leave a half-built evidence view
+                raise
+            withheld = load_episode_manifest(cpaths).withheld_sources
+            what = ", ".join(sorted({f"{w['host']} {w['source']}" for w in withheld}))
+            rec = CaseRecord(case_id=child_id, preset_id=parent.preset_id, title=f"{parent.title} · without {what}",
+                             card_id=parent.card_id, difficulty=parent.difficulty, seed=parent.seed, runner_id=runner_id,
+                             investigation_mode=mode, evidence_origin=parent.evidence_origin,
+                             inference_mode=runner.inference_mode, model_id=runner.model_id, bundle_id=manifest.bundle_id,
+                             client_token=token, parent_case_id=case_id,
+                             excluded_sources=[{k: v for k, v in w.items() if k != "sha256"} for w in withheld])
+            rec.timings["derive_s"] = round(time.perf_counter() - t0, 3)
+            self._save(rec)
+            with self._guard:
+                self._tokens[token] = child_id
+            log = self._log(child_id)
+            pm = load_manifest(ppaths)
+            log.append("state", {"state": "generating", "detail": "deriving an evidence view with sources withheld"})
+            log.append("stage", {"name": "derive", "status": "done", "info": {
+                "parent_case_id": case_id, "parent_raw_bundle_sha256": pm.raw_bundle_sha256,
+                "withheld": [w["source_id"] for w in withheld], "what": what}})
+            log.append("stage", {"name": "freeze", "status": "done",
+                                 "info": {"artifacts": len(manifest.sources), "raw_bundle_sha256": manifest.raw_bundle_sha256}})
+            log.append("stage", {"name": "normalize", "status": "done",
+                                 "info": {"events": manifest.event_count, "errors": len(manifest.normalization_errors),
+                                          "derived_db_sha256": manifest.derived_db_sha256}})
+            log.append("stage", {"name": "seal", "status": "done", "info": {
+                "note": "what actually happened is unchanged and stays sealed; what is observable is recomputed for this view"}})
+            self._set_state(rec, "frozen", "evidence view frozen and hashed; nothing is carried over from the original case")
+            return rec
+
+    def source_experiment(self, case_id: str) -> dict[str, Any]:
+        """The parent/child relationship and what the original claims are worth without the withheld sources.
+
+        Deterministic. Reads the two evidence bundles and the original report only: no model, no sealed file.
+        """
+        rec = self._load(case_id)
+        if rec.parent_case_id is None:
+            kids = [c for c in self.list_cases() if c.get("parent_case_id") == case_id]
+            return {"role": "original", "case_id": case_id, "bundle_id": rec.bundle_id,
+                    "children": [{"child_case_id": k["case_id"], "title": k["title"], "state": k["state"],
+                                  "excluded_sources": k["excluded_sources"], "bundle_id": k["bundle_id"]} for k in kids],
+                    "sources": [source_experiment.public_source(s) for s in load_manifest(self._paths(case_id)).sources]}
+        cpaths = self._paths(case_id)
+        cm = load_manifest(cpaths)
+        out: dict[str, Any] = {"role": "derived", "case_id": case_id, "parent_case_id": rec.parent_case_id,
+                               "child_state": rec.state, "excluded_sources": rec.excluded_sources}
+        try:
+            parent = self._load(rec.parent_case_id)
+        except NotFound:
+            out["comparison"] = None
+            out["note"] = "The original case no longer exists (it was reset), so its claims cannot be compared."
+            return out
+        ppaths = self._paths(rec.parent_case_id)
+        pm = load_manifest(ppaths)
+        out.update(source_experiment.describe(pm, cm, rec.excluded_sources))
+        out["parent_state"] = parent.state
+        report = self._report(ppaths) if parent.state in ("awaiting_review", "report_locked", "scored") else None
+        out["parent_report"] = None if report is None else {
+            "report_id": report.report_id, "locked": report.locked, "report_sha256": report.report_sha256,
+            "system_id": report.system_id, "inference_mode": report.inference_mode}
+        with EvidenceStore(ppaths.db) as pstore, EvidenceStore(cpaths.db) as cstore:
+            out["comparison"] = source_experiment.compare(report, pstore, pm, cstore, cm)
+        return out
+
+    def _child_scoring(self, rec: CaseRecord, paths: EpisodePaths, score: Any, key: Any) -> dict[str, Any]:
+        """Research scoring for a derived view: all original effects, both denominators. Trusted, post-lock only."""
+        try:
+            ppaths = self._paths(rec.parent_case_id or "")
+            pkey = load_answer_key(ppaths)
+            with EvidenceStore(paths.db) as cstore, EvidenceStore(ppaths.db) as pstore:
+                return {"parent_case_id": rec.parent_case_id, "excluded_sources": rec.excluded_sources,
+                        "scoring": source_experiment.scoring_summary(score, key, pkey, cstore, pstore)}
+        except Exception as exc:  # noqa: BLE001 - e.g. the original case was reset
+            return {"parent_case_id": rec.parent_case_id, "excluded_sources": rec.excluded_sources, "scoring": None,
+                    "note": f"the original case is no longer available for comparison ({type(exc).__name__})"}
 
     # ------------------------------------------------------------------ questions (never change the report)
     _QUESTION_STATES = ("frozen", "awaiting_review", "report_locked", "scored")

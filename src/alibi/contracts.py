@@ -13,7 +13,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 EVIDENCE_SCHEMA_VERSION = "1.0.0"
 TRUTH_SCHEMA_VERSION = "1.0.0"
@@ -95,9 +95,17 @@ class CoverageGap(Strict):
     reason: str = ""
 
 
+def source_id_for(artifact: str) -> str:
+    """Stable public id of one evidence source. Opaque: it is not a path and is never used as one."""
+    import hashlib
+
+    return "src-" + hashlib.sha256(artifact.encode("utf-8")).hexdigest()[:12]
+
+
 class SourceInfo(Strict):
     """Explicit trust/coverage metadata for one evidence source."""
 
+    source_id: str = ""  # filled from the artifact name when absent (manifests written before ids existed)
     artifact: str
     host: str
     source: str
@@ -116,6 +124,12 @@ class SourceInfo(Strict):
     coverage_declared: bool = False
     known_gaps: list[CoverageGap] = Field(default_factory=list)
     forwarded_to_collector: bool = False
+
+    @model_validator(mode="after")
+    def _fill_source_id(self) -> "SourceInfo":
+        if not self.source_id:
+            self.source_id = source_id_for(self.artifact)
+        return self
 
 
 class EvidenceManifest(Strict):
@@ -444,6 +458,11 @@ class EpisodeManifest(Strict):
     executed_plan_sha256: str = ""
     raw_bundle_sha256: str = ""
     evidence_files: dict[str, str] = Field(default_factory=dict)  # artifact -> sha256
+    # Set only for an evidence view derived from another episode with some sources withheld
+    # (a source-removal experiment). Operator metadata: never shown to an investigator.
+    parent_episode_id: str | None = None
+    parent_raw_bundle_sha256: str | None = None
+    withheld_sources: list[dict[str, Any]] = Field(default_factory=list)
     # nondeterministic run metadata, kept apart from deterministic evidence hashes
     created_at: datetime | None = None
     git_commit: str | None = None

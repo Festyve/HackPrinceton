@@ -170,14 +170,17 @@ class DeterministicRunner:
                            "summary": f"{len(findings)} templated finding(s)"})
         n_inc = sum(f.category == "incident_allegation" for f in findings)
         wall = max(0.0, time.perf_counter() - t0 - ctx.paced_seconds)
+        limits = baselines.coverage_limits(rec, xfer)  # what this bundle could not show
         return InvestigationReport(
             report_id=f"rep-{ctx.case_id}", bundle_id=ctx.manifest.bundle_id, system_id=self.system_id,
             system_label="Deterministic contradiction checks with templated findings",
             inference_mode="NO_MODEL_BASELINE", findings=findings, attribution=attribution,
             summary=(f"{n_inc} incident allegation(s), {len(findings) - n_inc} benign explanation(s)/open note(s). "
-                     + attribution.statement),
+                     + attribution.statement
+                     + (" Some checks could not be run on this bundle; what they would have shown is unknown." if limits else "")),
             open_questions=([] if not n_inc else ["Who had access to the credential used in the linked session?",
-                                                  "Was the destination known to anyone at the clinic?"]),
+                                                  "Was the destination known to anyone at the clinic?"])
+            + [f"Coverage limit: {x}" for x in limits],
             usage=Usage(wall_seconds=round(wall, 3), tool_calls=3 if linked else 2),
         )
 
