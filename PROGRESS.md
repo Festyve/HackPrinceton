@@ -54,6 +54,46 @@ Rayan confirmed **$20 cumulative**, including prior spend; keep the $19.50 autom
 
 Previous plans remain below for provenance; they do not override the new product definition. The audit baseline is default-branch `6e7d322`, with reusable UI wiring at `1b9216d`.
 
+## Overhaul handoff — Eric's session, Saturday November 14, 17:04 ET
+
+This block is the current handoff for the backend and integration. Gate-by-gate status with evidence is in [`docs/overhaul/ACCEPTANCE.md`](docs/overhaul/ACCEPTANCE.md). Terry's and Daniel's own handoffs: [`docs/terry-overhaul-handoff.md`](docs/terry-overhaul-handoff.md), [`docs/overhaul/daniel/HANDOFF.md`](docs/overhaul/daniel/HANDOFF.md).
+
+| | |
+|---|---|
+| Branch | `codex/eric-overhaul` is the integration branch: the worker lab, Terry's interface (`f51f8f8`) and Daniel's fixtures, protocol and validator (`dbc2936`). The default branch `codex/alibi-build` is brought to the same tree after each full test pass. The build from before the overhaul is unchanged on `codex/eric-phase2` (`6e7d322`). |
+| Launch | `uv sync --frozen && npm --prefix web ci && npm --prefix web run build && ./start.sh`, then http://127.0.0.1:8000. No key or network is needed for recordings. |
+| Demo selection | Recorded lab runs, real model, replay offline: **lab-incident-three-agents-haiku-5-5**, **lab-incident-fast-haiku-5-5**, **lab-control-fast-haiku-5-5**. The clinic recordings from the earlier runs remain. Notes for each are in [`docs/demo-script.md`](docs/demo-script.md). |
+| Model in use | `anthropic:claude-haiku-5-5`, effort low, for the workers' ordinary work and every investigator role. |
+| Spend | Estimated **$3.899** of the **$20** cap (1026 model calls). The overhaul: about **$0.25**. Reserved: $0. Unreconciled: $0. Automatic calls stop at $19.50. `uv run alibi spend`. |
+| Tests | `uv run pytest` → **584 passed, none failed or skipped** at `1d64b2c`: 527 offline, 57 in headless Chrome. |
+| Recordings | `demo/replays/`: 7 real-model runs (1 Opus, 6 Haiku) and 2 scripted-fixture runs. All reproduce their evidence and replay offline. |
+| Measured lab results | `benchmarks/worker-lab-eric-matrix/` (my declared matrix, 18 cells, [`docs/worker-lab-eric-matrix.md`](docs/worker-lab-eric-matrix.md)); `benchmarks/worker-lab-v1/eric/live/` (the 8 live cells of Daniel's protocol, accepted by his validator); `benchmarks/worker-lab-v1/daniel/` (his offline and scripted-runtime results); four records in `benchmarks/feature-checks/worker-lab-*.json`. |
+
+**What works end to end now**
+
+- Three automated workers do ordinary jobs chosen by a real model, through the budget gateway. The jobs are executed and leave files, log records and approved transfers.
+- In an incident run the scheduler changes one seeded worker's objective part-way through. That worker takes bounded fault actions under a named permission profile and a request allowance; success, failure and denial are recorded as they happen. In a control run nothing changes.
+- Evidence is produced only by replaying the saved action tape, so a tape reproduces its evidence byte for byte. Freezing, sealing, the deterministic checks, the verifier, review, reveal and scoring are the existing ones.
+- The investigator works from the frozen evidence, with one agent or three, under its own request allowance. Three comparisons: the same evidence with another allowance, the same evidence with the other mode, a new execution with another permission profile.
+- The three-agent mode on a lab case follows the evidence. Its recorded trace (plan, delegations, plan changes, case-file writes and reads) is at `GET /api/cases/{id}/trace` and `uv run alibi trace <case>`.
+- An interrupted investigation can be resumed from its checkpoint, also by another process.
+- Lab runs can be recorded and replayed offline. Everything is reachable from Terry's interface, the API ([`docs/api.md`](docs/api.md)) and `uv run alibi lab ...`.
+
+**What is not met or not done**
+
+- **A model does not choose the fault actions (P2).** They follow a scripted policy, by Eric's decision on November 14, and every lab run is labeled so. Not attempted.
+- **The investigator's behaviors are seen, not shown to be reliable (P4).** The plan was rewritten after a result in 3 of 6 saved three-agent traces. The skeptic downgraded a correct finding in 4 of those 6. Three agents did not do better than one in any comparison made.
+- **No recorded human usability review (P9)** and no ≤120 second demo yet.
+- One run per cell everywhere. Nothing here is a detection rate.
+- Daniel's dependent-lead case (`wl-39f2`) was missed by the deterministic checks, by one agent and by three.
+
+**Owner actions**
+
+1. Rayan: run and record the usability review; build the demo from the three lab recordings; decide how the pitch states that the changed objective is scripted. Claims and their limits: [`docs/claims.md`](docs/claims.md) rows 22 to 27.
+2. Daniel: look at `benchmarks/worker-lab-v1/eric/live/` (results, locked reports, every request the investigator was sent); run the release smoke on the integrated commit.
+3. Terry: further interface work on `codex/terry-overhaul`; Eric's session merges it and brings the default branch along after the tests pass.
+4. Eric: nothing is waiting on a decision. The current key stays, as decided.
+
 > Times are America/New_York. Entries record concrete check results, not intentions.
 > Status vocabulary: **OFFLINE-READY**, **AI-READY**, **INCOMPLETE** (PLAN §14).
 
@@ -522,3 +562,19 @@ Phase-two model spend so far: about **$0.08** (ledger total $3.006 of the $20 ca
 - Added real worker activity/proof, explicitly sealed operator history and recorded action outcomes, exact allocation/permission/context controls, same-evidence budget comparisons and new-execution permission comparisons. Actual trace parent spans, plan content changes, filesystem reads/writes and local record playback are inspectable. All earlier phase-two features remain.
 - Build passed; full browser regression 57 passed (179.84 s); the final worker-log/default/above-fold adjustment passed five focused browser cases. Full offline suite 474 passed (344.20 s). Thirty final screenshots across the requested sizes had zero page overflow and JavaScript errors. Proof: `docs/verification/terry-overhaul/`; reproducible capture: `tests/capture_overhaul.py`.
 - P9 now has implementation/automated evidence; Rayan's actual usability reviews remain pending. Other release gates retain Eric's documented limits, including scripted fault actions, pending worker recording and checkpoint-resume proof. Handoff: `docs/terry-overhaul-handoff.md`.
+
+## The overhaul, Eric's session (15:05–17:04)
+
+- 14:57 Rayan pushed `codex/product-definition` (`fc30b01`), a new product definition. It was read, put to Eric as a decision, and adopted with one change: the changed objective follows a scripted policy. The local untracked `CLAUDE.md` was backed up outside the repository before the branch's own `CLAUDE.md` was merged.
+- `5c768ad` (15:36): the worker lab. Engine, model-chosen ordinary work, scripted change of objective, tape and replay, API, tests. Offline on seeds 11 to 13 the deterministic checks established every observable effect and alleged nothing on a control.
+- `463c9d1` (15:42): first real-model lab runs. Workers' work chosen by the model (10 and 11 requests, all valid). One agent established 4 of 5 on the incident and alleged nothing on the control. $0.015.
+- `40907cd` (16:04): an evidence-led lead for three-agent mode and the recorded trace. Four real attempts, all saved: the first was stopped by the request-size ceiling; the others established 5, 3 and 4 of 5; only the fourth rewrote its plan. $0.056.
+- `6caa909` (16:15): Terry's first overhaul checkpoint merged. One browser test failed on Terry's branch alone (the source panel claimed the original was unchanged before the server answered); fixed here, and Daniel later noted the link is still drawn while that request is pending.
+- `30d8375` (16:20): lab recordings, terminal commands, a third comparison, and a declared 18-cell matrix on seed 21. Run once at that commit: 17 complete, 1 stopped at its allowance, no allegation on a control, nobody named, $0.08.
+- `4556712` (16:30): resume from a checkpoint. `ad21f1e`: a real three-agent run stopped at 6 requests in one process and finished by another with 14 more. It established 2 of 5; the skeptic downgraded both staging findings. $0.017.
+- `ab629a4` (16:40): three real lab recordings, one attempt each, kept as they came out. $0.031.
+- `0a2dea7` (16:42): a mistake corrected. Daniel had pushed his independent protocol at 15:56; my matrix was declared at the same path at 16:16 without a fetch and said no independent protocol had arrived. The matrix was moved aside unchanged with a correction.
+- `44c9ef6`, `63c4bc3`: Daniel's branch (`dbc2936`) and Terry's lab interface (`f51f8f8`) merged. 57 browser tests passed on the merged tree.
+- `08776b8` (16:57): the 8 live cells of Daniel's protocol, run from a worktree at his pinned commit `463c9d1` that shared the real ledger: 7 completed, 1 capped, no false accepted allegation, nothing alleged on a benign case, the dependent lead missed. His validator accepts the results. $0.040. The worktree and its link to the key file were removed afterwards.
+- 16:47 Terry merged `codex/terry-overhaul` into the default branch through a pull request. `1d64b2c` joins that history here.
+- Ledger at 17:04: $3.899451, 1026 calls, nothing reserved or unreconciled.

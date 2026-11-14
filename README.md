@@ -4,7 +4,7 @@
 
 ALIBI is a research lab for investigating AI workers. The team is building a controlled environment where workers do useful jobs, one can go rogue, and an outside investigator reconstructs what happened from surviving evidence. The experiment varies rogue permissions and investigation resources, then compares a locked, cited report with sealed ground truth.
 
-**Current build:** the evidence pipeline and real-model investigator work on scripted incidents. Productive model-driven workers, seeded rogue transitions and the new interface are the next implementation phase. [Product definition](PRODUCT.md) · [Start the overhaul](docs/overhaul/START_HERE.md) · [Audited status](docs/overhaul/STATUS.md). The instructions are ready; those new features are not yet claimed as implemented.
+**Current build (branch `codex/eric-overhaul`):** three automated workers do ordinary jobs chosen by a real model. In an incident run the scheduler changes one worker's objective part-way through and that worker takes bounded fault actions, which follow a **scripted policy: no model chooses them**. An investigator outside the lab works from the frozen evidence, with one agent or three, under a request allowance. Runs can be compared, recorded, replayed and resumed. What is met and what is not, gate by gate: [acceptance record](docs/overhaul/ACCEPTANCE.md). Not met: a model choosing the fault actions (by the owner's decision) and a recorded human usability review. [Product definition](PRODUCT.md) · [Measured lab results](docs/worker-lab-eric-matrix.md) · [API](docs/api.md)
 
 Built at HackPrinceton Fall 2026 by Eric Chen, Rayan, Daniel, and Terry.
 
@@ -68,11 +68,16 @@ uv run alibi ask <case-id> "Who did it?"         # needs a configured model; off
 uv run alibi review <case-id> accept
 uv run alibi export <case-id> > report.md
 uv run alibi import tests/fixtures/capture/missing-local-record --investigate   # captured evidence, unscored
+uv run alibi lab run --variant incident --preset balanced --investigate         # the worker lab; offline it uses labeled fixtures
+uv run alibi lab operator <case-id>                                             # what the workers did, once the report is locked
+uv run alibi lab compare <case-id> --kind investigator_budget --investigator-requests 4 --investigate
+uv run alibi trace <case-id>                                                    # plan, delegations, plan changes, case file
 ```
 
 ## What is real and what is not
 
 - The investigator, the question answering and the environment designer have run on real models. Four recordings are committed and replay offline, labeled "Recorded AI run".
+- In the worker lab the workers' ordinary work is chosen by a real model. A changed objective follows a **scripted policy**; no model chooses a fault action, and every lab run says so.
 - Every incident is a **scripted scenario**. No model plans or stages an incident. The one request to have a model plan an adversary's steps was declined by the model, and that route stays disabled.
 - All scored evidence is **simulated**. Three small captures written by running processes (a test application and an independent collector in Docker containers) import as **unscored** cases and go through the same pipeline: the deterministic comparison reports the one removed line and nothing on the two controls. A real model, run once on each, alleged nothing on the controls and described the missing line without calling it removal. These are not system logs and not a detection rate ([capture](docs/capture.md), [importing](docs/importing.md)).
 - Scores are agreement with a simulation's sealed answer key. They are not real-world forensic accuracy.
@@ -105,7 +110,7 @@ We then ran the eight model cells of the first two incident cases once more on t
 
 ## Live AI and budget
 
-Live inference uses a server-side Anthropic key in a gitignored `.env`. **The total API allowance is $20 across all runs, including the overhaul.** The last handoff reported about $3.65 used; read the current ledger before spending. Follow [current API setup](docs/overhaul/API_SETUP.md) and never delete the spend ledger.
+Live inference uses a server-side Anthropic key in a gitignored `.env`. **The total API allowance is $20 across all runs, including the overhaul.** About $3.90 has been used; read the current ledger before spending. Follow [current API setup](docs/overhaul/API_SETUP.md) and never delete the spend ledger.
 
 Every model call goes through one budget gateway. It counts the outgoing request before sending it, refuses one that is too large or cannot be counted, reserves tokens and money so parallel agents cannot jointly pass a cap, and keeps the worst-case cost of any call whose billing outcome is unknown until someone reconciles it. Automatic calls stop $0.50 short of the cap. The totals are a conservative estimate at list prices, not a bill; the provider console is the billing authority.
 
