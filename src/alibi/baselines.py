@@ -326,8 +326,10 @@ def run_br(store: EvidenceStore, manifest: EvidenceManifest) -> InvestigationRep
         summary=(f"{n_inc} incident allegation(s), {len(findings) - n_inc} benign explanation(s)/open note(s). "
                  + attribution.statement
                  + (" Some checks could not be run on this bundle; what they would have shown is unknown." if limits else "")),
-        open_questions=([] if not n_inc else ["Who had access to the credential used in the linked session?",
-                                              "Was the destination known to anyone at the clinic?"])
+        open_questions=([] if n_inc == len(fam_inc) else ["Who had access to the credential used in the linked session?",
+                                                          "Was the destination known to anyone at the clinic?"])
+        + (["Which of the two temperature records was changed, when, and who could write to the hub's stored readings?"]
+           if any(f.claim_type == "sensor_stream_discrepancy" for f in fam_inc) else [])
         + [f"Coverage limit: {x}" for x in limits],
         usage=Usage(wall_seconds=wall), created_at=started,
     )
