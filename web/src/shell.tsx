@@ -273,6 +273,12 @@ export function SavedCases({
                     ? "Unscored import"
                     : c.labels.evidence_origin}
                 </small>
+                {c.labels.worker_choices && (
+                  <small>{c.labels.worker_choices}</small>
+                )}
+                {c.labels.changed_objective_policy && (
+                  <small>{c.labels.changed_objective_policy}</small>
+                )}
               </span>
               <span className="case-list-status">
                 {humanState(c.state)}

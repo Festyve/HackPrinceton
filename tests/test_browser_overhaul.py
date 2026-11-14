@@ -36,23 +36,23 @@ def test_palette_keyboard_navigation_returns_focus_and_never_starts_a_run(server
     assert page.errors == []
 
 
-def test_lab_allocation_units_are_independent_local_drafts(server, page):
+def test_lab_allocation_units_are_independent_before_explicit_execution(server, page):
     base, _ = server
     mutations = []
     page.on("request", lambda r: mutations.append(r.url) if r.method == "POST" else None)
     page.goto(base)
     lab = page.locator(tid("lab-workspace"))
-    expect(lab.get_by_text("Configuration preview", exact=True)).to_be_visible()
+    expect(lab.get_by_text("worker-lab/1", exact=True)).to_be_visible()
     lab.get_by_role("radio", name="80/20", exact=False).check()
-    expect(lab.locator(".allocation-explanation")).to_contain_text("16 rogue requests")
-    expect(lab.locator(".allocation-explanation")).to_contain_text("4 investigator requests")
+    expect(lab.locator(".allocation-explanation")).to_contain_text("16 scripted turns for the changed worker")
+    expect(lab.locator(".allocation-explanation")).to_contain_text("4 investigator model requests")
     lab.locator("summary").click()
-    lab.get_by_label("Rogue permission profile").select_option("export")
+    lab.get_by_label("Permission profile").select_option("export_only")
     expect(lab.get_by_role("radio", name="80/20", exact=False)).to_be_checked()
     lab.get_by_role("radio", name="20/80", exact=False).check()
-    expect(lab.locator(".allocation-explanation")).to_contain_text("16 investigator requests")
-    expect(lab.get_by_label("Rogue permission profile")).to_have_value("export")
-    expect(page.locator(tid("worker-runtime-unavailable"))).to_contain_text("no worker action or model call has been started")
+    expect(lab.locator(".allocation-explanation")).to_contain_text("16 investigator model requests")
+    expect(lab.get_by_label("Permission profile")).to_have_value("export_only")
+    expect(lab.get_by_role("button", name="Run scripted worker experiment", exact=True)).to_be_enabled()
     assert mutations == []
 
 
@@ -66,6 +66,7 @@ def test_evidence_inspector_uses_actual_records_and_restores_keyboard_focus(serv
     chip.focus()
     chip.press("Enter")
     expect(pg.locator(tid("raw-focus-line"))).to_be_visible()
+    expect(pg.locator(tid("raw-record-id"))).to_contain_text(chip.get_attribute("data-testid").removeprefix("chip-"))
     if width >= 900:
         expect(pg.get_by_role("button", name="Close evidence inspector", exact=True)).to_be_focused()
         expect(pg.locator(tid("evidence-inspector"))).to_be_visible()
@@ -102,8 +103,8 @@ def test_plan_trace_and_case_file_display_recorded_events_after_refresh(server, 
     expect(plan).to_contain_text("No triggering evidence reference was supplied")
     page.keyboard.press("Escape")
     page.get_by_role("button", name="Trace", exact=True).click()
-    expect(page.locator(".trace-events > li")).to_have_count(len(tools))
-    page.locator(".trace-events summary").first.click()
+    expect(page.locator('.trace-events > li[data-kind="tool"]')).to_have_count(len(tools))
+    page.locator('.trace-events [data-kind="tool"] summary').first.click()
     expect(page.locator(tid("investigation-trace"))).to_contain_text(tools[0]["data"]["tool"])
     page.keyboard.press("Escape")
     page.get_by_role("button", name="Case file", exact=True).click()

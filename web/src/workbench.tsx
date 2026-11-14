@@ -188,7 +188,15 @@ export function RuntimeDetails({
         <dt>Reason</dt>
         <dd>{runtime?.live_block_reason ?? "No block reason reported"}</dd>
         <dt>Inference</dt>
-        <dd>{view?.case.labels.inference_label ?? "Choose a case"}</dd>
+        <dd>
+          {view?.case.labels.inference_label ?? "Choose a case"}
+          {view?.case.labels.worker_choices && (
+            <p>{view.case.labels.worker_choices}</p>
+          )}
+          {view?.case.labels.changed_objective_policy && (
+            <p>{view.case.labels.changed_objective_policy}</p>
+          )}
+        </dd>
         <dt>Playback</dt>
         <dd>{view?.case.labels.playback ?? "No active case"}</dd>
         <dt>Model</dt>

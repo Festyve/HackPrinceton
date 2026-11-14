@@ -3,6 +3,9 @@ import type { CaseView, RawView } from "./api";
 import type { Run } from "./model";
 import { Chips, EvidenceCtx } from "./common";
 import { Dialog } from "./dialog";
+import { useRecordedPlayback, PlaybackControls } from "./playback";
+import { useRecordedTrace } from "./trace-api";
+import type { TraceSpan } from "./trace-api";
 import { RawViewer } from "./evidence";
 
 export interface RawState {
@@ -72,6 +75,7 @@ export function InvestigationTools({
   onTrace,
   onQuestions,
   hasCase,
+  planProgress,
 }: {
   onSources: () => void;
   onPlan: () => void;
@@ -79,6 +83,7 @@ export function InvestigationTools({
   onTrace: () => void;
   onQuestions: () => void;
   hasCase: boolean;
+  planProgress?: string;
 }) {
   return (
     <div
@@ -90,8 +95,11 @@ export function InvestigationTools({
       <button data-testid="btn-sources" onClick={onSources} disabled={!hasCase}>
         Sources & witnesses
       </button>
-      <button onClick={onPlan} disabled={!hasCase}>
-        Plan
+      <button onClick={onPlan} disabled={!hasCase} aria-label="Plan">
+        Plan{" "}
+        {planProgress && (
+          <span className="tool-plan-progress">{planProgress}</span>
+        )}
       </button>
       <button onClick={onCaseFile} disabled={!hasCase}>
         Case file
@@ -128,7 +136,8 @@ export function PlanSummary({ run, onOpen }: { run: Run; onOpen: () => void }) {
   );
 }
 
-export function PlanView({ run }: { run: Run }) {
+export function PlanView({ run, caseId }: { run: Run; caseId: string }) {
+  const { trace, error } = useRecordedTrace(caseId, run.lastSeq);
   return (
     <section className="plan-view" data-testid="investigation-plan">
       <p className="small muted">
@@ -192,63 +201,188 @@ export function PlanView({ run }: { run: Run }) {
           })}
         </details>
       )}
-      <p className="small muted">
-        A revised plan and the conflict that caused it will appear only when the
-        backend records those events. This view does not infer a revision.
-      </p>
+      {trace && (
+        <section
+          className="recorded-revisions"
+          data-testid="recorded-plan-revisions"
+        >
+          <h3>Changes to the plan’s content</h3>
+          {!trace.behaviors.plan_revisions.length && (
+            <p>
+              No content revision was recorded. Status updates alone are not a
+              revised plan.
+            </p>
+          )}
+          {trace.behaviors.plan_revisions.map((revision) => {
+            const preceding = trace.spans.find(
+              (span) => span.start_seq === revision.after?.seq,
+            );
+            return (
+              <article key={revision.seq}>
+                <h4>Plan event {revision.seq}</h4>
+                {revision.added.map((text) => (
+                  <p key={`add-${text}`}>
+                    <span className="ok">Added:</span> {text}
+                  </p>
+                ))}
+                {revision.removed.map((text) => (
+                  <p key={`remove-${text}`}>
+                    <span className="amber">Removed:</span> {text}
+                  </p>
+                ))}
+                {revision.after && (
+                  <p className="small muted">
+                    Recorded after event {revision.after.seq}:{" "}
+                    {revision.after.what}. {revision.after.summary}
+                  </p>
+                )}
+                <Chips ids={preceding?.evidence_ids} />
+              </article>
+            );
+          })}
+          <p className="small muted">
+            “After” is recorded order, not proof of a cause or a reconstruction
+            of model thoughts.
+          </p>
+        </section>
+      )}
+      {error && (
+        <p className="small amber">
+          The structured trace could not be read: {error}. Received plan events
+          remain visible above.
+        </p>
+      )}
     </section>
   );
 }
 
-export function TraceView({ run }: { run: Run }) {
+export function TraceView({ run, caseId }: { run: Run; caseId: string }) {
+  const { trace, error } = useRecordedTrace(caseId, run.lastSeq);
+  const spans: TraceSpan[] =
+    trace?.spans ??
+    run.tools.map((t) => ({
+      span_id: `t${t.seq}`,
+      parent_id: null,
+      kind: "tool",
+      actor: t.agent,
+      tool: t.tool,
+      arguments: t.args,
+      result_summary: t.result_summary,
+      evidence_ids: t.evidence_ids,
+      status: t.ok ? "ok" : "error",
+      start_seq: t.seq,
+      start: "",
+      ms: t.ms,
+    }));
+  const playback = useRecordedPlayback(spans.length);
+  function depth(span: TraceSpan) {
+    let level = 0,
+      parent = span.parent_id;
+    const seen = new Set<string>();
+    while (parent && !seen.has(parent)) {
+      seen.add(parent);
+      level += 1;
+      parent = spans.find((s) => s.span_id === parent)?.parent_id ?? null;
+    }
+    return Math.min(level, 3);
+  }
   return (
     <section className="trace-view" data-testid="investigation-trace">
       <p className="small muted">
-        Actual received events, in causal stream order. Model thoughts are not
-        exposed or reconstructed.
+        {trace?.note ??
+          "Actual received tool events. Model thoughts are not exposed or reconstructed."}
       </p>
-      {!run.tools.length && <p>No tool calls have been recorded.</p>}
+      {error && (
+        <p className="small amber">
+          Structured trace unavailable: {error}. Received tool records remain
+          visible.
+        </p>
+      )}
+      <PlaybackControls playback={playback} />
+      {!spans.length && (
+        <p>No tool calls or delegated spans have been recorded.</p>
+      )}
       <ol className="trace-events">
-        {run.tools.map((t) => (
-          <li key={t.seq}>
+        {spans.slice(0, playback.shown).map((span) => (
+          <li
+            key={span.span_id}
+            data-kind={span.kind}
+            data-parent={span.parent_id ?? ""}
+            style={{ marginLeft: depth(span) * 16 }}
+          >
             <details>
               <summary>
-                <span className="trace-seq mono">{t.seq}</span>
+                <span className="trace-seq mono">{span.start_seq}</span>
                 <span>
-                  <b>{t.tool.replace(/_/g, " ")}</b>
-                  <small>{t.agent}</small>
+                  <b>
+                    {span.tool
+                      ? span.tool.replace(/_/g, " ")
+                      : span.kind === "run"
+                        ? "Investigation run"
+                        : "Delegated evidence review"}
+                  </b>
+                  <small>
+                    {span.actor} · {span.kind}
+                  </small>
                 </span>
-                <span className={t.ok ? "ok" : "bad"}>
-                  {t.ok ? "Completed" : "Failed"}
-                  {t.ms != null ? ` · ${t.ms} ms` : ""}
+                <span
+                  className={
+                    span.status === "error"
+                      ? "bad"
+                      : span.status === "running"
+                        ? "amber"
+                        : "ok"
+                  }
+                >
+                  {span.status === "ok" ? "Completed" : span.status}
+                  {span.ms != null ? ` · ${span.ms} ms` : ""}
                 </span>
               </summary>
               <dl className="facts">
-                <dt>Tool</dt>
-                <dd className="mono">{t.tool}</dd>
+                <dt>Recorded span</dt>
+                <dd className="mono">
+                  {span.span_id}
+                  {span.parent_id ? ` · parent ${span.parent_id}` : " · root"}
+                </dd>
+                {span.tool && (
+                  <>
+                    <dt>Tool ID</dt>
+                    <dd className="mono">{span.tool}</dd>
+                  </>
+                )}
                 <dt>Actor</dt>
-                <dd>{t.agent}</dd>
-                <dt>Input</dt>
+                <dd>{span.actor}</dd>
+                {span.start && (
+                  <>
+                    <dt>Recorded time</dt>
+                    <dd>
+                      {span.start}
+                      {span.end ? ` → ${span.end}` : ""}
+                    </dd>
+                  </>
+                )}
+                <dt>Input / task</dt>
                 <dd>
                   <pre>
-                    {t.args == null
-                      ? "No input summary recorded"
-                      : typeof t.args === "string"
-                        ? t.args
-                        : JSON.stringify(t.args, null, 2)}
+                    {span.arguments == null
+                      ? (span.task ?? "No input summary recorded")
+                      : typeof span.arguments === "string"
+                        ? span.arguments
+                        : JSON.stringify(span.arguments, null, 2)}
                   </pre>
                 </dd>
                 <dt>Result</dt>
-                <dd>{t.result_summary || "No result summary recorded"}</dd>
+                <dd>{span.result_summary || "No result summary recorded"}</dd>
               </dl>
-              <Chips ids={t.evidence_ids} />
+              <Chips ids={span.evidence_ids} />
             </details>
           </li>
         ))}
       </ol>
       <p className="small muted">
-        Per-span token and cost values are shown only when supplied by the
-        server. Aggregate measured usage is in Details.
+        Nesting comes from recorded parent span IDs. Display order remains the
+        recorded sequence. Per-span cost and tokens were not supplied; aggregate
+        measured use is in Details.
       </p>
     </section>
   );
@@ -256,6 +390,7 @@ export function TraceView({ run }: { run: Run }) {
 
 export function CaseFile({ view, run }: { view: CaseView; run: Run }) {
   const open = useContext(EvidenceCtx);
+  const { trace, error } = useRecordedTrace(view.case.case_id, run.lastSeq);
   return (
     <section className="case-file" data-testid="case-file">
       <p className="eyebrow">Investigator case file</p>
@@ -263,6 +398,33 @@ export function CaseFile({ view, run }: { view: CaseView; run: Run }) {
       <p>
         {view.report?.summary || "A report summary has not been recorded yet."}
       </p>
+      <p className="small muted">
+        Recorded file-write previews, which may be truncated. These are not a
+        reconstruction of hidden reasoning.
+      </p>
+      {trace && (
+        <div className="case-file-history" data-testid="case-file-history">
+          <h3>Filesystem activity</h3>
+          <p>
+            {trace.behaviors.case_file.writes} writes / edits ·{" "}
+            {trace.behaviors.case_file.reads_after_a_write} later reads of
+            written files · {trace.behaviors.resumed.times} recorded resumes
+          </p>
+          <ol>
+            {trace.case_file.map((file) => (
+              <li key={file.seq}>
+                <b>{file.op}</b> <span className="mono">{file.path}</span>
+                <small>
+                  Event {file.seq} · {file.t}
+                </small>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+      {error && (
+        <p className="small amber">Filesystem trace unavailable: {error}</p>
+      )}
       {run.notes.length ? (
         run.notes.map((n, i) => (
           <section key={i}>

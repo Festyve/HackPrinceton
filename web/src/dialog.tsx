@@ -7,16 +7,19 @@ export function Dialog({
   children,
   onClose,
   wide = false,
+  returnFocus,
 }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
   wide?: boolean;
+  returnFocus?: HTMLElement | null;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const el = ref.current;
-    const trigger = document.activeElement as HTMLElement | null;
+    const trigger =
+      returnFocus ?? (document.activeElement as HTMLElement | null);
     el?.showModal();
     // Keep keyboard focus inside the app even when Tab would otherwise visit browser chrome.
     const contain = (e: KeyboardEvent) => {

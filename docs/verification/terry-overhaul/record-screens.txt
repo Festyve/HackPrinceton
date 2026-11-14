@@ -1,0 +1,1 @@
+Refreshed six evidence screenshots; record identity visible at all three sizes; no page overflow.

@@ -1,3 +1,4 @@
+import type { LabMeta } from "./lab-api";
 import type {
   AttributionAssessment,
   EvidenceManifest,
@@ -18,6 +19,11 @@ export class ApiError extends Error {
 }
 
 export interface Capabilities {
+  worker_lab?: {
+    endpoint?: boolean;
+    ordinary_work?: string;
+    changed_objective?: string;
+  };
   investigation_modes?: {
     available?: string[];
     labels?: Record<string, string>;
@@ -75,6 +81,7 @@ export interface Presets {
 }
 
 export interface CaseInfo {
+  lab?: LabMeta | null;
   case_id: string;
   state: string;
   detail?: string;
@@ -97,6 +104,8 @@ export interface CaseInfo {
     inference_label: string;
     playback: string;
     model_id?: string | null;
+    worker_choices?: string;
+    changed_objective_policy?: string;
     investigation_mode_label?: string;
   };
 }
@@ -500,7 +509,7 @@ export interface Benchmark {
   } | null;
 }
 
-async function req<T>(path: string, init?: RequestInit): Promise<T> {
+export async function req<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
     res = await fetch(path, init);
@@ -569,6 +578,7 @@ export const api = {
   review: (id: string, decision: "accept" | "reject") =>
     post<CaseView>(`/api/cases/${q(id)}/review`, { decision }),
   reveal: (id: string) => post<CaseView>(`/api/cases/${q(id)}/reveal`),
+  cancel: (id: string) => post<CaseView>(`/api/cases/${q(id)}/cancel`),
   reset: (id: string) => post<unknown>(`/api/cases/${q(id)}/reset`),
   evEvents: (id: string, ids: string) =>
     req<{ events: EvEvent[]; missing: string[] }>(
