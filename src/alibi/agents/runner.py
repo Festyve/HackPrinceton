@@ -207,8 +207,11 @@ class AgentRunner:
                                                 for t in args.get("todos", [])]})
                     ctx.pace_quiet(0.5)
                 elif name in ("write_file", "edit_file"):
-                    ctx.emit("note", {"path": str(args.get("file_path", "")),
+                    ctx.emit("note", {"path": str(args.get("file_path", "")), "op": name,
                                       "preview": str(args.get("content", args.get("new_string", "")))[:400]})
+                elif name == "read_file":
+                    # the case file being read back later is part of the real trace, so it is recorded
+                    ctx.emit("note_read", {"path": str(args.get("file_path", ""))})
                 elif name == "finalize_report":
                     toolbox.note_pending_final(str(args.get("summary", "")), list(args.get("open_questions") or []))
         elif isinstance(msg, ToolMessage) and msg.name == "task":

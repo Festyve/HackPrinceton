@@ -27,7 +27,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from alibi import baselines, checks, explain, evidence_views, export, importing, questions, source_experiment
+from alibi import baselines, checks, explain, evidence_views, export, importing, questions, source_experiment, trace
 from alibi.lab import engine as lab_engine
 from alibi.config import REPO_ROOT, Settings
 from alibi.contracts import INFERENCE_LABELS, InvestigationReport, QuestionAnswer, iso
@@ -1235,6 +1235,13 @@ class Orchestrator:
             "last_seq": self._log(case_id).last_seq(),
             "runtime": self.settings.public_dict(),
         }
+
+    def investigation_trace(self, case_id: str) -> dict[str, Any]:
+        """The recorded plan, tool calls, delegations and case-file activity of this case's investigation."""
+        rec = self._load(case_id)
+        out = trace.investigation_trace(self._log(case_id).since(0))
+        out.update(case_id=case_id, state=rec.state, labels=rec.public()["labels"])
+        return out
 
     def _store(self, case_id: str) -> tuple[EvidenceStore, EpisodePaths]:
         self._load(case_id)

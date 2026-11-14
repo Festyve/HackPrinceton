@@ -292,8 +292,12 @@ def test_a_model_is_told_it_is_a_lab_and_is_given_no_truth(env, monkeypatch):
         investigator.build_investigator(toolbox, lead_model=None, auditor_model=None, skeptic_model=None, checkpointer=None)
         brief = json.dumps(toolbox.brief() if hasattr(toolbox, "brief") else manifest.operational_context)
     for prompt in seen + [framing_for(manifest, QA_SYSTEM)]:
-        assert "automated workers process synthetic datasets" in prompt and "clinic" not in prompt.lower()
-        assert "W1" not in prompt and "changed" not in prompt.lower().replace("unchanged", "")
+        flat = " ".join(prompt.split()).lower()
+        assert "automated workers process synthetic datasets" in flat and "clinic" not in flat
+        # nothing says that an objective was changed, by whom or when
+        assert "w1" not in flat and "objective" not in flat and "rogue" not in flat and "transition" not in flat
+    # the three-agent lead on a lab case is told to follow the evidence, not a fixed order of steps
+    assert seen[1] == investigator.LAB_LEAD_PROMPT and "not a fixed script" in seen[1] and "read_file /case/case.md" in seen[1]
     assert "transition" not in brief and "lab_incident" not in brief and "wk-ingest" in brief
 
 
@@ -416,3 +420,54 @@ def test_a_refusal_is_kept_as_a_refusal_and_no_fixture_stands_in(live):
     assert statuses["chosen"] == 2 and statuses["refused"] >= 1 and len(fake.seen) == 3  # asked no more after refusing
     assert rec.lab["provenance"]["ordinary_work"] == ["model:anthropic:test-model"]
     assert rec.state == "frozen"  # the run still freezes; what was not done is simply not there
+
+
+# ---------------------------------------------------------------- the recorded trace
+
+
+def test_the_trace_reports_only_what_the_event_log_holds(env):
+    """A scripted three-agent run plans, delegates and writes a note. It never rewrites its plan and never reads the
+    note back, and the trace says exactly that."""
+    _, orch, c, _ = env
+    cid = _create(c, variant="incident", runner="agent-fixture")["case"]["case_id"]
+    _wait(c, cid)
+    tr = c.get(f"/api/cases/{cid}/trace").json()
+    b = tr["behaviors"]
+    assert b["planned_before_examining"] is True
+    assert [d["to"] for d in b["delegations"]] == ["integrity-auditor", "skeptic"] and all(d["tool_calls"] == 2 for d in b["delegations"])
+    assert b["plan_revisions"] == [] and b["case_file"] == {"writes": 1, "reads_after_a_write": 0, "paths": ["/case/notes.md"]}
+    assert b["resumed"]["times"] == 0
+    tools = [s for s in tr["spans"] if s["kind"] == "tool"]
+    assert tools and all(s["parent_id"] for s in tools) and tr["labels"]["inference"] == "SCRIPTED_FIXTURE"
+    assert "not a model's thoughts" in tr["note"]
+
+
+def test_the_trace_recognises_a_rewritten_plan_and_a_note_read_back():
+    from alibi.trace import investigation_trace
+
+    def ev(seq, kind, **data):
+        return {"seq": seq, "ts": f"2026-11-14T20:00:{seq:02d}Z", "type": kind, "data": data}
+
+    events = [
+        ev(1, "agent", agent="lead-investigator", status="started", task="investigate"),
+        ev(2, "todo", items=[{"text": "read the brief", "status": "in_progress"}, {"text": "run the checks", "status": "pending"}]),
+        ev(3, "note", path="/case/case.md", op="write_file", preview="Questions"),
+        ev(4, "agent", agent="integrity-auditor", status="started", task="run the checks"),
+        ev(5, "tool", agent="integrity-auditor", tool="check_local_vs_collector", args="{}", result_summary="2 lines absent", evidence_ids=["ev_1"], ok=True),
+        ev(6, "agent", agent="integrity-auditor", status="finished", summary="3 candidates"),
+        ev(7, "todo", items=[{"text": "read the brief", "status": "completed"}, {"text": "run the checks", "status": "completed"},
+                             {"text": "Lead: two export records missing on the host", "status": "pending"}]),
+        ev(8, "tool", agent="lead-investigator", tool="search_events", args="{}", result_summary="5 rows", ok=True),
+        ev(9, "note_read", path="/case/case.md"),
+        ev(10, "note_read", path="/case/other.md"),  # never written: not a read-back
+        ev(11, "todo", items=[{"text": "read the brief", "status": "completed"}, {"text": "run the checks", "status": "completed"},
+                              {"text": "Lead: two export records missing on the host", "status": "completed"}]),
+    ]
+    b = investigation_trace(events)["behaviors"]
+    assert b["planned_before_examining"] is True
+    assert [(r["seq"], r["added"], r["after"]["seq"]) for r in b["plan_revisions"]] == [
+        (7, ["Lead: two export records missing on the host"], 6)]  # ticking items off (seq 11) is not a revision
+    assert b["case_file"]["writes"] == 1 and b["case_file"]["reads_after_a_write"] == 1
+    assert b["delegations"][0]["tool_calls"] == 1 and b["delegations"][0]["result_summary"] == "3 candidates"
+    # no plan at all, or a plan written only after examining, is reported as such
+    assert investigation_trace(events[3:])["behaviors"]["planned_before_examining"] is False
