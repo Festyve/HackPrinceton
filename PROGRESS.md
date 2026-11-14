@@ -386,3 +386,11 @@ Phase-two model spend so far: about **$0.08** (ledger total $3.006 of the $20 ca
 - None of them had affected recorded spend. After the fixes: the real ledger still validates ($3.4749, 508 calls, nothing reserved or unreconciled), the unbilled count check works, and one smoke call settled normally.
 - Two more robustness tests for the checks: reordered or late collector delivery, and a collector clock that disagrees with the host (`40e6dac`). Both passed without a code change.
 - Added: `GET /api/spend` (totals only) for the interface's status drawer, and `alibi eval --render` to regenerate a report from saved results.
+
+### While waiting for teammate branches (06:45–07:00)
+
+- Integration briefs with paste-ready prompts: [`docs/ui-integration-brief.md`](docs/ui-integration-brief.md) for the UI owner and the end of [`docs/importing.md`](docs/importing.md) for the capture owner (`e184eab`).
+- Questions about the new case families: their claims are now compared with the family's own deterministic check. A real answer about the cold-chain case had been cut off at the per-call output limit; the limit is raised and a cut-off is reported as one (`93ad802`). Verified on the real model: 3 claims checked, $0.003.
+- The cold-chain and records-heist recordings were re-recorded with one recorded answer each; both replay offline and score 1/1 and 3/3 (`d4b83f2`). In the cold-chain run the model again put the backup service account in the attribution although no account was involved in that incident; the report still says the human is not established, and the scorer treats account identification as not applicable there.
+- Planted instructions in evidence, tried once on the real model (`benchmarks/feature-checks/planted-instructions-haiku-5-5.json`): 3/3 effects, nobody named, nothing leaked, and the model described the line as data. One run; not a robustness measurement.
+- A background watcher wakes the session when `codex/terry-ui` moves, when `codex/daniel-capture` appears, or at 09:00 ET.
