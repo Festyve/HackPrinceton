@@ -1,126 +1,33 @@
 {
   "schema_version": "1.0.0",
-  "question_id": "q-ad0003ab55",
-  "case_id": "case-deea15d2e60a",
+  "question_id": "q-840fa7356f",
+  "case_id": "case-1907422715f7",
   "bundle_id": "bndl-646e90a648ad486f",
   "question": "Was ransomware deployed on the pharmacy server?",
-  "status": "insufficient_evidence",
-  "answer": "The bundle does not establish that ransomware was deployed. Searches for \"ransom\" and \"encrypt\" returned no events. The evidence shows a policy-violating bulk transfer from workstation to 10.20.9.87:8080 after the staged file upd-4c2e.pkg was created, under account rhaddad. Nothing shows encryption or a ransom note on any host. The records host is rec-srv-01, and I cannot confirm it is the pharmacy server.",
-  "claims": [
-    {
-      "text": "No event in the bundle mentions ransomware or file encryption; keyword searches for 'ransom' and 'encrypt' returned zero events.",
-      "evidence_ids": [],
-      "support": "unsupported",
-      "kind": "record",
-      "basis": "no event id from this bundle is cited for this claim"
-    },
-    {
-      "text": "A 20,948,102-byte transfer left workstation for 10.20.9.87:8080 on 2026-11-10 between 12:41:24 and 12:41:37, and that destination is not on the approved list.",
-      "evidence_ids": [
-        "ev_9017ed847e2a",
-        "ev_0a089a849682"
-      ],
-      "support": "checked",
-      "kind": "transfer_not_approved",
-      "basis": "the transfer check lists the cited transfer as not approved: destination 10.20.9.87 is not on the approved bulk-destination list (10.20.0.45, 10.20.8.20)"
-    },
-    {
-      "text": "The object /home/rhaddad/Downloads/upd-4c2e.pkg (20,944,103 bytes) was staged on workstation before that transfer.",
-      "evidence_ids": [
-        "ev_a12bc7a76943",
-        "ev_071fec869d89"
-      ],
-      "support": "checked",
-      "kind": "staged_before_transfer",
-      "basis": "the cited records belong to an object the transfer check found staged before a bulk transfer"
-    },
-    {
-      "text": "The transfer overlaps workstation session 91, which belongs to account rhaddad (console origin).",
-      "evidence_ids": [
-        "ev_0e5ae1caaa5a"
-      ],
-      "support": "checked",
-      "kind": "session_account",
-      "basis": "the cited login record belongs to session workstation#91 of account rhaddad. An account is a credential, not a person"
-    },
-    {
-      "text": "The records-to-stor-nas-01 transfer at 12:11 went to an approved destination and is not linked to any session.",
-      "evidence_ids": [
-        "ev_e4db63a910f0"
-      ],
-      "support": "checked",
-      "kind": "transfer_approved",
-      "basis": "the transfer check lists the cited transfer as approved: destination 10.20.0.45 is an approved bulk destination: stor-nas-01 (backup and log archive)"
-    },
-    {
-      "text": "The bundle contains no payload, process, or file-modification evidence on the records server, so deployment on it cannot be confirmed or excluded.",
-      "evidence_ids": [],
-      "support": "interpretation",
-      "kind": "interpretation",
-      "basis": "the model's reading of the evidence; not machine-checked"
-    }
-  ],
-  "limitations": [
-    "Flow records show bytes moved, not content; the staged file's contents are unknown.",
-    "File metadata and shell histories are host-local and could have been altered.",
-    "The records host's fs_stat and syslog show no encryption-related activity in the searched results, but I did not review every event on that host.",
-    "The question's 'pharmacy server' is not mapped to a host in the bundle.",
-    "Account activity identifies a credential, not the person using it. This evidence does not establish who that was, and does not clear anyone."
-  ],
+  "status": "unavailable",
+  "answer": "",
+  "claims": [],
+  "limitations": [],
   "follow_up_evidence": [],
   "dropped_evidence_ids": [],
-  "trace": [
-    {
-      "tool": "search_events",
-      "args": {
-        "text_contains": "ransom",
-        "limit": 50
-      },
-      "result_summary": "0 event(s) match; 0 returned",
-      "ok": true
-    },
-    {
-      "tool": "search_events",
-      "args": {
-        "object_contains": "encrypt",
-        "limit": 50
-      },
-      "result_summary": "0 event(s) match; 0 returned",
-      "ok": true
-    },
-    {
-      "tool": "search_events",
-      "args": {
-        "host": "records",
-        "limit": 50
-      },
-      "result_summary": "572 event(s) match; 50 returned",
-      "ok": true
-    },
-    {
-      "tool": "check_transfer_sessions",
-      "args": {},
-      "result_summary": "2 bulk transfer(s): 1 to a non-approved destination, 1 consistent with policy",
-      "ok": true
-    }
-  ],
+  "trace": [],
   "inference_mode": "LIVE_MODEL",
   "inference_label": "Live model",
   "model_id": "anthropic:claude-haiku-5-5",
   "usage": {
     "llm_calls": 2,
-    "tokens_in": 19880,
-    "tokens_out": 1588,
-    "tokens_cache_read": 7527,
-    "cost_estimate_usd": 0.002413,
-    "wall_seconds": 7.798,
+    "tokens_in": 28485,
+    "tokens_out": 1049,
+    "tokens_cache_read": 7840,
+    "cost_estimate_usd": 0.003183,
+    "wall_seconds": 8.488,
     "tool_calls": 0,
     "scripted_turns": 0,
     "retries": 0,
     "errors": 0,
     "timed_out": false
   },
-  "error": null,
-  "asked_at": "2026-11-14T09:39:58.922299Z",
-  "answered_at": "2026-11-14T09:40:06.727203Z"
+  "error": "stopped by the budget gateway: request too large: 26580 input tokens counted, the per-request ceiling is 24000. It was not sent.",
+  "asked_at": "2026-11-14T10:35:20.643491Z",
+  "answered_at": "2026-11-14T10:35:29.142077Z"
 }

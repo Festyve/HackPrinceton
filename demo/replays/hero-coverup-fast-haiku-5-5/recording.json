@@ -1,0 +1,1150 @@
+{
+ "meta": {
+  "title": "Inside job \u00b7 cover-up",
+  "preset_id": "hero-coverup",
+  "difficulty": "L2",
+  "inference_mode": "LIVE_MODEL",
+  "model_id": "anthropic:claude-haiku-5-5",
+  "runner_id": "agent-live",
+  "investigation_mode": "fast",
+  "recorded_at": "2026-11-14T10:36:22.689783+00:00",
+  "git_commit": "e1676bd",
+  "note": "Real model run (claude-haiku-5-5, fast mode: one agent) through the budget gateway, with two recorded question answers. The incident is a scripted scenario.",
+  "simulator_version": "1.1.0",
+  "raw_bundle_sha256": "646e90a648ad486f1b8f81a173ce6b4a865ba8edebef63ce98a367ddbff31444"
+ },
+ "spec": {
+  "accounts": {
+   "admin": "adm-vrao",
+   "nurse_a": "rhaddad",
+   "nurse_b": "mreyes"
+  },
+  "badges": {
+   "adm-vrao": "B-3004",
+   "facilities-1": "B-3554",
+   "mreyes": "B-1949",
+   "pharmacy-1": "B-5551",
+   "rhaddad": "B-3201"
+  },
+  "benign": {},
+  "capture_end": "2026-11-10T15:15:00+00:00",
+  "capture_start": "2026-11-10T06:15:00+00:00",
+  "card_id": "inside-job",
+  "case_kind": "incident",
+  "crime": {
+   "framed_account": "rhaddad",
+   "operator_person": "person:adm-vrao",
+   "owner_badged_out": true,
+   "sink_ip": "10.20.9.87",
+   "start": "2026-11-10T12:38:08+00:00"
+  },
+  "dataset_sizes": {
+   "immunization_registry": 8315511,
+   "patients_full": 20944103
+  },
+  "difficulty": "L2",
+  "dmz_ips": [
+   "10.20.9.19",
+   "10.20.9.34",
+   "10.20.9.86",
+   "10.20.9.87"
+  ],
+  "plan": [
+   {
+    "delay_s": 20,
+    "params": {
+     "account": "rhaddad"
+    },
+    "step": "login_as"
+   },
+   {
+    "delay_s": 104,
+    "params": {
+     "dst_dir": "/home/{account}/Downloads",
+     "dst_name": "upd-4c2e.pkg",
+     "src": "patients_full"
+    },
+    "step": "stage_copy"
+   },
+   {
+    "delay_s": 65,
+    "params": {
+     "dst": "10.20.9.87",
+     "path": "/home/rhaddad/Downloads/upd-4c2e.pkg"
+    },
+    "step": "exfil_http"
+   },
+   {
+    "delay_s": 44,
+    "params": {
+     "event_selection": "own_session_all",
+     "file": "/var/log/auth.log",
+     "host": "collector"
+    },
+    "step": "delete_log_lines"
+   },
+   {
+    "delay_s": 101,
+    "params": {
+     "event_selection": "own_session_open",
+     "file": "/var/log/auth.log",
+     "host": "workstation"
+    },
+    "step": "delete_log_lines"
+   }
+  ],
+  "plan_source": "scripted_scenario",
+  "scenario_version": "1.0.0",
+  "seed": 9023,
+  "simulator_version": "1.1.0",
+  "t0": "2026-11-10T07:00:00+00:00",
+  "t_backup": "2026-11-10T12:11:00+00:00",
+  "t_rot": "2026-11-10T09:00:00+00:00",
+  "variant": "incident_coverup"
+ },
+ "events": [
+  {
+   "seq": 9,
+   "ts": "2026-11-14T10:35:41.530430+00:00",
+   "type": "agent",
+   "data": {
+    "agent": "single-agent",
+    "status": "started",
+    "task": "investigate the frozen bundle"
+   }
+  },
+  {
+   "seq": 10,
+   "ts": "2026-11-14T10:35:43.189018+00:00",
+   "type": "todo",
+   "data": {
+    "items": [
+     {
+      "text": "Get case brief and policies",
+      "status": "in_progress"
+     },
+     {
+      "text": "Run deterministic checks (log vs collector, transfers)",
+      "status": "pending"
+     },
+     {
+      "text": "Review records access events and session origin",
+      "status": "pending"
+     },
+     {
+      "text": "Submit findings, attribution, report",
+      "status": "pending"
+     }
+    ]
+   }
+  },
+  {
+   "seq": 11,
+   "ts": "2026-11-14T10:35:43.193142+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "get_case_brief",
+    "args": {},
+    "result_summary": "brief for bndl-646e90a648ad486f: 16 sources",
+    "evidence_ids": [],
+    "ok": true,
+    "ms": 0
+   }
+  },
+  {
+   "seq": 12,
+   "ts": "2026-11-14T10:35:44.664952+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "search_events",
+    "args": {
+     "host": "records",
+     "limit": 50,
+     "offset": 0
+    },
+    "result_summary": "572 event(s) match; 50 returned",
+    "evidence_ids": [
+     "ev_5e770f7d0e34",
+     "ev_2f285c33a6ab",
+     "ev_56639f640860",
+     "ev_da6be6ce4dea",
+     "ev_efb111022138",
+     "ev_2da76ba2a124",
+     "ev_8843723f0fea",
+     "ev_9364855fc290"
+    ],
+    "ok": true,
+    "ms": 75
+   }
+  },
+  {
+   "seq": 13,
+   "ts": "2026-11-14T10:35:44.665553+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "search_events",
+    "args": {
+     "host": "workstation",
+     "limit": 50,
+     "offset": 0
+    },
+    "result_summary": "261 event(s) match; 50 returned",
+    "evidence_ids": [
+     "ev_128b7c11b948",
+     "ev_a4fdd20cf48c",
+     "ev_0735cf8153b6",
+     "ev_92e2299113bf",
+     "ev_7c14874ab2f9",
+     "ev_f0361a19c20c",
+     "ev_bd2fa5dec30f",
+     "ev_996937a77bea"
+    ],
+    "ok": true,
+    "ms": 75
+   }
+  },
+  {
+   "seq": 14,
+   "ts": "2026-11-14T10:35:44.709483+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "check_transfer_sessions",
+    "args": {},
+    "result_summary": "2 bulk transfer(s): 1 to a non-approved destination, 1 consistent with policy",
+    "evidence_ids": [
+     "ev_e4db63a910f0",
+     "ev_9017ed847e2a"
+    ],
+    "ok": true,
+    "ms": 119
+   }
+  },
+  {
+   "seq": 15,
+   "ts": "2026-11-14T10:35:44.729362+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "check_local_vs_collector",
+    "args": {},
+    "result_summary": "6 forwarded logs compared: 1 line(s) unexplainedly absent on the host, 183 explained by rotation, 0 collection gap(s)",
+    "evidence_ids": [
+     "ev_0e5ae1caaa5a"
+    ],
+    "ok": true,
+    "ms": 141
+   }
+  },
+  {
+   "seq": 16,
+   "ts": "2026-11-14T10:35:49.099248+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "get_events",
+    "args": {
+     "ids": [
+      "ev_0e5ae1caaa5a",
+      "ev_0b6a6ca7baef",
+      "ev_8488241a1c07",
+      "ev_e77eb85e1660",
+      "ev_0a089a849682",
+      "ev_071fec869d89",
+      "ev_66d914361c18",
+      "ev_d75c1233140a",
+      "ev_998986d214f2",
+      "ev_a12bc7a76943",
+      "ev_e4db63a910f0",
+      "ev_9017ed847e2a",
+      "ev_1048c86a75f0",
+      "ev_0582ac2d6dd5"
+     ]
+    },
+    "result_summary": "14 of 14 id(s) resolved",
+    "evidence_ids": [
+     "ev_0e5ae1caaa5a",
+     "ev_0b6a6ca7baef",
+     "ev_8488241a1c07",
+     "ev_e77eb85e1660",
+     "ev_0a089a849682",
+     "ev_071fec869d89",
+     "ev_66d914361c18",
+     "ev_d75c1233140a"
+    ],
+    "ok": true,
+    "ms": 3
+   }
+  },
+  {
+   "seq": 17,
+   "ts": "2026-11-14T10:35:49.104148+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "search_events",
+    "args": {
+     "host": "workstation",
+     "limit": 50,
+     "session_id": "workstation#91",
+     "offset": 0
+    },
+    "result_summary": "1 event(s) match; 1 returned",
+    "evidence_ids": [
+     "ev_8488241a1c07"
+    ],
+    "ok": true,
+    "ms": 7
+   }
+  },
+  {
+   "seq": 18,
+   "ts": "2026-11-14T10:35:49.106939+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "check_account_vs_person",
+    "args": {
+     "session_id": "workstation#91"
+    },
+    "result_summary": "console_session_while_holder_badged_out",
+    "evidence_ids": [
+     "ev_49c33f246bbb",
+     "ev_afa5b9d9811b"
+    ],
+    "ok": true,
+    "ms": 10
+   }
+  },
+  {
+   "seq": 19,
+   "ts": "2026-11-14T10:35:59.849693+00:00",
+   "type": "finding",
+   "data": {
+    "finding": {
+     "id": "F-00b58f",
+     "claim_type": "local_log_removal",
+     "category": "incident_allegation",
+     "attack_id": "T1070",
+     "technique_family": "indicator_removal",
+     "host": "workstation",
+     "actor_claimed": null,
+     "account_used": "rhaddad",
+     "t_start": "2026-11-10T12:38:28Z",
+     "t_end": "2026-11-10T12:38:30Z",
+     "object_or_session": "/var/log/auth.log",
+     "evidence_ids": [
+      "ev_0e5ae1caaa5a",
+      "ev_0b6a6ca7baef",
+      "ev_8488241a1c07",
+      "ev_0582ac2d6dd5",
+      "ev_1048c86a75f0"
+     ],
+     "counterevidence_ids": [
+      "ev_0582ac2d6dd5"
+     ],
+     "check_refs": [],
+     "confidence": 0.8,
+     "rationale": "The collector holds the session 91 login line (seq 35, inner time 12:38:28) for rhaddad on tty1, but the local workstation auth.log has no copy. Local lines bracket it on both sides (logout of session 90 at 12:15:34, logout of session 91 at 12:45:08). The 09:00 rotation is recorded but does not cover a 12:38 line, so rotation does not explain the absence. Host-local file is writable; this supports removal of the line from the local copy, not who did it.",
+     "assumptions": [],
+     "alternative_explanations": [],
+     "status": "verified",
+     "verification_status": "supported_observation",
+     "verifier_notes": [
+      "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+     ],
+     "skeptic_note": null,
+     "produced_by": "single-agent"
+    },
+    "phase": "proposed"
+   }
+  },
+  {
+   "seq": 20,
+   "ts": "2026-11-14T10:35:59.851761+00:00",
+   "type": "finding",
+   "data": {
+    "finding": {
+     "id": "F-51a39f",
+     "claim_type": "data_staging",
+     "category": "incident_allegation",
+     "attack_id": "T1074",
+     "technique_family": "data_staging",
+     "host": "workstation",
+     "actor_claimed": null,
+     "account_used": "rhaddad",
+     "t_start": "2026-11-10T12:40:14Z",
+     "t_end": "2026-11-10T12:40:19Z",
+     "object_or_session": "/home/rhaddad/Downloads/upd-4c2e.pkg",
+     "evidence_ids": [
+      "ev_071fec869d89",
+      "ev_66d914361c18",
+      "ev_d75c1233140a",
+      "ev_998986d214f2",
+      "ev_a12bc7a76943"
+     ],
+     "counterevidence_ids": [],
+     "check_refs": [],
+     "confidence": 0.85,
+     "rationale": "Shell history shows clinic-export of dataset patients_full to Downloads/upd-4c2e.pkg at 12:40:14. Records app logs export_bulk for patients_full by rhaddad (20,944,103 bytes) at 12:40:15, and the collector holds a copy. The workstation fs_stat shows the file at 20,944,103 bytes at 12:40:19.",
+     "assumptions": [],
+     "alternative_explanations": [],
+     "status": "verified",
+     "verification_status": "supported_observation",
+     "verifier_notes": [
+      "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+     ],
+     "skeptic_note": null,
+     "produced_by": "single-agent"
+    },
+    "phase": "proposed"
+   }
+  },
+  {
+   "seq": 21,
+   "ts": "2026-11-14T10:35:59.851834+00:00",
+   "type": "finding",
+   "data": {
+    "finding": {
+     "id": "F-e409cc",
+     "claim_type": "policy_violating_transfer",
+     "category": "incident_allegation",
+     "attack_id": "T1048",
+     "technique_family": "exfiltration",
+     "host": "workstation",
+     "actor_claimed": null,
+     "account_used": "rhaddad",
+     "t_start": "2026-11-10T12:41:24Z",
+     "t_end": "2026-11-10T12:41:37Z",
+     "object_or_session": "10.20.9.87:8080",
+     "evidence_ids": [
+      "ev_9017ed847e2a",
+      "ev_0a089a849682",
+      "ev_998986d214f2"
+     ],
+     "counterevidence_ids": [],
+     "check_refs": [],
+     "confidence": 0.85,
+     "rationale": "Shell history shows curl upload of the staged package to http://10.20.9.87:8080. The tap records 20,948,102 bytes out from 10.20.1.21 (workstation) to 10.20.9.87:8080, above the 5 MB threshold. The destination is not on the approved list (10.20.0.45, 10.20.8.20). It overlaps workstation session 91 (rhaddad, console).",
+     "assumptions": [],
+     "alternative_explanations": [],
+     "status": "verified",
+     "verification_status": "supported_observation",
+     "verifier_notes": [
+      "bulk transfer to a destination not on the approved list, cited via the flow record"
+     ],
+     "skeptic_note": null,
+     "produced_by": "single-agent"
+    },
+    "phase": "proposed"
+   }
+  },
+  {
+   "seq": 22,
+   "ts": "2026-11-14T10:35:59.851945+00:00",
+   "type": "finding",
+   "data": {
+    "finding": {
+     "id": "F-fae12e",
+     "claim_type": "policy_consistent_transfer",
+     "category": "benign_explanation",
+     "attack_id": null,
+     "technique_family": null,
+     "host": "records",
+     "actor_claimed": null,
+     "account_used": null,
+     "t_start": "2026-11-10T12:11:04Z",
+     "t_end": "2026-11-10T12:11:10Z",
+     "object_or_session": "10.20.0.45:873",
+     "evidence_ids": [
+      "ev_e4db63a910f0"
+     ],
+     "counterevidence_ids": [],
+     "check_refs": [],
+     "confidence": 0.8,
+     "rationale": "Bulk flow of 20,949,303 bytes from records to 10.20.0.45:873 (stor-nas-01, approved backup/log archive destination). Policy-consistent. No overlapping interactive session is linked.",
+     "assumptions": [],
+     "alternative_explanations": [],
+     "status": "verified",
+     "verification_status": "supported_observation",
+     "verifier_notes": [
+      "a deterministic check supports this observation; it is not an incident allegation"
+     ],
+     "skeptic_note": null,
+     "produced_by": "single-agent"
+    },
+    "phase": "proposed"
+   }
+  },
+  {
+   "seq": 23,
+   "ts": "2026-11-14T10:35:59.852012+00:00",
+   "type": "finding",
+   "data": {
+    "finding": {
+     "id": "F-2aa970",
+     "claim_type": "retention_explained_absence",
+     "category": "benign_explanation",
+     "attack_id": null,
+     "technique_family": null,
+     "host": "records",
+     "actor_claimed": null,
+     "account_used": null,
+     "t_start": "2026-11-10T06:28:22Z",
+     "t_end": "2026-11-10T08:59:13Z",
+     "object_or_session": "/var/log/records-app/access.log",
+     "evidence_ids": [
+      "ev_703d13366f13",
+      "ev_4358af94bbef",
+      "ev_f4e3558523bc"
+     ],
+     "counterevidence_ids": [],
+     "check_refs": [],
+     "confidence": 0.5,
+     "rationale": "183 collector-retained access.log lines from 06:28 to 08:59 are absent locally. They predate the oldest generation kept after the 09:00:04 logrotate (keep 0, archived off-host), so the absence is explained by scheduled rotation.",
+     "assumptions": [],
+     "alternative_explanations": [],
+     "status": "proposed",
+     "verification_status": "structurally_valid",
+     "verifier_notes": [
+      "references resolve; no allegation is made"
+     ],
+     "skeptic_note": null,
+     "produced_by": "single-agent"
+    },
+    "phase": "proposed"
+   }
+  },
+  {
+   "seq": 24,
+   "ts": "2026-11-14T10:35:59.852061+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "submit_finding",
+    "args": {
+     "claim_type": "retention_explained_absence",
+     "category": "benign_explanation",
+     "host": "records",
+     "object_or_session": "/var/log/records-app/access.log"
+    },
+    "result_summary": "F-2aa970 retention_explained_absence: structurally_valid",
+    "evidence_ids": [
+     "ev_703d13366f13",
+     "ev_4358af94bbef",
+     "ev_f4e3558523bc"
+    ],
+    "ok": true,
+    "ms": 92
+   }
+  },
+  {
+   "seq": 25,
+   "ts": "2026-11-14T10:35:59.852180+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "submit_finding",
+    "args": {
+     "claim_type": "data_staging",
+     "category": "incident_allegation",
+     "host": "workstation",
+     "object_or_session": "/home/rhaddad/Downloads/upd-4c2e.pkg"
+    },
+    "result_summary": "F-51a39f data_staging: supported_observation",
+    "evidence_ids": [
+     "ev_071fec869d89",
+     "ev_66d914361c18",
+     "ev_d75c1233140a",
+     "ev_998986d214f2",
+     "ev_a12bc7a76943"
+    ],
+    "ok": true,
+    "ms": 93
+   }
+  },
+  {
+   "seq": 26,
+   "ts": "2026-11-14T10:35:59.852517+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "submit_finding",
+    "args": {
+     "claim_type": "policy_violating_transfer",
+     "category": "incident_allegation",
+     "host": "workstation",
+     "object_or_session": "10.20.9.87:8080"
+    },
+    "result_summary": "F-e409cc policy_violating_transfer: supported_observation",
+    "evidence_ids": [
+     "ev_9017ed847e2a",
+     "ev_0a089a849682",
+     "ev_998986d214f2"
+    ],
+    "ok": true,
+    "ms": 93
+   }
+  },
+  {
+   "seq": 27,
+   "ts": "2026-11-14T10:35:59.852841+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "submit_finding",
+    "args": {
+     "claim_type": "policy_consistent_transfer",
+     "category": "benign_explanation",
+     "host": "records",
+     "object_or_session": "10.20.0.45:873"
+    },
+    "result_summary": "F-fae12e policy_consistent_transfer: supported_observation",
+    "evidence_ids": [
+     "ev_e4db63a910f0"
+    ],
+    "ok": true,
+    "ms": 92
+   }
+  },
+  {
+   "seq": 28,
+   "ts": "2026-11-14T10:35:59.853129+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "submit_finding",
+    "args": {
+     "claim_type": "local_log_removal",
+     "category": "incident_allegation",
+     "host": "workstation",
+     "object_or_session": "/var/log/auth.log"
+    },
+    "result_summary": "F-00b58f local_log_removal: supported_observation",
+    "evidence_ids": [
+     "ev_0e5ae1caaa5a",
+     "ev_0b6a6ca7baef",
+     "ev_8488241a1c07",
+     "ev_0582ac2d6dd5",
+     "ev_1048c86a75f0"
+    ],
+    "ok": true,
+    "ms": 94
+   }
+  },
+  {
+   "seq": 30,
+   "ts": "2026-11-14T10:36:03.547417+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "submit_attribution",
+    "args": {
+     "account_used": "rhaddad",
+     "human_identity": "insufficient_evidence"
+    },
+    "result_summary": "account rhaddad; human identity insufficient_evidence",
+    "evidence_ids": [
+     "ev_0e5ae1caaa5a",
+     "ev_071fec869d89",
+     "ev_66d914361c18",
+     "ev_0a089a849682"
+    ],
+    "ok": true,
+    "ms": 1
+   }
+  },
+  {
+   "seq": 31,
+   "ts": "2026-11-14T10:36:07.431818+00:00",
+   "type": "agent",
+   "data": {
+    "agent": "single-agent",
+    "status": "finished",
+    "summary": "5 finding(s) submitted for review"
+   }
+  }
+ ],
+ "report": {
+  "schema_version": "1.0.0",
+  "report_id": "rep-case-044c4c41ff3c",
+  "bundle_id": "bndl-646e90a648ad486f",
+  "system_id": "B1+",
+  "system_label": "Fast investigation: one agent with deterministic checks, no delegation (same configuration as benchmark arm B1+)",
+  "inference_mode": "LIVE_MODEL",
+  "model_id": "anthropic:claude-haiku-5-5",
+  "findings": [
+   {
+    "id": "F-00b58f",
+    "claim_type": "local_log_removal",
+    "category": "incident_allegation",
+    "attack_id": "T1070",
+    "technique_family": "indicator_removal",
+    "host": "workstation",
+    "actor_claimed": null,
+    "account_used": "rhaddad",
+    "t_start": "2026-11-10T12:38:28Z",
+    "t_end": "2026-11-10T12:38:30Z",
+    "object_or_session": "/var/log/auth.log",
+    "evidence_ids": [
+     "ev_0e5ae1caaa5a",
+     "ev_0b6a6ca7baef",
+     "ev_8488241a1c07",
+     "ev_0582ac2d6dd5",
+     "ev_1048c86a75f0"
+    ],
+    "counterevidence_ids": [
+     "ev_0582ac2d6dd5"
+    ],
+    "check_refs": [],
+    "confidence": 0.8,
+    "rationale": "The collector holds the session 91 login line (seq 35, inner time 12:38:28) for rhaddad on tty1, but the local workstation auth.log has no copy. Local lines bracket it on both sides (logout of session 90 at 12:15:34, logout of session 91 at 12:45:08). The 09:00 rotation is recorded but does not cover a 12:38 line, so rotation does not explain the absence. Host-local file is writable; this supports removal of the line from the local copy, not who did it.",
+    "assumptions": [],
+    "alternative_explanations": [],
+    "status": "verified",
+    "verification_status": "supported_observation",
+    "verifier_notes": [
+     "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+    ],
+    "skeptic_note": null,
+    "produced_by": "single-agent"
+   },
+   {
+    "id": "F-51a39f",
+    "claim_type": "data_staging",
+    "category": "incident_allegation",
+    "attack_id": "T1074",
+    "technique_family": "data_staging",
+    "host": "workstation",
+    "actor_claimed": null,
+    "account_used": "rhaddad",
+    "t_start": "2026-11-10T12:40:14Z",
+    "t_end": "2026-11-10T12:40:19Z",
+    "object_or_session": "/home/rhaddad/Downloads/upd-4c2e.pkg",
+    "evidence_ids": [
+     "ev_071fec869d89",
+     "ev_66d914361c18",
+     "ev_d75c1233140a",
+     "ev_998986d214f2",
+     "ev_a12bc7a76943"
+    ],
+    "counterevidence_ids": [],
+    "check_refs": [],
+    "confidence": 0.85,
+    "rationale": "Shell history shows clinic-export of dataset patients_full to Downloads/upd-4c2e.pkg at 12:40:14. Records app logs export_bulk for patients_full by rhaddad (20,944,103 bytes) at 12:40:15, and the collector holds a copy. The workstation fs_stat shows the file at 20,944,103 bytes at 12:40:19.",
+    "assumptions": [],
+    "alternative_explanations": [],
+    "status": "verified",
+    "verification_status": "supported_observation",
+    "verifier_notes": [
+     "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+    ],
+    "skeptic_note": null,
+    "produced_by": "single-agent"
+   },
+   {
+    "id": "F-e409cc",
+    "claim_type": "policy_violating_transfer",
+    "category": "incident_allegation",
+    "attack_id": "T1048",
+    "technique_family": "exfiltration",
+    "host": "workstation",
+    "actor_claimed": null,
+    "account_used": "rhaddad",
+    "t_start": "2026-11-10T12:41:24Z",
+    "t_end": "2026-11-10T12:41:37Z",
+    "object_or_session": "10.20.9.87:8080",
+    "evidence_ids": [
+     "ev_9017ed847e2a",
+     "ev_0a089a849682",
+     "ev_998986d214f2"
+    ],
+    "counterevidence_ids": [],
+    "check_refs": [],
+    "confidence": 0.85,
+    "rationale": "Shell history shows curl upload of the staged package to http://10.20.9.87:8080. The tap records 20,948,102 bytes out from 10.20.1.21 (workstation) to 10.20.9.87:8080, above the 5 MB threshold. The destination is not on the approved list (10.20.0.45, 10.20.8.20). It overlaps workstation session 91 (rhaddad, console).",
+    "assumptions": [],
+    "alternative_explanations": [],
+    "status": "verified",
+    "verification_status": "supported_observation",
+    "verifier_notes": [
+     "bulk transfer to a destination not on the approved list, cited via the flow record"
+    ],
+    "skeptic_note": null,
+    "produced_by": "single-agent"
+   },
+   {
+    "id": "F-2aa970",
+    "claim_type": "retention_explained_absence",
+    "category": "benign_explanation",
+    "attack_id": null,
+    "technique_family": null,
+    "host": "records",
+    "actor_claimed": null,
+    "account_used": null,
+    "t_start": "2026-11-10T06:28:22Z",
+    "t_end": "2026-11-10T08:59:13Z",
+    "object_or_session": "/var/log/records-app/access.log",
+    "evidence_ids": [
+     "ev_703d13366f13",
+     "ev_4358af94bbef",
+     "ev_f4e3558523bc"
+    ],
+    "counterevidence_ids": [],
+    "check_refs": [],
+    "confidence": 0.5,
+    "rationale": "183 collector-retained access.log lines from 06:28 to 08:59 are absent locally. They predate the oldest generation kept after the 09:00:04 logrotate (keep 0, archived off-host), so the absence is explained by scheduled rotation.",
+    "assumptions": [],
+    "alternative_explanations": [],
+    "status": "proposed",
+    "verification_status": "structurally_valid",
+    "verifier_notes": [
+     "references resolve; no allegation is made"
+    ],
+    "skeptic_note": null,
+    "produced_by": "single-agent"
+   },
+   {
+    "id": "F-fae12e",
+    "claim_type": "policy_consistent_transfer",
+    "category": "benign_explanation",
+    "attack_id": null,
+    "technique_family": null,
+    "host": "records",
+    "actor_claimed": null,
+    "account_used": null,
+    "t_start": "2026-11-10T12:11:04Z",
+    "t_end": "2026-11-10T12:11:10Z",
+    "object_or_session": "10.20.0.45:873",
+    "evidence_ids": [
+     "ev_e4db63a910f0"
+    ],
+    "counterevidence_ids": [],
+    "check_refs": [],
+    "confidence": 0.8,
+    "rationale": "Bulk flow of 20,949,303 bytes from records to 10.20.0.45:873 (stor-nas-01, approved backup/log archive destination). Policy-consistent. No overlapping interactive session is linked.",
+    "assumptions": [],
+    "alternative_explanations": [],
+    "status": "verified",
+    "verification_status": "supported_observation",
+    "verifier_notes": [
+     "a deterministic check supports this observation; it is not an incident allegation"
+    ],
+    "skeptic_note": null,
+    "produced_by": "single-agent"
+   }
+  ],
+  "attribution": {
+   "account_used": "rhaddad",
+   "session_ref": "workstation#91",
+   "human_identity": "insufficient_evidence",
+   "named_person_accused": null,
+   "named_person_exonerated": null,
+   "supporting_evidence_ids": [
+    "ev_0e5ae1caaa5a",
+    "ev_071fec869d89",
+    "ev_66d914361c18",
+    "ev_0a089a849682"
+   ],
+   "contrary_evidence_ids": [
+    "ev_49c33f246bbb",
+    "ev_afa5b9d9811b"
+   ],
+   "assumptions": [],
+   "limits": [
+    "An account identifies a credential, not a person.",
+    "Badge readers miss tailgating and shared badges.",
+    "Console credentials have been found written down before.",
+    "No named person is accused or cleared."
+   ],
+   "statement": "Account used: rhaddad. The workstation console session 91 (tty1, 12:38:28-12:45:08 UTC) ran the export, staging and unapproved upload. The human operator is not established. The badge assigned to rhaddad was tapped out at the time of login, so the account holder may not have been at the console, but this does not identify who was. Credential sharing, tailgating or a missed badge event are all open.",
+   "review_status": "pending",
+   "approved_by_human": false,
+   "approved_at": null
+  },
+  "summary": "Tip: records access and transfers during this shift. Findings: (1) On workstation, rhaddad's console session 91 (12:38:28-12:45:08 UTC) ran clinic-export of patients_full to /home/rhaddad/Downloads/upd-4c2e.pkg (about 20.9 MB). Records logged the export_bulk at 12:40:15. (2) At 12:41:24-12:41:37 the package was uploaded by curl to 10.20.9.87:8080, which is not an approved bulk destination (policy violation). (3) The collector holds the session 91 login line, but the local workstation auth.log lacks it, bracketed by local records on both sides; rotation does not explain this, so the local copy shows removal of that line. Benign items: a 20.9 MB records-to-stor-nas-01 transfer at 12:11 is policy-consistent, and the 183-line records access.log gap before 09:00 is explained by scheduled off-host rotation. Attribution: account rhaddad was used; the human operator is not established. The rhaddad badge had tapped out before the console login, but that does not identify who was at the console. Credential sharing or tailgating remain possible. No person is named as responsible or cleared.",
+  "open_questions": [
+   "Who physically or remotely operated session workstation#91? Review the badge reader data for tailgating, and check whether the console credential was shared or written down.",
+   "What is 10.20.9.87 and who controls it? It is not on the approved list.",
+   "Was the auth.log line removal done by the operator of session 91 or by another process? The host-local copy is writable.",
+   "Were any records exported from the 12:40 export retained anywhere else, and where did the upload end up?",
+   "Why does the workstation auth.log.1 hold only 14 lines? Verify rotation retention."
+  ],
+  "usage": {
+   "llm_calls": 6,
+   "tokens_in": 112331,
+   "tokens_out": 5113,
+   "tokens_cache_read": 84726,
+   "cost_estimate_usd": 0.006854,
+   "wall_seconds": 26.396,
+   "tool_calls": 14,
+   "scripted_turns": 0,
+   "retries": 0,
+   "errors": 0,
+   "timed_out": false
+  },
+  "created_at": "2026-11-14T10:36:07.530685Z",
+  "locked": false,
+  "locked_at": null,
+  "report_sha256": null,
+  "review_history": [],
+  "verifier_version": "1.1.0"
+ },
+ "questions": [
+  {
+   "schema_version": "1.0.0",
+   "question_id": "q-e3c4e04f73",
+   "case_id": "case-044c4c41ff3c",
+   "bundle_id": "bndl-646e90a648ad486f",
+   "question": "What links the missing log line to the transfer?",
+   "status": "answered",
+   "answer": "The link is workstation console session 91, account rhaddad. The collector holds its login line (seq 35, 12:38:28 UTC), which is absent from the workstation's local auth.log even though local lines bracket it. Within that session, the package was staged at 12:40 and uploaded by curl at 12:41 to 10.20.9.87:8080, which is not an approved destination. The check supports the session link. It does not show who operated the session or who removed the line.",
+   "claims": [
+    {
+     "text": "The collector holds the rhaddad login line for workstation session 91 (tty1, inner time 12:38:28 UTC, seq 35), and the local workstation auth.log lacks it.",
+     "evidence_ids": [
+      "ev_0e5ae1caaa5a",
+      "ev_0b6a6ca7baef",
+      "ev_8488241a1c07"
+     ],
+     "support": "checked",
+     "kind": "line_missing_locally",
+     "basis": "the local-versus-collector check reports the cited collector record as absent from the host's own log, with local records before and after it"
+    },
+    {
+     "text": "The 09:00:01 logrotate of auth.log occurs before the 12:38 line, and the local lines before and after it are present, so rotation does not explain the absence.",
+     "evidence_ids": [
+      "ev_0582ac2d6dd5",
+      "ev_1048c86a75f0",
+      "ev_0b6a6ca7baef",
+      "ev_8488241a1c07"
+     ],
+     "support": "unsupported",
+     "kind": "absence_explained_by_rotation",
+     "basis": "the check does not tie the cited records to a log rotation"
+    },
+    {
+     "text": "Session 91 ran clinic-export of patients_full to /home/rhaddad/Downloads/upd-4c2e.pkg (20,944,103 bytes) at 12:40, and the file was present at 12:40:19.",
+     "evidence_ids": [
+      "ev_071fec869d89",
+      "ev_66d914361c18",
+      "ev_a12bc7a76943"
+     ],
+     "support": "checked",
+     "kind": "staged_before_transfer",
+     "basis": "the cited records belong to an object the transfer check found staged before a bulk transfer"
+    },
+    {
+     "text": "The tap recorded 20,948,102 bytes sent from the workstation to 10.20.9.87:8080 from 12:41:24 to 12:41:37, which is above the 5 MB threshold and not on the approved list.",
+     "evidence_ids": [
+      "ev_9017ed847e2a",
+      "ev_0a089a849682"
+     ],
+     "support": "checked",
+     "kind": "transfer_not_approved",
+     "basis": "the transfer check lists the cited transfer as not approved: destination 10.20.9.87 is not on the approved bulk-destination list (10.20.0.45, 10.20.8.20)"
+    },
+    {
+     "text": "The upload's curl command ran in the same console session 91 under account rhaddad, the only session overlapping the transfer.",
+     "evidence_ids": [
+      "ev_0a089a849682",
+      "ev_0e5ae1caaa5a"
+     ],
+     "support": "checked",
+     "kind": "session_account",
+     "basis": "the cited login record belongs to session workstation#91 of account rhaddad. An account is a credential, not a person"
+    },
+    {
+     "text": "The missing line is linked to the transfer because it is the login for the one session that staged and uploaded the package; the removal's actor and the human operator are not established.",
+     "evidence_ids": [
+      "ev_0e5ae1caaa5a",
+      "ev_9017ed847e2a"
+     ],
+     "support": "interpretation",
+     "kind": "interpretation",
+     "basis": "the model's reading of the evidence; not machine-checked"
+    }
+   ],
+   "limitations": [
+    "Account activity identifies a credential, not the person using it. This evidence does not establish who that was, and does not clear anyone."
+   ],
+   "follow_up_evidence": [],
+   "dropped_evidence_ids": [],
+   "trace": [
+    {
+     "tool": "check_local_vs_collector",
+     "args": {
+      "host": "workstation",
+      "file": "/var/log/auth.log"
+     },
+     "result_summary": "1 forwarded logs compared: 1 line(s) unexplainedly absent on the host, 0 explained by rotation, 0 collection gap(s)",
+     "ok": true
+    },
+    {
+     "tool": "check_transfer_sessions",
+     "args": {},
+     "result_summary": "2 bulk transfer(s): 1 to a non-approved destination, 1 consistent with policy",
+     "ok": true
+    },
+    {
+     "tool": "get_events",
+     "args": {
+      "ids": [
+       "ev_0e5ae1caaa5a",
+       "ev_0b6a6ca7baef",
+       "ev_8488241a1c07",
+       "ev_0582ac2d6dd5",
+       "ev_1048c86a75f0",
+       "ev_071fec869d89",
+       "ev_66d914361c18",
+       "ev_d75c1233140a",
+       "ev_998986d214f2",
+       "ev_a12bc7a76943",
+       "ev_9017ed847e2a",
+       "ev_0a089a849682"
+      ]
+     },
+     "result_summary": "12 of 12 id(s) resolved",
+     "ok": true
+    }
+   ],
+   "inference_mode": "LIVE_MODEL",
+   "inference_label": "Live model",
+   "model_id": "anthropic:claude-haiku-5-5",
+   "usage": {
+    "llm_calls": 2,
+    "tokens_in": 21482,
+    "tokens_out": 1712,
+    "tokens_cache_read": 8274,
+    "cost_estimate_usd": 0.00259,
+    "wall_seconds": 7.729,
+    "tool_calls": 0,
+    "scripted_turns": 0,
+    "retries": 0,
+    "errors": 0,
+    "timed_out": false
+   },
+   "error": null,
+   "asked_at": "2026-11-14T10:36:07.574078Z",
+   "answered_at": "2026-11-14T10:36:15.311224Z"
+  },
+  {
+   "schema_version": "1.0.0",
+   "question_id": "q-3f2e0d21ee",
+   "case_id": "case-044c4c41ff3c",
+   "bundle_id": "bndl-646e90a648ad486f",
+   "question": "Who did it?",
+   "status": "answered",
+   "answer": "The evidence establishes which account was used, not which person. Console session workstation#91 ran under account rhaddad (tty1, 12:38:28-12:45:08 UTC), which staged the 20.9 MB patients_full export and uploaded it to 10.20.9.87:8080, an unapproved destination. The rhaddad badge had tapped out at 12:31:46, before the login. Who was typing is not established; credential sharing, tailgating or a missed badge event remain open. No person is named as responsible or cleared.",
+   "claims": [
+    {
+     "text": "Workstation session 91 belongs to account rhaddad, opened from the console on tty1 at 12:38:28 UTC.",
+     "evidence_ids": [
+      "ev_0e5ae1caaa5a"
+     ],
+     "support": "checked",
+     "kind": "session_account",
+     "basis": "the cited login record belongs to session workstation#91 of account rhaddad. An account is a credential, not a person"
+    },
+    {
+     "text": "The package /home/rhaddad/Downloads/upd-4c2e.pkg (20,944,103 bytes, patients_full) was staged on workstation before the transfer.",
+     "evidence_ids": [
+      "ev_071fec869d89",
+      "ev_66d914361c18",
+      "ev_a12bc7a76943"
+     ],
+     "support": "checked",
+     "kind": "staged_before_transfer",
+     "basis": "the cited records belong to an object the transfer check found staged before a bulk transfer"
+    },
+    {
+     "text": "A 20,948,102-byte flow went from workstation to 10.20.9.87:8080 at 12:41:24-12:41:37 UTC, a destination not on the approved list.",
+     "evidence_ids": [
+      "ev_9017ed847e2a",
+      "ev_0a089a849682"
+     ],
+     "support": "checked",
+     "kind": "transfer_not_approved",
+     "basis": "the transfer check lists the cited transfer as not approved: destination 10.20.9.87 is not on the approved bulk-destination list (10.20.0.45, 10.20.8.20)"
+    },
+    {
+     "text": "The collector's copy of the session 91 login line is absent from the workstation's local auth.log, bracketed by local records on both sides, and rotation does not explain it.",
+     "evidence_ids": [
+      "ev_0e5ae1caaa5a",
+      "ev_0b6a6ca7baef",
+      "ev_8488241a1c07"
+     ],
+     "support": "checked",
+     "kind": "line_missing_locally",
+     "basis": "the local-versus-collector check reports the cited collector record as absent from the host's own log, with local records before and after it"
+    },
+    {
+     "text": "The rhaddad badge (B-3201) last tapped out at 12:31:46, before session 91 opened, so the badge record does not place the account holder at the console.",
+     "evidence_ids": [
+      "ev_49c33f246bbb",
+      "ev_afa5b9d9811b"
+     ],
+     "support": "interpretation",
+     "kind": "interpretation",
+     "basis": "the model's reading of the evidence; not machine-checked"
+    }
+   ],
+   "limitations": [
+    "An account identifies a credential, not a person; the typist is unknown.",
+    "Badge readers do not capture tailgating or shared credentials.",
+    "Flow records show bytes moved, not content; the object's contents are not verified beyond size and name.",
+    "The local auth.log is writable, so the removal cannot be attributed to a particular actor or process.",
+    "Account activity identifies a credential, not the person using it. This evidence does not establish who that was, and does not clear anyone."
+   ],
+   "follow_up_evidence": [],
+   "dropped_evidence_ids": [],
+   "trace": [
+    {
+     "tool": "check_account_vs_person",
+     "args": {
+      "session_id": "workstation#91"
+     },
+     "result_summary": "console_session_while_holder_badged_out",
+     "ok": true
+    },
+    {
+     "tool": "check_transfer_sessions",
+     "args": {},
+     "result_summary": "2 bulk transfer(s): 1 to a non-approved destination, 1 consistent with policy",
+     "ok": true
+    },
+    {
+     "tool": "check_local_vs_collector",
+     "args": {
+      "host": "workstation",
+      "file": "/var/log/auth.log"
+     },
+     "result_summary": "1 forwarded logs compared: 1 line(s) unexplainedly absent on the host, 0 explained by rotation, 0 collection gap(s)",
+     "ok": true
+    }
+   ],
+   "inference_mode": "LIVE_MODEL",
+   "inference_label": "Live model",
+   "model_id": "anthropic:claude-haiku-5-5",
+   "usage": {
+    "llm_calls": 2,
+    "tokens_in": 19371,
+    "tokens_out": 1530,
+    "tokens_cache_read": 8266,
+    "cost_estimate_usd": 0.002236,
+    "wall_seconds": 7.246,
+    "tool_calls": 0,
+    "scripted_turns": 0,
+    "retries": 0,
+    "errors": 0,
+    "timed_out": false
+   },
+   "error": null,
+   "asked_at": "2026-11-14T10:36:15.341060Z",
+   "answered_at": "2026-11-14T10:36:22.594643Z"
+  }
+ ]
+}

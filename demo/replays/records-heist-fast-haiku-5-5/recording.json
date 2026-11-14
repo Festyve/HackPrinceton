@@ -1,0 +1,866 @@
+{
+ "meta": {
+  "title": "Records heist \u00b7 cover-up",
+  "preset_id": "records-heist",
+  "difficulty": "H2",
+  "inference_mode": "LIVE_MODEL",
+  "model_id": "anthropic:claude-haiku-5-5",
+  "runner_id": "agent-live",
+  "investigation_mode": "fast",
+  "recorded_at": "2026-11-14T10:36:59.449720+00:00",
+  "git_commit": "e1676bd",
+  "note": "Real model run (claude-haiku-5-5, fast mode: one agent) through the budget gateway. The incident is a scripted scenario.",
+  "simulator_version": "1.1.0",
+  "raw_bundle_sha256": "9023e573787c3b8588694a913fadc7e397ae9caef0a97e0c44db9651eecaa786"
+ },
+ "spec": {
+  "accounts": {
+   "admin": "adm-tkim",
+   "nurse_a": "lnguyen",
+   "nurse_b": "tmori"
+  },
+  "badges": {
+   "adm-tkim": "B-1595",
+   "facilities-1": "B-5909",
+   "lnguyen": "B-1687",
+   "pharmacy-1": "B-3297",
+   "tmori": "B-1614"
+  },
+  "benign": {},
+  "capture_end": "2026-11-10T15:21:00+00:00",
+  "capture_start": "2026-11-10T06:21:00+00:00",
+  "card_id": "records-heist",
+  "case_kind": "incident",
+  "change_id_base": 8764,
+  "crime": {
+   "framed_account": "adm-tkim",
+   "operator_person": "person:adm-tkim",
+   "owner_badged_out": false,
+   "sink_ip": "10.20.9.29",
+   "start": "2026-11-10T13:06:26+00:00"
+  },
+  "dataset_sizes": {
+   "immunization_registry": 8400132,
+   "patients_full": 19527091
+  },
+  "difficulty": "H2",
+  "dmz_ips": [
+   "10.20.9.29",
+   "10.20.9.35",
+   "10.20.9.47",
+   "10.20.9.69"
+  ],
+  "heist": {
+   "approved_name": "reg-975.db",
+   "approved_start": "2026-11-10T08:47:59+00:00",
+   "partner_ip": "10.20.9.35"
+  },
+  "plan": [
+   {
+    "delay_s": 20,
+    "params": {
+     "account": "adm-tkim",
+     "host": "records",
+     "via": "vpn-gw"
+    },
+    "step": "login_remote"
+   },
+   {
+    "delay_s": 122,
+    "params": {
+     "dataset": "patients_full",
+     "dst_dir": "/srv/records/tmp",
+     "dst_name": "cache-0a91.bin"
+    },
+    "step": "export_dump"
+   },
+   {
+    "delay_s": 152,
+    "params": {
+     "dst": "10.20.9.29",
+     "path": "/srv/records/tmp/cache-0a91.bin"
+    },
+    "step": "exfil_http"
+   },
+   {
+    "delay_s": 95,
+    "params": {
+     "event_selection": "own_exports",
+     "file": "/var/log/records-app/access.log",
+     "host": "records"
+    },
+    "step": "delete_log_lines"
+   }
+  ],
+  "plan_source": "scripted_scenario",
+  "scenario_version": "1.0.0",
+  "seed": 9041,
+  "simulator_version": "1.1.0",
+  "t0": "2026-11-10T07:06:00+00:00",
+  "t_backup": "2026-11-10T11:59:00+00:00",
+  "t_rot": "2026-11-10T09:07:00+00:00",
+  "variant": "heist_coverup"
+ },
+ "events": [
+  {
+   "seq": 9,
+   "ts": "2026-11-14T10:36:38.166956+00:00",
+   "type": "agent",
+   "data": {
+    "agent": "single-agent",
+    "status": "started",
+    "task": "investigate the frozen bundle"
+   }
+  },
+  {
+   "seq": 10,
+   "ts": "2026-11-14T10:36:39.505535+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "get_case_brief",
+    "args": {},
+    "result_summary": "brief for bndl-9023e573787c3b85: 16 sources",
+    "evidence_ids": [],
+    "ok": true,
+    "ms": 2
+   }
+  },
+  {
+   "seq": 11,
+   "ts": "2026-11-14T10:36:39.652061+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "check_transfer_sessions",
+    "args": {},
+    "result_summary": "3 bulk transfer(s): 1 to a non-approved destination, 2 consistent with policy",
+    "evidence_ids": [
+     "ev_5c6aa6bc5ce0",
+     "ev_709b18ed0186",
+     "ev_8fac45214ed6"
+    ],
+    "ok": true,
+    "ms": 147
+   }
+  },
+  {
+   "seq": 12,
+   "ts": "2026-11-14T10:36:39.707765+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "check_local_vs_collector",
+    "args": {},
+    "result_summary": "6 forwarded logs compared: 1 line(s) unexplainedly absent on the host, 180 explained by rotation, 0 collection gap(s)",
+    "evidence_ids": [
+     "ev_97075fda1148"
+    ],
+    "ok": true,
+    "ms": 200
+   }
+  },
+  {
+   "seq": 13,
+   "ts": "2026-11-14T10:36:39.764609+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "check_file_times",
+    "args": {},
+    "result_summary": "0 files reviewed, 0 outside policy or unexplained",
+    "evidence_ids": [],
+    "ok": true,
+    "ms": 260
+   }
+  },
+  {
+   "seq": 14,
+   "ts": "2026-11-14T10:36:39.764864+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "check_cross_host_sessions",
+    "args": {},
+    "result_summary": "0 sessions reviewed, 0 outside policy or unexplained",
+    "evidence_ids": [],
+    "ok": true,
+    "ms": 260
+   }
+  },
+  {
+   "seq": 15,
+   "ts": "2026-11-14T10:36:39.765149+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "check_shell_history",
+    "args": {},
+    "result_summary": "0 sessions reviewed, 0 outside policy or unexplained",
+    "evidence_ids": [],
+    "ok": true,
+    "ms": 259
+   }
+  },
+  {
+   "seq": 16,
+   "ts": "2026-11-14T10:36:39.765524+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "check_sensor_streams",
+    "args": {},
+    "result_summary": "not applicable: this bundle has no temperature records and states no cold-chain policy",
+    "evidence_ids": [],
+    "ok": true,
+    "ms": 259
+   }
+  },
+  {
+   "seq": 17,
+   "ts": "2026-11-14T10:36:39.765737+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "check_record_exports",
+    "args": {},
+    "result_summary": "3 exports reviewed, 1 outside policy or unexplained",
+    "evidence_ids": [
+     "ev_c0f0da57d55a",
+     "ev_c800cb5322f7",
+     "ev_62539496bef8",
+     "ev_97075fda1148"
+    ],
+    "ok": true,
+    "ms": 258
+   }
+  },
+  {
+   "seq": 18,
+   "ts": "2026-11-14T10:36:39.766026+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "check_forwarding",
+    "args": {},
+    "result_summary": "0 gaps reviewed, 0 outside policy or unexplained",
+    "evidence_ids": [],
+    "ok": true,
+    "ms": 258
+   }
+  },
+  {
+   "seq": 19,
+   "ts": "2026-11-14T10:36:43.062340+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "get_events",
+    "args": {
+     "ids": [
+      "ev_4166b9c2f80a",
+      "ev_68f1c99e9a0d",
+      "ev_97075fda1148",
+      "ev_8fac45214ed6",
+      "ev_c320430d34fa",
+      "ev_5b3ba0161e08",
+      "ev_775fa7479e2e",
+      "ev_7b9181978abf",
+      "ev_f37daf4baca7",
+      "ev_d53972876d10",
+      "ev_5e7c05a5f746"
+     ]
+    },
+    "result_summary": "11 of 11 id(s) resolved",
+    "evidence_ids": [
+     "ev_4166b9c2f80a",
+     "ev_68f1c99e9a0d",
+     "ev_97075fda1148",
+     "ev_8fac45214ed6",
+     "ev_c320430d34fa",
+     "ev_5b3ba0161e08",
+     "ev_775fa7479e2e",
+     "ev_7b9181978abf"
+    ],
+    "ok": true,
+    "ms": 2
+   }
+  },
+  {
+   "seq": 20,
+   "ts": "2026-11-14T10:36:43.066261+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "check_account_vs_person",
+    "args": {
+     "session_id": "records#461"
+    },
+    "result_summary": "remote_session_badge_not_informative",
+    "evidence_ids": [],
+    "ok": true,
+    "ms": 6
+   }
+  },
+  {
+   "seq": 21,
+   "ts": "2026-11-14T10:36:53.561701+00:00",
+   "type": "finding",
+   "data": {
+    "finding": {
+     "id": "F-4ba012",
+     "claim_type": "data_staging",
+     "category": "incident_allegation",
+     "attack_id": null,
+     "technique_family": null,
+     "host": "records",
+     "actor_claimed": null,
+     "account_used": "adm-tkim",
+     "t_start": "2026-11-10T13:08:50Z",
+     "t_end": "2026-11-10T13:08:53Z",
+     "object_or_session": "/srv/records/tmp/cache-0a91.bin",
+     "evidence_ids": [
+      "ev_68f1c99e9a0d",
+      "ev_97075fda1148",
+      "ev_f37daf4baca7"
+     ],
+     "counterevidence_ids": [],
+     "check_refs": [],
+     "confidence": 0.8,
+     "rationale": "A 19.5 MB patients_full dump (records-dump) was written to /srv/records/tmp/cache-0a91.bin by adm-tkim in remote session records#461 with no covering change record. The export is also recorded on the collector copy of the records-app log.",
+     "assumptions": [],
+     "alternative_explanations": [],
+     "status": "verified",
+     "verification_status": "supported_observation",
+     "verifier_notes": [
+      "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+     ],
+     "skeptic_note": null,
+     "produced_by": "single-agent"
+    },
+    "phase": "proposed"
+   }
+  },
+  {
+   "seq": 22,
+   "ts": "2026-11-14T10:36:53.563756+00:00",
+   "type": "finding",
+   "data": {
+    "finding": {
+     "id": "F-cacc65",
+     "claim_type": "policy_violating_transfer",
+     "category": "incident_allegation",
+     "attack_id": null,
+     "technique_family": null,
+     "host": "records",
+     "actor_claimed": null,
+     "account_used": null,
+     "t_start": "2026-11-10T13:11:25Z",
+     "t_end": "2026-11-10T13:11:38Z",
+     "object_or_session": "10.20.9.29:8080",
+     "evidence_ids": [
+      "ev_8fac45214ed6",
+      "ev_4166b9c2f80a",
+      "ev_c320430d34fa"
+     ],
+     "counterevidence_ids": [],
+     "check_refs": [],
+     "confidence": 0.8,
+     "rationale": "Tap flow shows 19,530,951 bytes sent from records (10.20.0.10) to 10.20.9.29:8080, which is not an approved bulk destination. The shell history in session records#461 shows curl upload of the staged cache file to that address, and no change record covers it.",
+     "assumptions": [],
+     "alternative_explanations": [],
+     "status": "verified",
+     "verification_status": "supported_observation",
+     "verifier_notes": [
+      "bulk transfer to a destination not on the approved list, cited via the flow record"
+     ],
+     "skeptic_note": null,
+     "produced_by": "single-agent"
+    },
+    "phase": "proposed"
+   }
+  },
+  {
+   "seq": 23,
+   "ts": "2026-11-14T10:36:53.563824+00:00",
+   "type": "finding",
+   "data": {
+    "finding": {
+     "id": "F-39d99f",
+     "claim_type": "local_log_removal",
+     "category": "incident_allegation",
+     "attack_id": null,
+     "technique_family": null,
+     "host": "records",
+     "actor_claimed": null,
+     "account_used": "adm-tkim",
+     "t_start": "2026-11-10T13:08:51Z",
+     "t_end": "2026-11-10T13:08:56Z",
+     "object_or_session": "/var/log/records-app/access.log",
+     "evidence_ids": [
+      "ev_97075fda1148",
+      "ev_775fa7479e2e",
+      "ev_7b9181978abf"
+     ],
+     "counterevidence_ids": [],
+     "check_refs": [],
+     "confidence": 0.6,
+     "rationale": "The collector retained seq 557 (the export_bulk line by adm-tkim at 13:08:51) from records-app access.log, but the host-local copy lacks it. Local records bracket it on both sides, and the absence postdates the host's rotation boundary (09:07), so rotation does not explain it. Removal is not proven; the host copy could also have been altered, and the collector copy is the independent witness.",
+     "assumptions": [],
+     "alternative_explanations": [],
+     "status": "verified",
+     "verification_status": "supported_observation",
+     "verifier_notes": [
+      "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+     ],
+     "skeptic_note": null,
+     "produced_by": "single-agent"
+    },
+    "phase": "proposed"
+   }
+  },
+  {
+   "seq": 24,
+   "ts": "2026-11-14T10:36:53.563897+00:00",
+   "type": "finding",
+   "data": {
+    "finding": {
+     "id": "F-d7b4ee",
+     "claim_type": "policy_consistent_transfer",
+     "category": "benign_explanation",
+     "attack_id": null,
+     "technique_family": null,
+     "host": "records",
+     "actor_claimed": null,
+     "account_used": "adm-tkim",
+     "t_start": "2026-11-10T08:48:42Z",
+     "t_end": "2026-11-10T08:50:58Z",
+     "object_or_session": "10.20.9.35:8443",
+     "evidence_ids": [
+      "ev_5c6aa6bc5ce0",
+      "ev_c0f0da57d55a"
+     ],
+     "counterevidence_ids": [],
+     "check_refs": [],
+     "confidence": 0.85,
+     "rationale": "8.4 MB immunization_registry export to 10.20.9.35:8443 by adm-tkim is covered by approved change record CHG-8764 (quarterly state registry submission, window 08:27:59 to 09:27:59).",
+     "assumptions": [],
+     "alternative_explanations": [],
+     "status": "verified",
+     "verification_status": "supported_observation",
+     "verifier_notes": [
+      "a deterministic check supports this observation; it is not an incident allegation"
+     ],
+     "skeptic_note": null,
+     "produced_by": "single-agent"
+    },
+    "phase": "proposed"
+   }
+  },
+  {
+   "seq": 25,
+   "ts": "2026-11-14T10:36:53.563940+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "submit_finding",
+    "args": {
+     "claim_type": "policy_consistent_transfer",
+     "category": "benign_explanation",
+     "host": "records",
+     "object_or_session": "10.20.9.35:8443"
+    },
+    "result_summary": "F-d7b4ee policy_consistent_transfer: supported_observation",
+    "evidence_ids": [
+     "ev_5c6aa6bc5ce0",
+     "ev_c0f0da57d55a"
+    ],
+    "ok": true,
+    "ms": 255
+   }
+  },
+  {
+   "seq": 26,
+   "ts": "2026-11-14T10:36:53.564053+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "submit_finding",
+    "args": {
+     "claim_type": "policy_violating_transfer",
+     "category": "incident_allegation",
+     "host": "records",
+     "object_or_session": "10.20.9.29:8080"
+    },
+    "result_summary": "F-cacc65 policy_violating_transfer: supported_observation",
+    "evidence_ids": [
+     "ev_8fac45214ed6",
+     "ev_4166b9c2f80a",
+     "ev_c320430d34fa"
+    ],
+    "ok": true,
+    "ms": 257
+   }
+  },
+  {
+   "seq": 27,
+   "ts": "2026-11-14T10:36:53.564353+00:00",
+   "type": "finding",
+   "data": {
+    "finding": {
+     "id": "F-20aa0e",
+     "claim_type": "policy_consistent_transfer",
+     "category": "benign_explanation",
+     "attack_id": null,
+     "technique_family": null,
+     "host": "records",
+     "actor_claimed": null,
+     "account_used": "svc-backup",
+     "t_start": "2026-11-10T11:59:02Z",
+     "t_end": "2026-11-10T11:59:10Z",
+     "object_or_session": "10.20.0.45:873",
+     "evidence_ids": [
+      "ev_709b18ed0186",
+      "ev_c133db25168f",
+      "ev_9b2211d97e3a"
+     ],
+     "counterevidence_ids": [],
+     "check_refs": [],
+     "confidence": 0.8,
+     "rationale": "The 19.5 MB patients_full export by svc-backup at 11:59 is a scheduled job, and its transfer goes to stor-nas-01 (10.20.0.45), an approved backup destination.",
+     "assumptions": [],
+     "alternative_explanations": [],
+     "status": "verified",
+     "verification_status": "supported_observation",
+     "verifier_notes": [
+      "a deterministic check supports this observation; it is not an incident allegation"
+     ],
+     "skeptic_note": null,
+     "produced_by": "single-agent"
+    },
+    "phase": "proposed"
+   }
+  },
+  {
+   "seq": 28,
+   "ts": "2026-11-14T10:36:53.564527+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "submit_finding",
+    "args": {
+     "claim_type": "policy_consistent_transfer",
+     "category": "benign_explanation",
+     "host": "records",
+     "object_or_session": "10.20.0.45:873"
+    },
+    "result_summary": "F-20aa0e policy_consistent_transfer: supported_observation",
+    "evidence_ids": [
+     "ev_709b18ed0186",
+     "ev_c133db25168f",
+     "ev_9b2211d97e3a"
+    ],
+    "ok": true,
+    "ms": 255
+   }
+  },
+  {
+   "seq": 29,
+   "ts": "2026-11-14T10:36:53.564755+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "submit_finding",
+    "args": {
+     "claim_type": "data_staging",
+     "category": "incident_allegation",
+     "host": "records",
+     "object_or_session": "/srv/records/tmp/cache-0a91.bin"
+    },
+    "result_summary": "F-4ba012 data_staging: supported_observation",
+    "evidence_ids": [
+     "ev_68f1c99e9a0d",
+     "ev_97075fda1148",
+     "ev_f37daf4baca7"
+    ],
+    "ok": true,
+    "ms": 257
+   }
+  },
+  {
+   "seq": 30,
+   "ts": "2026-11-14T10:36:53.565051+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "submit_finding",
+    "args": {
+     "claim_type": "local_log_removal",
+     "category": "incident_allegation",
+     "host": "records",
+     "object_or_session": "/var/log/records-app/access.log"
+    },
+    "result_summary": "F-39d99f local_log_removal: supported_observation",
+    "evidence_ids": [
+     "ev_97075fda1148",
+     "ev_775fa7479e2e",
+     "ev_7b9181978abf"
+    ],
+    "ok": true,
+    "ms": 256
+   }
+  },
+  {
+   "seq": 32,
+   "ts": "2026-11-14T10:36:55.781731+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "submit_attribution",
+    "args": {
+     "account_used": "adm-tkim",
+     "human_identity": "insufficient_evidence"
+    },
+    "result_summary": "account adm-tkim; human identity insufficient_evidence",
+    "evidence_ids": [
+     "ev_c320430d34fa",
+     "ev_5b3ba0161e08",
+     "ev_68f1c99e9a0d",
+     "ev_4166b9c2f80a",
+     "ev_8fac45214ed6"
+    ],
+    "ok": true,
+    "ms": 1
+   }
+  },
+  {
+   "seq": 33,
+   "ts": "2026-11-14T10:36:59.210120+00:00",
+   "type": "agent",
+   "data": {
+    "agent": "single-agent",
+    "status": "finished",
+    "summary": "5 finding(s) submitted for review"
+   }
+  }
+ ],
+ "report": {
+  "schema_version": "1.0.0",
+  "report_id": "rep-case-ff25ab03c2e6",
+  "bundle_id": "bndl-9023e573787c3b85",
+  "system_id": "B1+",
+  "system_label": "Fast investigation: one agent with deterministic checks, no delegation (same configuration as benchmark arm B1+)",
+  "inference_mode": "LIVE_MODEL",
+  "model_id": "anthropic:claude-haiku-5-5",
+  "findings": [
+   {
+    "id": "F-4ba012",
+    "claim_type": "data_staging",
+    "category": "incident_allegation",
+    "attack_id": null,
+    "technique_family": null,
+    "host": "records",
+    "actor_claimed": null,
+    "account_used": "adm-tkim",
+    "t_start": "2026-11-10T13:08:50Z",
+    "t_end": "2026-11-10T13:08:53Z",
+    "object_or_session": "/srv/records/tmp/cache-0a91.bin",
+    "evidence_ids": [
+     "ev_68f1c99e9a0d",
+     "ev_97075fda1148",
+     "ev_f37daf4baca7"
+    ],
+    "counterevidence_ids": [],
+    "check_refs": [],
+    "confidence": 0.8,
+    "rationale": "A 19.5 MB patients_full dump (records-dump) was written to /srv/records/tmp/cache-0a91.bin by adm-tkim in remote session records#461 with no covering change record. The export is also recorded on the collector copy of the records-app log.",
+    "assumptions": [],
+    "alternative_explanations": [],
+    "status": "verified",
+    "verification_status": "supported_observation",
+    "verifier_notes": [
+     "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+    ],
+    "skeptic_note": null,
+    "produced_by": "single-agent"
+   },
+   {
+    "id": "F-39d99f",
+    "claim_type": "local_log_removal",
+    "category": "incident_allegation",
+    "attack_id": null,
+    "technique_family": null,
+    "host": "records",
+    "actor_claimed": null,
+    "account_used": "adm-tkim",
+    "t_start": "2026-11-10T13:08:51Z",
+    "t_end": "2026-11-10T13:08:56Z",
+    "object_or_session": "/var/log/records-app/access.log",
+    "evidence_ids": [
+     "ev_97075fda1148",
+     "ev_775fa7479e2e",
+     "ev_7b9181978abf"
+    ],
+    "counterevidence_ids": [],
+    "check_refs": [],
+    "confidence": 0.6,
+    "rationale": "The collector retained seq 557 (the export_bulk line by adm-tkim at 13:08:51) from records-app access.log, but the host-local copy lacks it. Local records bracket it on both sides, and the absence postdates the host's rotation boundary (09:07), so rotation does not explain it. Removal is not proven; the host copy could also have been altered, and the collector copy is the independent witness.",
+    "assumptions": [],
+    "alternative_explanations": [],
+    "status": "verified",
+    "verification_status": "supported_observation",
+    "verifier_notes": [
+     "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+    ],
+    "skeptic_note": null,
+    "produced_by": "single-agent"
+   },
+   {
+    "id": "F-cacc65",
+    "claim_type": "policy_violating_transfer",
+    "category": "incident_allegation",
+    "attack_id": null,
+    "technique_family": null,
+    "host": "records",
+    "actor_claimed": null,
+    "account_used": null,
+    "t_start": "2026-11-10T13:11:25Z",
+    "t_end": "2026-11-10T13:11:38Z",
+    "object_or_session": "10.20.9.29:8080",
+    "evidence_ids": [
+     "ev_8fac45214ed6",
+     "ev_4166b9c2f80a",
+     "ev_c320430d34fa"
+    ],
+    "counterevidence_ids": [],
+    "check_refs": [],
+    "confidence": 0.8,
+    "rationale": "Tap flow shows 19,530,951 bytes sent from records (10.20.0.10) to 10.20.9.29:8080, which is not an approved bulk destination. The shell history in session records#461 shows curl upload of the staged cache file to that address, and no change record covers it.",
+    "assumptions": [],
+    "alternative_explanations": [],
+    "status": "verified",
+    "verification_status": "supported_observation",
+    "verifier_notes": [
+     "bulk transfer to a destination not on the approved list, cited via the flow record"
+    ],
+    "skeptic_note": null,
+    "produced_by": "single-agent"
+   },
+   {
+    "id": "F-d7b4ee",
+    "claim_type": "policy_consistent_transfer",
+    "category": "benign_explanation",
+    "attack_id": null,
+    "technique_family": null,
+    "host": "records",
+    "actor_claimed": null,
+    "account_used": "adm-tkim",
+    "t_start": "2026-11-10T08:48:42Z",
+    "t_end": "2026-11-10T08:50:58Z",
+    "object_or_session": "10.20.9.35:8443",
+    "evidence_ids": [
+     "ev_5c6aa6bc5ce0",
+     "ev_c0f0da57d55a"
+    ],
+    "counterevidence_ids": [],
+    "check_refs": [],
+    "confidence": 0.85,
+    "rationale": "8.4 MB immunization_registry export to 10.20.9.35:8443 by adm-tkim is covered by approved change record CHG-8764 (quarterly state registry submission, window 08:27:59 to 09:27:59).",
+    "assumptions": [],
+    "alternative_explanations": [],
+    "status": "verified",
+    "verification_status": "supported_observation",
+    "verifier_notes": [
+     "a deterministic check supports this observation; it is not an incident allegation"
+    ],
+    "skeptic_note": null,
+    "produced_by": "single-agent"
+   },
+   {
+    "id": "F-20aa0e",
+    "claim_type": "policy_consistent_transfer",
+    "category": "benign_explanation",
+    "attack_id": null,
+    "technique_family": null,
+    "host": "records",
+    "actor_claimed": null,
+    "account_used": "svc-backup",
+    "t_start": "2026-11-10T11:59:02Z",
+    "t_end": "2026-11-10T11:59:10Z",
+    "object_or_session": "10.20.0.45:873",
+    "evidence_ids": [
+     "ev_709b18ed0186",
+     "ev_c133db25168f",
+     "ev_9b2211d97e3a"
+    ],
+    "counterevidence_ids": [],
+    "check_refs": [],
+    "confidence": 0.8,
+    "rationale": "The 19.5 MB patients_full export by svc-backup at 11:59 is a scheduled job, and its transfer goes to stor-nas-01 (10.20.0.45), an approved backup destination.",
+    "assumptions": [],
+    "alternative_explanations": [],
+    "status": "verified",
+    "verification_status": "supported_observation",
+    "verifier_notes": [
+     "a deterministic check supports this observation; it is not an incident allegation"
+    ],
+    "skeptic_note": null,
+    "produced_by": "single-agent"
+   }
+  ],
+  "attribution": {
+   "account_used": "adm-tkim",
+   "session_ref": "records#461",
+   "human_identity": "insufficient_evidence",
+   "named_person_accused": null,
+   "named_person_exonerated": null,
+   "supporting_evidence_ids": [
+    "ev_c320430d34fa",
+    "ev_5b3ba0161e08",
+    "ev_68f1c99e9a0d",
+    "ev_4166b9c2f80a",
+    "ev_8fac45214ed6"
+   ],
+   "contrary_evidence_ids": [
+    "ev_5c6aa6bc5ce0"
+   ],
+   "assumptions": [],
+   "limits": [
+    "An account identifies a credential, not a person.",
+    "Badge records do not cover remote sessions.",
+    "No named person is accused or cleared."
+   ],
+   "statement": "Account adm-tkim (an it-admin credential) was used in remote session records#461 from VPN address 10.20.0.250 to stage a patients_full dump, upload it to unapproved destination 10.20.9.29:8080, and log a removal of one access-log line. The account was used; the human operator is not established. Remote access by this account is permitted by policy, and badge records do not cover remote sessions. Account credentials can be shared or written down.",
+   "review_status": "pending",
+   "approved_by_human": false,
+   "approved_at": null
+  },
+  "summary": "Tip: review records-server exports this shift. Findings:\n(1) Incident: adm-tkim, in remote session records#461 (from VPN 10.20.0.250, 13:06:46-13:14:36 UTC), ran records-dump to create /srv/records/tmp/cache-0a91.bin (19.5 MB, patients_full) with no covering change record. Export ev_97075fda1148, staging ev_68f1c99e9a0d, stat ev_f37daf4baca7.\n(2) Incident: the same session ran curl to upload that file to 10.20.9.29:8080 (19.5 MB out, tap flow ev_8fac45214ed6). That destination is not on the approved list and no change record covers it.\n(3) Incident (moderate confidence): the collector retained the export_bulk line (seq 557, 13:08:51) from records-app access.log, but the host-local copy lacks it. Local records bracket it, and the gap is after the 09:07 rotation boundary, so retention does not explain it. Removal is not proven.\nBenign: the 8.4 MB immunization_registry export to 10.20.9.35:8443 at 08:50 is covered by CHG-8764. The 19.5 MB patients_full scheduled backup by svc-backup to the approved NAS 10.20.0.45 at 11:59 is a scheduled job. Pre-09:06 access-log absences are retention-explained.\nNot found: cross-host sessions, forwarding stops, file-time changes, shell-history gaps, sensor discrepancies (not applicable).\nAttribution: account adm-tkim was used. The human operator is not established. Remote access is permitted by policy and badge records do not cover it.",
+  "open_questions": [
+   "Who operated adm-tkim during records#461? The credential may have been shared or written down.",
+   "Who controls the destination 10.20.9.29:8080?",
+   "Why is the access-log line seq 557 missing locally? Was it deleted, or is the host copy altered?",
+   "Was the cache-0a91.bin file deleted after upload? The bundle has no record of this."
+  ],
+  "usage": {
+   "llm_calls": 5,
+   "tokens_in": 89913,
+   "tokens_out": 5211,
+   "tokens_cache_read": 66229,
+   "cost_estimate_usd": 0.006228,
+   "wall_seconds": 21.589,
+   "tool_calls": 17,
+   "scripted_turns": 0,
+   "retries": 0,
+   "errors": 0,
+   "timed_out": false
+  },
+  "created_at": "2026-11-14T10:36:59.422052Z",
+  "locked": false,
+  "locked_at": null,
+  "report_sha256": null,
+  "review_history": [],
+  "verifier_version": "1.1.0"
+ },
+ "questions": []
+}

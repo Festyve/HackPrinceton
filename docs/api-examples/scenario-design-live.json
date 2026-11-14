@@ -1,0 +1,41 @@
+{
+  "designer_version": "1.0.0",
+  "design_seed": 12,
+  "status": "designed",
+  "source": "model_designed",
+  "model_id": "anthropic:claude-haiku-5-5",
+  "design": {
+    "background_activity": "normal",
+    "routine_condition": "second_log_rotation",
+    "condition_time": "midday",
+    "interruption_cause": "agent_restart",
+    "interruption_seconds": 180
+  },
+  "fallback_reason": null,
+  "usage": {
+    "llm_calls": 1,
+    "tokens_in": 850,
+    "tokens_out": 109,
+    "tokens_cache_read": 0,
+    "cost_estimate_usd": 0.000161,
+    "wall_seconds": null,
+    "tool_calls": 0,
+    "scripted_turns": 0,
+    "retries": 0,
+    "errors": 0,
+    "timed_out": false
+  },
+  "label": "Environment chosen by a model (anthropic:claude-haiku-5-5) from fixed options. It planned no incident; any incident steps are a pre-authored scripted scenario.",
+  "preview": [
+    "Shared workstation: a normal day.",
+    "Routine condition: an extra scheduled log rotation that discards the older log generation, in the midday.",
+    "No incident is part of a design. An operator may place a pre-authored, scripted incident scenario in this environment; that choice is not made by the model."
+  ],
+  "design_id": "design-956a0b6fb3",
+  "created_at": "2026-11-14T10:35:30.210377+00:00",
+  "fixtures": [
+    "none",
+    "inside-job-plain",
+    "inside-job-coverup"
+  ]
+}
