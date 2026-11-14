@@ -3,7 +3,7 @@
 > Times are America/New_York. Entries record concrete check results, not intentions.
 > Status vocabulary: **OFFLINE-READY**, **AI-READY**, **INCOMPLETE** (PLAN §14).
 
-## Current state — second run, Saturday November 14, 08:25 ET
+## Current state — second run, Saturday November 14, 08:35 ET
 
 This block is the handoff. Everything below it is the build history, oldest first.
 
@@ -13,7 +13,7 @@ This block is the handoff. Everything below it is the build history, oldest firs
 | Launch | `uv sync --frozen && ./start.sh`, then http://127.0.0.1:8000. `./start.sh --port 8010` if the port is busy. |
 | Demo selection | Recorded replays. For the pitch: **Inside job · cover-up** recorded on Claude Opus 5.5 (specialist mode) or on Claude Haiku 5.5 (fast mode, with two recorded question answers). Also recorded on Haiku: **Records heist** and **Cold chain**. No key or network needed. |
 | Model in use | `anthropic:claude-haiku-5-5`, effort low, for every role. Opus 5.5 recordings and pilot are from the first run and unchanged. |
-| Spend | Estimated **$3.628** of the **$20** cap across both runs (621 model calls). This run: about **$0.71**. Reserved: $0. Unreconciled: $0. Automatic calls stop at $19.50. `uv run alibi spend`. |
+| Spend | Estimated **$3.639** of the **$20** cap across both runs (632 model calls). This run: about **$0.72**. Reserved: $0. Unreconciled: $0. Automatic calls stop at $19.50. `uv run alibi spend`. |
 | Tests | `uv run pytest` → **452 passed, none failed or skipped** at `a043d4a` (08:17): 431 offline, 21 in headless Chrome. On the UI fallback branch the browser count is 31. A fresh clone of the default branch at `c0cf94e` (07:50) installed, built, passed every test and served the recorded demo with no key and no `.env`. |
 | Recordings | `demo/replays/`: 4 real-model runs (1 Opus, 3 Haiku) and 2 scripted-fixture runs. All six reproduce their evidence byte for byte and replay offline. |
 | Measured results | `benchmarks/offline-v1`, `benchmarks/ai-pilot-v1` (first run, frozen); `benchmarks/paired-v2` and `benchmarks/paired-v2-rep1` (this run's evaluation and its replication; summary in `docs/evaluation-summary.md`); `benchmarks/paired-v2-repeat1` (eight cells run a second time; `docs/evaluation-v2-repeat1.md`); `benchmarks/calibration`, `benchmarks/feature-checks`, `benchmarks/paired-v2-dev` (operational checks). |
@@ -427,3 +427,9 @@ Phase-two model spend so far: about **$0.08** (ledger total $3.006 of the $20 ca
 - A fresh clone of the fallback branch at `5002b4e`, with no `.env`: install, build, **461 tests passed, none failed or skipped**.
 - Default branch at `a043d4a`: **452 passed, none failed or skipped** (431 offline, 21 browser).
 - Redacted secret scan of all 87 commits and the working tree: no key-like string, no assigned key value, `.env` and the ledger never committed.
+
+### Real model through the whole fallback interface (08:25–08:35)
+
+- In Chrome, on the fallback branch with the real model: the designer returned "Environment chosen by a model (anthropic:claude-haiku-5-5) from fixed options. It planned no incident…" in 1.8 s; the case generated from it (nothing placed by the operator) was investigated in fast mode in 24.3 s and labeled "Live model" / "LIVE · fresh case"; the report made no incident allegation and named nobody; one question was answered in 6.9 s with 1 claim confirmed by a check and 2 cited; unsealing showed a benign day, environment chosen by a model, no step chosen by a model, no false alert. No console errors.
+- Cost of that pass: est. $0.0106 (11 model calls). Ledger: $3.638866, 632 calls, nothing reserved or unreconciled.
+- Saved as `benchmarks/feature-checks/live-designer-investigation-question-in-browser-haiku-5-5.json`.
