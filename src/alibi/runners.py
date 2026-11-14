@@ -87,12 +87,24 @@ def summarize_reconcile(rec: dict[str, Any]) -> tuple[str, list[str]]:
     ret = sum(f["retention_explained_absence"]["count"] for f in rec["files"])
     gaps = len(rec["heartbeat_gaps"])
     ids = [r["collector_event_id"] for _, r in un]
-    return (f"{len(rec['files'])} forwarded logs compared: {len(un)} line(s) unexplainedly absent on the host, "
-            f"{ret} explained by rotation, {gaps} collection gap(s)"), ids
+    blind = [f for f in rec["files"] if f["status"] == "not_assessable"]
+    unbracketed = sum(len(f["inconclusive_local_absence"]) for f in rec["files"])
+    no_beats = [h for h, v in (rec.get("coverage", {}).get("heartbeat") or {}).items() if v != "available"]
+    text = (f"{len(rec['files']) - len(blind)} forwarded logs compared: {len(un)} line(s) unexplainedly absent on the host, "
+            f"{ret} explained by rotation, {gaps} collection gap(s)")
+    if unbracketed:
+        text += f"; {unbracketed} absent line(s) inconclusive (not bracketed by local records on both sides)"
+    if blind:
+        text += f"; {len(blind)} log(s) NOT assessable (a needed source is not in this bundle: unknown, not clean)"
+    if no_beats:
+        text += f"; collection gaps not measurable for {', '.join(sorted(no_beats))} (no heartbeat data)"
+    return text, ids
 
 
 def summarize_transfers(xfer: dict[str, Any]) -> tuple[str, list[str]]:
     rows = xfer["transfers"]
+    if xfer.get("status") == "not_assessable":
+        return "bulk transfers NOT assessable: no network flow source in this bundle (unknown, not zero)", []
     bad = [t for t in rows if t["policy_status"] == "not_approved"]
     return (f"{len(rows)} bulk transfer(s): {len(bad)} to a non-approved destination, "
             f"{len(rows) - len(bad)} consistent with policy"), [t["flow_event_id"] for t in rows]

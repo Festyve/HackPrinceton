@@ -1,0 +1,24 @@
+{
+  "host": "workstation",
+  "file": "/var/log/auth.log",
+  "status": "not_assessable",
+  "status_reason": "this bundle has no collector copy, so the host's own log cannot be compared with an independent one. Its completeness is unknown.",
+  "heartbeat_coverage": "not_available",
+  "counts": {},
+  "local_coverage_start": null,
+  "coverage_basis": "not_assessable",
+  "coverage_boundary_event_ids": [],
+  "rotations": [],
+  "local_segments": [],
+  "rows": [],
+  "rows_total": 0,
+  "window_start": 0,
+  "legend": {
+    "both": "present on the host and at the collector",
+    "retained_by_collector": "retained by collector; absent from the host's own log after its retention boundary",
+    "rotated_out": "only at the collector because the host rotated this segment out (expected)",
+    "local_only": "on the host only; the collector never received it (collection gap)",
+    "inconclusive": "absent locally, but local records do not bracket it on both sides or it lies outside the host's stated coverage: not enough to say it was removed",
+    "collector_only": "only at the collector"
+  }
+}

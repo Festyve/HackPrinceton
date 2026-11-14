@@ -173,6 +173,8 @@ def findings_from_reconcile(rec: dict[str, Any], produced_by: str = "BR") -> lis
                 rationale=(f"{mac['in_heartbeat_gap'] + mac['outside_heartbeat_gap']} line(s) of {file} exist on {host} "
                            f"but never reached the collector"
                            + (f", during a {int(gaps[0]['seconds'])} s heartbeat gap (cause: {cause})." if gaps else
+                              ", and there is no heartbeat data to tell whether collection was interrupted."
+                              if f.get("heartbeat_coverage") == "not_available" else
                               ", with no heartbeat gap to explain it.")
                            + " This is a collection gap. The evidence does not show why collection stopped."),
                 alternative_explanations=["forwarder maintenance or restart", "transport loss", "collector outage",
@@ -300,13 +302,29 @@ def run_br(store: EvidenceStore, manifest: EvidenceManifest) -> InvestigationRep
     attribution = attribution_from(xfer, presence, findings)
     n_inc = sum(f.category == "incident_allegation" for f in findings)
     wall = (datetime.now(timezone.utc) - started).total_seconds()
+    # what this bundle could not show: stated in the report so that "nothing found" is never read as "nothing there"
+    limits = coverage_limits(rec, xfer)
     return InvestigationReport(
         report_id=f"rep-BR-{manifest.bundle_id}", bundle_id=manifest.bundle_id, system_id="BR",
         system_label="BR · deterministic contradiction checks, templated findings", inference_mode="NO_MODEL_BASELINE",
         findings=findings, attribution=attribution,
         summary=(f"{n_inc} incident allegation(s), {len(findings) - n_inc} benign explanation(s)/open note(s). "
-                 + attribution.statement),
+                 + attribution.statement
+                 + (" Some checks could not be run on this bundle; what they would have shown is unknown." if limits else "")),
         open_questions=([] if not n_inc else ["Who had access to the credential used in the linked session?",
-                                              "Was the destination known to anyone at the clinic?"]),
+                                              "Was the destination known to anyone at the clinic?"])
+        + [f"Coverage limit: {x}" for x in limits],
         usage=Usage(wall_seconds=wall), created_at=started,
     )
+
+
+def coverage_limits(rec: dict[str, Any], xfer: dict[str, Any]) -> list[str]:
+    """Plain statements of what the bundle could not show (absent sources, uncompared files, unbracketed lines)."""
+    out = list(rec.get("coverage_limits", [])) + list(xfer.get("coverage_limits", []))
+    for f in rec.get("files", []):
+        rows = f.get("inconclusive_local_absence", [])
+        if rows:
+            out.append(f"{len(rows)} line(s) of {f['file']} on {f['host']} are held by the collector and absent from "
+                       f"the host's copy, but the host's records do not bracket them on both sides "
+                       f"({rows[0].get('reason', 'coverage unknown')}). This is inconclusive, not an allegation.")
+    return out

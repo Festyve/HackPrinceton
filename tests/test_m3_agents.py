@@ -291,8 +291,8 @@ class _Echo(BaseChatModel):
 
 
 def test_ledger_enforces_shared_call_token_and_credit_caps(tmp_path):
-    caps = RunCaps(max_calls=3, max_input_tokens=2500, max_output_tokens=6000, max_seconds=90)
-    led = gateway.BudgetLedger(tmp_path / "b.json", caps, kind="local")
+    caps = RunCaps(max_calls=3, max_input_tokens=20_000, max_output_tokens=6000, max_seconds=90)
+    led = gateway.BudgetLedger(tmp_path / "b.json", caps, kind="local", max_tokens_per_call=1000)
     lead, sub = gateway.wrap(_Echo(), led, "lead-investigator"), gateway.wrap(_Echo(), led, "skeptic")
     lead.invoke("a"); sub.invoke("b"); lead.invoke("c")  # noqa: E702
     with pytest.raises(gateway.BudgetExceeded):
@@ -301,21 +301,29 @@ def test_ledger_enforces_shared_call_token_and_credit_caps(tmp_path):
     assert (u.llm_calls, u.tokens_in, u.tokens_out, u.cost_estimate_usd) == (3, 3000, 600, 0.0)
     assert gateway.BudgetLedger(tmp_path / "b.json", caps, kind="local").usage().llm_calls == 3  # survives a restart
 
-    tok = gateway.BudgetLedger(None, RunCaps(max_calls=12, max_input_tokens=1500), kind="local")
-    m = gateway.wrap(_Echo(), tok, "lead-investigator")
+    # the request is counted BEFORE it is sent: 2 x 1000 used + the third request's size passes 2500
+    tok = gateway.BudgetLedger(None, RunCaps(max_calls=12, max_input_tokens=2500), kind="local")
+    echo = _Echo(seen=[])
+    m = gateway.wrap(echo, tok, "lead-investigator")
     m.invoke("a"); m.invoke("b")  # noqa: E702
-    with pytest.raises(gateway.BudgetExceeded):
+    with pytest.raises(gateway.BudgetExceeded) as err:
         m.invoke("c")
+    assert "input token cap reached" in str(err.value) and len(echo.seen) == 2  # the third was never sent
 
     paid = gateway.BudgetLedger(None, RunCaps(), kind="included_credits", max_usd=0.0, price_in_per_mtok=3, price_out_per_mtok=15)
     with pytest.raises(gateway.BudgetExceeded) as err:
         gateway.wrap(_Echo(), paid, "lead-investigator").invoke("a")
-    assert "paid overage is not authorized" in str(err.value)
+    assert "paid overage is not authorized" in str(err.value).lower()
     unknown = gateway.BudgetLedger(None, RunCaps(), kind="included_credits", max_usd=5.0)
     with pytest.raises(gateway.BudgetExceeded) as err:
         gateway.wrap(_Echo(), unknown, "lead-investigator").invoke("a")
     assert "unknown pricing" in str(err.value)
-    ok = gateway.BudgetLedger(None, RunCaps(), kind="included_credits", max_usd=5.0, price_in_per_mtok=3, price_out_per_mtok=15)
+    orphan = gateway.BudgetLedger(None, RunCaps(), kind="included_credits", max_usd=5.0, price_in_per_mtok=3, price_out_per_mtok=15)
+    with pytest.raises(gateway.BudgetExceeded) as err:  # a billed route is never run without the cumulative ledger
+        gateway.wrap(_Echo(), orphan, "lead-investigator").invoke("a")
+    assert "cumulative spend ledger" in str(err.value)
+    ok = gateway.BudgetLedger(None, RunCaps(), kind="included_credits", max_usd=5.0, price_in_per_mtok=3, price_out_per_mtok=15,
+                              global_spend=gateway.GlobalSpend(tmp_path / "spend.json", 5.0))
     gateway.wrap(_Echo(), ok, "lead-investigator").invoke("a")
     assert ok.usage().cost_estimate_usd == pytest.approx((1000 * 3 + 200 * 15) / 1e6)
 
@@ -447,9 +455,9 @@ def test_total_spend_cap_is_shared_across_runs_and_survives_restart(tmp_path):
     second = ledger("run-2")
     gateway.wrap(_Echo(), second, "lead-investigator").invoke("b")
     assert gateway.GlobalSpend(path, 0.60).snapshot()["spent_usd"] == pytest.approx(0.016)
-    # the worst-case reservation for one more call (40k cached-write input + 3k output = $0.26) no longer
-    # fits once the shared total is nearly used up, even though THIS run has spent almost nothing
-    tight = gateway.GlobalSpend(path, 0.25)
+    # the worst-case reservation for one more call (its counted input written to cache + 3k output, about
+    # $0.06) no longer fits once the shared total is nearly used up, though THIS run has spent nothing
+    tight = gateway.GlobalSpend(path, 0.05)
     third = gateway.BudgetLedger(None, caps, kind="included_credits", max_usd=0.25, price_in_per_mtok=4.0,
                                  price_out_per_mtok=20.0, global_spend=tight, max_tokens_per_call=3000, label="run-3")
     with pytest.raises(gateway.BudgetExceeded) as err:

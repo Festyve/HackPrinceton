@@ -1,6 +1,6 @@
 # API setup for the second run
 
-**Rayan's confirmed limit: $5 total across both runs.** Not another $5. Preserve `.alibi/spend.json`; never reset, replace, or bypass it. About $2.08 remained in the last handoff. Reconcile before calling a model.
+**Confirmed limit: $20 total across both runs** (Eric raised it from $5 on November 14). Not another $20: the $2.92 spent in the first run counts. Preserve `.alibi/spend.json`; never reset, replace, or bypass it. About $17.08 remains under the cap, $16.58 before the development ceiling. Reconcile before calling a model.
 
 ## Eric's setup
 
@@ -12,7 +12,7 @@
 
 No new provider is needed. Terry and Daniel work offline without Eric's key. LangSmith, AWS, OpenAI, Gemini and deployment credentials are unnecessary for the required demo; local traces show framework behavior.
 
-Max may offer separate monthly API credits after seven days. Eric can check claude.ai → Settings → Billing → API credits → Link organization. Select the intended organization and verify the balance; eligibility is not assumed. **Claimed credits do not raise this project's $5 authorization.** [Eligibility and claim steps](https://support.claude.com/en/articles/17154008-monthly-api-credits-for-max-ultra-and-team-plans).
+Max may offer separate monthly API credits after seven days. Eric can check claude.ai → Settings → Billing → API credits → Link organization. Select the intended organization and verify the balance; eligibility is not assumed. **Claimed credits do not raise this project's $20 authorization.** [Eligibility and claim steps](https://support.claude.com/en/articles/17154008-monthly-api-credits-for-max-ultra-and-team-plans).
 
 ## Make the remaining allowance useful
 
@@ -25,7 +25,8 @@ After guard fixes, use this candidate profile while retaining existing per-inves
 ```dotenv
 RUNTIME_MODE=live
 LIVE_PROVIDER_KIND=included_credits
-LLM_MAX_USD=5
+LLM_MAX_USD=20
+LLM_SPEND_FLOOR_USD=2.922403
 BENCH_MAX_SYSTEM_RUNS=0
 LEAD_MODEL=anthropic:claude-haiku-5-5
 SUBAGENT_MODEL=anthropic:claude-haiku-5-5
@@ -49,7 +50,7 @@ Promote Haiku only after correct workflow completion, citations, review pause, a
 | Reserve for a judge's live request | $0.50 |
 | Reconciliation/headroom | Remainder |
 
-These are ceilings. The stricter of verified remaining balance, total cap, and category allowance wins. Automatic development calls stop by **$4.50 cumulative**; the final $0.50 stays for an operator-triggered live demo. If less remains, shrink and declare the evaluation matrix before running it.
+These are ceilings. The stricter of verified remaining balance, total cap, and category allowance wins. Automatic development calls stop by **$19.50 cumulative**; the final $0.50 stays for an operator-triggered live demo (`ALIBI_USE_DEMO_RESERVE=1`). The category ceilings above were sized for the inexpensive profile and did not grow with the cap; a different model means declaring a new matrix against the development ceiling first. If less remains, shrink and declare the evaluation matrix before running it.
 
 Declare the model and new matrix first. `BENCH_MAX_SYSTEM_RUNS=16` applies only to the new four-case × four-AI-arm suite after preflight proves it fits. Do not rerun the old `pilot` command, which currently writes v1 paths.
 

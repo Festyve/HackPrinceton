@@ -76,8 +76,15 @@ def _predicate(f: Finding, cited: set[str], obs: Observations) -> tuple[str, str
         if cited & obs.retention_ids:
             return "rejected", ("the cited collector records predate the host's retention boundary (log rotation); "
                                 "their absence from the local log is expected")
+        blind = [x for x in obs.reconcile["files"] if x["host"] == f.host and x["status"] == "not_assessable"]
+        if blind:
+            return "unresolved", ("the comparison this claim rests on cannot be run on this bundle: "
+                                  + blind[0]["status_reason"])
         return "unresolved", "no cited record is a collector-retained line that is unexplainedly absent locally"
 
+    if obs.transfers.get("status") == "not_assessable" and f.claim_type in ("policy_violating_transfer", "data_staging"):
+        return "unresolved", ("no network flow source is in this bundle, so the transfer this claim rests on "
+                              "cannot be observed")
     rows = [t for t in obs.transfers["transfers"] if t["src_host"] == f.host]
     if f.claim_type == "policy_violating_transfer":
         hits = [t for t in rows if t["flow_event_id"] in cited or cited & set(t["command_event_ids"])]

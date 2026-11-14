@@ -231,3 +231,27 @@ Reviewed implementation commit `874cc5f`. This change updates documentation and 
 - Reviewer validation: frontend TypeScript/Vite build passed; 143 non-browser tests passed, one asset test initially skipped before UI build and then passed separately; all 9 Chrome browser tests passed. Total: 153 passing checks across those invocations. Browser invocation required `PYTHONPATH=src` in the reviewer tool environment; normal clean-start commands still need the scheduled second-machine check.
 - No model inference or paid API calls were made during this review. No credentials were read or copied.
 - Existing v1 results and recorded runs were preserved. New features and new measurements belong in a separately versioned phase-two release.
+
+
+## Phase two implementation log — started November 14, 03:39 ET
+
+Branch `codex/eric-phase2`, continuing from `ffecc3f`. Newest entry last. Times are America/New_York.
+
+### Stage 1 — budget and evidence correctness (done 04:10)
+
+No model call was made in this stage. Spend is unchanged: an estimated **$2.922403, 91 calls**, now against a **$20** cap (development ceiling $19.50).
+
+- **Gateway rewritten** (`src/alibi/agents/gateway.py`). Requests are counted before sending and bounded per request; input, output and money are reserved atomically; the output limit sent equals the output reserved; timeouts, lost responses, missing usage and crashed processes keep their worst case until `alibi spend --reconcile`; settlement is idempotent; the ledger migrates forward, has a floor, an absolute configurable path and fails closed when unreadable.
+- **Settings hardened** (`src/alibi/config.py`): NaN, infinity, negative and out-of-range values rejected; development ceiling and demo reserve; one model for all roles; unknown prices block billed routes.
+- **Checks 1.1.0** (`src/alibi/checks.py`): both local brackets required; stated source coverage honored; absent collector, host copy, flows, badge reader or heartbeats are "not assessable". Explanations, summaries, the rule baseline's report and the evidence views say "unknown" in those cases.
+- **Tests:** `uv run pytest` → 206 passed (197 offline, 9 in headless Chrome). New: `tests/test_budget_gateway.py` (44 tests) and 9 coverage tests in `tests/test_m2_checks.py`.
+- **Commands that do not call a model:** `uv run alibi runtime`, `uv run alibi spend`, `uv run alibi smoke --count-only`.
+- **Not yet done from the continuation:** stages 2–6 (fast/specialist modes and Haiku calibration, cited questions, source-removal experiment, capture and UI integration, new case families, six-arm evaluation, export, final docs).
+
+## Terry UI — November 14, 2026, verified local handoff
+
+- Implemented the evidence-workbench redesign on `codex/terry-ui` (`98623d8` initial slice), preserving the existing case flow and recording. Integrated Eric's published branch through `0de232d` via `ad62bd8`; consumed his generated coverage fields without editing the generator output.
+- Verified production build; 197 integrated non-browser tests; 21 browser tests plus the final case-switch regression; six development-case investigator regression gates with networking denied and zero model calls. Preserved official benchmarks, saved model outputs, scoring and truth isolation.
+- Fourteen screenshots cover seven real offline states at 1280×720 and 1440×900. Native modal keyboard behavior, narrow layout, source/coverage selection, provenance, citations, refresh, reconnect, lock-before-reveal, hostile text and two resets are covered.
+- Handoff, exact launch/reproduction commands, source references, verification output and a 60-second walkthrough are in `docs/terry-ui-handoff.md`. Questions, immutable source experiments, report export and captured-Linux integration still require the backend/capture contracts; their absence is shown honestly in the UI. Actual projector/second-machine verification remains external.
+- No paid runtime inference, spend-ledger reset or Codex banked reset was used.
