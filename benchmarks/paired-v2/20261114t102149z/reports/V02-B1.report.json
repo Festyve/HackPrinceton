@@ -1,0 +1,194 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v02-20261114t102149z-b1",
+ "bundle_id": "bndl-644137520589f844",
+ "system_id": "B1",
+ "system_label": "Arm B1: one agent with generic evidence tools only (no checks)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-3accd5",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": "T1074",
+   "technique_family": "collection/staging",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:15:15Z",
+   "t_end": "2026-11-10T11:15:20Z",
+   "object_or_session": "/tmp/.font-unix/idx-3e08.bin",
+   "evidence_ids": [
+    "ev_3fb5abe9cac6",
+    "ev_7f43d4470d7b"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "Shell history under account jpark shows clinic-export of dataset patients_full written to a hidden /tmp path (about 20.6 MB per fs_stat). Staging a full patient dataset outside the records system is a precursor to bulk transfer.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-06531a",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": "T1048",
+   "technique_family": "exfiltration",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:18:27Z",
+   "t_end": "2026-11-10T11:18:40Z",
+   "object_or_session": "10.20.9.87:8080",
+   "evidence_ids": [
+    "ev_ad1c5aaad750",
+    "ev_647a922ee132"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "Shell history shows curl upload of the staged /tmp/.font-unix/idx-3e08.bin to 10.20.9.87:8080. The tap flow record independently shows 20,582,305 bytes sent from 10.20.1.21 (the workstation address seen in records access logs) to that destination. This is above the 5,000,000-byte bulk threshold and the destination is not an approved bulk destination (stor-nas-01 10.20.0.45, lab-gw-01 10.20.8.20), so it violates transfer policy.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-70a6b2",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T08:05:57Z",
+   "t_end": "2026-11-10T11:39:30Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_c7e009c1bcaa",
+    "ev_7cb038a8ca29",
+    "ev_82e7e4ceab08",
+    "ev_b75e5c3b1092",
+    "ev_260b48e781e3",
+    "ev_0b322b83bdc5"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "Repeated small curl uploads of single lab request PDFs (roughly 340-750 KB each) from tmori and jpark to lab-gw-01 (10.20.8.20), an approved destination for laboratory and registry submissions, and below the bulk threshold. Policy-consistent.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-f1ed5b",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "svc-backup",
+   "t_start": "2026-11-10T11:59:00Z",
+   "t_end": "2026-11-10T11:59:10Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_0a3326346765",
+    "ev_0e6a13b0323c"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.7,
+   "rationale": "A roughly 20.6 MB transfer to stor-nas-01 (approved backup and log archive) at 11:59, launched by the svc-backup scheduled backup-incremental cron job. Destination is approved; consistent with routine backup.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  }
+ ],
+ "attribution": {
+  "account_used": "jpark",
+  "session_ref": "workstation#74",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_9b3995123e96",
+   "ev_0c41efcea0c4",
+   "ev_135b6f8fb4cb",
+   "ev_e18cda9a3328",
+   "ev_3fb5abe9cac6",
+   "ev_ad1c5aaad750"
+  ],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "No evidence ties a specific person to the session.",
+   "Shared console credentials; badge readers can miss tailgating.",
+   "Remote VPN sessions are not covered by badge records."
+  ],
+  "statement": "Account jpark was used at the workstation (ws-nurse-01) for the staging and upload of a patient dataset export. Human operator not established. The account is a credential, and console credentials at the shared station have been found written down before. The jpark tty1 session (workstation#74) was open 11:14:18 to 11:20:41 UTC. Badge B-2333 (account jpark's listed badge) was recorded in at 08:03 and out at 11:57, so the badge places that credential's holder in the building during the window, but badge data cannot establish who used the console.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Records access and transfers this shift. Supported incident finding: at 11:15 UTC, account jpark on workstation ws-nurse-01 ran clinic-export of the patients_full dataset to a hidden path (/tmp/.font-unix/idx-3e08.bin, ~20.6 MB). At 11:18:27 the same session uploaded that file via curl to 10.20.9.87:8080. The tap flow shows 20.58 MB sent to that destination, above the 5 MB bulk threshold and not an approved destination. This violates transfer policy. Benign or consistent activity: small lab-request uploads to the approved lab-gw-01 (10.20.8.20); a 20.6 MB backup to approved stor-nas-01 (10.20.0.45) by the svc-backup cron job; records access.log rotation that archived the file off-host by design. No log removal was found: the collector copies match host logs for the records auth log and the workstation auth log. Attribution: account jpark was used; the human operator is not established. Remote VPN and shared console credentials are possible.",
+ "open_questions": [
+  "Who holds or used the jpark credential at 11:14-11:20 UTC, and was the console session shared?",
+  "What is the destination 10.20.9.87:8080, and was it authorized?",
+  "The workstation auth.log.1 generation was not examined in detail; the collector copies align with the host logs for the windows checked.",
+  "Metadata snapshots and shell histories are host-local and not forwarded; their completeness cannot be independently verified."
+ ],
+ "usage": {
+  "llm_calls": 8,
+  "tokens_in": 258710,
+  "tokens_out": 7271,
+  "tokens_cache_read": 202104,
+  "cost_estimate_usd": 0.012732,
+  "wall_seconds": 31.549,
+  "tool_calls": 23,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T10:25:40.393507Z",
+ "report_sha256": "e6f8917428e6cce4fb361e9fc80f50eda6ae24d71a2c9837652a6ebfb2b29a10",
+ "review_history": [
+  {
+   "at": "2026-11-14T10:25:40.393507Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

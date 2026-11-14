@@ -1,0 +1,165 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v03-20261114t102149z-alibi",
+ "bundle_id": "bndl-c00971b3903015ba",
+ "system_id": "ALIBI",
+ "system_label": "Specialist review: lead + integrity-auditor + skeptic with deterministic checks (benchmark arm ALIBI)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-2b3762",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:16:00Z",
+   "t_end": "2026-11-10T08:51:01Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_e8404edb19d6",
+    "ev_3c46266213b9",
+    "ev_35d033e71636",
+    "ev_66517422695f",
+    "ev_d4510bed9ce3",
+    "ev_2eef1cb8e761",
+    "ev_0e3c6428cb68",
+    "ev_dfdb62498266",
+    "ev_ef4f6bb24b98"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "14 collector-retained auth.log lines are absent locally; they predate the kept rotated generation after scheduled rotation (keep=1). No heartbeat gap.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "downgraded_by_skeptic",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": "Skeptic: benign rotation retention (keep=1); record as open note, not incident. Corrects my earlier provisional keep.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-e1b0f9",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:18:36Z",
+   "t_end": "2026-11-10T08:51:04Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_25c4167a6c43",
+    "ev_03ab751818de",
+    "ev_9ad8e0432034",
+    "ev_fdcaf1874244",
+    "ev_cf8c6357cdef",
+    "ev_d1ef81638d26",
+    "ev_c2e582d4993a"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "184 collector-retained access.log lines are absent locally; rotation with keep=0 archives the segment off-host. No heartbeat gap.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "downgraded_by_skeptic",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": "Skeptic: keep=0 rotation with off-host archive explains absence; archive not in bundle. Corrects my earlier provisional keep.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-914ac8",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:58:04Z",
+   "t_end": "2026-11-10T11:58:09Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_37a2095912d6"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "The only flow at or above 5 MB (16.9 MB, tcp/873) goes to approved stor-nas-01 (backup/log archive). No non-approved bulk transfer found.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": "Skeptic: approved destination 10.20.0.45; flow shows volume not content; no linked session or staging.",
+   "produced_by": "lead-investigator"
+  }
+ ],
+ "attribution": {
+  "account_used": null,
+  "session_ref": null,
+  "human_identity": "not_assessed",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Shell histories are host-writable and not forwarded.",
+   "fs_stat truncated at 25 rows.",
+   "VPN remote-access sessions not queried."
+  ],
+  "statement": "Account used: none established. No policy-violating transfer, local log removal, or data staging was supported by the evidence. No person is named or cleared; account names identify credentials, not people.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Bundle bndl-c00971b3903015ba (Northside Clinic, 2026-11-10 06:07Z to 15:07Z, capture complete). The tip asked about records access and transfers. The evidence does not support an incident. No unexplained local log removal was found: missing lines on workstation auth.log (14 lines, 06:16-08:45Z) and records access.log (184 lines, 06:18-08:50Z) are explained by scheduled rotation (workstation keep=1; records keep=0 with off-host archive), and heartbeats show no gaps. The only tap flow at or above the 5 MB threshold (16.9 MB, tcp/873, 11:58Z) goes to approved stor-nas-01 (10.20.0.45), so it is policy-consistent. No data staging linked to a transfer was found. Staged files under /var/tmp/xfer dated Aug-Oct 2026 predate the window and are not treated as staging. Account used: none established; no human operator is established, and no person is named or cleared. Two retention findings were downgraded by the skeptic to open notes.",
+ "open_questions": [
+  "fs_stat output was truncated at 25 rows; in-window archive/copy staging is not fully assessed.",
+  "Shell histories are host-writable and not forwarded; command-level activity cannot be fully verified.",
+  "Remote VPN sessions via vpn-gw-01 were not queried; badge records do not cover remote access.",
+  "Contents of the off-host archive for records access.log and of stor-nas-01 backup content were not available to verify the approved transfer.",
+  "Flow records show volume, not content; the 16.9 MB transfer's data classification is unverified."
+ ],
+ "usage": {
+  "llm_calls": 11,
+  "tokens_in": 119839,
+  "tokens_out": 10900,
+  "tokens_cache_read": 75637,
+  "cost_estimate_usd": 0.011731,
+  "wall_seconds": 46.653,
+  "tool_calls": 22,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T10:29:03.270709Z",
+ "report_sha256": "76d23829ca863045fdc7991802483c26f21fb73a8b264ba5ab0dc666a479a8b6",
+ "review_history": [
+  {
+   "at": "2026-11-14T10:29:03.270709Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

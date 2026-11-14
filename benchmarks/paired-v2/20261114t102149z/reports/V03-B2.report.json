@@ -1,0 +1,190 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v03-20261114t102149z-b2",
+ "bundle_id": "bndl-c00971b3903015ba",
+ "system_id": "B2",
+ "system_label": "Arm B2: lead + integrity-auditor + skeptic with generic evidence tools only (no checks)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-8ec782",
+   "claim_type": "collection_gap",
+   "category": "unresolved",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "n/a",
+   "t_start": "2026-11-10T06:07:00Z",
+   "t_end": "2026-11-10T15:07:00Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_70fa7564845a",
+    "ev_2dedfc7ad9cf"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.3,
+   "rationale": "Heartbeat sampling showed regular status; not exhaustively checked, so continuity of workstation forwarding is not confirmed.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "downgraded_by_skeptic",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": "Cited heartbeats do not show a gap; collector seq is continuous through 09:58; later windows unchecked.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-eea412",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "n/a",
+   "t_start": "2026-11-10T08:51:00Z",
+   "t_end": "2026-11-10T12:12:01Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_0e3c6428cb68",
+    "ev_ef4f6bb24b98",
+    "ev_2811fe796d5f",
+    "ev_1e7ed5499416",
+    "ev_e03de9b1943c"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.7,
+   "rationale": "Scheduled logrotate on workstation (08:51, 12:12; keep=1) discarded the older auth.log generation. Absence on host is explained by retention policy; collector copies should hold the lines.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "downgraded_by_skeptic",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": "Rotation is real, but logins fall inside the window and the collector copy is continuous; absence not established as explained by rotation alone.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-309e04",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "n/a",
+   "t_start": "2026-11-10T08:51:03Z",
+   "t_end": "2026-11-10T08:51:04Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_696203029ec1",
+    "ev_c2e582d4993a"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.7,
+   "rationale": "Records-app access.log rotation (keep=0) archived the segment off-host at 08:51:04; absence of earlier lines on host is policy-expected.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": "Scheduled keep=0 rotation archived off-host to approved NAS; access log continues after rotation.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-13cd5a",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "svc-backup",
+   "t_start": "2026-11-10T11:58:00Z",
+   "t_end": "2026-11-10T11:58:09Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_b62760645c3f",
+    "ev_0f3d401519ed",
+    "ev_6984d47b6ea9",
+    "ev_2a6142bc3631",
+    "ev_37a2095912d6"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.7,
+   "rationale": "16.9MB svc-backup export via scheduled backup cron, sent to approved backup NAS stor-nas-01 (10.20.0.45). Above the bulk threshold but to an approved destination.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "downgraded_by_skeptic",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": "Destination is approved; the claim is benign and the downgrade reflects that it is a benign explanation, not an incident. Source host tie to records is inferred.",
+   "produced_by": "lead-investigator"
+  }
+ ],
+ "attribution": {
+  "account_used": "svc-backup (bulk export); rhaddad, lnguyen, adm-vrao observed in window without a finding",
+  "session_ref": null,
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_6984d47b6ea9",
+   "ev_2a6142bc3631",
+   "ev_b62760645c3f",
+   "ev_37a2095912d6"
+  ],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Host-local logs are writable; collector copies are the independent witness.",
+   "Shared console credentials have been written down before; badge readers miss tailgating; VPN sessions are not covered by badge data."
+  ],
+  "statement": "Account used only; human operator not established. Accounts are credentials, not people. The bulk export was a scheduled svc-backup run to an approved destination. No local log removal was established.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "The investigator did not write a summary.",
+ "open_questions": [
+  "Incomplete run: stopped by the budget gateway: input token cap reached: 274704 used + 0 reserved + 18391 needed > 280000."
+ ],
+ "usage": {
+  "llm_calls": 14,
+  "tokens_in": 274704,
+  "tokens_out": 17079,
+  "tokens_cache_read": 179636,
+  "cost_estimate_usd": 0.022219,
+  "wall_seconds": 77.012,
+  "tool_calls": 43,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T10:30:20.490602Z",
+ "report_sha256": "bf845faae3ebdd69c36ce7b6f6d1b832aed2e2bd695fcb6de2c6c33ce439f405",
+ "review_history": [
+  {
+   "at": "2026-11-14T10:30:20.490602Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

@@ -1,0 +1,162 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v02-20261114t102149z-b2",
+ "bundle_id": "bndl-644137520589f844",
+ "system_id": "B2",
+ "system_label": "Arm B2: lead + integrity-auditor + skeptic with generic evidence tools only (no checks)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-e5d86b",
+   "claim_type": "local_log_removal",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:14:18Z",
+   "t_end": "2026-11-10T11:20:41Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_9b3995123e96",
+    "ev_65f8e01c713e",
+    "ev_0c41efcea0c4",
+    "ev_424ebb025874"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "Collector holds jpark session 74 login at 11:14:18 (seq 29) and logout (seq 30); workstation auth.log retains the logout but not the login. Missing line is not explained by the 09:00 rotation.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+   ],
+   "skeptic_note": "Collector independent witness holds seq 29 login line that host auth.log lacks; seq contiguity; rotation at 09:00 is hours earlier.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-3accd5",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:15:15Z",
+   "t_end": "2026-11-10T11:15:20Z",
+   "object_or_session": "/tmp/.font-unix/idx-3e08.bin",
+   "evidence_ids": [
+    "ev_3fb5abe9cac6",
+    "ev_7f43d4470d7b",
+    "ev_ad1c5aaad750"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "Shell history shows clinic-export of patients_full into hidden temp path; fs_stat shows a 20.6 MB file there at 11:15:20, later sent out.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": "Host-local evidence only (shell history and fs_stat), with timing consistent with the transfer; kept at moderate confidence, not independently confirmed.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-06531a",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:18:27Z",
+   "t_end": "2026-11-10T11:18:40Z",
+   "object_or_session": "10.20.9.87:8080",
+   "evidence_ids": [
+    "ev_647a922ee132",
+    "ev_ad1c5aaad750"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "Tap flow sent 20,582,305 bytes to 10.20.9.87:8080, above the 5 MB threshold and not an approved destination; matches curl -T of the staged file at the same second.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": "Tap is an independent witness; destination is not an approved bulk destination; source-to-workstation mapping rests on timing match with shell history.",
+   "produced_by": "lead-investigator"
+  }
+ ],
+ "attribution": {
+  "account_used": "jpark",
+  "session_ref": "workstation#74",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_9b3995123e96",
+   "ev_3fb5abe9cac6",
+   "ev_ad1c5aaad750"
+  ],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Account name identifies a credential, not a person",
+   "Badge records do not establish who was at the workstation",
+   "Shell history and fs_stat are host-local"
+  ],
+  "statement": "Account jpark was used for the workstation session 74 activity (login, export to temp path, and transfer timing). The human operator is not established; the account may have been used by someone other than the credential holder. Console credentials at the shared station have been found written down before.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Tip: review records access and transfers this shift. Findings on workstation (ws-nurse-01), account jpark, session 74 (11:14-11:20Z):\n1) Local log removal (F-e5d86b): the collector holds the jpark tty1 login at 11:14:18 (seq 29, ev_9b3995123e96) and logout (seq 30, ev_65f8e01c713e). The workstation auth.log keeps the logout (ev_0c41efcea0c4) but not the login. Rotation at 09:00 does not explain it. Confidence about 0.8.\n2) Data staging (F-3accd5): shell history shows clinic-export --dataset patients_full writing /tmp/.font-unix/idx-3e08.bin at 11:15:15 (ev_3fb5abe9cac6). fs_stat shows a 20.6 MB file at 11:15:20 (ev_7f43d4470d7b). These are host-local records, not independently confirmed.\n3) Policy-violating transfer (F-06531a): tap flow of 20,582,305 bytes to 10.20.9.87:8080 at 11:18:27-11:18:40 (ev_647a922ee132), matching curl -T of the staged file (ev_ad1c5aaad750). The destination is not an approved bulk destination.\nAttribution: account jpark was used. The human operator is not established. Source 10.20.1.21 is bound to the workstation by timing and command match only. Remote VPN access is permitted and the 10.20.1.21 address is reachable remotely (ev_d9d49a92097c), and shared-station credentials have been found written down before. No person is named.",
+ "open_questions": [
+  "Does 10.20.1.21 map directly to ws-nurse-01 (DHCP or asset record not in bundle)?",
+  "What was the 10.20.9.87 destination and who controls it?",
+  "Was session 74 local or remote via vpn-gw-01? Who was physically present?",
+  "Contents and purpose of /tmp/.font-unix/idx-3e08.bin are unverified; was the export authorized?",
+  "auth.log.1 was not indexed and was not inspected; does it contain related lines?",
+  "Why does the records host show no matching activity for the 06:21 SSH flow from 10.20.0.250?"
+ ],
+ "usage": {
+  "llm_calls": 14,
+  "tokens_in": 255105,
+  "tokens_out": 15476,
+  "tokens_cache_read": 164261,
+  "cost_estimate_usd": 0.020735,
+  "wall_seconds": 70.562,
+  "tool_calls": 39,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T10:27:56.123989Z",
+ "report_sha256": "cc83c9acca95618d5941712fd252f9016dfb4b76cf926133583bd703c1d244ad",
+ "review_history": [
+  {
+   "at": "2026-11-14T10:27:56.123989Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

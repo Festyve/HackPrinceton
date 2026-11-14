@@ -1,0 +1,185 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v04-20261114t102149z-b2",
+ "bundle_id": "bndl-cd1018d48b2b57c5",
+ "system_id": "B2",
+ "system_label": "Arm B2: lead + integrity-auditor + skeptic with generic evidence tools only (no checks)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-414df9",
+   "claim_type": "collection_gap",
+   "category": "unresolved",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "none",
+   "t_start": "2026-11-10T06:22:00Z",
+   "t_end": "2026-11-10T15:22:00Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_ca7d30575a0d"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.3,
+   "rationale": "Host access.log has no rotated generation locally (keep 0); collector holds 726 lines vs 542 on host; not count-compared. Unresolved.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "downgraded_by_skeptic",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": "Single ordinary event; count mismatch unquantified. Open note only.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-654613",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "none (root cron logrotate)",
+   "t_start": "2026-11-10T09:08:00Z",
+   "t_end": "2026-11-10T09:08:01Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_b591d558b9fe",
+    "ev_a741c20d6927",
+    "ev_3369fb8ab26d",
+    "ev_cc71b1ad71a6"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "Scheduled logrotate moved auth.log to .1 (keep 1) at 09:08:01; collector holds forwarded lines the host copy lacks; no clear command found.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "downgraded_by_skeptic",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": "Rotation confirmed by cron logrotate; but gap not checked against collector copy in the window. Treated as open note.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-c3ca6c",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "none established",
+   "t_start": "2026-11-10T12:18:04Z",
+   "t_end": "2026-11-10T12:18:11Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_e4ead89c28e8"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.5,
+   "rationale": "22.5MB outbound to approved backup NAS stor-nas-01; above threshold but approved destination. Source host mapping (10.20.0.10) unconfirmed.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": "Approved backup destination on port 873; consistent with scheduled backup; source mapping open.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-4ed4af",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "kcole",
+   "t_start": "2026-11-10T13:13:02Z",
+   "t_end": "2026-11-10T13:13:09Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_3d5e70d6b46b",
+    "ev_3aab0fa6ae8e"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.6,
+   "rationale": "kcole uploaded a registry database via curl to 10.20.8.20, an approved laboratory/registry destination. Policy-consistent by destination; content not visible.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "downgraded_by_skeptic",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": "Approved destination, but source-to-workstation mapping and authorization not established.",
+   "produced_by": "lead-investigator"
+  }
+ ],
+ "attribution": {
+  "account_used": "kcole, tmori, adm-bsato, svc-backup (credentials observed in sessions and transfers; no single account tied to the flagged transfers)",
+  "session_ref": null,
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Shell history and fs_stat are host-local and not forwarded.",
+   "Flow source IPs not mapped to hosts.",
+   "Badge records do not cover VPN sessions.",
+   "Console credentials have been found written down before."
+  ],
+  "statement": "Account used; human operator not established. Accounts identify credentials, not people. No person is named or cleared.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Bundle bndl-cd1018d48b2b57c5 (Northside Clinic, 2026-11-10 06:22-15:22Z). The evidence does not support an incident. No local log removal was established: the workstation auth.log gap at 09:08Z coincides with scheduled logrotate (.1 retained), and records auth.log matches the collector. No data staging allegation was supported in the sampled review. Bulk outbound flows over 5 MB went only to approved destinations (10.20.0.45 backup NAS; 10.20.8.20 lab gateway). The 12:18Z 22.5 MB flow to the backup NAS (port 873) is consistent with a scheduled backup, but its source (10.20.0.10) is not mapped to the workstation. The 13:13Z kcole upload to 10.20.8.20 is approved by destination, but its authorization is not established. Accounts (kcole, tmori, adm-bsato, svc-backup) identify credentials only; the human operator is not established and no person is named or cleared.",
+ "open_questions": [
+  "Map 10.20.0.10 and 10.20.1.21 to hosts to confirm the source of the backup and lab flows.",
+  "Compare records access.log line counts (collector 726 vs host 542) and check the off-host archived rotation segment.",
+  "Shell history and fs_stat were only partly checked (50 of 152 rows); review the rest.",
+  "Confirm whether the kcole registry upload to 10.20.8.20 was an authorized submission.",
+  "Verify VPN (10.20.0.250) sessions against account expectations; badge records do not cover remote access."
+ ],
+ "usage": {
+  "llm_calls": 13,
+  "tokens_in": 198185,
+  "tokens_out": 13046,
+  "tokens_cache_read": 136849,
+  "cost_estimate_usd": 0.015558,
+  "wall_seconds": 57.959,
+  "tool_calls": 31,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T10:33:20.953455Z",
+ "report_sha256": "6aa1d513f8234e873f9585629c71b3a5b46c6a4ea9f022e6e402d081dab4fd74",
+ "review_history": [
+  {
+   "at": "2026-11-14T10:33:20.953455Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

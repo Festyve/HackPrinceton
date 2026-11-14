@@ -1,0 +1,211 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v01-20261114t102149z-alibi",
+ "bundle_id": "bndl-820162c5d101a140",
+ "system_id": "ALIBI",
+ "system_label": "Specialist review: lead + integrity-auditor + skeptic with deterministic checks (benchmark arm ALIBI)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-9090df",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T10:26:38Z",
+   "t_end": "2026-11-10T10:28:03Z",
+   "object_or_session": "/home/rhaddad/Downloads/cache-0a91.bin",
+   "evidence_ids": [
+    "ev_61a92f53ab5f",
+    "ev_ad11135ba4d2",
+    "ev_eb89a8080966",
+    "ev_78cff1512ff0",
+    "ev_09b4ad6dcb1f"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.5,
+   "rationale": "A file the same size as the 23.18 MB patients export arrived at 10:26:38 and was sent out about 70 s later. Staging is inferred; the checker did not confirm it.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Client-requested export downloaded for legitimate use",
+    "Different object of same size"
+   ],
+   "status": "downgraded_by_skeptic",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size reached this host, per records independent of it, shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": "Staging not confirmed by checker; file matches a client-requested export download; mtime anomaly alone does not prove staging.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-8db130",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T10:27:48Z",
+   "t_end": "2026-11-10T10:28:03Z",
+   "object_or_session": "10.20.9.62:8080",
+   "evidence_ids": [
+    "ev_09b4ad6dcb1f",
+    "ev_2a1a69dae2fb",
+    "ev_f3e53611f8fb",
+    "ev_e54a71973aad",
+    "ev_0d767bd677cd"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "About 23.18 MB sent from workstation to 10.20.9.62:8080, a non-approved destination, with no covering change record; overlaps console session workstation#54 (rhaddad).",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Authorized transfer not yet in change log",
+    "Flow shows volume, not content"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": "Approved-list check fails; no change record; flow shows bytes not content.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-0b669d",
+   "claim_type": "second_host_session",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "adm-tkim",
+   "t_start": "2026-11-10T10:30:12Z",
+   "t_end": "2026-11-10T10:35:00Z",
+   "object_or_session": "records#402",
+   "evidence_ids": [
+    "ev_a9ffa48ff362",
+    "ev_1f05ff28f0e1",
+    "ev_c8c107da32b4",
+    "ev_55e5f9f5c9f1",
+    "ev_98708a555bf3"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.75,
+   "rationale": "adm-tkim session on records opened from 10.20.1.21, which is not a listed admin source, with no covering change record; overlaps workstation#54.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Admin working from nurse workstation under an unlisted change request",
+    "Credential used by someone else"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a session on this host was opened from another monitored host outside the stated access policy"
+   ],
+   "skeptic_note": "Remote session from non-listed admin source 10.20.1.21 with no covering change record.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-ea24f6",
+   "claim_type": "forwarding_stopped",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "adm-tkim",
+   "t_start": "2026-11-10T10:30:45Z",
+   "t_end": "2026-11-10T10:34:05Z",
+   "object_or_session": "log-forwarder",
+   "evidence_ids": [
+    "ev_e49249e092de",
+    "ev_bfb2782e7150",
+    "ev_bfdef7f743b0",
+    "ev_c602b8a93a8e",
+    "ev_196ace5fc219",
+    "ev_4e197d46ccb4",
+    "ev_570e93bd66fa",
+    "ev_fdb66ba0799c"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.7,
+   "rationale": "Log forwarding on records stopped for 200 s (19 missed heartbeats) after stop commands by adm-tkim; restart recorded; no approved change covers this window.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Maintenance restart without recorded change",
+    "Fault-driven restart unrelated to operator"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a recorded stop command opens this collection gap and no approved change record covers it"
+   ],
+   "skeptic_note": "200 s heartbeat gap with recorded restart by adm-tkim; CHG-6914 window ended before the gap.",
+   "produced_by": "lead-investigator"
+  }
+ ],
+ "attribution": {
+  "account_used": "rhaddad; adm-tkim",
+  "session_ref": "workstation#54; records#402",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Flow records show bytes, not content",
+   "Host-local logs and metadata are writable",
+   "Account names identify credentials, not people"
+  ],
+  "statement": "Accounts used: rhaddad (console session workstation#54 on workstation, linked to the transfer) and adm-tkim (remote session records#402 and the forwarding stop on records). Human operator not established for either; account used only. Credentials may be shared or written down, and badge records do not cover remote sessions.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Tip: review records access and transfers during the shift (capture 2026-11-10 06:18-15:18 UTC).\n\nSupported (kept after skeptic review):\n1. Policy-violating transfer: about 23.18 MB sent from workstation to 10.20.9.62:8080 at 10:27:48-10:28:03 UTC. The destination is not on the approved list and no change record covers it. Console session workstation#54 used account rhaddad. Confidence 0.8.\n2. Log-forwarding stop on records: forwarding was down about 200 s (10:30:45-10:34:05 UTC, 19 missed heartbeats) after stop commands by account adm-tkim. The restart is recorded. CHG-6914 covers maintenance but its window ended at 09:18:42, before the gap. Confidence 0.7.\n3. Unlisted-source remote session: adm-tkim session records#402 opened from 10.20.1.21 (not a listed admin source) at 10:30:12-10:35:00 UTC, overlapping workstation#54. No covering change. Confidence 0.75.\n\nNot supported as incident: data staging of /home/rhaddad/Downloads/cache-0a91.bin. The file matches the size of a patients export that was downloaded at 10:26:38, and was sent out about 70 s later. The checker did not confirm a staging step, so this was downgraded. The file mtime (2026-10-11) contradicts its arrival time, which is an unresolved metadata anomaly on a host-writable record.\n\nBenign/neutral: older access.log lines absent locally are explained by scheduled rotation (retention), with 202 lines retained at the collector. A bulk transfer to approved stor-nas-01 (10.20.0.45) by svc-backup is a scheduled backup. Four local access.log lines are missing at the collector during the forwarding gap; this is a collection gap, not proof of removal.\n\nAttribution: accounts used were rhaddad and adm-tkim. No human operator is established. Credentials can be shared or written down, badge records do not cover remote sessions, and flow records show bytes, not content.",
+ "open_questions": [
+  "What is the destination 10.20.9.62:8080, and was any approved change covering the 23 MB transfer?",
+  "Who was operating workstation#54 and records#402? Badge and remote-session records do not establish this.",
+  "Why does the cache-0a91.bin mtime (2026-10-11) predate its arrival; was the metadata altered?",
+  "Is there a change request for the records log-forwarder stop at 10:30:45 UTC outside CHG-6914?",
+  "Shell history for workstation#54 shows no matching command; the touch-screen client may not log history."
+ ],
+ "usage": {
+  "llm_calls": 11,
+  "tokens_in": 141518,
+  "tokens_out": 12899,
+  "tokens_cache_read": 91803,
+  "cost_estimate_usd": 0.013581,
+  "wall_seconds": 53.55,
+  "tool_calls": 29,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T10:23:56.433314Z",
+ "report_sha256": "8e860ad2c6f345125850b90718a5a36a7b012815963ed702ff3f4a3a5ffdbfbd",
+ "review_history": [
+  {
+   "at": "2026-11-14T10:23:56.433314Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

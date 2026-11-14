@@ -1,0 +1,171 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v04-20261114t102149z-alibi",
+ "bundle_id": "bndl-cd1018d48b2b57c5",
+ "system_id": "ALIBI",
+ "system_label": "Specialist review: lead + integrity-auditor + skeptic with deterministic checks (benchmark arm ALIBI)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-16fc6c",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:39:14Z",
+   "t_end": "2026-11-10T09:08:04Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_ca7d30575a0d",
+    "ev_1c9781b1e11c",
+    "ev_9280d16c960a",
+    "ev_bb730e5b7dbe",
+    "ev_71191a508749",
+    "ev_26078c4957ec",
+    "ev_4c0385c7a76e"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "180 collector-retained access.log lines are absent locally. They predate the oldest local generation, and the 09:08:04Z rotation was archived off-host (keep=0). Explained by rotation, not removal.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Scheduled rotation"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": "Pending skeptic review; rotation evidence cited directly.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-9cb03b",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "kcole",
+   "t_start": "2026-11-10T07:48:07Z",
+   "t_end": "2026-11-10T07:50:20Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_c779361f5b18",
+    "ev_8ea6080800e4",
+    "ev_74ab09f20982",
+    "ev_30c3b083b6ad"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.6,
+   "rationale": "Account kcole ran clinic-labs requests and curl uploads of lab-req PDFs to 10.20.8.20, the approved lab-gw-01 destination. Consistent with policy. Timing differs from the auditor's 13:13Z flow, which is unreconciled.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Authorized laboratory submission by the account holder",
+    "Another person using the kcole credential"
+   ],
+   "status": "proposed",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": "Pending skeptic review; approved destination, timing discrepancy noted as open question.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-00c7be",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T09:08:01Z",
+   "t_end": "2026-11-10T09:08:01Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_f47244eded4e",
+    "ev_b591d558b9fe"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "Scheduled rotation of workstation auth.log. Local and collector copies are consistent (53 and 53 lines), so no removal or truncation is supported.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Scheduled rotation"
+   ],
+   "status": "proposed",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": "Pending skeptic review; local and collector copies agree.",
+   "produced_by": "lead-investigator"
+  }
+ ],
+ "attribution": {
+  "account_used": "kcole",
+  "session_ref": null,
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_c779361f5b18",
+   "ev_8ea6080800e4"
+  ],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Shared credentials have been found written down before",
+   "Badge readers can miss tailgating",
+   "Timing conflict between shell history (07:48Z) and auditor flow (13:13Z)"
+  ],
+  "statement": "Account used; human operator not established. kcole ran the shell uploads on workstation. Account name is a credential, not a person. Badge data does not identify who was at the keyboard.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Bundle bndl-cd1018d48b2b57c5 (Northside Clinic, 06:22Z to 15:22Z). The tip asked about records access and transfers. The evidence does not establish an incident.\n\n1. Log removal: not supported. The workstation auth.log rotation at 09:08:01Z (keep=1) is consistent with the collector copy (finding F-00c7be). The records access.log absences (180 lines) are explained by the 09:08:04Z off-host archival rotation (keep=0) (finding F-16fc6c).\n2. Transfers: the records-to-10.20.0.45:873 bulk flow (22.5 MB) goes to the approved backup NAS and is policy-consistent. The kcole upload path to 10.20.8.20 is an approved laboratory destination, but I could not confirm it as policy-consistent. The skeptic downgraded finding F-9cb03b, and I was unable to apply that downgrade in the record because I had already recorded keep. Treat F-9cb03b as downgraded.\n3. Staging: the auditor reported an 11.8 MB flow at 13:13Z from workstation to 10.20.8.20:80 (ev_3aab0fa6ae8e) that carried a staged immunization-registry export, during kcole console session workstation#93. Its purpose and authorization are unverified. Earlier registry exports (/var/tmp/xfer/imm-registry-100 to 102.db) appear in fs_stat but are outside the capture window. I did not record a data_staging finding because I did not verify the staged object within the window myself.\n4. Attribution: account kcole was used. Human operator not established. Badge B-1633 and the shared-credential risk do not identify who was at the keyboard. Nobody is named.",
+ "open_questions": [
+  "Reconcile the timing: shell history shows curl uploads to 10.20.8.20 at 07:48Z and 07:50Z, while the auditor placed the 11.8 MB registry flow at 13:13Z (ev_3aab0fa6ae8e). Are these the same, or separate events?",
+  "Was the 13:13Z flow an authorized laboratory or registry submission? Verify with the clinic outside these logs.",
+  "What did the 13:13Z transfer contain? Flow records show bytes only, not content. Verify the staged file and its origin.",
+  "Confirm the records-to-NAS 12:18Z transfer was a scheduled backup.",
+  "Who was operating the kcole session? Badge and VPN coverage are incomplete, and credentials may have been shared."
+ ],
+ "usage": {
+  "llm_calls": 12,
+  "tokens_in": 167378,
+  "tokens_out": 12522,
+  "tokens_cache_read": 104542,
+  "cost_estimate_usd": 0.01516,
+  "wall_seconds": 56.204,
+  "tool_calls": 25,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T10:32:22.778510Z",
+ "report_sha256": "dbc1915a100c20dbaccf4c45ce01a0b055ebd2f26af4477b143b6b92a7c34621",
+ "review_history": [
+  {
+   "at": "2026-11-14T10:32:22.778510Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

@@ -1,0 +1,233 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v04-20261114t102149z-b1",
+ "bundle_id": "bndl-cd1018d48b2b57c5",
+ "system_id": "B1",
+ "system_label": "Arm B1: one agent with generic evidence tools only (no checks)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-b5195d",
+   "claim_type": "data_staging",
+   "category": "unresolved",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "kcole",
+   "t_start": "2026-11-10T13:11:27Z",
+   "t_end": "2026-11-10T13:13:02Z",
+   "object_or_session": "/var/tmp/xfer/imm-registry-564.db",
+   "evidence_ids": [
+    "ev_acbb1133ae2d",
+    "ev_3d5e70d6b46b"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.3,
+   "rationale": "The immunization registry export was written to a non-standard staging directory /var/tmp/xfer and then uploaded. Earlier monthly files with the same naming pattern (imm-registry-100/101/102, Aug to Oct, fs_stat) suggest a recurring process, which points to a routine job rather than a one-off. The evidence does not establish intent or that the data went anywhere other than the approved gateway.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Recurring registry submission workflow using a staging directory",
+    "Staging chosen by the export tool's default path"
+   ],
+   "status": "proposed",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-4a164f",
+   "claim_type": "other",
+   "category": "unresolved",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "kcole",
+   "t_start": "2026-11-10T13:26:56Z",
+   "t_end": "2026-11-10T13:42:51Z",
+   "object_or_session": "workstation console session kcole tty1 (workstation#94)",
+   "evidence_ids": [
+    "ev_b38c4c21b6ce",
+    "ev_d0c85700d242",
+    "ev_3d5e70d6b46b"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.4,
+   "rationale": "Account kcole logged in on the shared station tty1 during the 13:11 to 13:13 export and upload. Badge records show kcole's badge (B-1633) out at 11:17 and back in at 11:53 with no later badge-out until 15:03, so the badge was present. Remote VPN sessions are not covered by badge records, and console credentials at this station have been found written down before. Who was at the keyboard is not established.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "kcole performed the work personally",
+    "another person used the kcole credential"
+   ],
+   "status": "proposed",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-9bfc33",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T09:08:00Z",
+   "t_end": "2026-11-10T09:08:03Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_b591d558b9fe",
+    "ev_f47244eded4e",
+    "ev_a741c20d6927"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "Workstation auth.log was rotated by scheduled logrotate at 09:08:01 (keep 1, rotated copy .1 retained). The collector holds a continuous sequence (seq 1 to 53) of the workstation auth.log lines with no gap, so no evidence of local log removal was found for this file.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Scheduled log rotation"
+   ],
+   "status": "proposed",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-c3ca6c",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T12:18:04Z",
+   "t_end": "2026-11-10T12:18:11Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_e4ead89c28e8"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.5,
+   "rationale": "A 22.5 MB outbound flow from 10.20.0.10 to 10.20.0.45:873 (stor-nas-01, approved for backup and log archive). Destination is approved, so this is consistent with policy. The source host is not named in the evidence, so host is given as the workstation only as a placeholder and is not confirmed.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Scheduled backup to stor-nas-01 (svc-backup)"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-192cdb",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": "",
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "kcole",
+   "t_start": "2026-11-10T13:11:27Z",
+   "t_end": "2026-11-10T13:13:09Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_acbb1133ae2d",
+    "ev_b27976a53c19",
+    "ev_3d5e70d6b46b",
+    "ev_3aab0fa6ae8e"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.6,
+   "rationale": "Account kcole ran a bulk export of the immunization_registry dataset (11.79 MB per records app) to /var/tmp/xfer and uploaded it with curl to 10.20.8.20:80 (lab-gw-01), 11.79 MB on the tap flow. 10.20.8.20 is an approved destination for laboratory and registry submissions, so the destination is not a policy violation on the brief's rule. The transfer is still a bulk export of clinic registry data and the business purpose is not confirmed by the evidence.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Routine registry submission to the approved lab/registry gateway",
+    "Operator error in staging location"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  }
+ ],
+ "attribution": {
+  "account_used": "kcole",
+  "session_ref": null,
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_acbb1133ae2d",
+   "ev_3d5e70d6b46b",
+   "ev_3aab0fa6ae8e",
+   "ev_b38c4c21b6ce"
+  ],
+  "contrary_evidence_ids": [
+   "ev_e4ead89c28e8"
+  ],
+  "assumptions": [],
+  "limits": [
+   "Shell history is host-local and writable",
+   "Badge reader can miss tailgating",
+   "Credentials at the shared station have been found written down before"
+  ],
+  "statement": "The account kcole performed the 13:11 immunization registry export and the 13:13 upload to 10.20.8.20:80 on workstation. The approved lab gateway is the destination. The human operator is not established. The badge reader shows the kcole badge in the building during the window, but the badge does not identify who was at the keyboard, and remote sessions are not covered by badge records.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "The investigator did not write a summary.",
+ "open_questions": [
+  "Incomplete run: stopped by the budget gateway: input token cap reached: 227101 used + 0 reserved + 63430 needed > 280000."
+ ],
+ "usage": {
+  "llm_calls": 7,
+  "tokens_in": 227101,
+  "tokens_out": 8461,
+  "tokens_cache_read": 168604,
+  "cost_estimate_usd": 0.013228,
+  "wall_seconds": 36.878,
+  "tool_calls": 28,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T10:33:58.067196Z",
+ "report_sha256": "e6e5318296d382b842b6bc1b6b1ccc4f2af7d4d6decafc31ea1aa1f8895c8361",
+ "review_history": [
+  {
+   "at": "2026-11-14T10:33:58.067196Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

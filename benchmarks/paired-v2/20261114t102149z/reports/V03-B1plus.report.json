@@ -1,0 +1,218 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v03-20261114t102149z-b1plus",
+ "bundle_id": "bndl-c00971b3903015ba",
+ "system_id": "B1+",
+ "system_label": "Fast investigation: one agent with deterministic checks, no delegation (same configuration as benchmark arm B1+)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-d78bce",
+   "claim_type": "collection_gap",
+   "category": "unresolved",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T09:06:28Z",
+   "t_end": "2026-11-10T12:48:27Z",
+   "object_or_session": "/home/rhaddad/Documents/census-1110-67.csv",
+   "evidence_ids": [
+    "ev_32107b540cd2",
+    "ev_be850d2bf1d2",
+    "ev_cb3d9987dcee",
+    "ev_d35d89e73de9"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "check_transfer_sessions"
+   ],
+   "confidence": 0.4,
+   "rationale": "rhaddad's shell history shows a daily-census export to a local file and repeated printing of census-1109.csv during the shift. No flow, transfer or staging record links these to an outbound destination. Printing and local export are not transfers. Not established either way; shell histories are host-local and not forwarded.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-6df3b4",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:16:00Z",
+   "t_end": "2026-11-10T08:45:07Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_e8404edb19d6",
+    "ev_3c46266213b9",
+    "ev_2eef1cb8e761",
+    "ev_0e3c6428cb68"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "check_local_vs_collector"
+   ],
+   "confidence": 0.85,
+   "rationale": "Fourteen workstation auth.log lines from 06:16 to 08:45 are absent locally but present at the collector. They predate the oldest kept local generation, which began at the 08:51 rotation. The check classifies this as retention-explained, with no unexplained absence.",
+   "assumptions": [
+    "Rotation record is accurate"
+   ],
+   "alternative_explanations": [
+    "Deliberate removal of older lines; not supported since the rotation discarded them by policy"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-93ded4",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:18:36Z",
+   "t_end": "2026-11-10T08:50:01Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_25c4167a6c43",
+    "ev_03ab751818de",
+    "ev_c2e582d4993a",
+    "ev_d1ef81638d26"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "check_local_vs_collector"
+   ],
+   "confidence": 0.85,
+   "rationale": "The records access.log copy on the host lacks 184 lines from 06:18 to 08:50 that exist at the collector. The check attributes these to logrotate at 08:51:04, which archived the segment off-host to stor-nas-01 (keep 0). The lines predate the oldest local generation, so the absence is explained by retention, not removal.",
+   "assumptions": [
+    "Logrotate ran as scheduled"
+   ],
+   "alternative_explanations": [
+    "Deliberate deletion, which the rotation record does not support for these lines"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-914ac8",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:58:04Z",
+   "t_end": "2026-11-10T11:58:09Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_37a2095912d6"
+   ],
+   "counterevidence_ids": [
+    "ev_ids_none"
+   ],
+   "check_refs": [
+    "check_transfer_sessions"
+   ],
+   "confidence": 0.85,
+   "rationale": "A 16.9 MB outbound flow from records (10.20.0.10) to 10.20.0.45:873 is above the 5 MB bulk threshold, but 10.20.0.45 is the approved stor-nas-01 backup/log archive destination. No session or staged object is linked to it. Policy-consistent on the available evidence; content is not visible.",
+   "assumptions": [
+    "Flow records reflect real destinations"
+   ],
+   "alternative_explanations": [
+    "Scheduled backup or log archive to stor-nas-01 (consistent with the 08:51 logrotate archive to the same NAS)"
+   ],
+   "status": "rejected_by_verifier",
+   "verification_status": "invalid_reference",
+   "verifier_notes": [
+    "1 cited id(s) do not exist in this evidence bundle: ['ev_ids_none']"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  }
+ ],
+ "attribution": {
+  "account_used": "rhaddad, lnguyen, adm-vrao",
+  "session_ref": "records#327; workstation#41-50",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_badcd19721f5",
+   "ev_9213b517ca08",
+   "ev_7a5808181e27"
+  ],
+  "contrary_evidence_ids": [
+   "ev_37a2095912d6"
+  ],
+  "assumptions": [
+   "Logs are accurate and not forged"
+  ],
+  "limits": [
+   "Badge data does not cover remote sessions",
+   "Shell histories and fs_stat are host-local, not forwarded",
+   "Shared console credentials have been found written down before"
+  ],
+  "statement": "Account used for the records and workstation activity in the window: adm-vrao (records SSH session 327 from 10.20.1.90), rhaddad and lnguyen (workstation tty1 sessions). Account use is established by the logs. The human operator is not established: the console and shared credentials can be used by someone other than the account holder, and badge records do not cover remote sessions. The bulk transfer to 10.20.0.45 is to an approved destination, and no incident-level data-staging or log-removal claim is supported.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Tip: review records access and transfers during the shift. Findings: (1) The one bulk outbound flow (records to 10.20.0.45:873, 16.9 MB, 11:58 UTC) goes to the approved stor-nas-01 backup destination; no session or staged object links to it. Policy-consistent. (2) Missing lines in records access.log and workstation auth.log that are present at the collector are explained by scheduled logrotate and off-host archive (keep 0 / keep 1), not by removal. No unexplained local-log absence. (3) rhaddad's shell history shows a local census export and repeated printing of census-1109.csv; no flow links these to an outbound destination, so they stay unresolved. No incident allegation (staging, exfiltration or log removal) is supported by the evidence. Attribution: accounts used are rhaddad, lnguyen and adm-vrao; the human operator is not established. Note: one submitted finding (F-914ac8) carries a placeholder counterevidence id (\"ev_ids_none\") that does not resolve; it should be disregarded or corrected.",
+ "open_questions": [
+  "What was in the 16.9 MB rsync-style transfer to stor-nas-01 (scheduled backup vs ad hoc)? Flow content is not visible.",
+  "Was the census-1110-67.csv export or the census-1109.csv print taken off-site? Workstation shell history and fs_stat are host-local and not forwarded.",
+  "Were the staged files in /var/tmp/xfer/imm-registry-100..102.db (Aug-Oct, before capture) part of an approved lab submission? No transfer in the window links to them.",
+  "Remote VPN sessions (vpn-gw-01) are not covered by badge records; operator identity for any session cannot be established from this bundle."
+ ],
+ "usage": {
+  "llm_calls": 6,
+  "tokens_in": 139416,
+  "tokens_out": 5257,
+  "tokens_cache_read": 104802,
+  "cost_estimate_usd": 0.008003,
+  "wall_seconds": 23.698,
+  "tool_calls": 14,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T10:31:25.746098Z",
+ "report_sha256": "f8461fbe6960512f13520b3284aa4d0448d5bac51e777dfd978d02a5233749a7",
+ "review_history": [
+  {
+   "at": "2026-11-14T10:31:25.746098Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

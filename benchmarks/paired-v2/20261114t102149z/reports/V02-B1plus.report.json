@@ -1,0 +1,221 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v02-20261114t102149z-b1plus",
+ "bundle_id": "bndl-644137520589f844",
+ "system_id": "B1+",
+ "system_label": "Fast investigation: one agent with deterministic checks, no delegation (same configuration as benchmark arm B1+)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-e5d86b",
+   "claim_type": "local_log_removal",
+   "category": "incident_allegation",
+   "attack_id": "T1070.002",
+   "technique_family": "indicator_removal",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:14:18Z",
+   "t_end": "2026-11-10T11:20:41Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_9b3995123e96",
+    "ev_424ebb025874",
+    "ev_0c41efcea0c4",
+    "ev_65f8e01c713e",
+    "ev_e1dfdcd68150",
+    "ev_95c867044b06"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "check_local_vs_collector:workstation:/var/log/auth.log"
+   ],
+   "confidence": 0.8,
+   "rationale": "The collector holds the jpark console login for session 74 (seq 29, inner time 11:14:18), but the workstation's local auth.log lacks it, while local records bracket it on both sides (session 73 logout ev_424ebb025874 and session 74 logout ev_0c41efcea0c4). The only rotation was at 09:00:01, before the line, and the check reports no retention-explained absence for this file. The absence is unexplained by rotation. This supports local removal of that line; it does not identify who removed it.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-3accd5",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": "T1074.001",
+   "technique_family": "data_staging",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:15:15Z",
+   "t_end": "2026-11-10T11:15:20Z",
+   "object_or_session": "/tmp/.font-unix/idx-3e08.bin",
+   "evidence_ids": [
+    "ev_3fb5abe9cac6",
+    "ev_7f43d4470d7b",
+    "ev_7fd4e032ea80",
+    "ev_6472dce3b3e7",
+    "ev_bb842212e4e9"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "Shell history shows jpark ran clinic-export of dataset patients_full to /tmp/.font-unix/idx-3e08.bin at 11:15:15. The records app logged a matching export_bulk for patients_full (20,578,812 bytes) at 11:15:16, and the tap shows the matching 20.5 MB flow to records. fs_stat shows the file at 20,578,812 bytes owned by jpark. This is a hidden-path staging of patient data on the workstation.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-06531a",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": "T1048",
+   "technique_family": "exfiltration",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:18:27Z",
+   "t_end": "2026-11-10T11:18:40Z",
+   "object_or_session": "10.20.9.87:8080",
+   "evidence_ids": [
+    "ev_647a922ee132",
+    "ev_ad1c5aaad750",
+    "ev_9b3995123e96"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "A 20.58 MB outbound flow from workstation 10.20.1.21 to 10.20.9.87:8080 at 11:18:27-11:18:40 exceeds the 5 MB bulk threshold and the destination is not on the approved list. Shell history shows curl -T uploading the staged file to that address. The only overlapping session is jpark console session 74.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-d1ea46",
+   "claim_type": "account_use",
+   "category": "unresolved",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:14:18Z",
+   "t_end": "2026-11-10T11:20:41Z",
+   "object_or_session": "workstation#74",
+   "evidence_ids": [
+    "ev_9b3995123e96",
+    "ev_0c41efcea0c4",
+    "ev_135b6f8fb4cb",
+    "ev_e18cda9a3328"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.5,
+   "rationale": "The jpark console session was opened while the account's badge holder was badged in. This shows the account was used. It does not show who typed the commands, since credentials can be shared or written down, and tailgating is not visible to badge readers.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-954045",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:59:04Z",
+   "t_end": "2026-11-10T11:59:10Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_0a3326346765"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.6,
+   "rationale": "A 20.58 MB transfer from records to stor-nas-01 (approved backup and log archive destination) is policy-consistent. No interactive session overlaps it, and it matches the scheduled archive pattern.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  }
+ ],
+ "attribution": {
+  "account_used": "jpark",
+  "session_ref": null,
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [],
+  "statement": "The jpark credential was used for a console session on workstation (session 74) that staged patients_full, exfiltrated it to 10.20.9.87:8080, and whose auth.log login line was removed locally. The account was used. The human operator is not established: the badge check shows only that the holder was in the building, and shared or written-down credentials are possible.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Tip: review records access and transfers this shift. Findings: (1) On workstation, the jpark console session 74 (11:14:18-11:20:41 UTC) ran clinic-export of patients_full to /tmp/.font-unix/idx-3e08.bin (about 20.6 MB), a records-app export_bulk was logged at 11:15:16, and the file was uploaded with curl to 10.20.9.87:8080 at 11:18:27-11:18:40. The destination is not on the approved list and the transfer exceeds the 5 MB threshold. (2) The login line for session 74 is present on the collector but absent from the workstation's local auth.log, bracketed by local records on both sides, and no rotation explains it. This supports removal of a local log line. (3) A records-to-stor-nas-01 transfer at 11:59 is policy-consistent and was treated as benign. Attribution: the jpark account was used. The human operator is not established. The badge holder was in the building, but credentials can be shared, so this neither names nor clears anyone.",
+ "open_questions": [
+  "Who operated the jpark console session 74? The badge check cannot establish this.",
+  "What is 10.20.9.87 and who controls it?",
+  "Was the /tmp staged file deleted after upload? The fs_stat snapshot may not show this.",
+  "Why do the workstation's shell histories and file metadata have no collector copy? They are not forwarded, so their coverage is limited.",
+  "Records access.log rotation at 09:00 was archived off-host; the 185 pre-09:00 lines are retention-explained and were not assessed further."
+ ],
+ "usage": {
+  "llm_calls": 5,
+  "tokens_in": 83543,
+  "tokens_out": 4502,
+  "tokens_cache_read": 57000,
+  "cost_estimate_usd": 0.006139,
+  "wall_seconds": 19.454,
+  "tool_calls": 14,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T10:28:15.809960Z",
+ "report_sha256": "3c0455e9f3994da3d894b235276738da66293c74752b2317103d78d9d58b9877",
+ "review_history": [
+  {
+   "at": "2026-11-14T10:28:15.809960Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

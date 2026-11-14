@@ -1,0 +1,157 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v01-20261114t102149z-b1",
+ "bundle_id": "bndl-820162c5d101a140",
+ "system_id": "B1",
+ "system_label": "Arm B1: one agent with generic evidence tools only (no checks)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-7b1b80",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T10:26:38Z",
+   "t_end": "2026-11-10T10:28:56Z",
+   "object_or_session": "/home/rhaddad/Downloads/cache-0a91.bin",
+   "evidence_ids": [
+    "ev_eb89a8080966",
+    "ev_61a92f53ab5f"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.6,
+   "rationale": "A 23,176,722-byte file in the user's Downloads directory matches the byte count of the patients_full bulk export (23176722) logged at 10:26:38, and it was the size of the flow that left the host at 10:27:48. Its presence in Downloads before the outbound flow is consistent with staging.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "The file could have been downloaded from another source; the size match is strong but the file's origin is not directly recorded."
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size reached this host, per records independent of it, shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-8db130",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T10:27:48Z",
+   "t_end": "2026-11-10T10:28:03Z",
+   "object_or_session": "10.20.9.62:8080",
+   "evidence_ids": [
+    "ev_09b4ad6dcb1f",
+    "ev_61a92f53ab5f",
+    "ev_ad11135ba4d2"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.75,
+   "rationale": "Tap flow from workstation 10.20.1.21 sent 23,180,407 bytes to 10.20.9.62:8080 in 15s, far above the 5MB bulk threshold and not an approved destination (approved: 10.20.0.45, 10.20.8.20). It follows a records-app export_bulk of patients_full by rhaddad from client 10.20.1.21 at 10:26:38 with bytes=23176722, which matches the size of the file later seen in Downloads.",
+   "assumptions": [
+    "Bulk outbound to any destination not in the approved list violates policy, per the brief."
+   ],
+   "alternative_explanations": [
+    "Flow records show 10.20.9.62:8080 also receives small routine traffic from several hosts, so the destination may be a known internal service; the policy issue rests on bulk size and the non-approved destination.",
+    "The flow is a simulated tap record; the payload is not confirmed as patient data by packet capture."
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-091f10",
+   "claim_type": "timestamp_alteration",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T10:28:03Z",
+   "t_end": "2026-11-10T10:28:56Z",
+   "object_or_session": "/home/rhaddad/Downloads/cache-0a91.bin",
+   "evidence_ids": [
+    "ev_eb89a8080966",
+    "ev_09b4ad6dcb1f"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.35,
+   "rationale": "The snapshot records mtime 10:28:56, about 53 seconds after the transfer ended, while the file's other timestamp is 2026-10-11 and the file size matches the 10:26 export. The snapshot is host-local and point-in-time, so the mtime could reflect a later legitimate write; this is weakly supported.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "The file may have been written or touched by normal use after the upload.",
+    "The fs_stat snapshot is host-writable and taken at capture end, so it may not reflect the true sequence."
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an independent record shows the content arriving after the modification time the file carries"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  }
+ ],
+ "attribution": {
+  "account_used": null,
+  "session_ref": null,
+  "human_identity": "not_assessed",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [],
+  "statement": "The investigator did not submit an attribution assessment.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "The investigator did not write a summary.",
+ "open_questions": [
+  "Incomplete run: stopped by the budget gateway: input token cap reached: 268610 used + 0 reserved + 77840 needed > 280000."
+ ],
+ "usage": {
+  "llm_calls": 7,
+  "tokens_in": 268610,
+  "tokens_out": 8925,
+  "tokens_cache_read": 198124,
+  "cost_estimate_usd": 0.015254,
+  "wall_seconds": 41.437,
+  "tool_calls": 26,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T10:25:07.997297Z",
+ "report_sha256": "87b4031ea476c73f9c95f28f1ecd865d01b6f303894fe08264fceed62148beb7",
+ "review_history": [
+  {
+   "at": "2026-11-14T10:25:07.997297Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

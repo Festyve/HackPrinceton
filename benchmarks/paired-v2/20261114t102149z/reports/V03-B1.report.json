@@ -1,0 +1,163 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v03-20261114t102149z-b1",
+ "bundle_id": "bndl-c00971b3903015ba",
+ "system_id": "B1",
+ "system_label": "Arm B1: one agent with generic evidence tools only (no checks)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-e062ac",
+   "claim_type": "local_log_removal",
+   "category": "unresolved",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T12:11:58Z",
+   "t_end": "2026-11-10T12:12:02Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_ef4f6bb24b98",
+    "ev_b29707922fb3",
+    "ev_dfdb62498266"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.5,
+   "rationale": "Possible local log removal question: a forced rotation discarded an older auth.log generation. Unresolved because the rotation is an audited admin action and the content is preserved at the collector. Not established as an incident.</rationale>\n<parameter name=\"confidence\">0.3",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "proposed",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-13cd5a",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T11:58:00Z",
+   "t_end": "2026-11-10T11:58:09Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_37a2095912d6",
+    "ev_b62760645c3f"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.1,
+   "rationale": "Duplicate placeholder; see first transfer finding.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-7acdc0",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T12:08:46Z",
+   "t_end": "2026-11-10T12:12:02Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_1e7ed5499416",
+    "ev_b29707922fb3",
+    "ev_a9c69d6ed6ea",
+    "ev_ef4f6bb24b98",
+    "ev_dfdb62498266"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.6,
+   "rationale": "adm-vrao ran a forced logrotate of /var/log/auth.log in session 51 at 12:11:58. The rotation at 12:12:01 discarded the previous .1 generation, which is the policy's keep-1 behavior. The pre-12:12 auth events were already forwarded to the collector (ev_7874dac3efca and related seq 1-40 copies), so no independent record is lost. The rotation is an administrator action that is visible in the audit trail, not a silent deletion.</rationale>\n<parameter name=\"assumptions\">[\"The discarded generation's content is covered by collector copies, which were not checked line by line\"]",
+   "assumptions": [],
+   "alternative_explanations": [
+    "An administrator could have rotated logs to reduce local evidence; the timing right after an admin login is noted but no evidence of intent exists",
+    "Discarded generation content not directly inspected"
+   ],
+   "status": "proposed",
+   "verification_status": "structurally_valid",
+   "verifier_notes": [
+    "references resolve; no allegation is made"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  }
+ ],
+ "attribution": {
+  "account_used": "adm-vrao",
+  "session_ref": null,
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_badcd19721f5",
+   "ev_1e7ed5499416",
+   "ev_b29707922fb3"
+  ],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Credentials at shared stations have been found written down; badge reads can miss tailgating",
+   "Remote VPN access is allowed and not covered by badge records"
+  ],
+  "statement": "Account adm-vrao was used for SSH sessions on records (session 327, from 10.20.1.90) and on workstation (session 51, from 10.20.1.90), including a forced logrotate of workstation auth.log. The account used is adm-vrao. The human operator is not established. The bundle shows no evidence tying a person to these sessions, and badge B-4756 was seen at the door at 07:31 only as a badge record, which does not establish who used the credential.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Tip: review records access and transfers during this shift. What the evidence supports:\n\n1. Transfers: The only outbound flow above the 5 MB bulk threshold is a 16.9 MB transfer from 10.20.0.10 to 10.20.0.45:873 (stor-nas-01, an approved backup/log-archive destination) at 11:58:04 (ev_37a2095912d6). It coincides with the svc-backup backup-incremental cron on records (ev_b62760645c3f). This is consistent with policy. No flow to an unapproved bulk destination was found. The 10.20.0.10 to records mapping is inferred from timing.\n\n2. Records access: adm-vrao SSH session 327 from 10.20.1.90 (07:41-07:48) ran a status check and a tail of the records-app access log (ev_badcd19721f5 through ev_c30f61765e7e). The collector copies match. No bulk export or log deletion on records was found. Records access.log was rotated at 08:51 by scheduled logrotate with the segment archived off-host to stor-nas-01 (ev_c2e582d4993a), which is retention-explained.\n\n3. Workstation auth.log: adm-vrao (session 51, from 10.20.1.90) ran a forced logrotate at 12:11:58 (ev_b29707922fb3). This discarded the older .1 generation (ev_ef4f6bb24b98). The pre-rotation auth events are preserved at the collector (independent witness), so no independent record was lost. This is an audited administrator action; it is treated as unresolved rather than an incident.\n\n4. Staging: fs_stat shows census CSVs in rhaddad and lnguyen home directories and a monthly /var/tmp/xfer/imm-registry series, but no flow evidence links these files to an outbound transfer. Not established as staging for exfiltration.\n\n5. Attribution: the account adm-vrao was used. The human operator is not established. Remote VPN sessions are allowed and badge records do not cover them, and credentials have been found written down before.\n\nHousekeeping: I accidentally submitted a duplicate transfer finding (second submission of 10.20.0.45:873 with confidence 0.1, placeholder rationale). It should be disregarded; the first transfer finding stands.",
+ "open_questions": [
+  "Confirm the mapping of 10.20.0.10 to the records host (or to another host), and confirm that the 11:58 transfer was the scheduled svc-backup job.",
+  "Who used adm-vrao from 10.20.1.90 on both records and workstation, and was the forced logrotate on workstation authorized? Check the change log for that window.",
+  "Review the content of the discarded auth.log.1 generation at the collector to confirm nothing was removed.",
+  "Verify the purpose of the census CSVs in home directories and the /var/tmp/xfer/imm-registry series, and whether any transfer to lab-gw-01 (10.20.8.20) took place outside this capture."
+ ],
+ "usage": {
+  "llm_calls": 8,
+  "tokens_in": 263147,
+  "tokens_out": 7999,
+  "tokens_cache_read": 209009,
+  "cost_estimate_usd": 0.012856,
+  "wall_seconds": 41.15,
+  "tool_calls": 26,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T10:31:01.854875Z",
+ "report_sha256": "30ce094afe12a4de22d798508cce64a8cab6cad6aee9f07c1b80fd78d7fed119",
+ "review_history": [
+  {
+   "at": "2026-11-14T10:31:01.854875Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

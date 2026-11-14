@@ -1,0 +1,158 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v01-20261114t102149z-b2",
+ "bundle_id": "bndl-820162c5d101a140",
+ "system_id": "B2",
+ "system_label": "Arm B2: lead + integrity-auditor + skeptic with generic evidence tools only (no checks)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-d038e8",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-10-11T10:26:42Z",
+   "t_end": "2026-11-10T10:28:56Z",
+   "object_or_session": "/home/rhaddad/Downloads/cache-0a91.bin",
+   "evidence_ids": [
+    "ev_eb89a8080966",
+    "ev_09b4ad6dcb1f"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.4,
+   "rationale": "File size 23,176,722 bytes closely matches the 23,180,407-byte outbound flow. Its mtime (2026-10-11) predates the flow while ctime is 10:28:56, a metadata discrepancy. Snapshot is host-writable; staging is not proven.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Ordinary downloaded cache file",
+    "mtime preserved by copy or restore",
+    "snapshot host-writable"
+   ],
+   "status": "proposed",
+   "verification_status": "unresolved_interpretation",
+   "verifier_notes": [
+    "the time window is wider than 30 minutes; too broad to verify"
+   ],
+   "skeptic_note": null,
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-8db130",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T10:27:48Z",
+   "t_end": "2026-11-10T10:28:03Z",
+   "object_or_session": "10.20.9.62:8080",
+   "evidence_ids": [
+    "ev_09b4ad6dcb1f",
+    "ev_9ed6d1d34748",
+    "ev_ad11135ba4d2"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.55,
+   "rationale": "Tap flow shows 23.18 MB out from 10.20.1.21 to 10.20.9.62:8080, an unapproved destination over the 5 MB threshold, 1.5 minutes after a bulk export of patients_full by rhaddad from the same client IP (collector copy). Source host mapping of 10.20.1.21 not confirmed.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Legitimate sync to an unlisted host; no change record covers it",
+    "IP-to-host mapping not confirmed"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": null,
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-7d28f8",
+   "claim_type": "second_host_session",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "adm-tkim",
+   "t_start": "2026-11-10T10:30:12Z",
+   "t_end": "2026-11-10T10:35:01Z",
+   "object_or_session": "records#402",
+   "evidence_ids": [
+    "ev_a9ffa48ff362",
+    "ev_1f05ff28f0e1",
+    "ev_bfdef7f743b0",
+    "ev_c602b8a93a8e",
+    "ev_c8c107da32b4",
+    "ev_55e5f9f5c9f1"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.5,
+   "rationale": "adm-tkim session records#402 on records opened from 10.20.1.21, which is not one of the approved admin sources (10.20.1.90, 10.20.0.250). Session included a sudo stop of log-forwarder at 10:30:50. Source-host mapping of 10.20.1.21 not confirmed.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a session on this host was opened from another monitored host outside the stated access policy"
+   ],
+   "skeptic_note": null,
+   "produced_by": "lead-investigator"
+  }
+ ],
+ "attribution": {
+  "account_used": null,
+  "session_ref": null,
+  "human_identity": "not_assessed",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [],
+  "statement": "The investigator did not submit an attribution assessment.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "The investigator did not write a summary.",
+ "open_questions": [
+  "Incomplete run: stopped by the budget gateway: input token cap reached: 259742 used + 0 reserved + 39914 needed > 280000."
+ ],
+ "usage": {
+  "llm_calls": 14,
+  "tokens_in": 259742,
+  "tokens_out": 16399,
+  "tokens_cache_read": 162502,
+  "cost_estimate_usd": 0.021979,
+  "wall_seconds": 72.3,
+  "tool_calls": 37,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T10:23:02.528620Z",
+ "report_sha256": "8b9f4bfbf0a7ff8c2069ba57d358565940f716a7f970cf4675a6d4c61e770085",
+ "review_history": [
+  {
+   "at": "2026-11-14T10:23:02.528620Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

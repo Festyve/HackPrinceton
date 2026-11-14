@@ -1,0 +1,204 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v04-20261114t102149z-b1plus",
+ "bundle_id": "bndl-cd1018d48b2b57c5",
+ "system_id": "B1+",
+ "system_label": "Fast investigation: one agent with deterministic checks, no delegation (same configuration as benchmark arm B1+)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-e1f1ac",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T13:11:27Z",
+   "t_end": "2026-11-10T13:11:31Z",
+   "object_or_session": "/var/tmp/xfer/imm-registry-564.db",
+   "evidence_ids": [
+    "ev_acbb1133ae2d",
+    "ev_b27976a53c19",
+    "ev_a7c0f547d458",
+    "ev_72d811c34d5c",
+    "ev_da92a27832be"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.45,
+   "rationale": "Under session workstation#93 (account kcole, console), the immunization_registry was bulk-exported (11.79 MB per records app export_bulk, relayed to collector) into /var/tmp/xfer/imm-registry-564.db, a non-standard staging path, owned by kcole. The file was then uploaded (see transfer finding). Staging of a bulk registry export is an incident-relevant step, but the file's purpose is not stated and the export is recorded by the app as a normal authenticated export.",
+   "assumptions": [
+    "clinic-export and the export_bulk record reflect a real dataset export"
+   ],
+   "alternative_explanations": [
+    "Legitimate registry submission prepared by the account holder or a colleague",
+    "Export staged for an approved lab/registry submission"
+   ],
+   "status": "rejected_by_verifier",
+   "verification_status": "unresolved_interpretation",
+   "verifier_notes": [
+    "the staged object was sent to an approved destination; that is not an incident"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-c44a32",
+   "claim_type": "policy_consistent_transfer",
+   "category": "unresolved",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T13:13:02Z",
+   "t_end": "2026-11-10T13:13:09Z",
+   "object_or_session": "10.20.8.20:80",
+   "evidence_ids": [
+    "ev_3aab0fa6ae8e",
+    "ev_3d5e70d6b46b",
+    "ev_751cb2ff0df4"
+   ],
+   "counterevidence_ids": [
+    "ev_3aab0fa6ae8e"
+   ],
+   "check_refs": [],
+   "confidence": 0.5,
+   "rationale": "11.8 MB upload from workstation to 10.20.8.20 (lab-gw-01), which the transfer policy lists as an approved bulk destination for laboratory and registry submissions. Destination is approved, so the transfer is not a policy violation by destination. It follows the staged registry export in the same session, and the purpose of the upload is not confirmed. Same session also made several small curl uploads of lab-request PDFs to the same host.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Approved registry submission from the clinic"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-16fc6c",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:39:14Z",
+   "t_end": "2026-11-10T09:08:04Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_ca7d30575a0d",
+    "ev_1c9781b1e11c",
+    "ev_26078c4957ec",
+    "ev_4c0385c7a76e"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "180 records-app access.log lines seen at the collector are absent locally before 09:08:04. The check attributes them to scheduled rotation (keep 0; segment archived off-host). Predates the oldest local generation, so not an unexplained removal. No unexplained local absence in any host log.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  },
+  {
+   "id": "F-4862ec",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T12:18:04Z",
+   "t_end": "2026-11-10T12:18:11Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_e4ead89c28e8"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "22.5 MB outbound from records to 10.20.0.45 (stor-nas-01, approved backup and log archive destination). Bulk size but approved destination; no interactive session overlaps it. Consistent with scheduled backup (svc-backup is a service account). Flow record shows bytes only, not content.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "single-agent"
+  }
+ ],
+ "attribution": {
+  "account_used": "kcole",
+  "session_ref": "workstation#93",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_6b533564e091",
+   "ev_acbb1133ae2d",
+   "ev_3d5e70d6b46b"
+  ],
+  "contrary_evidence_ids": [
+   "ev_0cb6b7f46595",
+   "ev_badcf0f55880"
+  ],
+  "assumptions": [],
+  "limits": [
+   "Account identifies a credential, not a person",
+   "Badge readers do not show tailgating or shared credentials",
+   "Remote VPN sessions are not covered by badge records",
+   "Badge presence does not clear or implicate any person"
+  ],
+  "statement": "Account kcole was used for console session workstation#93 (tty1, 13:09:07-13:19:07 UTC) during which a bulk immunization_registry export was staged to /var/tmp/xfer and uploaded to 10.20.8.20 (approved lab/registry destination). The account holder's badge (B-1633) was inside the building, but other account holders were also badged in and console credentials have previously been found written down. The human operator is not established.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Tip asked about records access and transfers during the shift. Findings: (1) No unexplained local log removal. The 180 missing records-app access.log lines before 09:08 are explained by scheduled rotation (keep 0, archived off-host); other host logs are consistent with the collector. (2) A 22.5 MB transfer from records to stor-nas-01 (approved backup destination) at 12:18 is consistent with policy. (3) Under console session workstation#93 (account kcole, 13:09-13:19), an immunization_registry bulk export (11.79 MB) was written to /var/tmp/xfer/imm-registry-564.db and uploaded to 10.20.8.20 (lab-gw-01, an approved destination). The destination is approved, so this is not a policy violation by destination; the staging step and upload purpose remain unexplained (medium-low confidence). (4) Account kcole was used; the badge for that account was in the building, but other holders were also badged in and shared credentials have been seen before. The human operator is not established and no person is named.",
+ "open_questions": [
+  "Purpose of the registry export staged in /var/tmp/xfer and uploaded to lab-gw-01. Confirm with the registry or lab owner whether it was an authorized submission.",
+  "Who operated console session workstation#93 and the kcole account. Badge data cannot establish this.",
+  "The workstation file metadata snapshot was taken at capture end; the lpr print of census-1109.csv and repeated typo commands were not assessed further."
+ ],
+ "usage": {
+  "llm_calls": 5,
+  "tokens_in": 98826,
+  "tokens_out": 5439,
+  "tokens_cache_read": 66314,
+  "cost_estimate_usd": 0.007446,
+  "wall_seconds": 24.476,
+  "tool_calls": 18,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T10:34:22.742069Z",
+ "report_sha256": "d1d16b923b046023d0dad3c09f35ae883ff71f8f628db99d21587279f683be8e",
+ "review_history": [
+  {
+   "at": "2026-11-14T10:34:22.742069Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}
