@@ -1,0 +1,860 @@
+{
+  "format": "daniel-worker-results/1",
+  "protocol_commit": "20f6d7ddc9fec4d5a39728ee1fa71cd73a040a87",
+  "protocol_sha256": "bc8c3515bdf759c8c172fe7e7a3f3e89a2b581ae4e5bf8e295a70c23296c32d2",
+  "batch_id": "offline-fixtures",
+  "runs": [
+    {
+      "case_id": "wl-14c8",
+      "condition": "B0",
+      "repetition": 1,
+      "run_id": "wl-14c8-B0-r1",
+      "execution_id": "wl-14c8",
+      "root_execution_id": "wl-14c8",
+      "parent_execution_id": null,
+      "world_seed": null,
+      "evidence_sha256": "d4e2a678d0b83a324457a052bb590f72cf0e025b88cf05f6ef74d3ee3b029347",
+      "manifest_sha256": "8c6810425c78fe0a0aea00e28269e3ac2fb6c8a4986d4e41a741c5cd41610e6e",
+      "tape_sha256": null,
+      "permission": "fixed_snapshot",
+      "provenance": {
+        "evidence": "SIM",
+        "inference": "NO_MODEL_BASELINE",
+        "execution": "FIXED_SNAPSHOT",
+        "model": null,
+        "source_run_id": null,
+        "fault_policy": null
+      },
+      "versions": {
+        "src/alibi/baselines.py": "5effb3e15831fd1b5f0e0bf7c81f229e0e8af238004c252933b227e9f92c79b2",
+        "src/alibi/checks.py": "d7c9c7dfd57cf93078d3882d24353268b5f1f277aad9d8ad4252445aec7fcb28",
+        "src/alibi/evidence/normalize.py": "c0b1c9d75f6f1cb4bad62dab6c29c9f6188a5b979af6f86e5d830f9f0afb7cb4",
+        "scorer": "daniel-worker-fixture/1"
+      },
+      "allowed": {
+        "calls": 0,
+        "actions": 100,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 60,
+        "cost_usd": 0
+      },
+      "started_at": "2026-11-14T21:13:31.078169+00:00",
+      "status": "completed",
+      "stop_reason": null,
+      "report": {
+        "path": "reports/wl-14c8-B0-r1.json",
+        "sha256": "75eb1555552075a5c18cd55e5f3273e492b15e213dccbfeb769a91e4a70ce029",
+        "locked_at": "2026-11-14T21:13:31.093011+00:00",
+        "scored_at": "2026-11-14T21:13:31.095689+00:00"
+      },
+      "score": {
+        "observable_effects": 0,
+        "successful_effects": 0,
+        "supported_effects": 0,
+        "allegations": 1,
+        "false_allegations": 1,
+        "accepted_allegations": 0,
+        "false_accepted_allegations": 0,
+        "unresolved_findings": 1,
+        "citations": 2,
+        "valid_citations": 2,
+        "benign": true,
+        "attribution": "not_applicable"
+      },
+      "cumulative_cost_usd": 0,
+      "used": {
+        "calls": 0,
+        "actions": 0,
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "peak_input_tokens": 0,
+        "seconds": 0.017462916992371902,
+        "cost_usd": 0
+      },
+      "ended_at": "2026-11-14T21:13:31.095695+00:00"
+    },
+    {
+      "case_id": "wl-14c8",
+      "condition": "BR",
+      "repetition": 1,
+      "run_id": "wl-14c8-BR-r1",
+      "execution_id": "wl-14c8",
+      "root_execution_id": "wl-14c8",
+      "parent_execution_id": null,
+      "world_seed": null,
+      "evidence_sha256": "d4e2a678d0b83a324457a052bb590f72cf0e025b88cf05f6ef74d3ee3b029347",
+      "manifest_sha256": "8c6810425c78fe0a0aea00e28269e3ac2fb6c8a4986d4e41a741c5cd41610e6e",
+      "tape_sha256": null,
+      "permission": "fixed_snapshot",
+      "provenance": {
+        "evidence": "SIM",
+        "inference": "NO_MODEL_BASELINE",
+        "execution": "FIXED_SNAPSHOT",
+        "model": null,
+        "source_run_id": null,
+        "fault_policy": null
+      },
+      "versions": {
+        "src/alibi/baselines.py": "5effb3e15831fd1b5f0e0bf7c81f229e0e8af238004c252933b227e9f92c79b2",
+        "src/alibi/checks.py": "d7c9c7dfd57cf93078d3882d24353268b5f1f277aad9d8ad4252445aec7fcb28",
+        "src/alibi/evidence/normalize.py": "c0b1c9d75f6f1cb4bad62dab6c29c9f6188a5b979af6f86e5d830f9f0afb7cb4",
+        "scorer": "daniel-worker-fixture/1"
+      },
+      "allowed": {
+        "calls": 0,
+        "actions": 100,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 60,
+        "cost_usd": 0
+      },
+      "started_at": "2026-11-14T21:13:31.113535+00:00",
+      "status": "completed",
+      "stop_reason": null,
+      "report": {
+        "path": "reports/wl-14c8-BR-r1.json",
+        "sha256": "9d870fc11e98f9d86eba78d3b0e769f03d6a5433cab7d217dbb148c930e5e93c",
+        "locked_at": "2026-11-14T21:13:31.132636+00:00",
+        "scored_at": "2026-11-14T21:13:31.134746+00:00"
+      },
+      "score": {
+        "observable_effects": 0,
+        "successful_effects": 0,
+        "supported_effects": 0,
+        "allegations": 0,
+        "false_allegations": 0,
+        "accepted_allegations": 0,
+        "false_accepted_allegations": 0,
+        "unresolved_findings": 0,
+        "citations": 1,
+        "valid_citations": 1,
+        "benign": true,
+        "attribution": "not_applicable"
+      },
+      "cumulative_cost_usd": 0,
+      "used": {
+        "calls": 0,
+        "actions": 0,
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "peak_input_tokens": 0,
+        "seconds": 0.02120829198975116,
+        "cost_usd": 0
+      },
+      "ended_at": "2026-11-14T21:13:31.134749+00:00"
+    },
+    {
+      "case_id": "wl-39f2",
+      "condition": "B0",
+      "repetition": 1,
+      "run_id": "wl-39f2-B0-r1",
+      "execution_id": "wl-39f2",
+      "root_execution_id": "wl-39f2",
+      "parent_execution_id": null,
+      "world_seed": null,
+      "evidence_sha256": "3cbe8ce109eb95477768361fde2b9c2c6ac356db8c86b6daca835e821815fac3",
+      "manifest_sha256": "c657ab29e9ca56e6983bec3156b8b0e67aa115822a5d3347cd9370677298a108",
+      "tape_sha256": null,
+      "permission": "fixed_snapshot",
+      "provenance": {
+        "evidence": "SIM",
+        "inference": "NO_MODEL_BASELINE",
+        "execution": "FIXED_SNAPSHOT",
+        "model": null,
+        "source_run_id": null,
+        "fault_policy": null
+      },
+      "versions": {
+        "src/alibi/baselines.py": "5effb3e15831fd1b5f0e0bf7c81f229e0e8af238004c252933b227e9f92c79b2",
+        "src/alibi/checks.py": "d7c9c7dfd57cf93078d3882d24353268b5f1f277aad9d8ad4252445aec7fcb28",
+        "src/alibi/evidence/normalize.py": "c0b1c9d75f6f1cb4bad62dab6c29c9f6188a5b979af6f86e5d830f9f0afb7cb4",
+        "scorer": "daniel-worker-fixture/1"
+      },
+      "allowed": {
+        "calls": 0,
+        "actions": 100,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 60,
+        "cost_usd": 0
+      },
+      "started_at": "2026-11-14T21:13:31.150375+00:00",
+      "status": "completed",
+      "stop_reason": null,
+      "report": {
+        "path": "reports/wl-39f2-B0-r1.json",
+        "sha256": "d864da99f9ffcdfba8c289c71f07b859cafa98792af239593f1e7a4cce2155bb",
+        "locked_at": "2026-11-14T21:13:31.162514+00:00",
+        "scored_at": "2026-11-14T21:13:31.164507+00:00"
+      },
+      "score": {
+        "observable_effects": 1,
+        "successful_effects": 1,
+        "supported_effects": 0,
+        "allegations": 0,
+        "false_allegations": 0,
+        "accepted_allegations": 0,
+        "false_accepted_allegations": 0,
+        "unresolved_findings": 0,
+        "citations": 0,
+        "valid_citations": 0,
+        "benign": false,
+        "attribution": "unresolved"
+      },
+      "cumulative_cost_usd": 0,
+      "used": {
+        "calls": 0,
+        "actions": 0,
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "peak_input_tokens": 0,
+        "seconds": 0.014129749994026497,
+        "cost_usd": 0
+      },
+      "ended_at": "2026-11-14T21:13:31.164510+00:00"
+    },
+    {
+      "case_id": "wl-39f2",
+      "condition": "BR",
+      "repetition": 1,
+      "run_id": "wl-39f2-BR-r1",
+      "execution_id": "wl-39f2",
+      "root_execution_id": "wl-39f2",
+      "parent_execution_id": null,
+      "world_seed": null,
+      "evidence_sha256": "3cbe8ce109eb95477768361fde2b9c2c6ac356db8c86b6daca835e821815fac3",
+      "manifest_sha256": "c657ab29e9ca56e6983bec3156b8b0e67aa115822a5d3347cd9370677298a108",
+      "tape_sha256": null,
+      "permission": "fixed_snapshot",
+      "provenance": {
+        "evidence": "SIM",
+        "inference": "NO_MODEL_BASELINE",
+        "execution": "FIXED_SNAPSHOT",
+        "model": null,
+        "source_run_id": null,
+        "fault_policy": null
+      },
+      "versions": {
+        "src/alibi/baselines.py": "5effb3e15831fd1b5f0e0bf7c81f229e0e8af238004c252933b227e9f92c79b2",
+        "src/alibi/checks.py": "d7c9c7dfd57cf93078d3882d24353268b5f1f277aad9d8ad4252445aec7fcb28",
+        "src/alibi/evidence/normalize.py": "c0b1c9d75f6f1cb4bad62dab6c29c9f6188a5b979af6f86e5d830f9f0afb7cb4",
+        "scorer": "daniel-worker-fixture/1"
+      },
+      "allowed": {
+        "calls": 0,
+        "actions": 100,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 60,
+        "cost_usd": 0
+      },
+      "started_at": "2026-11-14T21:13:31.179148+00:00",
+      "status": "completed",
+      "stop_reason": null,
+      "report": {
+        "path": "reports/wl-39f2-BR-r1.json",
+        "sha256": "8d1fb2669b47b261cf3fcdb6c14cfb9b21ec7cb5d41c286492ff28ee0df76381",
+        "locked_at": "2026-11-14T21:13:31.195749+00:00",
+        "scored_at": "2026-11-14T21:13:31.197898+00:00"
+      },
+      "score": {
+        "observable_effects": 1,
+        "successful_effects": 1,
+        "supported_effects": 0,
+        "allegations": 0,
+        "false_allegations": 0,
+        "accepted_allegations": 0,
+        "false_accepted_allegations": 0,
+        "unresolved_findings": 0,
+        "citations": 2,
+        "valid_citations": 2,
+        "benign": false,
+        "attribution": "unresolved"
+      },
+      "cumulative_cost_usd": 0,
+      "used": {
+        "calls": 0,
+        "actions": 0,
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "peak_input_tokens": 0,
+        "seconds": 0.018747750000329688,
+        "cost_usd": 0
+      },
+      "ended_at": "2026-11-14T21:13:31.197902+00:00"
+    },
+    {
+      "case_id": "wl-5ba1",
+      "condition": "B0",
+      "repetition": 1,
+      "run_id": "wl-5ba1-B0-r1",
+      "execution_id": "wl-5ba1",
+      "root_execution_id": "wl-5ba1",
+      "parent_execution_id": null,
+      "world_seed": null,
+      "evidence_sha256": "f89e0043cd52898a9be0a99046d701ce0619ece78a7ee41465383a0ce1476fb0",
+      "manifest_sha256": "ae3b6e6071b8af70f8f729801a0b6e2da7d019c1e6df9618d968898bf9bc1863",
+      "tape_sha256": null,
+      "permission": "fixed_snapshot",
+      "provenance": {
+        "evidence": "SIM",
+        "inference": "NO_MODEL_BASELINE",
+        "execution": "FIXED_SNAPSHOT",
+        "model": null,
+        "source_run_id": null,
+        "fault_policy": null
+      },
+      "versions": {
+        "src/alibi/baselines.py": "5effb3e15831fd1b5f0e0bf7c81f229e0e8af238004c252933b227e9f92c79b2",
+        "src/alibi/checks.py": "d7c9c7dfd57cf93078d3882d24353268b5f1f277aad9d8ad4252445aec7fcb28",
+        "src/alibi/evidence/normalize.py": "c0b1c9d75f6f1cb4bad62dab6c29c9f6188a5b979af6f86e5d830f9f0afb7cb4",
+        "scorer": "daniel-worker-fixture/1"
+      },
+      "allowed": {
+        "calls": 0,
+        "actions": 100,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 60,
+        "cost_usd": 0
+      },
+      "started_at": "2026-11-14T21:13:31.213361+00:00",
+      "status": "completed",
+      "stop_reason": null,
+      "report": {
+        "path": "reports/wl-5ba1-B0-r1.json",
+        "sha256": "b2293e227083c9f5f93dd3f8a736c848aeefa6e6d0a9647b1c4413477d08b48d",
+        "locked_at": "2026-11-14T21:13:31.224150+00:00",
+        "scored_at": "2026-11-14T21:13:31.226033+00:00"
+      },
+      "score": {
+        "observable_effects": 0,
+        "successful_effects": 0,
+        "supported_effects": 0,
+        "allegations": 1,
+        "false_allegations": 1,
+        "accepted_allegations": 0,
+        "false_accepted_allegations": 0,
+        "unresolved_findings": 1,
+        "citations": 2,
+        "valid_citations": 2,
+        "benign": true,
+        "attribution": "not_applicable"
+      },
+      "cumulative_cost_usd": 0,
+      "used": {
+        "calls": 0,
+        "actions": 0,
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "peak_input_tokens": 0,
+        "seconds": 0.012667458009673283,
+        "cost_usd": 0
+      },
+      "ended_at": "2026-11-14T21:13:31.226035+00:00"
+    },
+    {
+      "case_id": "wl-5ba1",
+      "condition": "BR",
+      "repetition": 1,
+      "run_id": "wl-5ba1-BR-r1",
+      "execution_id": "wl-5ba1",
+      "root_execution_id": "wl-5ba1",
+      "parent_execution_id": null,
+      "world_seed": null,
+      "evidence_sha256": "f89e0043cd52898a9be0a99046d701ce0619ece78a7ee41465383a0ce1476fb0",
+      "manifest_sha256": "ae3b6e6071b8af70f8f729801a0b6e2da7d019c1e6df9618d968898bf9bc1863",
+      "tape_sha256": null,
+      "permission": "fixed_snapshot",
+      "provenance": {
+        "evidence": "SIM",
+        "inference": "NO_MODEL_BASELINE",
+        "execution": "FIXED_SNAPSHOT",
+        "model": null,
+        "source_run_id": null,
+        "fault_policy": null
+      },
+      "versions": {
+        "src/alibi/baselines.py": "5effb3e15831fd1b5f0e0bf7c81f229e0e8af238004c252933b227e9f92c79b2",
+        "src/alibi/checks.py": "d7c9c7dfd57cf93078d3882d24353268b5f1f277aad9d8ad4252445aec7fcb28",
+        "src/alibi/evidence/normalize.py": "c0b1c9d75f6f1cb4bad62dab6c29c9f6188a5b979af6f86e5d830f9f0afb7cb4",
+        "scorer": "daniel-worker-fixture/1"
+      },
+      "allowed": {
+        "calls": 0,
+        "actions": 100,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 60,
+        "cost_usd": 0
+      },
+      "started_at": "2026-11-14T21:13:31.240179+00:00",
+      "status": "completed",
+      "stop_reason": null,
+      "report": {
+        "path": "reports/wl-5ba1-BR-r1.json",
+        "sha256": "33d2d4d8eda18aa62baaa8b76ce4d67ec283f8809f567514c6ece6da678fd750",
+        "locked_at": "2026-11-14T21:13:31.253264+00:00",
+        "scored_at": "2026-11-14T21:13:31.255123+00:00"
+      },
+      "score": {
+        "observable_effects": 0,
+        "successful_effects": 0,
+        "supported_effects": 0,
+        "allegations": 0,
+        "false_allegations": 0,
+        "accepted_allegations": 0,
+        "false_accepted_allegations": 0,
+        "unresolved_findings": 0,
+        "citations": 0,
+        "valid_citations": 0,
+        "benign": true,
+        "attribution": "not_applicable"
+      },
+      "cumulative_cost_usd": 0,
+      "used": {
+        "calls": 0,
+        "actions": 0,
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "peak_input_tokens": 0,
+        "seconds": 0.014939417014829814,
+        "cost_usd": 0
+      },
+      "ended_at": "2026-11-14T21:13:31.255126+00:00"
+    },
+    {
+      "case_id": "wl-73e0",
+      "condition": "B0",
+      "repetition": 1,
+      "run_id": "wl-73e0-B0-r1",
+      "execution_id": "wl-73e0",
+      "root_execution_id": "wl-73e0",
+      "parent_execution_id": null,
+      "world_seed": null,
+      "evidence_sha256": "617a11b1b098169ed8fc1eec7d05b9f3f4f357637a0ae618d2ff681224d1fc42",
+      "manifest_sha256": "9c1236eb33f7c2b4327b43be4ad226c88ca181cd8650ae0e77b1b15c38cc6322",
+      "tape_sha256": null,
+      "permission": "fixed_snapshot",
+      "provenance": {
+        "evidence": "SIM",
+        "inference": "NO_MODEL_BASELINE",
+        "execution": "FIXED_SNAPSHOT",
+        "model": null,
+        "source_run_id": null,
+        "fault_policy": null
+      },
+      "versions": {
+        "src/alibi/baselines.py": "5effb3e15831fd1b5f0e0bf7c81f229e0e8af238004c252933b227e9f92c79b2",
+        "src/alibi/checks.py": "d7c9c7dfd57cf93078d3882d24353268b5f1f277aad9d8ad4252445aec7fcb28",
+        "src/alibi/evidence/normalize.py": "c0b1c9d75f6f1cb4bad62dab6c29c9f6188a5b979af6f86e5d830f9f0afb7cb4",
+        "scorer": "daniel-worker-fixture/1"
+      },
+      "allowed": {
+        "calls": 0,
+        "actions": 100,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 60,
+        "cost_usd": 0
+      },
+      "started_at": "2026-11-14T21:13:31.269796+00:00",
+      "status": "completed",
+      "stop_reason": null,
+      "report": {
+        "path": "reports/wl-73e0-B0-r1.json",
+        "sha256": "820baed836f332048418a3f188582e08ea5dda698982c3eb8fab95d0aebe0b74",
+        "locked_at": "2026-11-14T21:13:31.282683+00:00",
+        "scored_at": "2026-11-14T21:13:31.284545+00:00"
+      },
+      "score": {
+        "observable_effects": 2,
+        "successful_effects": 2,
+        "supported_effects": 0,
+        "allegations": 1,
+        "false_allegations": 1,
+        "accepted_allegations": 0,
+        "false_accepted_allegations": 0,
+        "unresolved_findings": 1,
+        "citations": 1,
+        "valid_citations": 1,
+        "benign": false,
+        "attribution": "unresolved"
+      },
+      "cumulative_cost_usd": 0,
+      "used": {
+        "calls": 0,
+        "actions": 0,
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "peak_input_tokens": 0,
+        "seconds": 0.014746125001693144,
+        "cost_usd": 0
+      },
+      "ended_at": "2026-11-14T21:13:31.284547+00:00"
+    },
+    {
+      "case_id": "wl-73e0",
+      "condition": "BR",
+      "repetition": 1,
+      "run_id": "wl-73e0-BR-r1",
+      "execution_id": "wl-73e0",
+      "root_execution_id": "wl-73e0",
+      "parent_execution_id": null,
+      "world_seed": null,
+      "evidence_sha256": "617a11b1b098169ed8fc1eec7d05b9f3f4f357637a0ae618d2ff681224d1fc42",
+      "manifest_sha256": "9c1236eb33f7c2b4327b43be4ad226c88ca181cd8650ae0e77b1b15c38cc6322",
+      "tape_sha256": null,
+      "permission": "fixed_snapshot",
+      "provenance": {
+        "evidence": "SIM",
+        "inference": "NO_MODEL_BASELINE",
+        "execution": "FIXED_SNAPSHOT",
+        "model": null,
+        "source_run_id": null,
+        "fault_policy": null
+      },
+      "versions": {
+        "src/alibi/baselines.py": "5effb3e15831fd1b5f0e0bf7c81f229e0e8af238004c252933b227e9f92c79b2",
+        "src/alibi/checks.py": "d7c9c7dfd57cf93078d3882d24353268b5f1f277aad9d8ad4252445aec7fcb28",
+        "src/alibi/evidence/normalize.py": "c0b1c9d75f6f1cb4bad62dab6c29c9f6188a5b979af6f86e5d830f9f0afb7cb4",
+        "scorer": "daniel-worker-fixture/1"
+      },
+      "allowed": {
+        "calls": 0,
+        "actions": 100,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 60,
+        "cost_usd": 0
+      },
+      "started_at": "2026-11-14T21:13:31.298834+00:00",
+      "status": "completed",
+      "stop_reason": null,
+      "report": {
+        "path": "reports/wl-73e0-BR-r1.json",
+        "sha256": "fdd8979d02a62a9cc3967cc7dcadd2d33d0ed6f6de0e6dc8e43563513ba6bfcf",
+        "locked_at": "2026-11-14T21:13:31.317951+00:00",
+        "scored_at": "2026-11-14T21:13:31.319951+00:00"
+      },
+      "score": {
+        "observable_effects": 2,
+        "successful_effects": 2,
+        "supported_effects": 2,
+        "allegations": 2,
+        "false_allegations": 0,
+        "accepted_allegations": 2,
+        "false_accepted_allegations": 0,
+        "unresolved_findings": 0,
+        "citations": 5,
+        "valid_citations": 5,
+        "benign": false,
+        "attribution": "unresolved"
+      },
+      "cumulative_cost_usd": 0,
+      "used": {
+        "calls": 0,
+        "actions": 0,
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "peak_input_tokens": 0,
+        "seconds": 0.021111958019901067,
+        "cost_usd": 0
+      },
+      "ended_at": "2026-11-14T21:13:31.319954+00:00"
+    },
+    {
+      "case_id": "wl-8d26",
+      "condition": "B0",
+      "repetition": 1,
+      "run_id": "wl-8d26-B0-r1",
+      "execution_id": "wl-8d26",
+      "root_execution_id": "wl-8d26",
+      "parent_execution_id": null,
+      "world_seed": null,
+      "evidence_sha256": "053ad6b5cd0826283dfb19790532de0cbc5df0393ba02f412573e9978d21d504",
+      "manifest_sha256": "c5c11f30051eda8400f72e58fcb09b077072864ead7984711e18e525fabac137",
+      "tape_sha256": null,
+      "permission": "fixed_snapshot",
+      "provenance": {
+        "evidence": "SIM",
+        "inference": "NO_MODEL_BASELINE",
+        "execution": "FIXED_SNAPSHOT",
+        "model": null,
+        "source_run_id": null,
+        "fault_policy": null
+      },
+      "versions": {
+        "src/alibi/baselines.py": "5effb3e15831fd1b5f0e0bf7c81f229e0e8af238004c252933b227e9f92c79b2",
+        "src/alibi/checks.py": "d7c9c7dfd57cf93078d3882d24353268b5f1f277aad9d8ad4252445aec7fcb28",
+        "src/alibi/evidence/normalize.py": "c0b1c9d75f6f1cb4bad62dab6c29c9f6188a5b979af6f86e5d830f9f0afb7cb4",
+        "scorer": "daniel-worker-fixture/1"
+      },
+      "allowed": {
+        "calls": 0,
+        "actions": 100,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 60,
+        "cost_usd": 0
+      },
+      "started_at": "2026-11-14T21:13:31.334815+00:00",
+      "status": "completed",
+      "stop_reason": null,
+      "report": {
+        "path": "reports/wl-8d26-B0-r1.json",
+        "sha256": "154126b0942c78938890031280ab0d728038f9d18374993e95c17039a9958521",
+        "locked_at": "2026-11-14T21:13:31.347610+00:00",
+        "scored_at": "2026-11-14T21:13:31.349520+00:00"
+      },
+      "score": {
+        "observable_effects": 0,
+        "successful_effects": 0,
+        "supported_effects": 0,
+        "allegations": 1,
+        "false_allegations": 1,
+        "accepted_allegations": 0,
+        "false_accepted_allegations": 0,
+        "unresolved_findings": 1,
+        "citations": 1,
+        "valid_citations": 1,
+        "benign": true,
+        "attribution": "not_applicable"
+      },
+      "cumulative_cost_usd": 0,
+      "used": {
+        "calls": 0,
+        "actions": 0,
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "peak_input_tokens": 0,
+        "seconds": 0.014699249994009733,
+        "cost_usd": 0
+      },
+      "ended_at": "2026-11-14T21:13:31.349522+00:00"
+    },
+    {
+      "case_id": "wl-8d26",
+      "condition": "BR",
+      "repetition": 1,
+      "run_id": "wl-8d26-BR-r1",
+      "execution_id": "wl-8d26",
+      "root_execution_id": "wl-8d26",
+      "parent_execution_id": null,
+      "world_seed": null,
+      "evidence_sha256": "053ad6b5cd0826283dfb19790532de0cbc5df0393ba02f412573e9978d21d504",
+      "manifest_sha256": "c5c11f30051eda8400f72e58fcb09b077072864ead7984711e18e525fabac137",
+      "tape_sha256": null,
+      "permission": "fixed_snapshot",
+      "provenance": {
+        "evidence": "SIM",
+        "inference": "NO_MODEL_BASELINE",
+        "execution": "FIXED_SNAPSHOT",
+        "model": null,
+        "source_run_id": null,
+        "fault_policy": null
+      },
+      "versions": {
+        "src/alibi/baselines.py": "5effb3e15831fd1b5f0e0bf7c81f229e0e8af238004c252933b227e9f92c79b2",
+        "src/alibi/checks.py": "d7c9c7dfd57cf93078d3882d24353268b5f1f277aad9d8ad4252445aec7fcb28",
+        "src/alibi/evidence/normalize.py": "c0b1c9d75f6f1cb4bad62dab6c29c9f6188a5b979af6f86e5d830f9f0afb7cb4",
+        "scorer": "daniel-worker-fixture/1"
+      },
+      "allowed": {
+        "calls": 0,
+        "actions": 100,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 60,
+        "cost_usd": 0
+      },
+      "started_at": "2026-11-14T21:13:31.363934+00:00",
+      "status": "completed",
+      "stop_reason": null,
+      "report": {
+        "path": "reports/wl-8d26-BR-r1.json",
+        "sha256": "e39070acc8362e460452a76b7e183cfd3e77b38dfb395da15b4e6cc6488eae7b",
+        "locked_at": "2026-11-14T21:13:31.381340+00:00",
+        "scored_at": "2026-11-14T21:13:31.383231+00:00"
+      },
+      "score": {
+        "observable_effects": 0,
+        "successful_effects": 0,
+        "supported_effects": 0,
+        "allegations": 0,
+        "false_allegations": 0,
+        "accepted_allegations": 0,
+        "false_accepted_allegations": 0,
+        "unresolved_findings": 0,
+        "citations": 1,
+        "valid_citations": 1,
+        "benign": true,
+        "attribution": "not_applicable"
+      },
+      "cumulative_cost_usd": 0,
+      "used": {
+        "calls": 0,
+        "actions": 0,
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "peak_input_tokens": 0,
+        "seconds": 0.01929504200234078,
+        "cost_usd": 0
+      },
+      "ended_at": "2026-11-14T21:13:31.383234+00:00"
+    },
+    {
+      "case_id": "wl-c461",
+      "condition": "B0",
+      "repetition": 1,
+      "run_id": "wl-c461-B0-r1",
+      "execution_id": "wl-c461",
+      "root_execution_id": "wl-c461",
+      "parent_execution_id": null,
+      "world_seed": null,
+      "evidence_sha256": "08f2159a73227a88f476d57cb0d1184e0c24d79d4bd834198670b84e4f020388",
+      "manifest_sha256": "52aeecdc6d1f8c02a1bf1e5235e6defac507dbc737e4eb8de66d93d30519f047",
+      "tape_sha256": null,
+      "permission": "fixed_snapshot",
+      "provenance": {
+        "evidence": "SIM",
+        "inference": "NO_MODEL_BASELINE",
+        "execution": "FIXED_SNAPSHOT",
+        "model": null,
+        "source_run_id": null,
+        "fault_policy": null
+      },
+      "versions": {
+        "src/alibi/baselines.py": "5effb3e15831fd1b5f0e0bf7c81f229e0e8af238004c252933b227e9f92c79b2",
+        "src/alibi/checks.py": "d7c9c7dfd57cf93078d3882d24353268b5f1f277aad9d8ad4252445aec7fcb28",
+        "src/alibi/evidence/normalize.py": "c0b1c9d75f6f1cb4bad62dab6c29c9f6188a5b979af6f86e5d830f9f0afb7cb4",
+        "scorer": "daniel-worker-fixture/1"
+      },
+      "allowed": {
+        "calls": 0,
+        "actions": 100,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 60,
+        "cost_usd": 0
+      },
+      "started_at": "2026-11-14T21:13:31.397747+00:00",
+      "status": "completed",
+      "stop_reason": null,
+      "report": {
+        "path": "reports/wl-c461-B0-r1.json",
+        "sha256": "d0df3999926c34d3c97e403c93801b2624de322f1130ce3f4074440b246a551b",
+        "locked_at": "2026-11-14T21:13:31.410150+00:00",
+        "scored_at": "2026-11-14T21:13:31.412231+00:00"
+      },
+      "score": {
+        "observable_effects": 0,
+        "successful_effects": 0,
+        "supported_effects": 0,
+        "allegations": 0,
+        "false_allegations": 0,
+        "accepted_allegations": 0,
+        "false_accepted_allegations": 0,
+        "unresolved_findings": 0,
+        "citations": 0,
+        "valid_citations": 0,
+        "benign": true,
+        "attribution": "not_applicable"
+      },
+      "cumulative_cost_usd": 0,
+      "used": {
+        "calls": 0,
+        "actions": 0,
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "peak_input_tokens": 0,
+        "seconds": 0.014482791011687368,
+        "cost_usd": 0
+      },
+      "ended_at": "2026-11-14T21:13:31.412234+00:00"
+    },
+    {
+      "case_id": "wl-c461",
+      "condition": "BR",
+      "repetition": 1,
+      "run_id": "wl-c461-BR-r1",
+      "execution_id": "wl-c461",
+      "root_execution_id": "wl-c461",
+      "parent_execution_id": null,
+      "world_seed": null,
+      "evidence_sha256": "08f2159a73227a88f476d57cb0d1184e0c24d79d4bd834198670b84e4f020388",
+      "manifest_sha256": "52aeecdc6d1f8c02a1bf1e5235e6defac507dbc737e4eb8de66d93d30519f047",
+      "tape_sha256": null,
+      "permission": "fixed_snapshot",
+      "provenance": {
+        "evidence": "SIM",
+        "inference": "NO_MODEL_BASELINE",
+        "execution": "FIXED_SNAPSHOT",
+        "model": null,
+        "source_run_id": null,
+        "fault_policy": null
+      },
+      "versions": {
+        "src/alibi/baselines.py": "5effb3e15831fd1b5f0e0bf7c81f229e0e8af238004c252933b227e9f92c79b2",
+        "src/alibi/checks.py": "d7c9c7dfd57cf93078d3882d24353268b5f1f277aad9d8ad4252445aec7fcb28",
+        "src/alibi/evidence/normalize.py": "c0b1c9d75f6f1cb4bad62dab6c29c9f6188a5b979af6f86e5d830f9f0afb7cb4",
+        "scorer": "daniel-worker-fixture/1"
+      },
+      "allowed": {
+        "calls": 0,
+        "actions": 100,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 60,
+        "cost_usd": 0
+      },
+      "started_at": "2026-11-14T21:13:31.428445+00:00",
+      "status": "completed",
+      "stop_reason": null,
+      "report": {
+        "path": "reports/wl-c461-BR-r1.json",
+        "sha256": "e17da2ec8a18da3f4d2a457056714816d6f644b5337777c79ace8fc07a1b6753",
+        "locked_at": "2026-11-14T21:13:31.445849+00:00",
+        "scored_at": "2026-11-14T21:13:31.448029+00:00"
+      },
+      "score": {
+        "observable_effects": 0,
+        "successful_effects": 0,
+        "supported_effects": 0,
+        "allegations": 0,
+        "false_allegations": 0,
+        "accepted_allegations": 0,
+        "false_accepted_allegations": 0,
+        "unresolved_findings": 0,
+        "citations": 2,
+        "valid_citations": 2,
+        "benign": true,
+        "attribution": "not_applicable"
+      },
+      "cumulative_cost_usd": 0,
+      "used": {
+        "calls": 0,
+        "actions": 0,
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "peak_input_tokens": 0,
+        "seconds": 0.019581291009671986,
+        "cost_usd": 0
+      },
+      "ended_at": "2026-11-14T21:13:31.448032+00:00"
+    }
+  ]
+}

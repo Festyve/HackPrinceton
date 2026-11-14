@@ -1,0 +1,578 @@
+{
+  "format": "daniel-worker-protocol/1",
+  "id": "worker-lab-v1",
+  "owner": "Daniel",
+  "cases": {
+    "wl-14c8": {
+      "kind": "fixed_snapshot",
+      "split": "evaluation",
+      "seed": null,
+      "evidence_path": "tests/fixtures/daniel/worker-lab/evidence/wl-14c8",
+      "raw_bundle_sha256": "d4e2a678d0b83a324457a052bb590f72cf0e025b88cf05f6ef74d3ee3b029347",
+      "capture_manifest_sha256": "8c6810425c78fe0a0aea00e28269e3ac2fb6c8a4986d4e41a741c5cd41610e6e"
+    },
+    "wl-39f2": {
+      "kind": "fixed_snapshot",
+      "split": "evaluation",
+      "seed": null,
+      "evidence_path": "tests/fixtures/daniel/worker-lab/evidence/wl-39f2",
+      "raw_bundle_sha256": "3cbe8ce109eb95477768361fde2b9c2c6ac356db8c86b6daca835e821815fac3",
+      "capture_manifest_sha256": "c657ab29e9ca56e6983bec3156b8b0e67aa115822a5d3347cd9370677298a108"
+    },
+    "wl-5ba1": {
+      "kind": "fixed_snapshot",
+      "split": "development",
+      "seed": null,
+      "evidence_path": "tests/fixtures/daniel/worker-lab/evidence/wl-5ba1",
+      "raw_bundle_sha256": "f89e0043cd52898a9be0a99046d701ce0619ece78a7ee41465383a0ce1476fb0",
+      "capture_manifest_sha256": "ae3b6e6071b8af70f8f729801a0b6e2da7d019c1e6df9618d968898bf9bc1863"
+    },
+    "wl-73e0": {
+      "kind": "fixed_snapshot",
+      "split": "evaluation",
+      "seed": null,
+      "evidence_path": "tests/fixtures/daniel/worker-lab/evidence/wl-73e0",
+      "raw_bundle_sha256": "617a11b1b098169ed8fc1eec7d05b9f3f4f357637a0ae618d2ff681224d1fc42",
+      "capture_manifest_sha256": "9c1236eb33f7c2b4327b43be4ad226c88ca181cd8650ae0e77b1b15c38cc6322"
+    },
+    "wl-8d26": {
+      "kind": "fixed_snapshot",
+      "split": "development",
+      "seed": null,
+      "evidence_path": "tests/fixtures/daniel/worker-lab/evidence/wl-8d26",
+      "raw_bundle_sha256": "053ad6b5cd0826283dfb19790532de0cbc5df0393ba02f412573e9978d21d504",
+      "capture_manifest_sha256": "c5c11f30051eda8400f72e58fcb09b077072864ead7984711e18e525fabac137"
+    },
+    "wl-c461": {
+      "kind": "fixed_snapshot",
+      "split": "evaluation",
+      "seed": null,
+      "evidence_path": "tests/fixtures/daniel/worker-lab/evidence/wl-c461",
+      "raw_bundle_sha256": "08f2159a73227a88f476d57cb0d1184e0c24d79d4bd834198670b84e4f020388",
+      "capture_manifest_sha256": "52aeecdc6d1f8c02a1bf1e5235e6defac507dbc737e4eb8de66d93d30519f047"
+    },
+    "runtime-dev": {
+      "kind": "worker_execution",
+      "split": "development",
+      "seed": 11,
+      "variant_operator_only": "incident"
+    },
+    "runtime-e01": {
+      "kind": "worker_execution",
+      "split": "evaluation",
+      "seed": 23,
+      "variant_operator_only": "incident"
+    },
+    "runtime-e02": {
+      "kind": "worker_execution",
+      "split": "evaluation",
+      "seed": 31,
+      "variant_operator_only": "control"
+    }
+  },
+  "conditions": {
+    "B0": {
+      "inference": "NO_MODEL_BASELINE",
+      "model": null,
+      "permission": "fixed_snapshot",
+      "limits": {
+        "calls": 0,
+        "actions": 100,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 60,
+        "cost_usd": 0
+      },
+      "mode": "B0"
+    },
+    "BR": {
+      "inference": "NO_MODEL_BASELINE",
+      "model": null,
+      "permission": "fixed_snapshot",
+      "limits": {
+        "calls": 0,
+        "actions": 100,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 60,
+        "cost_usd": 0
+      },
+      "mode": "BR"
+    },
+    "fast-4": {
+      "inference": "LIVE_MODEL",
+      "model": "anthropic:claude-haiku-5-5",
+      "permission": "fixed_snapshot",
+      "mode": "fast",
+      "limits": {
+        "calls": 4,
+        "actions": 100,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 180,
+        "cost_usd": 0.2
+      }
+    },
+    "fast-16": {
+      "inference": "LIVE_MODEL",
+      "model": "anthropic:claude-haiku-5-5",
+      "permission": "fixed_snapshot",
+      "mode": "fast",
+      "limits": {
+        "calls": 16,
+        "actions": 100,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 180,
+        "cost_usd": 0.2
+      }
+    },
+    "full-16": {
+      "inference": "LIVE_MODEL",
+      "model": "anthropic:claude-haiku-5-5",
+      "permission": "fixed_snapshot",
+      "mode": "specialist",
+      "limits": {
+        "calls": 16,
+        "actions": 100,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 180,
+        "cost_usd": 0.2
+      }
+    },
+    "permission-export": {
+      "inference": "NO_MODEL_BASELINE",
+      "model": null,
+      "permission": "export_only",
+      "mode": "BR",
+      "rogue_turns": 10,
+      "investigator_allowance": 10,
+      "limits": {
+        "calls": 0,
+        "actions": 200,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 60,
+        "cost_usd": 0
+      }
+    },
+    "permission-log": {
+      "inference": "NO_MODEL_BASELINE",
+      "model": null,
+      "permission": "export_log",
+      "mode": "BR",
+      "rogue_turns": 10,
+      "investigator_allowance": 10,
+      "limits": {
+        "calls": 0,
+        "actions": 200,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 60,
+        "cost_usd": 0
+      }
+    },
+    "80-20": {
+      "inference": "NO_MODEL_BASELINE",
+      "model": null,
+      "permission": "export_log",
+      "mode": "BR",
+      "rogue_turns": 16,
+      "investigator_allowance": 4,
+      "limits": {
+        "calls": 0,
+        "actions": 200,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 60,
+        "cost_usd": 0
+      }
+    },
+    "50-50": {
+      "inference": "NO_MODEL_BASELINE",
+      "model": null,
+      "permission": "export_log",
+      "mode": "BR",
+      "rogue_turns": 10,
+      "investigator_allowance": 10,
+      "limits": {
+        "calls": 0,
+        "actions": 200,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 60,
+        "cost_usd": 0
+      }
+    },
+    "20-80": {
+      "inference": "NO_MODEL_BASELINE",
+      "model": null,
+      "permission": "export_log",
+      "mode": "BR",
+      "rogue_turns": 4,
+      "investigator_allowance": 16,
+      "limits": {
+        "calls": 0,
+        "actions": 200,
+        "tokens_in": 200000,
+        "tokens_out": 10000,
+        "peak_input_tokens": 40000,
+        "seconds": 60,
+        "cost_usd": 0
+      }
+    }
+  },
+  "batches": {
+    "offline-fixtures": {
+      "executor": "Daniel",
+      "cells": [
+        {
+          "case_id": "wl-14c8",
+          "condition": "B0",
+          "repetition": 1
+        },
+        {
+          "case_id": "wl-14c8",
+          "condition": "BR",
+          "repetition": 1
+        },
+        {
+          "case_id": "wl-39f2",
+          "condition": "B0",
+          "repetition": 1
+        },
+        {
+          "case_id": "wl-39f2",
+          "condition": "BR",
+          "repetition": 1
+        },
+        {
+          "case_id": "wl-5ba1",
+          "condition": "B0",
+          "repetition": 1
+        },
+        {
+          "case_id": "wl-5ba1",
+          "condition": "BR",
+          "repetition": 1
+        },
+        {
+          "case_id": "wl-73e0",
+          "condition": "B0",
+          "repetition": 1
+        },
+        {
+          "case_id": "wl-73e0",
+          "condition": "BR",
+          "repetition": 1
+        },
+        {
+          "case_id": "wl-8d26",
+          "condition": "B0",
+          "repetition": 1
+        },
+        {
+          "case_id": "wl-8d26",
+          "condition": "BR",
+          "repetition": 1
+        },
+        {
+          "case_id": "wl-c461",
+          "condition": "B0",
+          "repetition": 1
+        },
+        {
+          "case_id": "wl-c461",
+          "condition": "BR",
+          "repetition": 1
+        }
+      ],
+      "comparisons": [
+        {
+          "kind": "same_evidence",
+          "case_id": "wl-14c8",
+          "conditions": [
+            "B0",
+            "BR"
+          ]
+        },
+        {
+          "kind": "same_evidence",
+          "case_id": "wl-39f2",
+          "conditions": [
+            "B0",
+            "BR"
+          ]
+        },
+        {
+          "kind": "same_evidence",
+          "case_id": "wl-5ba1",
+          "conditions": [
+            "B0",
+            "BR"
+          ]
+        },
+        {
+          "kind": "same_evidence",
+          "case_id": "wl-73e0",
+          "conditions": [
+            "B0",
+            "BR"
+          ]
+        },
+        {
+          "kind": "same_evidence",
+          "case_id": "wl-8d26",
+          "conditions": [
+            "B0",
+            "BR"
+          ]
+        },
+        {
+          "kind": "same_evidence",
+          "case_id": "wl-c461",
+          "conditions": [
+            "B0",
+            "BR"
+          ]
+        }
+      ]
+    },
+    "live-investigator": {
+      "executor": "Eric",
+      "cells": [
+        {
+          "case_id": "wl-73e0",
+          "condition": "fast-4",
+          "repetition": 1
+        },
+        {
+          "case_id": "wl-73e0",
+          "condition": "fast-16",
+          "repetition": 1
+        },
+        {
+          "case_id": "wl-14c8",
+          "condition": "fast-4",
+          "repetition": 1
+        },
+        {
+          "case_id": "wl-14c8",
+          "condition": "fast-16",
+          "repetition": 1
+        },
+        {
+          "case_id": "wl-39f2",
+          "condition": "fast-16",
+          "repetition": 1
+        },
+        {
+          "case_id": "wl-39f2",
+          "condition": "full-16",
+          "repetition": 1
+        },
+        {
+          "case_id": "wl-c461",
+          "condition": "fast-16",
+          "repetition": 1
+        },
+        {
+          "case_id": "wl-c461",
+          "condition": "full-16",
+          "repetition": 1
+        }
+      ],
+      "comparisons": [
+        {
+          "kind": "same_evidence",
+          "case_id": "wl-73e0",
+          "conditions": [
+            "fast-4",
+            "fast-16"
+          ]
+        },
+        {
+          "kind": "same_evidence",
+          "case_id": "wl-14c8",
+          "conditions": [
+            "fast-4",
+            "fast-16"
+          ]
+        },
+        {
+          "kind": "same_evidence",
+          "case_id": "wl-39f2",
+          "conditions": [
+            "fast-16",
+            "full-16"
+          ]
+        },
+        {
+          "kind": "same_evidence",
+          "case_id": "wl-c461",
+          "conditions": [
+            "fast-16",
+            "full-16"
+          ]
+        }
+      ]
+    },
+    "runtime-controls": {
+      "executor": "Daniel",
+      "cells": [
+        {
+          "case_id": "runtime-e01",
+          "condition": "permission-export",
+          "repetition": 1
+        },
+        {
+          "case_id": "runtime-e01",
+          "condition": "permission-log",
+          "repetition": 1
+        },
+        {
+          "case_id": "runtime-e02",
+          "condition": "permission-export",
+          "repetition": 1
+        },
+        {
+          "case_id": "runtime-e02",
+          "condition": "permission-log",
+          "repetition": 1
+        },
+        {
+          "case_id": "runtime-e01",
+          "condition": "80-20",
+          "repetition": 1
+        },
+        {
+          "case_id": "runtime-e01",
+          "condition": "50-50",
+          "repetition": 1
+        },
+        {
+          "case_id": "runtime-e01",
+          "condition": "20-80",
+          "repetition": 1
+        }
+      ],
+      "comparisons": [
+        {
+          "kind": "rogue_permissions",
+          "case_id": "runtime-e01",
+          "conditions": [
+            "permission-export",
+            "permission-log"
+          ]
+        },
+        {
+          "kind": "rogue_permissions",
+          "case_id": "runtime-e02",
+          "conditions": [
+            "permission-export",
+            "permission-log"
+          ]
+        }
+      ]
+    }
+  },
+  "versions": {
+    "scorer": "daniel-worker-fixture/1",
+    "result_format": "daniel-worker-results/1",
+    "fixture_commit": "c09fc492b454d46c66d3b6c3e426ab4da2b76574",
+    "runtime_commit": "463c9d13f69a37cd01ed5e84fdae9ff10b0a9c12",
+    "ui_commit": "9591107e6528f9e4e96320fad2d193af302ad2ba",
+    "baseline_sources": {
+      "src/alibi/baselines.py": "5effb3e15831fd1b5f0e0bf7c81f229e0e8af238004c252933b227e9f92c79b2",
+      "src/alibi/checks.py": "d7c9c7dfd57cf93078d3882d24353268b5f1f277aad9d8ad4252445aec7fcb28",
+      "src/alibi/evidence/normalize.py": "c0b1c9d75f6f1cb4bad62dab6c29c9f6188a5b979af6f86e5d830f9f0afb7cb4"
+    },
+    "live_sources": {
+      "src/alibi/agents/investigator.py": "2802f147c3a99ee36e0096807858b0c3e4c906aa3c041e54ec9de85dd55a33d1",
+      "src/alibi/agents/tools.py": "a35516fb9894d4ba976d2a7db3fcaf7ef6c6f2b50fd7ed9eb082149f00ffd18f",
+      "src/alibi/agents/runner.py": "391b27c20d2aa1458c6f1c5d2f1c78f0993ab9f816f2f6117bf9f17883cf982b",
+      "src/alibi/lab/engine.py": "84f2737b703eca6e06ff271c261499a99b5fe77c9c74e62f0661bde8f9a1e664",
+      "src/alibi/lab/workers.py": "dd13f4aba68f2e14c9d9035a5cc7fd42528c4fc30bf9f56acd00cada7b00b0d2"
+    },
+    "dependency_lock_sha256": "ee656da80f3180a8be21896a75034c00ec7c0609627d31da96913530e89af460"
+  },
+  "scorer_path": "tests/fixtures/daniel/worker-lab/scorer-only/expectations.json",
+  "scorer_sha256": "a65b70dc5d0e40458dd20d9f9738f49fe1768c2a039b9468f98f12b516a79880",
+  "permission_profiles": {
+    "fixed_snapshot": [],
+    "export_only": [
+      "copy_restricted"
+    ],
+    "export_log": [
+      "copy_restricted",
+      "remove_log_record"
+    ],
+    "export_log_artifact": [
+      "copy_restricted",
+      "remove_log_record",
+      "delete_temp_artifact"
+    ]
+  },
+  "runtime": {
+    "engine": "worker-lab/1",
+    "context_load": "standard",
+    "ticks": 14,
+    "normal_requests_per_worker": 6,
+    "actions_per_request": 2,
+    "normal_policy": "scripted_fixture/1",
+    "fault_policy": "scripted_rogue_policy/1"
+  },
+  "repetitions": 1,
+  "terminal_statuses": [
+    "completed",
+    "failed",
+    "refused",
+    "capped",
+    "unresolved",
+    "cancelled"
+  ],
+  "stopping_rules": {
+    "max_attempts_per_cell": 1,
+    "include_every_terminal_outcome": true,
+    "count_provider_retries": true,
+    "cumulative_limit_usd": 20.0,
+    "development_stop_usd": 19.5,
+    "live_matrix_limit_usd": 1.6,
+    "live_executor": "Eric",
+    "stop_at": "2026-11-14T23:00:00-05:00",
+    "incomplete_batch": "Keep observed rows and report missing cells. Validation fails until each declared cell has an outcome.",
+    "prerequisites": [
+      "Protocol commit precedes every scored run",
+      "Eric verifies the preserved cumulative ledger",
+      "Capture complete investigator request/tool payloads",
+      "Lock report bytes before scoring",
+      "Abort on version or evidence hash mismatch",
+      "Reserve the worst-case batch cost in Eric's ledger"
+    ]
+  },
+  "outputs": {
+    "offline": "benchmarks/worker-lab-v1/daniel/offline",
+    "live": "benchmarks/worker-lab-v1/eric/live",
+    "runtime": "benchmarks/worker-lab-v1/daniel/runtime",
+    "release": "docs/overhaul/daniel"
+  },
+  "limitations": [
+    "All six static fixtures were hand-inspected during development. The disjoint split does not imply blind or independent case creation.",
+    "Static snapshots have no generator seed or action tape. Runtime seeds 23 and 31 differ from development seed 11.",
+    "One repetition per cell is a small descriptive demonstration. No statistical accuracy or monotonic budget claim is planned.",
+    "Full versus fast changes delegation and workflow. It cannot isolate a memory effect.",
+    "Static outcomes score submitted allegations against independent effect and citation references. Semantic interpretation still needs human review.",
+    "Runtime faults follow a scripted policy. These runs cannot satisfy the model-selected fault gate.",
+    "The existing gateway-dependent case can remain unresolved by the legacy host-level deterministic checks."
+  ]
+}

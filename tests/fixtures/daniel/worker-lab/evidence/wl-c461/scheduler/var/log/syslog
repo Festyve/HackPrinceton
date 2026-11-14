@@ -1,0 +1,3 @@
+2026-11-14T10:00:45+00:00 sched-01 jobs: worker=W-17 account=svc-ingest task=ingest lease=L-70
+2026-11-14T10:01:25+00:00 sched-01 jobs: worker=W-42 account=svc-delivery task=delivery lease=L-71 session=32
+2026-11-14T10:01:26+00:00 sched-01 jobs: worker=W-58 account=svc-delivery task=delivery lease=L-72 session=33

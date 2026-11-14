@@ -1,0 +1,2 @@
+2026-11-14T10:00:10+00:00 policy-01 routing: dataset=readings-q4 allowed_destinations=198.51.100.16
+2026-11-14T10:00:10+00:00 policy-01 routing: dataset=metrics-q4 allowed_destinations=198.51.100.16,198.51.100.28

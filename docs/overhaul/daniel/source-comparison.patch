@@ -1,0 +1,101 @@
+diff --git a/web/src/App.tsx b/web/src/App.tsx
+index 4eebd6c..a5f1013 100644
+--- a/web/src/App.tsx
++++ b/web/src/App.tsx
+@@ -9,0 +10 @@ import type {
++  SourceExperiment,
+@@ -105,0 +107,20 @@ export default function App() {
++  const [sourceComparison, setSourceComparison] = useState<{
++    caseId: string;
++    result: SourceExperiment | null;
++    error: string | null;
++  } | null>(null);
++  const derivedCaseId = view?.case.parent_case_id ? view.case.case_id : null;
++  const activeComparison = sourceComparison?.caseId === derivedCaseId ? sourceComparison : null;
++  useEffect(() => {
++    if (!derivedCaseId) return;
++    let active = true;
++    api.sourceExperiment(derivedCaseId).then(
++      (result) => {
++        if (active) setSourceComparison({ caseId: derivedCaseId, result, error: null });
++      },
++      (error: unknown) => {
++        if (active) setSourceComparison({ caseId: derivedCaseId, result: null, error: String(error) });
++      },
++    );
++    return () => { active = false; };
++  }, [derivedCaseId, view?.case.state]);
+@@ -804 +825 @@ export default function App() {
+-                          <ExperimentComparison view={view} />
++                          <ExperimentComparison exp={activeComparison?.result ?? null} err={activeComparison?.error ?? null} />
+@@ -866,0 +888,2 @@ export default function App() {
++              comparison={activeComparison?.result ?? null}
++              comparisonError={activeComparison?.error ?? null}
+diff --git a/web/src/features/sources.tsx b/web/src/features/sources.tsx
+index bdb525b..3b4edd9 100644
+--- a/web/src/features/sources.tsx
++++ b/web/src/features/sources.tsx
+@@ -34,0 +35,2 @@ export function WitnessPanel({
++  comparison,
++  comparisonError,
+@@ -37,0 +40,2 @@ export function WitnessPanel({
++  comparison: SourceExperiment | null;
++  comparisonError: string | null;
+@@ -65 +69 @@ export function WitnessPanel({
+-    if (!sources.length) return;
++    if (parent || !sources.length) return;
+@@ -73 +77 @@ export function WitnessPanel({
+-  }, [id, sources.length, view.case.state]);
++  }, [id, parent, sources.length, view.case.state]);
+@@ -79 +83 @@ export function WitnessPanel({
+-      exp?.role === "derived" && exp.comparison == null && !!exp.note;
++      comparison?.role === "derived" && comparison.comparison == null && !!comparison.note;
+@@ -87,3 +91,5 @@ export function WitnessPanel({
+-          {gone
+-            ? exp?.note
+-            : "Deriving this view did not change the original evidence or its report."}
++          {comparisonError && "The original case status is unavailable."}
++          {!comparisonError && !comparison && "Checking the original case…"}
++          {comparison && (gone
++            ? comparison.note
++            : "Deriving this view did not change the original evidence or its report.")}
+@@ -91 +97 @@ export function WitnessPanel({
+-        {!gone && (
++        {comparison && !gone && (
+@@ -196,16 +202,4 @@ const CHANGE: Record<ExperimentClaim["change"], { word: string; cls: string }> =
+-export function ExperimentComparison({ view }: { view: CaseView }) {
+-  const id = view.case.case_id;
+-  const [exp, setExp] = useState<SourceExperiment | null>(null);
+-  const [err, setErr] = useState<string | null>(null);
+-  useEffect(() => {
+-    let live = true;
+-    setExp(null);
+-    setErr(null);
+-    api
+-      .sourceExperiment(id)
+-      .then((r) => live && setExp(r))
+-      .catch((e: unknown) => live && setErr(message(e)));
+-    return () => {
+-      live = false;
+-    };
+-  }, [id]);
++export function ExperimentComparison({ exp, err }: {
++  exp: SourceExperiment | null;
++  err: string | null;
++}) {
+diff --git a/web/src/workbench.tsx b/web/src/workbench.tsx
+index f4a75da..af17462 100644
+--- a/web/src/workbench.tsx
++++ b/web/src/workbench.tsx
+@@ -3 +3 @@ import { EvidenceCtx } from "./common";
+-import type { CaseView, Runtime } from "./api";
++import type { CaseView, Runtime, SourceExperiment } from "./api";
+@@ -33,0 +34,2 @@ export function Sources({
++  comparison,
++  comparisonError,
+@@ -38,0 +41,2 @@ export function Sources({
++  comparison: SourceExperiment | null;
++  comparisonError: string | null;
+@@ -155 +159 @@ export function Sources({
+-      <WitnessPanel view={view} onOpenCase={onOpenCase} />
++      <WitnessPanel view={view} onOpenCase={onOpenCase} comparison={comparison} comparisonError={comparisonError} />
