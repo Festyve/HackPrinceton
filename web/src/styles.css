@@ -1980,3 +1980,9 @@ details li {
 .design-result select {
   max-width: 100%;
 }
+.temp-plot .isolated {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.5;
+}
+

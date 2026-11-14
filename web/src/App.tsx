@@ -98,16 +98,29 @@ export default function App() {
   const retryRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
-    api
-      .runtime()
-      .then(setRuntime)
-      .catch(() => setRuntime(null));
+    // What the server can do decides what the controls say, so a failed first request is tried again.
+    let live = true;
+    let tries = 0;
+    const loadRuntime = () =>
+      api
+        .runtime()
+        .then((r) => live && setRuntime(r))
+        .catch(() => {
+          if (!live) return;
+          setRuntime(null);
+          tries += 1;
+          if (tries < 8) window.setTimeout(loadRuntime, Math.min(1500 * tries, 8000));
+        });
+    void loadRuntime();
     api
       .presets()
       .then(setPresets)
       .catch((e: unknown) =>
         setPresetErr(String(e instanceof Error ? e.message : e)),
       );
+    return () => {
+      live = false;
+    };
   }, []);
 
   const closeStream = useCallback(() => {

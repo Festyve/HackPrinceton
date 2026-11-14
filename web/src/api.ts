@@ -132,6 +132,8 @@ export interface SourceExperiment {
     state?: string;
     excluded_sources?: ExcludedSource[];
   }>;
+  /** Why there is no comparison, e.g. the original case was reset. */
+  note?: string;
   comparison?: {
     method?: string;
     claims?: ExperimentClaim[];
@@ -584,18 +586,20 @@ export const api = {
   createFromDesign: (
     design_id: string,
     design_fixture: string,
+    client_token: string,
     investigation_mode?: string | null,
   ) =>
     post<CaseView>("/api/cases", {
       design_id,
       design_fixture,
-      client_token: token(),
+      client_token,
       ...(investigation_mode ? { investigation_mode } : {}),
     }),
   questions: (id: string) =>
     req<{ questions: QuestionAnswer[] }>(`/api/cases/${q(id)}/questions`),
   ask: (id: string, question: string, client_token: string) =>
-    post<QuestionAnswer>(`/api/cases/${q(id)}/questions?wait_s=20`, {
+    // a short wait: an answer that needs no model comes back at once; a slow one shows as pending and is polled
+    post<QuestionAnswer>(`/api/cases/${q(id)}/questions?wait_s=2`, {
       question,
       client_token,
     }),
