@@ -18,6 +18,8 @@ The server is a localhost demo. Billed and mutating routes have no authenticatio
 
 Examples: `runtime-offline.json`, `runtime-live.json`.
 
+`GET /api/spend` returns the cumulative spend estimate for a status display: `cap_usd`, `limit_in_force_usd`, `spent_usd`, `unreconciled_usd`, `reserved_usd`, `remaining_to_limit_usd`, `calls` and counts of open items. Totals only. With no billed route it returns `{"configured": false}`. It is an estimate at configured prices, not a bill.
+
 ## Fast and specialist investigations
 
 `POST /api/cases` accepts `investigation_mode: "fast" | "specialist"`.

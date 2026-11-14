@@ -508,3 +508,36 @@ def test_spend_command_shows_and_reconciles_without_calling_a_model(tmp_path, mo
     assert cli.main(["spend", "--reconcile", token, "--actual", "0.04", "--note", "console"]) == 0
     assert gateway.GlobalSpend(path, 5.0).snapshot()["spent_usd"] == pytest.approx(0.04)
     assert gateway.GlobalSpend(path, 5.0).snapshot()["unreconciled_usd"] == 0
+
+
+def test_spend_endpoint_shows_totals_only_and_says_when_nothing_can_be_spent(tmp_path):
+    from dataclasses import replace
+
+    from fastapi.testclient import TestClient
+
+    from alibi.api.app import create_app
+    from alibi.orchestrator import Orchestrator
+
+    off = replace(load_settings({}, dotenv=False), runs_dir=tmp_path / "r0", sealed_dir=tmp_path / "s0")
+    c0 = TestClient(create_app(off, Orchestrator(off, pace_s=0.0)))
+    assert c0.get("/api/spend").json() == {"configured": False,
+                                           "note": "no billed model route is configured; nothing can be spent"}
+    env = {"RUNTIME_MODE": "live", "LIVE_PROVIDER_KIND": "included_credits", "LEAD_MODEL": "anthropic:m",
+           "LLM_MAX_USD": "5", "LLM_PRICE_IN_PER_MTOK": "4", "LLM_PRICE_OUT_PER_MTOK": "20",
+           "ALIBI_SPEND_LEDGER": str(tmp_path / "spend.json"), "LLM_SPEND_FLOOR_USD": "1.25"}
+    live = replace(load_settings(env, dotenv=False), runs_dir=tmp_path / "r1", sealed_dir=tmp_path / "s1")
+    spend = gateway.global_spend_for(live)
+    held = spend.reserve(0.10, "investigation:lead-investigator", "anthropic:m")
+    lost = spend.reserve(0.20, "question:case-x")
+    spend.mark_uncertain(lost, "timeout")
+    c1 = TestClient(create_app(live, Orchestrator(live, pace_s=0.0)))
+    got = c1.get("/api/spend").json()
+    assert got["configured"] is True and got["readable"] is True
+    assert (got["cap_usd"], got["limit_in_force_usd"], got["spent_usd"]) == (5.0, 4.5, 1.25)
+    assert got["unreconciled_usd"] == 0.2 and got["reserved_usd"] == 0.1 and got["committed_usd"] == pytest.approx(1.55)
+    assert got["open_reservations"] == 1 and got["unreconciled_items"] == 1
+    blob = json.dumps(got)
+    assert held not in blob and lost not in blob and "investigation:" not in blob and "log" not in got  # totals only
+    (tmp_path / "spend.json").write_text("{ broken")
+    bad = c1.get("/api/spend").json()
+    assert bad["readable"] is False and "no model call will be made" in bad["note"]

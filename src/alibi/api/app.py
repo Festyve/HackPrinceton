@@ -132,6 +132,25 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
             "capabilities": orch.capabilities(),
         }
 
+    @app.get("/api/spend")
+    def spend() -> dict:
+        """The cumulative model-spend estimate, for a status display. Totals only: no log entries, no tokens,
+        no keys. It is an estimate at configured prices; the provider console is the billing authority."""
+        from alibi.agents import gateway
+
+        try:
+            ledger = gateway.global_spend_for(settings)
+            if ledger is None:
+                return {"configured": False, "note": "no billed model route is configured; nothing can be spent"}
+            snap = ledger.snapshot()
+        except gateway.LedgerError as exc:
+            return {"configured": True, "readable": False, "note": f"the spend ledger cannot be read, so no model call "
+                                                                   f"will be made: {str(exc)[:200]}"}
+        keep = ("cap_usd", "limit_in_force_usd", "demo_reserve_held_usd", "spent_usd", "unreconciled_usd", "reserved_usd",
+                "committed_usd", "remaining_to_limit_usd", "remaining_to_cap_usd", "calls", "note")
+        return {"configured": True, "readable": True, **{k: snap[k] for k in keep},
+                "open_reservations": len(snap["open_reservations"]), "unreconciled_items": len(snap["unreconciled"])}
+
     @app.get("/api/presets")
     def presets() -> dict:
         return {"presets": orch.presets(), "replays": orch.replays()}
