@@ -41,7 +41,7 @@ This block is the handoff. Everything below it is the build history, oldest firs
 
 **Owner actions**
 
-1. Eric: rotate the API key (it was pasted into chat); edit only the key line in `.env`.
+1. Eric: no key action is outstanding. Eric decided on Saturday November 14 to keep the current API key. It was pasted into the coding chat, so it is in that local chat transcript and in the gitignored `.env`, and nowhere in the repository: `.env` is ignored by `.gitignore` line 5, is not tracked, and was never committed on any local or remote branch. Keep that chat transcript private.
 2. Terry: add UI controls for the new routes, or take `codex/eric-ui-wiring`; rebase on `codex/eric-phase2`. See [`docs/ui-integration-brief.md`](docs/ui-integration-brief.md).
 3. Daniel: push the capture branch with its importer entry point.
 4. Repository owner: make the repository public. A redacted scan of the worktree and of every commit found no credential-like string, and `.env` and the ledger were never committed.
