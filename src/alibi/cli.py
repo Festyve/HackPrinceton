@@ -92,6 +92,40 @@ def _cmd_steps(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_bench(args: argparse.Namespace) -> int:
+    from alibi import bench
+
+    if args.write_config:
+        print(f"wrote {bench.write_config()}")
+        return 0
+    problems = bench.check_config()
+    if problems:
+        for line in problems:
+            print(f"error: {line}", file=sys.stderr)
+        print("The evaluation configuration is frozen. Changing rules means bumping a version and declaring a "
+              "fresh test split (uv run alibi bench --write-config).", file=sys.stderr)
+        return 1
+    if args.check:
+        print("evaluation config matches the code: docs/evaluation-config.json")
+        return 0
+    settings = load_settings()
+    doc = bench.run_offline_suite(settings)
+    bench.write_outputs(doc)
+    print(f"suite {doc['suite']} run {doc['run_id']} commit {doc['git_commit']} · model calls made: 0")
+    for s in doc["systems"]:
+        a = s["aggregate"]
+        if not a:
+            print(f"  {s['id']:<6} {s['status_detail']}")
+            continue
+        r = lambda x: "N/A" if not x["den"] else f"{x['num']}/{x['den']}"  # noqa: E731
+        print(f"  {s['id']:<6} cases {s['completed']}/{s['n_cases']} · effects caught {r(a['step_recall'])} · "
+              f"final precision {r(a['final_precision'])} · raw precision {r(a['proposal_precision'])} · "
+              f"cover-ups {r(a['coverup_detected'])} · account {r(a['account_identification'])} · "
+              f"benign false alerts {r(a['benign_false_alert'])} · benign raw alerts {r(a['benign_raw_alert'])}")
+    print("wrote benchmarks/offline-v1/results.json and docs/benchmark.md")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="alibi", description="ALIBI forensic proving ground")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -114,6 +148,11 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("steps", help="print the sealed executed-step record of an episode (operator only)")
     p.add_argument("episode_id")
     p.set_defaults(func=_cmd_steps)
+
+    p = sub.add_parser("bench", help="run the declared offline benchmark suite (B0 and BR; no model calls)")
+    p.add_argument("--check", action="store_true", help="only verify that the frozen config matches the code")
+    p.add_argument("--write-config", action="store_true", help="write docs/evaluation-config.json from the code")
+    p.set_defaults(func=_cmd_bench)
 
     p = sub.add_parser("serve", help="serve the API and the built case board on localhost")
     p.add_argument("--host", default=None)

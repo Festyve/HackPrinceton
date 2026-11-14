@@ -1,0 +1,221 @@
+{
+  "suite": "offline-v1",
+  "evidence_origin": "SIM",
+  "versions": {
+    "simulator": "1.0.0",
+    "scenario": "1.0.0",
+    "normalizer": "1.0.0",
+    "verifier": "1.0.0",
+    "scorer": "1.0.0",
+    "b0": "1.0.0",
+    "br": "1.0.0"
+  },
+  "seed_splits": {
+    "development": "seeds 1-40: hand-inspected while building; used by the automated tests",
+    "demo": [
+      9023,
+      9002,
+      9003
+    ],
+    "test": [
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111,
+      112
+    ],
+    "note": "Test seeds were declared before the first run of this suite and are not used for tuning. If results cause a rule or scorer change, the version is bumped and a fresh split is declared."
+  },
+  "cases": [
+    {
+      "case_ref": "T01",
+      "variant": "incident_plain",
+      "seed": 101,
+      "group": "straightforward incident"
+    },
+    {
+      "case_ref": "T02",
+      "variant": "incident_plain",
+      "seed": 102,
+      "group": "straightforward incident"
+    },
+    {
+      "case_ref": "T03",
+      "variant": "incident_plain",
+      "seed": 103,
+      "group": "straightforward incident"
+    },
+    {
+      "case_ref": "T04",
+      "variant": "incident_plain",
+      "seed": 104,
+      "group": "straightforward incident"
+    },
+    {
+      "case_ref": "T05",
+      "variant": "incident_coverup",
+      "seed": 105,
+      "group": "cover-up incident"
+    },
+    {
+      "case_ref": "T06",
+      "variant": "incident_coverup",
+      "seed": 106,
+      "group": "cover-up incident"
+    },
+    {
+      "case_ref": "T07",
+      "variant": "incident_coverup",
+      "seed": 107,
+      "group": "cover-up incident"
+    },
+    {
+      "case_ref": "T08",
+      "variant": "incident_coverup",
+      "seed": 108,
+      "group": "cover-up incident"
+    },
+    {
+      "case_ref": "T09",
+      "variant": "benign_rotation",
+      "seed": 109,
+      "group": "benign control: forced log rotation"
+    },
+    {
+      "case_ref": "T10",
+      "variant": "benign_approved_transfer",
+      "seed": 110,
+      "group": "benign control: approved bulk transfer"
+    },
+    {
+      "case_ref": "T11",
+      "variant": "benign_remote_login",
+      "seed": 111,
+      "group": "benign control: legitimate remote login"
+    },
+    {
+      "case_ref": "T12",
+      "variant": "benign_collection_gap",
+      "seed": 112,
+      "group": "benign control: incomplete collection"
+    }
+  ],
+  "ai_pilot_case_refs": [
+    "T01",
+    "T05",
+    "T10",
+    "T12"
+  ],
+  "systems": [
+    {
+      "id": "B0",
+      "label": "Fixed keyword/regex recipe over the same evidence",
+      "kind": "offline",
+      "priority": "P0",
+      "purpose": "Measures improvement over this specific search recipe"
+    },
+    {
+      "id": "BR",
+      "label": "Deterministic contradiction checks, templated findings, no model",
+      "kind": "offline",
+      "priority": "P0",
+      "purpose": "Shows what the engineering alone accomplishes"
+    },
+    {
+      "id": "B1",
+      "label": "Single agent, generic evidence tools only",
+      "kind": "ai",
+      "priority": "P1",
+      "purpose": "Original single-agent baseline"
+    },
+    {
+      "id": "B1+",
+      "label": "Single agent with the same checks and evidence as ALIBI",
+      "kind": "ai",
+      "priority": "first AI comparison",
+      "purpose": "Isolates the contribution of delegation"
+    },
+    {
+      "id": "B2",
+      "label": "ALIBI architecture without contradiction checks",
+      "kind": "ai",
+      "priority": "P1",
+      "purpose": "Original ablation"
+    },
+    {
+      "id": "ALIBI",
+      "label": "Lead + integrity-auditor + skeptic + checks",
+      "kind": "ai",
+      "priority": "first AI comparison",
+      "purpose": "Full product"
+    }
+  ],
+  "inputs_shared_by_all_systems": [
+    "the same frozen bundle bytes",
+    "the same neutral tip",
+    "the same operational context",
+    "the same report schema",
+    "the same verifier",
+    "the same scorer"
+  ],
+  "scorable_effect_types": [
+    "data_staging",
+    "policy_violating_transfer",
+    "local_log_removal"
+  ],
+  "not_scored_as_effects": {
+    "login_as": "assessed through account identification and attribution metrics, not recall",
+    "failed or partial steps": "counted separately as attempts; never recall targets"
+  },
+  "matching": {
+    "rule": "claim type == effect type AND same host AND (same object OR same session) AND finding window <= max_window_s wide and overlapping the effect window within tolerance_s AND the finding cites at least one record the executed step produced",
+    "algorithm": "one-to-one maximum bipartite matching, findings and effects visited in id order",
+    "tolerance_s": 120,
+    "max_window_s": 1800,
+    "only_final_accepted_allegations_can_match": true
+  },
+  "verifier": {
+    "max_allegation_window_s": 1800,
+    "window_tolerance_s": 120,
+    "note": "applied identically to every system; never adds findings; never reads the answer key"
+  },
+  "policy": {
+    "bulk_threshold_bytes": 5000000
+  },
+  "b0_rules": [
+    {
+      "rule": "upload_tool",
+      "claim_type": "policy_violating_transfer",
+      "pattern": "\\bcurl\\b.*\\s(?:-T|--upload-file)\\s|\\bscp\\s|\\bwget\\s+--post-file|\\bnc\\s+-|\\brsync\\s"
+    },
+    {
+      "rule": "bulk_export",
+      "claim_type": "data_staging",
+      "pattern": "export_bulk|--dataset\\s"
+    },
+    {
+      "rule": "log_tamper",
+      "claim_type": "local_log_removal",
+      "pattern": "\\brm\\s+\\S*(?:/var/log|\\.log)|\\bsed\\s+-i\\b.*(?:/var/log|\\.log)|\\btruncate\\s|\\bshred\\s|history\\s+-c|unset\\s+HISTFILE|logrotate\\s+-f"
+    }
+  ],
+  "batch_review": "skipped_for_benchmark (approved_by_human=false); the locked model/baseline output is graded as is",
+  "ai_caps_per_investigation": {
+    "max_calls": 12,
+    "max_input_tokens": 40000,
+    "max_output_tokens": 6000,
+    "max_seconds": 90.0,
+    "tool_result_max_records": 50,
+    "tool_result_max_bytes": 8192,
+    "shared_across": "lead, specialists and retries"
+  },
+  "error_policy": "failed and timed-out runs are kept and counted; budget stops are marked censored; no replacement seeds",
+  "paid_overage_authorized_usd": 0
+}
