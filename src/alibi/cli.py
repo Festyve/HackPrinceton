@@ -419,26 +419,36 @@ def _cmd_eval(args: argparse.Namespace) -> int:
     from alibi.runners import RuntimeBlocked
 
     settings = load_settings()
+    suite = args.suite
+    spec = evaluation.SUITES[suite]
     try:
         if args.declare:
-            print(f"declared: {evaluation.declare()}")
+            print(f"declared: {evaluation.declare(suite)}")
             return 0
         if args.check:
-            problems = evaluation.check_config()
+            problems = evaluation.check_config(suite)
             for line in problems:
                 print(f"error: {line}", file=sys.stderr)
             print("the declaration matches the code" if not problems else "the declaration and the code disagree")
             return 1 if problems else 0
         if args.preflight:
-            print(json.dumps(evaluation.preflight(settings), indent=2))
+            cells = len(spec["cases"]) * len(evaluation.AI_ARMS)
+            print(json.dumps(evaluation.preflight(settings, cells, spec["ceiling"]), indent=2))
+            return 0
+        if args.summary:
+            docs = [d for d in (evaluation.latest(suite=name) for name in evaluation.SUITES) if d]
+            out = evaluation.REPORT_MD.with_name("evaluation-summary.md")
+            out.write_text(evaluation.render_combined(docs), encoding="utf-8")
+            print(f"wrote {out}")
             return 0
         if args.dev_check:
             doc = evaluation.run(settings, cases=evaluation.DEV_CASES, suite="paired-v2-dev", ceiling_usd=0.25)
         elif args.run:
-            doc = evaluation.run(settings)
-            evaluation.REPORT_MD.write_text(evaluation.render_markdown(doc), encoding="utf-8")
+            doc = evaluation.run(settings, suite=suite)
+            name = "evaluation-v2.md" if suite == evaluation.SUITE else f"evaluation-{suite.replace('paired-', '')}.md"
+            evaluation.REPORT_MD.with_name(name).write_text(evaluation.render_markdown(doc), encoding="utf-8")
         else:
-            print("choose one of --declare, --check, --preflight, --dev-check, --run", file=sys.stderr)
+            print("choose one of --declare, --check, --preflight, --dev-check, --run, --summary", file=sys.stderr)
             return 2
     except RuntimeBlocked as exc:
         print(f"{exc}\nNo model call was made.", file=sys.stderr)
@@ -582,6 +592,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--preflight", action="store_true", help="worst-case cost and limits; no model call")
     p.add_argument("--dev-check", action="store_true", help="one development case through the four AI arms (not a result)")
     p.add_argument("--run", action="store_true", help="run the declared matrix and write an immutable result directory")
+    p.add_argument("--summary", action="store_true", help="write docs/evaluation-summary.md from the saved results")
+    p.add_argument("--suite", default="paired-v2", choices=["paired-v2", "paired-v2-rep1"],
+                   help="paired-v2 (four cases) or its separately declared replication on two more incident seeds")
     p.set_defaults(func=_cmd_eval)
 
     p = sub.add_parser("pilot", help="(refused: the first-run pilot is complete and kept as recorded)")

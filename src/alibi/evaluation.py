@@ -85,6 +85,24 @@ CASES: list[dict[str, Any]] = [
     {"case_ref": "V04", "variant": "benign_approved_transfer", "seed": 204, "group": "benign control: approved transfer",
      "why": "a bulk transfer with the same shape as the crime, to an approved destination"},
 ]
+# Replication, declared separately after paired-v2 had run and before any bundle for these seeds existed: the two
+# incident kinds again on two more of the reserved seeds, same model, arms, budget and rules. It exists because
+# paired-v2 has only two incident cases; it is reported beside paired-v2, never merged into it.
+REPLICATION_SUITE = "paired-v2-rep1"
+REPLICATION_CASES: list[dict[str, Any]] = [
+    {"case_ref": "V05", "variant": "incident_evasion", "seed": 205, "group": "difficult incident (replication)",
+     "why": "the same kind of case as V01 on a new seed"},
+    {"case_ref": "V06", "variant": "incident_coverup", "seed": 206, "group": "cover-up (replication)",
+     "why": "the same kind of case as V02 on a new seed"},
+]
+PAIRED_V2_ESTIMATED_COST_USD = 0.2198  # what paired-v2 used of the shared $0.75 evaluation ceiling
+SUITES: dict[str, dict[str, Any]] = {
+    SUITE: {"cases": CASES, "config": CONFIG_PATH, "ceiling": CATEGORY_CEILING_USD, "reserved": list(range(205, 213))},
+    REPLICATION_SUITE: {"cases": REPLICATION_CASES, "config": REPO_ROOT / "docs" / "evaluation-config-v2-rep1.json",
+                        "ceiling": round(CATEGORY_CEILING_USD - PAIRED_V2_ESTIMATED_COST_USD, 4),
+                        "reserved": list(range(207, 213))},
+}
+
 # Development check only (not an evaluation result): one development-seed incident through all four AI arms,
 # to find harness faults before the declared cases are spent.
 DEV_CASES: list[dict[str, Any]] = [
@@ -124,14 +142,28 @@ def _tools_by_arm() -> dict[str, Any]:
     return out
 
 
-def declared_config() -> dict[str, Any]:
-    """The evaluation as declared by the code. Must equal docs/evaluation-config-v2.json before a run."""
+def declared_config(suite: str = SUITE) -> dict[str, Any]:
+    """The evaluation as declared by the code. Must equal the suite's declared file before a run."""
     from alibi.agents.tools import MAX_BYTES, MAX_RECORDS
 
+    spec = SUITES[suite]
+    cases = spec["cases"]
     worst = gateway.worst_case_usd(CAPS.max_input_tokens, CAPS.max_output_tokens, PRICE_IN, PRICE_OUT)
-    cells = len(CASES) * len(AI_ARMS)
+    cells = len(cases) * len(AI_ARMS)
+    doc = _declared(suite, cases, cells, worst, spec, MAX_RECORDS, MAX_BYTES)
+    if suite != SUITE:
+        doc["replicates"] = {"suite": SUITE, "note": "Same model, arms, prompts, tools, budget and rules as paired-v2, on "
+                                                      "two more reserved seeds. Declared after paired-v2 ran, so it is a "
+                                                      "replication and is reported separately.",
+                             "shared_ceiling_usd": CATEGORY_CEILING_USD,
+                             "already_used_by_paired_v2_usd": PAIRED_V2_ESTIMATED_COST_USD}
+    return doc
+
+
+def _declared(suite: str, cases: list[dict[str, Any]], cells: int, worst: float, spec: dict[str, Any],
+              MAX_RECORDS: int, MAX_BYTES: int) -> dict[str, Any]:
     return {
-        "suite": SUITE, "evidence_origin": "SIM",
+        "suite": suite, "evidence_origin": "SIM",
         "supersedes": "nothing. offline-v1 and ai-pilot-v1 stay as recorded; this is a separate suite.",
         "versions": bench.current_versions(),
         "model": {"id": MODEL, "effort": EFFORT, "max_tokens_per_call": MAX_TOKENS_PER_CALL,
@@ -149,11 +181,11 @@ def declared_config() -> dict[str, Any]:
         "verifier_feedback_note": ("submit_finding confirms form and reference validity only. Rule support is applied "
                                    "after the report is locked, identically for all six systems. The interactive product "
                                    "keeps immediate feedback; that is the one deliberate difference from this evaluation."),
-        "seed_split": {"evaluation": [c["seed"] for c in CASES], "reserved_unused": list(range(205, 213)),
+        "seed_split": {"evaluation": [c["seed"] for c in cases], "reserved_unused": spec["reserved"],
                        "note": "Declared before any bundle for these seeds was generated. Not used for tuning. A rule or "
                                "prompt change after results are seen needs a new version and a new split."},
-        "cases": CASES,
-        "matrix": {"ai_cells": cells, "runs_per_cell": 1, "offline_cells": len(CASES) * len(OFFLINE_ARMS),
+        "cases": cases,
+        "matrix": {"ai_cells": cells, "runs_per_cell": 1, "offline_cells": len(cases) * len(OFFLINE_ARMS),
                    "system_order": "randomized per case from the run id and recorded"},
         "batch_review": "skipped_for_benchmark (approved_by_human=false); the locked output is graded as is",
         "matching": {"tolerance_s": scoring.TOLERANCE_S, "max_window_s": scoring.MAX_WINDOW_S,
@@ -161,7 +193,7 @@ def declared_config() -> dict[str, Any]:
                      "rule": "claim type == effect type AND same host AND (same object OR same session) AND the window "
                              "overlaps within tolerance AND the finding cites a record the executed step produced"},
         "cost_preflight": {"worst_case_usd_per_cell": round(worst, 6), "worst_case_usd_total": round(worst * cells, 6),
-                           "category_ceiling_usd": CATEGORY_CEILING_USD,
+                           "category_ceiling_usd": spec["ceiling"],
                            "basis": "every input token priced as a cache write, the full output cap used"},
         "error_policy": "every cell is kept: completed, censored by a cap, refused, errored or not started. "
                         "No replacement seeds, no reruns of a finished cell.",
@@ -173,26 +205,36 @@ def declared_config() -> dict[str, Any]:
     }
 
 
-def check_config() -> list[str]:
-    if not CONFIG_PATH.exists():
-        return [f"{CONFIG_PATH.name} does not exist; declare it with `uv run alibi eval --declare`"]
-    on_disk = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
-    want = json.loads(json.dumps(declared_config()))
+def _config_path(suite: str) -> Path:
+    return CONFIG_PATH if suite == SUITE else SUITES[suite]["config"]
+
+
+def check_config(suite: str = SUITE) -> list[str]:
+    path = _config_path(suite)
+    if not path.exists():
+        return [f"{path.name} does not exist; declare it with `uv run alibi eval --declare`"]
+    on_disk = json.loads(path.read_text(encoding="utf-8"))
+    want = json.loads(json.dumps(declared_config(suite)))
     return [f"config drift in '{k}': the declared file and the code disagree"
             for k in sorted(set(on_disk) | set(want)) if k != "declared_at" and on_disk.get(k) != want.get(k)]
 
 
-def declare() -> Path:
+def _out_root(suite: str) -> Path:
+    return OUT_ROOT if suite == SUITE else REPO_ROOT / "benchmarks" / suite
+
+
+def declare(suite: str = SUITE) -> Path:
     """Write the declaration. Refused once any result of this suite exists: it is declared before, not after."""
-    if OUT_ROOT.exists() and any(OUT_ROOT.glob("*/results.json")):
-        raise RuntimeBlocked(f"{SUITE} already has results; its declaration is frozen")
-    CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
-    doc = {**declared_config(), "declared_at": datetime.now(timezone.utc).isoformat()}
-    CONFIG_PATH.write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8")
-    return CONFIG_PATH
+    root, path = _out_root(suite), _config_path(suite)
+    if root.exists() and any(root.glob("*/results.json")):
+        raise RuntimeBlocked(f"{suite} already has results; its declaration is frozen")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    doc = {**declared_config(suite), "declared_at": datetime.now(timezone.utc).isoformat()}
+    path.write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8")
+    return path
 
 
-def preflight(settings: Settings, n_cells: int | None = None) -> dict[str, Any]:
+def preflight(settings: Settings, n_cells: int | None = None, ceiling_usd: float = CATEGORY_CEILING_USD) -> dict[str, Any]:
     """Everything that must hold before a paid cell starts. Makes no model call."""
     cells = n_cells if n_cells is not None else len(CASES) * len(AI_ARMS)
     worst = gateway.worst_case_usd(CAPS.max_input_tokens, CAPS.max_output_tokens, PRICE_IN, PRICE_OUT)
@@ -209,15 +251,15 @@ def preflight(settings: Settings, n_cells: int | None = None) -> dict[str, Any]:
     if settings.bench_max_system_runs < cells:
         problems.append(f"BENCH_MAX_SYSTEM_RUNS is {settings.bench_max_system_runs}; {cells} system-runs are declared. "
                         "Set it only after this preflight passes otherwise")
-    if worst * cells > CATEGORY_CEILING_USD + 1e-9:
-        problems.append(f"worst case ${worst * cells:.4f} exceeds the ${CATEGORY_CEILING_USD:.2f} ceiling for this evaluation")
+    if worst * cells > ceiling_usd + 1e-9:
+        problems.append(f"worst case ${worst * cells:.4f} exceeds the ${ceiling_usd:.2f} ceiling for this evaluation")
     spend = gateway.global_spend_for(settings)
     snap = spend.snapshot() if spend else None
     if snap is not None and snap["remaining_to_limit_usd"] < worst * cells:
         problems.append(f"only ${snap['remaining_to_limit_usd']:.4f} remains under the development ceiling; "
                         f"the worst case is ${worst * cells:.4f}")
     return {"cells": cells, "worst_case_usd_per_cell": round(worst, 6), "worst_case_usd_total": round(worst * cells, 6),
-            "category_ceiling_usd": CATEGORY_CEILING_USD, "spend": snap, "problems": problems, "ok": not problems}
+            "category_ceiling_usd": ceiling_usd, "spend": snap, "problems": problems, "ok": not problems}
 
 
 def _live_runner(arm: str, settings: Settings) -> Any:
@@ -239,14 +281,18 @@ def run(settings: Settings, *, cases: list[dict[str, Any]] | None = None, runner
     runner_factory(arm, settings) is for tests: it supplies a stand-in runner. Real runs build the live
     runner, and a report that is not a live model's is refused, so a stub can never be recorded as AI.
     """
-    cases = cases if cases is not None else CASES
+    declared = suite in SUITES
+    if cases is None:
+        cases = SUITES[suite]["cases"] if declared else CASES
+        if declared and ceiling_usd == CATEGORY_CEILING_USD:
+            ceiling_usd = SUITES[suite]["ceiling"]
     live = runner_factory is None
     if live:
-        pre = preflight(settings, len(cases) * len(AI_ARMS))
+        pre = preflight(settings, len(cases) * len(AI_ARMS), ceiling_usd)
         if not pre["ok"]:
             raise RuntimeBlocked("evaluation refused: " + "; ".join(pre["problems"]))
-        if suite == SUITE:
-            drift = check_config()
+        if declared:
+            drift = check_config(suite)
             if drift:
                 raise RuntimeBlocked("evaluation refused: " + "; ".join(drift))
     settings = replace(settings, caps=CAPS)
@@ -340,7 +386,8 @@ def run(settings: Settings, *, cases: list[dict[str, Any]] | None = None, runner
         "suite": suite, "run_id": run_id, "generated_at": datetime.now(timezone.utc).isoformat(),
         "git_commit": _git_commit(), "evidence_origin": "SIM", "scorer_version": scoring.SCORER_VERSION,
         "versions": bench.current_versions(),
-        "config_sha256": _sha(CONFIG_PATH.read_text(encoding="utf-8")) if suite == SUITE and CONFIG_PATH.exists() else None,
+        "config_sha256": (_sha(_config_path(suite).read_text(encoding="utf-8"))
+                          if suite in SUITES and _config_path(suite).exists() else None),
         "inference": "LIVE_MODEL" if live else "TEST_DOUBLE", "model": settings.lead_model if live else None,
         "caps": {"max_calls": CAPS.max_calls, "max_input_tokens": CAPS.max_input_tokens,
                  "max_output_tokens": CAPS.max_output_tokens, "max_seconds": CAPS.max_seconds},
@@ -361,8 +408,8 @@ def run(settings: Settings, *, cases: list[dict[str, Any]] | None = None, runner
                   "Scores describe agreement with a controlled simulation, not real-world forensic accuracy."],
     }
     (out_dir / "results.json").write_text(json.dumps(doc, indent=1) + "\n", encoding="utf-8")
-    if suite == SUITE and CONFIG_PATH.exists():
-        (out_dir / "config.json").write_text(CONFIG_PATH.read_text(encoding="utf-8"), encoding="utf-8")
+    if suite in SUITES and _config_path(suite).exists():
+        (out_dir / "config.json").write_text(_config_path(suite).read_text(encoding="utf-8"), encoding="utf-8")
     doc["result_dir"] = str(out_dir)
     return doc
 
@@ -395,9 +442,9 @@ def _systems(runs: list[dict[str, Any]], n_cases: int) -> list[dict[str, Any]]:
     return out
 
 
-def latest(out_root: Path | None = None) -> dict[str, Any] | None:
-    """The most recent result of this suite, or None. Read-only."""
-    root = out_root or OUT_ROOT
+def latest(out_root: Path | None = None, suite: str = SUITE) -> dict[str, Any] | None:
+    """The most recent result of a suite, or None. Read-only."""
+    root = out_root or _out_root(suite)
     files = sorted(root.glob("*/results.json")) if root.exists() else []
     return json.loads(files[-1].read_text(encoding="utf-8")) if files else None
 
@@ -458,4 +505,47 @@ def render_markdown(doc: dict[str, Any]) -> str:
         out += [f"- {r['system_id']} on {r['case_ref']}: {r.get('stop_note') or r.get('error')}" for r in stops]
     out += ["", f"Locked reports for every cell: `benchmarks/{doc['suite']}/{doc['run_id'].lower()}/reports/`. "
             "The first-run results are unchanged in [benchmark.md](benchmark.md).", ""]
+    return "\n".join(out)
+
+
+def combined(docs: list[dict[str, Any]]) -> dict[str, Any]:
+    """Per-system totals over several result documents (for example paired-v2 and its replication).
+
+    A plain sum of completed cells, stated as such. The suites stay separate records; this only saves a
+    reader the addition.
+    """
+    scores: dict[str, list[Score]] = {a: [] for a in list(OFFLINE_ARMS) + list(AI_ARMS)}
+    censored: dict[str, int] = {a: 0 for a in scores}
+    for doc in docs:
+        for r in doc["runs"]:
+            if r["status"] == "completed" and r["score"]:
+                scores[r["system_id"]].append(Score.model_validate(r["score"]))
+                censored[r["system_id"]] += int(bool(r["censored"]))
+    return {"suites": [{"suite": d["suite"], "run_id": d["run_id"], "cases": len(d["cases"])} for d in docs],
+            "systems": [{"id": a, "label": ARM_LABELS[a], "cells": len(v), "censored": censored[a],
+                         "aggregate": bench.aggregate(v) if v else None} for a, v in scores.items()],
+            "note": "Sums over completed cells of separately declared suites, one run per cell. Not an accuracy estimate."}
+
+
+def render_combined(docs: list[dict[str, Any]]) -> str:
+    c = combined(docs)
+    out = ["# Evaluation summary", "",
+           "> Generated by `uv run alibi eval --summary` from the result files below. Do not edit by hand.", "",
+           "Suites summed here, each declared before it ran:", ""]
+    out += [f"- `{x['suite']}` run `{x['run_id']}`, {x['cases']} case(s)" for x in c["suites"]]
+    out += ["", "One run per cell on simulated cases. No AI system was told whether a finding was supported while it "
+            "investigated. This shows how the systems differed on these cases; it is not an accuracy estimate.", "",
+            "| System | Cells | Effects established | Cover-ups found | Benign cases with an accepted allegation | "
+            "Unsupported accepted allegations | Named a person | Stopped by a cap | Est. cost |",
+            "|---|---|---|---|---|---|---|---|---|"]
+    for x in c["systems"]:
+        g = x["aggregate"]
+        if not g:
+            continue
+        out.append(f"| {x['id']}: {x['label']} | {x['cells']} | {_r(g['step_recall'])} | {_r(g['coverup_detected'])} | "
+                   f"{_r(g['benign_false_alert'])} | {g['false_claims_final']} | {g['unsupported_named_attribution']} | "
+                   f"{x['censored']} | ${g['cost_estimate_usd']:.4f} |")
+    out += ["", "Per-case tables: " + ", ".join(
+        f"[{d['suite']}]({'evaluation-v2.md' if d['suite'] == SUITE else 'evaluation-' + d['suite'].replace('paired-', '') + '.md'})"
+        for d in docs) + ".", ""]
     return "\n".join(out)
