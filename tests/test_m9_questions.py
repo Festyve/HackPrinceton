@@ -84,7 +84,7 @@ def live(tmp_path, monkeypatch):
                        runs_dir=tmp_path / "runs", sealed_dir=tmp_path / "sealed")
     orch = Orchestrator(settings, pace_s=0.0)
     box: dict[str, Any] = {}
-    monkeypatch.setattr(gateway, "live_chat_model", lambda s, spec: box["model"])
+    monkeypatch.setattr(gateway, "live_chat_model", lambda s, spec, *limit: box["model"])
 
     def use(model: _FakeQA) -> _FakeQA:
         box["model"] = model
@@ -329,7 +329,7 @@ def test_an_exhausted_allowance_gives_unavailable_and_makes_no_model_call(tmp_pa
                        runs_dir=tmp_path / "runs", sealed_dir=tmp_path / "sealed")
     orch = Orchestrator(settings, pace_s=0.0)
     model = _fake([_answer()])
-    monkeypatch.setattr(gateway, "live_chat_model", lambda s, spec: model)
+    monkeypatch.setattr(gateway, "live_chat_model", lambda s, spec, *limit: model)
     c = TestClient(create_app(settings, orch))
     cid, _ = _case(c)
     q = _ask(c, cid)

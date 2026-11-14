@@ -349,7 +349,7 @@ def answer_question(settings: Settings, pending: QuestionAnswer, store: Evidence
                               "model_id": settings.lead_model}
     try:
         model = model_factory(ledger) if model_factory else gateway.wrap(
-            gateway.live_chat_model(settings, settings.lead_model or ""), ledger, "question")
+            gateway.live_chat_model(settings, settings.lead_model or "", ledger.max_tokens_per_call), ledger, "question")
         raw, trace, problem = run_exchange(model, pending.question, store, manifest, report)
         update["trace"] = trace[:30]
         if raw is None:

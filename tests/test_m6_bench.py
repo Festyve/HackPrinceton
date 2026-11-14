@@ -131,7 +131,7 @@ def test_ai_pilot_is_refused_without_a_runtime_or_a_run_budget(tmp_path):
     with pytest.raises(RuntimeBlocked) as err:
         bench.run_ai_pilot(load_settings({}), work_dir=tmp_path)
     assert "BLOCKED" in str(err.value)
-    live_no_budget = load_settings({"RUNTIME_MODE": "live", "LEAD_MODEL": "x:y", "LIVE_PROVIDER_KIND": "local"})
+    live_no_budget = load_settings({"RUNTIME_MODE": "live", "LEAD_MODEL": "ollama:y", "LIVE_PROVIDER_KIND": "local"})
     with pytest.raises(RuntimeBlocked) as err:
         bench.run_ai_pilot(live_no_budget, runner_factory=_LiveDouble, work_dir=tmp_path)
     assert "BENCH_MAX_SYSTEM_RUNS is 0" in str(err.value)

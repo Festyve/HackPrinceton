@@ -113,6 +113,32 @@ class GlobalSpend:
                 "carried_forward_usd": self.floor_usd}
 
     @staticmethod
+    def _invalid(state: Any) -> str | None:
+        """Why an existing ledger file cannot be trusted, or None. A file with no usable total is never "zero"."""
+        def amount(v: Any) -> bool:
+            return isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) and v >= 0
+
+        if not isinstance(state, dict):
+            return "it is not a JSON object"
+        if "spent_usd" not in state:
+            return "it has no spent_usd total"
+        for key in ("spent_usd", "uncertain_usd"):
+            if key in state and not amount(state[key]):
+                return f"{key} is not a finite, non-negative number"
+        if "calls" in state and not (isinstance(state["calls"], int) and state["calls"] >= 0):
+            return "calls is not a non-negative integer"
+        for key in ("reservations", "unreconciled"):
+            held = state.get(key, {})
+            if not isinstance(held, dict):
+                return f"{key} is not an object"
+            for token, item in held.items():
+                if not isinstance(item, dict) or not amount(item.get("usd")):
+                    return f"{key}[{token!r}] has no finite, non-negative amount"
+        if not isinstance(state.get("log", []), list) or not isinstance(state.get("settled", []), list):
+            return "log or settled is not a list"
+        return None
+
+    @staticmethod
     def _migrate(state: dict[str, Any]) -> dict[str, Any]:
         """Carry an older ledger forward. Spend already recorded is never dropped or repriced."""
         state.setdefault("spent_usd", 0.0)
@@ -136,17 +162,23 @@ class GlobalSpend:
                 fcntl.flock(lock, fcntl.LOCK_EX)
                 try:
                     if self.path.exists():
-                        raw = self.path.read_text(encoding="utf-8").strip()
+                        try:
+                            raw = self.path.read_text(encoding="utf-8").strip()
+                        except UnicodeDecodeError as exc:
+                            raise LedgerError(f"spend ledger {self.path} is not text; refusing to spend until it is "
+                                              "repaired") from exc
                         if not raw:
                             raise LedgerError(f"spend ledger {self.path} is empty; refusing to treat it as zero spend")
                         try:
-                            state = self._migrate(json.loads(raw))
-                        except (ValueError, TypeError, AttributeError) as exc:
+                            loaded = json.loads(raw)
+                        except ValueError as exc:
                             raise LedgerError(f"spend ledger {self.path} is unreadable ({type(exc).__name__}); "
                                               "refusing to spend until it is repaired") from exc
-                        if not all(isinstance(state[k], (int, float)) and math.isfinite(state[k])
-                                   for k in ("spent_usd", "uncertain_usd")):
-                            raise LedgerError(f"spend ledger {self.path} holds a non-finite total")
+                        problem = self._invalid(loaded)
+                        if problem:
+                            raise LedgerError(f"spend ledger {self.path} is damaged ({problem}); refusing to spend "
+                                              "until it is repaired. It was not treated as zero spend")
+                        state = self._migrate(loaded)
                     else:
                         state = self._fresh()
                     if state["spent_usd"] < self.floor_usd:  # known earlier spend is a floor, never forgotten
@@ -403,7 +435,18 @@ class BudgetLedger:
             s["reserved_in"] += input_tokens
             s["reserved_out"] += out
             s["reserved_usd"] += usd
-            self._persist()
+            try:
+                self._persist()
+            except OSError as exc:
+                # The investigation ledger cannot be written, so this call will not be made. Undo it completely:
+                # the request was never sent, and a hold nobody can release must not be left behind.
+                s["reserved"] -= 1
+                s["reserved_in"] -= input_tokens
+                s["reserved_out"] -= out
+                s["reserved_usd"] -= usd
+                if self.global_spend is not None and token:
+                    self.global_spend.release(token, "not sent: the investigation ledger could not be written")
+                raise BudgetExceeded(f"the investigation ledger cannot be written ({exc}); the request was not sent") from exc
             return Reservation(usd=usd, global_token=token, input_tokens=input_tokens, output_tokens=out)
 
     def commit(self, role: str, hold: Reservation, *, outcome: str = "ok", tokens_in: int = 0, tokens_out: int = 0,
@@ -419,16 +462,30 @@ class BudgetLedger:
         with self._lock:
             if hold.closed:
                 return
-            hold.closed = True
             s = self.state
+            scripted = self.kind == "scripted"
+            # 1. The cumulative ledger first. Each of its operations is idempotent per reservation, so if it cannot be
+            #    written the exception leaves this reservation open here too, and committing again later is safe.
+            cost = 0.0
+            if not scripted and outcome in ("ok", "refused") and self.kind == "included_credits":
+                cost = call_cost_usd(tokens_in, tokens_out, cache_read, cache_write, self.price_in or 0, self.price_out or 0)
+            if not scripted and self.global_spend is not None and hold.global_token:
+                if outcome == "not_billed":
+                    self.global_spend.release(hold.global_token, reason or "not billed")
+                elif outcome == "uncertain":
+                    self.global_spend.mark_uncertain(hold.global_token, reason or "unknown billing outcome")
+                else:
+                    self.global_spend.settle(hold.global_token, cost, f"{self.label}:{role}", model or self.model)
+            # 2. Then this investigation's own counters.
+            hold.closed = True
             s["reserved"] = max(0, s["reserved"] - 1)
             by = s["by_role"].setdefault(role, {"calls": 0, "tokens_in": 0, "tokens_out": 0})
             by["calls"] += 1
-            if self.kind == "scripted":
+            if scripted:
                 s["scripted_turns"] += 1
                 if outcome != "ok":
                     s["errors"] += 1
-                self._persist()
+                self._persist_quietly()
                 return
             s["reserved_in"] = max(0, s["reserved_in"] - hold.input_tokens)
             s["reserved_out"] = max(0, s["reserved_out"] - hold.output_tokens)
@@ -437,8 +494,6 @@ class BudgetLedger:
                 s["models"].append(model)
             if outcome == "not_billed":
                 s["errors"] += 1
-                if self.global_spend is not None and hold.global_token:
-                    self.global_spend.release(hold.global_token, reason or "not billed")
             elif outcome == "uncertain":
                 s["llm_calls"] += 1
                 s["uncertain_calls"] += 1
@@ -448,8 +503,6 @@ class BudgetLedger:
                 by["tokens_in"] += hold.input_tokens
                 by["tokens_out"] += hold.output_tokens
                 s["cost_usd"] += hold.usd
-                if self.global_spend is not None and hold.global_token:
-                    self.global_spend.mark_uncertain(hold.global_token, reason or "unknown billing outcome")
             else:  # ok | refused
                 s["llm_calls"] += 1
                 s["tokens_in"] += tokens_in
@@ -462,16 +515,21 @@ class BudgetLedger:
                 if outcome == "refused":
                     s["refusals"] += 1
                     s["errors"] += 1
-                cost = 0.0
-                if self.kind == "included_credits":
-                    cost = call_cost_usd(tokens_in, tokens_out, cache_read, cache_write,
-                                         self.price_in or 0, self.price_out or 0)
-                    s["cost_usd"] += cost
-                if self.global_spend is not None and hold.global_token:
-                    self.global_spend.settle(hold.global_token, cost, f"{self.label}:{role}", model or self.model)
+                s["cost_usd"] += cost
+                if tokens_in > hold.input_tokens or tokens_out > hold.output_tokens:
+                    # the provider used more than was reserved: recorded in full, and flagged so it is visible
+                    s["over_reservation_calls"] = s.get("over_reservation_calls", 0) + 1
             if retried:
                 s["retries"] += 1
+            self._persist_quietly()
+
+    def _persist_quietly(self) -> None:
+        """After a call has happened its money is already in the cumulative ledger. If this investigation's own
+        file cannot be written (for example its directory is gone), count that instead of raising."""
+        try:
             self._persist()
+        except OSError:
+            self.state["persist_errors"] = self.state.get("persist_errors", 0) + 1
 
     def disable(self, reason: str) -> None:
         with self._lock:
@@ -542,8 +600,11 @@ def count_request_tokens(inner: Any, bound: Any, messages: list[BaseMessage]) ->
 
 _NOT_BILLED_STATUS = {400, 401, 403, 404, 405, 409, 413, 422, 429}
 _AUTH_STATUS = {401, 403}
-_AUTH_MARKERS = ("401", "403", "authentication", "unauthorized", "permission", "credit", "billing", "quota", "payment")
-_TRANSIENT_MARKERS = ("timeout", "timed out", "429", "overloaded", "503", "502", "500", "529", "connection", "temporar")
+# exception classes that mean the request was refused for credentials before any processing
+_AUTH_CLASSES = ("authentication", "permissiondenied", "permissionerror", "unauthorized")
+_AUTH_WORDS = ("authentication", "unauthorized", "invalid api key", "invalid x-api-key", "credit balance",
+               "billing", "quota exceeded", "payment required")
+_TRANSIENT_MARKERS = ("timeout", "timed out", "overloaded", "connection", "temporar")
 
 
 def classify_error(exc: BaseException) -> dict[str, bool]:
@@ -552,18 +613,25 @@ def classify_error(exc: BaseException) -> dict[str, bool]:
     billed_unknown  True unless the provider certainly rejected the request before processing it.
     fatal           credential/credit problems: disable the route, no retry, no fallback provider.
     retry           transient: one bounded retry is allowed.
+
+    "Certainly not billed" is concluded only from an HTTP status or from the exception's class. Words or
+    digits inside an error message ("403 bytes read", "column 401") never free a reservation.
     """
     status = getattr(exc, "status_code", None)
     if status is None:
         status = getattr(getattr(exc, "response", None), "status_code", None)
-    text = f"{type(exc).__name__} {exc}".lower()
-    if isinstance(status, int):
+    if isinstance(status, int) and not isinstance(status, bool):
         return {"billed_unknown": status not in _NOT_BILLED_STATUS, "fatal": status in _AUTH_STATUS,
                 "retry": status == 429 or status >= 500}
-    if any(m in text for m in _AUTH_MARKERS):
+    name = type(exc).__name__.lower()
+    text = str(exc).lower()
+    if any(k in name for k in _AUTH_CLASSES):
         return {"billed_unknown": False, "fatal": True, "retry": False}
-    if any(m in text for m in _TRANSIENT_MARKERS):
+    if any(m in name or m in text for m in _TRANSIENT_MARKERS):
         return {"billed_unknown": True, "fatal": False, "retry": True}
+    if any(w in text for w in _AUTH_WORDS):
+        # it reads like a credential or credit problem: stop using the route, but keep the money held
+        return {"billed_unknown": True, "fatal": True, "retry": False}
     return {"billed_unknown": True, "fatal": False, "retry": False}
 
 
@@ -617,10 +685,13 @@ class BudgetedChatModel(BaseChatModel):
         llm_type = getattr(self.inner, "_llm_type", None)
         if self.ledger.kind != "scripted":
             if llm_type in UNCLAMPABLE_TYPES:
-                # this client takes its output limit at construction only; a smaller reservation cannot be honored
-                if max_output < self.ledger.max_tokens_per_call:
-                    raise BudgetExceeded("output token cap reached: the remaining allowance is smaller than this "
-                                         "model's fixed per-call output limit")
+                # This client takes its output limit when it is built (num_predict), not per call. The request is
+                # sent only if that built-in limit is known and no larger than what was reserved for this call.
+                fixed = getattr(self.inner, "num_predict", None)
+                if not isinstance(fixed, int) or fixed <= 0 or fixed > max_output:
+                    raise BudgetExceeded(
+                        f"this model's built-in output limit ({fixed if fixed else 'not set'}) is larger than the "
+                        f"{max_output} output tokens reserved for this call; the request was not sent")
             else:
                 kwargs["max_tokens"] = max_output  # the provider's output limit is exactly what was reserved
         if llm_type == "anthropic-chat":
@@ -701,7 +772,8 @@ def make_ledger(settings: Settings, path: Path | None, *, scripted: bool, label:
                         max_tokens_per_call=settings.max_tokens_per_call, label=label, model=settings.lead_model)
 
 
-def live_model_kwargs(model_spec: str, settings: Settings, env: Any = None) -> dict[str, Any]:
+def live_model_kwargs(model_spec: str, settings: Settings, env: Any = None,
+                      max_output_tokens: int | None = None) -> dict[str, Any]:
     """Provider-specific construction arguments for a live model. Pure, so it can be tested offline.
 
     Anthropic (current models): sampling parameters such as temperature are rejected, thinking is
@@ -713,6 +785,8 @@ def live_model_kwargs(model_spec: str, settings: Settings, env: Any = None) -> d
     """
     env = os.environ if env is None else env
     out_cap = min(settings.max_tokens_per_call, settings.caps.max_output_tokens)
+    if max_output_tokens is not None:  # a bounded side task (a question, a design) builds its client with its own limit
+        out_cap = max(1, min(out_cap, int(max_output_tokens)))
     provider = model_spec.split(":", 1)[0]
     if provider == "ollama":
         raw = str(env.get("LLM_NUM_CTX") or "").strip()
@@ -723,14 +797,18 @@ def live_model_kwargs(model_spec: str, settings: Settings, env: Any = None) -> d
     return {"temperature": 0, "max_tokens": out_cap, "timeout": min(60.0, settings.caps.max_seconds), "max_retries": 0}
 
 
-def live_chat_model(settings: Settings, model_spec: str) -> BaseChatModel:
-    """Construct a real model. Refused unless a zero-charge route is explicitly configured."""
+def live_chat_model(settings: Settings, model_spec: str, max_output_tokens: int | None = None) -> BaseChatModel:
+    """Construct a real model. Refused unless a live route is explicitly and completely configured.
+
+    max_output_tokens: the per-call output limit the caller's ledger will reserve, when it is smaller than the
+    settings' default. A client that cannot be given a limit per call must be built with it.
+    """
     reason = settings.live_block_reason()
     if reason is not None:
         raise RuntimeBlocked(reason)
     from langchain.chat_models import init_chat_model
 
-    return init_chat_model(model_spec, **live_model_kwargs(model_spec, settings))
+    return init_chat_model(model_spec, **live_model_kwargs(model_spec, settings, max_output_tokens=max_output_tokens))
 
 
 def wrap(inner: BaseChatModel, ledger: BudgetLedger, role: str,

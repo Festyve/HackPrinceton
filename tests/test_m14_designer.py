@@ -65,7 +65,7 @@ def live(tmp_path, monkeypatch):
                        runs_dir=tmp_path / "runs", sealed_dir=tmp_path / "sealed")
     orch = Orchestrator(settings, pace_s=0.0)
     box: dict[str, Any] = {}
-    monkeypatch.setattr(gateway, "live_chat_model", lambda s, spec: box["model"])
+    monkeypatch.setattr(gateway, "live_chat_model", lambda s, spec, *limit: box["model"])
 
     def use(reply=None, refuse=False) -> _FakeDesigner:
         box["model"] = _FakeDesigner(reply=reply, refuse=refuse, seen=[])

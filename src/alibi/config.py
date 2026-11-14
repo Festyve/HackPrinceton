@@ -47,6 +47,11 @@ def _s(env: Mapping[str, str], key: str) -> str | None:
     return raw or None
 
 
+# LIVE_PROVIDER_KIND=local means "served on this machine, costs nothing". Only providers known to be
+# local may use it; a hosted provider declared as local would be billed with no money accounting at all.
+LOCAL_PROVIDERS = ("ollama",)
+# Billed routes are limited to providers whose request counting and per-call output clamp are verified.
+BILLED_PROVIDERS = ("anthropic",)
 PER_CALL_INPUT_HARD_MAX = 95_000  # stay under the 100,000-token request size where some price tiers change
 DEMO_RESERVE_USD = 0.50  # held back from automatic use for an operator-triggered live demo
 
@@ -134,7 +139,19 @@ class Settings:
                 "RUNTIME_MODE=live requires LIVE_PROVIDER_KIND=local or included_credits "
                 "so the budget gateway knows how to account for usage."
             )
+        models = [m for m in (self.lead_model, self.subagent_model, self.adversary_model) if m]
+        providers = sorted({m.split(":", 1)[0] for m in models})
+        if self.live_provider_kind == "local":
+            hosted = [p for p in providers if p not in LOCAL_PROVIDERS]
+            if hosted:
+                return (f"LIVE_PROVIDER_KIND=local is only for models served on this machine ({', '.join(LOCAL_PROVIDERS)}). "
+                        f"{', '.join(hosted)} is a hosted provider: use LIVE_PROVIDER_KIND=included_credits with LLM_MAX_USD "
+                        "and prices, so its spend is counted.")
         if self.live_provider_kind == "included_credits":
+            other = [p for p in providers if p not in BILLED_PROVIDERS]
+            if other:
+                return (f"Billed routes are limited to {', '.join(BILLED_PROVIDERS)}: request counting and the per-call "
+                        f"output limit are verified only there. {', '.join(other)} stays disabled rather than run unbudgeted.")
             if self.llm_max_usd <= 0:
                 return "LIVE_PROVIDER_KIND=included_credits requires LLM_MAX_USD>0 (credit cap)."
             if self.price_in_per_mtok is None or self.price_out_per_mtok is None:

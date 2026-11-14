@@ -189,7 +189,8 @@ def design_environment(settings: Settings, design_seed: int, *, model_factory: A
     out["model_id"] = settings.lead_model
     try:
         model = model_factory(ledger) if model_factory else gateway.wrap(
-            gateway.live_chat_model(settings, settings.lead_model or ""), ledger, "scenario-designer")
+            gateway.live_chat_model(settings, settings.lead_model or "", ledger.max_tokens_per_call), ledger,
+            "scenario-designer")
         ai = model.bind_tools([tool]).invoke([
             SystemMessage(DESIGNER_SYSTEM),
             HumanMessage(f"Choose the environment for exercise number {int(design_seed)}.")])

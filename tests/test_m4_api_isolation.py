@@ -405,8 +405,8 @@ def test_model_planned_preset_is_hidden_and_refused_while_live_is_blocked(env):
 
 
 def test_model_planned_adversary_is_validated_executed_and_labeled(tmp_path, monkeypatch):
-    live = replace(load_settings({"RUNTIME_MODE": "live", "LIVE_PROVIDER_KIND": "local", "LEAD_MODEL": "fake:lead",
-                                  "ADVERSARY_MODEL": "fake:planner"}),
+    live = replace(load_settings({"RUNTIME_MODE": "live", "LIVE_PROVIDER_KIND": "local", "LEAD_MODEL": "ollama:fake-lead",
+                                  "ADVERSARY_MODEL": "ollama:fake-planner"}),
                    runs_dir=tmp_path / "runs", sealed_dir=tmp_path / "sealed")
     orch = Orchestrator(live, pace_s=0.0)
     assert "model-planned" not in [p["id"] for p in orch.presets()]  # opt-in even with a live runtime
@@ -421,14 +421,14 @@ def test_model_planned_adversary_is_validated_executed_and_labeled(tmp_path, mon
     wait_state(c, cid)
     assert planner.calls == 1
     pre = json.dumps(c.get(f"/api/cases/{cid}/events.json").json())
-    assert "Model-generated plan (fake:planner)" in pre  # who planned is visible to the audience
+    assert "Model-generated plan (ollama:fake-planner)" in pre  # who planned is visible to the audience
     inv = json.dumps(c.get(f"/api/cases/{cid}/events.json?view=investigator").json())
     for step_name in ("login_as", "stage_copy", "exfil_http", "delete_log_lines"):
         assert step_name not in pre and step_name not in inv  # what was planned stays sealed until reveal
     assert "Model-generated plan" not in inv  # the investigator is not even told who planned
     c.post(f"/api/cases/{cid}/review", json={"decision": "accept"})
     reveal = c.post(f"/api/cases/{cid}/reveal").json()["reveal"]
-    assert reveal["truth"]["plan_label"] == "Model-generated plan (fake:planner)"
+    assert reveal["truth"]["plan_label"] == "Model-generated plan (ollama:fake-planner)"
     assert reveal["truth"]["plan_provenance"]["source"] == "model_generated"
     assert [s["step_name"] for s in reveal["truth"]["steps"]] == ["login_as", "stage_copy", "exfil_http", "delete_log_lines"]
     assert reveal["truth"]["attribution"]["account_used"] == spec["accounts"]["nurse_b"]

@@ -100,13 +100,20 @@ def test_live_mode_is_blocked_without_explicit_zero_charge_route():
     assert "LEAD_MODEL" in load_settings({"RUNTIME_MODE": "live"}).live_block_reason()
     s = load_settings({"RUNTIME_MODE": "live", "LEAD_MODEL": "x:y"})
     assert "LIVE_PROVIDER_KIND" in s.live_block_reason()
-    s = load_settings({"RUNTIME_MODE": "live", "LEAD_MODEL": "x:y",
+    s = load_settings({"RUNTIME_MODE": "live", "LEAD_MODEL": "anthropic:y",
                        "LIVE_PROVIDER_KIND": "included_credits"})
     assert "LLM_MAX_USD" in s.live_block_reason()
-    s = load_settings({"RUNTIME_MODE": "live", "LEAD_MODEL": "x:y",
+    s = load_settings({"RUNTIME_MODE": "live", "LEAD_MODEL": "anthropic:y",
                        "LIVE_PROVIDER_KIND": "included_credits", "LLM_MAX_USD": "5"})
     assert "pricing" in s.live_block_reason().lower()
-    s = load_settings({"RUNTIME_MODE": "live", "LEAD_MODEL": "x:y", "LIVE_PROVIDER_KIND": "local"})
+    # a provider whose counting and output clamp are not verified is never billed, whatever else is set
+    s = load_settings({"RUNTIME_MODE": "live", "LEAD_MODEL": "x:y", "LIVE_PROVIDER_KIND": "included_credits",
+                       "LLM_MAX_USD": "5", "LLM_PRICE_IN_PER_MTOK": "1", "LLM_PRICE_OUT_PER_MTOK": "5"})
+    assert "Billed routes are limited to anthropic" in s.live_block_reason()
+    # and a hosted provider cannot be declared local to escape the money accounting
+    s = load_settings({"RUNTIME_MODE": "live", "LEAD_MODEL": "anthropic:y", "LIVE_PROVIDER_KIND": "local"})
+    assert "only for models served on this machine" in s.live_block_reason()
+    s = load_settings({"RUNTIME_MODE": "live", "LEAD_MODEL": "ollama:y", "LIVE_PROVIDER_KIND": "local"})
     assert s.live_block_reason() is None
 
 

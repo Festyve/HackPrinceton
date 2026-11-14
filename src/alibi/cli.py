@@ -190,7 +190,7 @@ def _cmd_smoke(args: argparse.Namespace) -> int:
     ledger = gateway.make_ledger(settings, None, scripted=False, label="smoke",
                                  caps=RunCaps(max_calls=2, max_input_tokens=3000, max_output_tokens=600, max_seconds=60,
                                               max_input_tokens_per_call=2000))
-    inner = gateway.live_chat_model(settings, settings.lead_model or "")
+    inner = gateway.live_chat_model(settings, settings.lead_model or "", ledger.max_tokens_per_call)
     model = gateway.wrap(inner, ledger, "smoke").bind_tools([ping])
     prompt = "Call the tool `ping` with value 7. Do not answer in text."
     if args.count_only:

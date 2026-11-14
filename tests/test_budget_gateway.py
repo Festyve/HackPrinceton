@@ -35,6 +35,7 @@ class _Probe(BaseChatModel):
     count_fails: bool = False
     fail: list = []
     delay: float = 0.0
+    num_predict: Any = None  # a client whose output limit is fixed when it is built (as Ollama's is)
     sent: list = []      # kwargs of every request that reached the "provider"
     counted: list = []   # (n_messages, tools) of every provider-side count
 
@@ -155,13 +156,36 @@ def test_output_limit_sent_to_the_provider_equals_the_output_reserved_near_the_c
 
 def test_a_model_that_cannot_take_a_per_call_limit_is_not_sent_an_unclamped_request(tmp_path):
     led = gateway.BudgetLedger(None, RunCaps(max_output_tokens=4000), kind="local", max_tokens_per_call=3000)
-    inner = _probe(kind="chat-ollama", usage={"input_tokens": 100, "output_tokens": 3000, "total_tokens": 3100})
+    inner = _probe(kind="chat-ollama", num_predict=3000, usage={"input_tokens": 100, "output_tokens": 3000, "total_tokens": 3100})
     m = gateway.wrap(inner, led, "lead-investigator")
     m.invoke("a")
     assert "max_tokens" not in inner.sent[0] and "num_predict" not in inner.sent[0]
     with pytest.raises(gateway.BudgetExceeded):
         m.invoke("b")  # 1000 left < the model's fixed 3000 limit
     assert len(inner.sent) == 1 and led.state["reserved"] == 0
+    # the comparison is with the limit the client was BUILT with, not with the ledger's own per-call figure:
+    # a side task that reserves 800 must not go out through a client built for 3000
+    small = gateway.BudgetLedger(None, RunCaps(max_calls=1, max_input_tokens=4000, max_output_tokens=900,
+                                               max_seconds=60.0, max_input_tokens_per_call=4000), kind="local")
+    small.max_tokens_per_call = 800
+    big = _probe(kind="chat-ollama", num_predict=3000)
+    with pytest.raises(gateway.BudgetExceeded) as err:
+        gateway.wrap(big, small, "scenario-designer").invoke("x")
+    assert "built-in output limit (3000)" in str(err.value) and big.sent == [] and small.state["reserved"] == 0
+    unknown = _probe(kind="chat-ollama")  # a client that does not say what its limit is
+    with pytest.raises(gateway.BudgetExceeded):
+        gateway.wrap(unknown, gateway.BudgetLedger(None, RunCaps(), kind="local"), "x").invoke("x")
+    assert unknown.sent == []
+    fits = _probe(kind="chat-ollama", num_predict=800)
+    again = gateway.BudgetLedger(None, RunCaps(max_calls=1, max_input_tokens=4000, max_output_tokens=900,
+                                               max_seconds=60.0, max_input_tokens_per_call=4000), kind="local")
+    again.max_tokens_per_call = 800
+    assert gateway.wrap(fits, again, "scenario-designer").invoke("x").content == "ok"
+    # and such a client is built with the caller's limit in the first place
+    s0 = load_settings({}, dotenv=False)
+    assert gateway.live_model_kwargs("ollama:m", s0, env={}, max_output_tokens=800)["num_predict"] == 800
+    assert gateway.live_model_kwargs("anthropic:m", s0, env={}, max_output_tokens=800)["max_tokens"] == 800
+    assert gateway.live_model_kwargs("ollama:m", s0, env={}, max_output_tokens=99_999)["num_predict"] == 3000  # never raised
 
 
 # ----------------------------------------------------------------- parallel reservations are atomic
@@ -281,6 +305,20 @@ def test_errors_are_accounted_by_whether_the_request_could_have_been_billed(tmp_
     assert gateway.classify_error(_Status(529)) == {"billed_unknown": True, "fatal": False, "retry": True}
     assert gateway.classify_error(TimeoutError("timed out"))["billed_unknown"] is True
     assert gateway.classify_error(RuntimeError("something unexpected")) == {"billed_unknown": True, "fatal": False, "retry": False}
+    # Without an HTTP status, words or digits in a message never prove the request was not billed.
+    held_and_retried = {"billed_unknown": True, "fatal": False, "retry": True}
+    assert gateway.classify_error(TimeoutError("read timed out after 14031 ms")) == held_and_retried
+    assert gateway.classify_error(ConnectionError("connection reset; 4403 bytes of the response were read")) == held_and_retried
+    assert gateway.classify_error(ValueError("Expecting ',' delimiter: line 1 column 403 (char 402)")) == \
+        {"billed_unknown": True, "fatal": False, "retry": False}
+    looks_like_credit = gateway.classify_error(RuntimeError("your credit balance is too low"))
+    assert looks_like_credit == {"billed_unknown": True, "fatal": True, "retry": False}  # route disabled, money still held
+    assert gateway.classify_error(PermissionError("denied")) == {"billed_unknown": False, "fatal": True, "retry": False}
+
+    class AuthenticationError(Exception):
+        pass
+
+    assert gateway.classify_error(AuthenticationError("bad key")) == {"billed_unknown": False, "fatal": True, "retry": False}
 
     led, spend = _billed(tmp_path)
     rejected = _probe(fail=[_Status(400, "invalid request")])
@@ -428,7 +466,16 @@ def test_a_missing_ledger_starts_from_the_recorded_floor_and_a_damaged_one_block
     low.write_text(json.dumps({"spent_usd": 1.0, "calls": 3, "reservations": {}, "log": []}))
     assert gateway.GlobalSpend(low, 20.0, floor_usd=2.922403).snapshot()["spent_usd"] == 2.922403  # never below known spend
 
-    for text in ("{ this is not json", "", "[1, 2, 3]", json.dumps({"spent_usd": "lots"}), json.dumps({"spent_usd": float("nan")})):
+    damaged = ["{ this is not json", "", "[1, 2, 3]", json.dumps({"spent_usd": "lots"}), json.dumps({"spent_usd": float("nan")}),
+               # a file that parses but holds no usable total is damage, never "nothing spent yet"
+               "{}", json.dumps({"calls": 91, "log": []}), json.dumps({"reservations": {}}),
+               json.dumps({"spent_usd": 3.47, "uncertain_usd": -3.0}), json.dumps({"spent_usd": -1}),
+               json.dumps({"spent_usd": 3.47, "reservations": {"x": {"usd": -3.0}}}),
+               json.dumps({"spent_usd": 3.47, "reservations": {"x": {"usd": float("nan")}}}),
+               json.dumps({"spent_usd": 3.47, "reservations": {"x": {}}}),
+               json.dumps({"spent_usd": 3.47, "reservations": []}), json.dumps({"spent_usd": 3.47, "unreconciled": [1]}),
+               json.dumps({"spent_usd": 3.47, "calls": "many"}), json.dumps({"spent_usd": True})]
+    for text in damaged:
         bad = tmp_path / "bad.json"
         bad.write_text(text)
         spend = gateway.GlobalSpend(bad, 20.0)
@@ -541,3 +588,77 @@ def test_spend_endpoint_shows_totals_only_and_says_when_nothing_can_be_spent(tmp
     (tmp_path / "spend.json").write_text("{ broken")
     bad = c1.get("/api/spend").json()
     assert bad["readable"] is False and "no model call will be made" in bad["note"]
+
+
+# ----------------------------------------------------------------- findings of an independent review, each pinned
+def test_a_ledger_that_is_not_text_blocks_spending_like_any_other_damage(tmp_path):
+    bad = tmp_path / "spend.json"
+    bad.write_bytes(b"\xff\xfe\x00binary garbage\x80")
+    spend = gateway.GlobalSpend(bad, 5.0)
+    for attempt in (lambda: spend.reserve(0.01, "x"), spend.snapshot):
+        with pytest.raises(gateway.LedgerError):  # and LedgerError is a BudgetExceeded, so runs stop cleanly
+            attempt()
+    assert bad.read_bytes().startswith(b"\xff\xfe")
+
+
+@pytest.mark.parametrize("env, expect", [
+    ({"LIVE_PROVIDER_KIND": "local", "LEAD_MODEL": "anthropic:claude-haiku-5-5"}, "only for models served on this machine"),
+    ({"LIVE_PROVIDER_KIND": "local", "LEAD_MODEL": "ollama:m", "SUBAGENT_MODEL": "openai:gpt"}, "hosted provider"),
+    ({"LIVE_PROVIDER_KIND": "included_credits", "LEAD_MODEL": "google_genai:gemini", "LLM_MAX_USD": "5",
+      "LLM_PRICE_IN_PER_MTOK": "1", "LLM_PRICE_OUT_PER_MTOK": "5"}, "Billed routes are limited to anthropic"),
+])
+def test_a_hosted_model_cannot_run_as_local_and_only_verified_providers_can_be_billed(env, expect, tmp_path):
+    settings = load_settings({"RUNTIME_MODE": "live", "ALIBI_SPEND_LEDGER": str(tmp_path / "spend.json"), **env}, dotenv=False)
+    assert expect in (settings.live_block_reason() or "")
+    with pytest.raises(gateway.RuntimeBlocked):
+        gateway.live_chat_model(settings, settings.lead_model or "")
+    ok = load_settings({"RUNTIME_MODE": "live", "LIVE_PROVIDER_KIND": "local", "LEAD_MODEL": "ollama:m"}, dotenv=False)
+    assert ok.live_block_reason() is None and gateway.global_spend_for(ok) is None
+
+
+def test_a_reservation_is_undone_when_the_investigation_ledger_cannot_be_written(tmp_path):
+    led, spend = _billed(tmp_path)
+    led.path = tmp_path / "case-directory-that-was-removed" / "budget.json"
+    inner = _probe()
+    with pytest.raises(gateway.BudgetExceeded) as err:
+        gateway.wrap(inner, led, "skeptic", counter=_fixed(8000)).invoke("x")
+    assert "cannot be written" in str(err.value) and "not sent" in str(err.value) and inner.sent == []
+    snap = spend.snapshot()  # nothing is left held for a request that never went out
+    assert snap["reserved_usd"] == 0 and snap["open_reservations"] == [] and snap["spent_usd"] == 0
+    assert (led.state["reserved"], led.state["reserved_in"], led.state["reserved_usd"]) == (0, 0, 0)
+
+
+def test_a_commit_that_cannot_reach_the_cumulative_ledger_can_be_made_again(tmp_path):
+    led, spend = _billed(tmp_path)
+    hold = led.reserve("lead-investigator", 1000)
+    good = (tmp_path / "spend.json").read_text()
+    (tmp_path / "spend.json").write_text("{ damaged while the call was in flight")
+    with pytest.raises(gateway.LedgerError):
+        led.commit("lead-investigator", hold, outcome="ok", tokens_in=1000, tokens_out=100)
+    assert hold.closed is False and led.usage().llm_calls == 0  # nothing was half-applied
+    (tmp_path / "spend.json").write_text(good)  # an operator repairs the file
+    led.commit("lead-investigator", hold, outcome="ok", tokens_in=1000, tokens_out=100)
+    led.commit("lead-investigator", hold, outcome="ok", tokens_in=1000, tokens_out=100)  # and a repeat changes nothing
+    assert hold.closed is True and led.usage().llm_calls == 1
+    snap = spend.snapshot()
+    assert snap["reserved_usd"] == 0 and snap["calls"] == 1
+    assert snap["spent_usd"] == pytest.approx(gateway.call_cost_usd(1000, 100, 0, 0, P_IN, P_OUT))
+
+
+def test_usage_above_the_reservation_is_charged_in_full_and_flagged(tmp_path):
+    led, spend = _billed(tmp_path, RunCaps(max_output_tokens=900), per_call=800)
+    inner = _probe(usage={"input_tokens": 1500, "output_tokens": 3000, "total_tokens": 4500})
+    gateway.wrap(inner, led, "lead-investigator", counter=_fixed(1000)).invoke("x")
+    assert inner.sent[0]["max_tokens"] == 800  # what was asked of the provider
+    assert led.usage().tokens_out == 3000 and led.state["over_reservation_calls"] == 1
+    assert spend.snapshot()["spent_usd"] == pytest.approx(gateway.call_cost_usd(1500, 3000, 0, 0, P_IN, P_OUT))
+
+
+def test_after_a_call_an_unwritable_investigation_file_does_not_lose_the_charge(tmp_path):
+    led, spend = _billed(tmp_path)
+    led.path = tmp_path / "budget.json"
+    hold = led.reserve("lead-investigator", 1000)
+    led.path = tmp_path / "gone" / "budget.json"  # the case directory disappears while the call is in flight
+    led.commit("lead-investigator", hold, outcome="ok", tokens_in=1000, tokens_out=100)
+    assert led.state["persist_errors"] == 1 and led.usage().llm_calls == 1
+    assert spend.snapshot()["spent_usd"] == pytest.approx(gateway.call_cost_usd(1000, 100, 0, 0, P_IN, P_OUT))
