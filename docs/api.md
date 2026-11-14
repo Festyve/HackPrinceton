@@ -1,6 +1,6 @@
 # API added in phase two
 
-Everything here is implemented and tested on `codex/eric-phase2`. Real responses for each state are in [`api-examples/`](api-examples/), written by `scripts/gen_api_examples.py` from the running application. Types are in `web/src/generated/contracts.ts` (`QuestionAnswer`, `SourceInfo.source_id`, `CoverageGap`). Earlier routes are unchanged.
+Everything here is implemented and tested on `codex/eric-phase2`; the worker-lab routes at the end are on `codex/eric-overhaul`. Real responses for each state are in [`api-examples/`](api-examples/), written by `scripts/gen_api_examples.py` from the running application. Types are in `web/src/generated/contracts.ts` (`QuestionAnswer`, `SourceInfo.source_id`, `CoverageGap`). Earlier routes are unchanged.
 
 The server is a localhost demo. Billed and mutating routes have no authentication.
 
@@ -179,3 +179,34 @@ A model chooses an ordinary operating environment from fixed options. It plans n
 ## Imported evidence
 
 `uv run alibi import <directory>` freezes a capture directory as an unscored case ([format and rules](importing.md)). It is a command, not a route. An imported case appears in `GET /api/cases` like any other, with `case.scored: false`, `card.id: "imported"` and `labels.ground_truth` starting with `none`. Reveal returns **409** for it. Each source in its manifest keeps its own `origin` (`SIM`, `DOCKER`, `HYBRID`). `capabilities.capture_import` describes this. No captured evidence ships with this build.
+
+## Worker lab
+
+Implemented on `codex/eric-overhaul`. Real payloads: `api-examples/lab-*.json`, written by `scripts/gen_lab_examples.py` (offline, so those examples are labeled scripted fixture and deterministic checks). A lab run is an ordinary case once it is frozen: every existing route (events, evidence, questions, source experiment, review, reveal, export) works on it.
+
+**What a run is.** Three automated workers (`W1` ingest, `W2` summarize, `W3` archive; accounts `wk-ingest`, `wk-report`, `wk-archive`) do jobs a scheduler assigns. In an `incident` run the scheduler changes one worker's objective part-way through, and that worker takes bounded fault actions. In a `control` run nothing changes and similar approved work happens. Ordinary work is chosen by the configured model, or by a scripted fixture when no model is configured. **A changed objective always follows a scripted policy. No model is asked to choose a fault action**, and the labels say so.
+
+| Route | What it returns |
+|---|---|
+| `GET /api/lab/options` | Variants, the three presets with their units, permission profiles and their actions, context loads, which kind of ordinary work is available, defaults |
+| `POST /api/lab/experiments` | Runs the workers once, freezes the result, returns `{case, lab}`. Body: `variant` (`incident`, `control`), `seed?`, `preset?` (`offense_heavy`, `balanced`, `defense_heavy`), `rogue_permissions?` (`export_only`, `export_log`, `export_log_artifact`), `rogue_requests?`, `investigator_requests?`, `context_load?` (`light`, `standard`, `heavy`), `ordinary_work?` (`model`, `scripted`), `runner?`, `investigation_mode?`, `client_token` (required), `autostart` (default false). With a model this makes up to 18 small model requests before it answers, so expect several seconds. The same `client_token` returns the same case and is never billed twice. **409** if `ordinary_work: "model"` is asked for and no model is configured |
+| `GET /api/cases/{id}/lab` | `config` (workers, ticks), `conditions`, `provenance`, `lineage`, `activity` (what the collector recorded for each worker: `event_id`, `worker`, `account`, `t`, `action`, `dataset`, `status`), `scheduler_records`, `operator_record.available`. Built from the case record and the frozen evidence only |
+| `GET /api/cases/{id}/lab/operator` | Every attempted action with its real outcome (`records[]`: `seq`, `tick`, `t`, `worker`, `objective`, `action`, `target`, `status` = `succeeded`, `failed` or `denied`, `outcome`, `artifacts`), the `transition` (worker, tick, time), permissions and allowances. **409 until the report is locked** |
+| `POST /api/cases/{id}/lab/comparisons` | A second run that changes one thing. `kind: "investigator_budget"` with `investigator_requests`: the same frozen evidence (equal bundle id), a different request allowance. `kind: "rogue_permissions"` with `rogue_permissions`: a new execution on the same seed with the first run's ordinary work replayed; its evidence may differ. Body also takes `runner?`, `investigation_mode?`, `client_token` (required), `autostart` |
+| `GET /api/cases/{id}/lab/comparisons` | The first run and every run derived from it: `lineage`, `conditions`, `bundle_id`, `outcome` (`not investigated`, `running`, `complete`, `stopped`, `failed`, `cancelled`), `stop_reason`, `allowed`, `used` (requests, tokens, cost, seconds), `findings`, and `scored` once that run is unsealed |
+
+**On the case record.** A lab case has `case.card_id = "worker-lab"`, `case.lab` (the same `config`, `conditions`, `provenance`, `lineage`) and two extra labels: `labels.worker_choices` and `labels.changed_objective_policy`. Show both wherever the inference label is shown. `conditions.investigator_requests` is the investigator's model-request allowance for that run; a run that reaches it ends as an incomplete report and says so in `report.open_questions` ("Incomplete run: ...").
+
+**What stays sealed.** Nothing public says whether a run is an incident or a control, which worker changed, or when: not the case record, the lab view, the manifest or the event stream. An incident and a control on the same seed have identical public settings. The operator's record and `reveal.truth.lab` open when the report is locked, like the answer key. To drive an operator's own screen during a presentation, start the server with `ALIBI_OPERATOR_VIEW=1`; the investigator is never given that record either way. Do not copy it into anything that is sent with a question.
+
+**Units.** A preset splits a pool of 20 requests: `offense_heavy` 16 for the changed worker and 4 for the investigator, `balanced` 10 and 10, `defense_heavy` 4 and 16. One unit is one model request for the investigator and one scripted turn for the changed worker. Show the numbers beside the preset name. An allowance is not a probability, and unused requests are not passed to the other side.
+
+```ts
+type LabConditions = { preset: string | null; preset_label: string; rogue_requests: number; investigator_requests: number;
+                       rogue_permissions: "export_only" | "export_log" | "export_log_artifact"; context_load: "light" | "standard" | "heavy" };
+type LabLineage = { root_case_id: string; parent_case_id: string | null; comparison: null | "investigator_budget" | "rogue_permissions";
+                    changed: null | Record<string, { from: unknown; to: unknown }>; note?: string; same_evidence_as_parent?: boolean };
+type LabActivity = { event_id: string; worker: "W1" | "W2" | "W3"; account: string; t: string; action: string; dataset: string | null; status: string | null };
+type LabOperatorRecord = { seq: number; tick: number; t: string; worker: string; account: string; objective: "normal" | "changed";
+                           action: string; target: string | null; status: "succeeded" | "failed" | "denied"; outcome: string; artifacts: string[] };
+```
