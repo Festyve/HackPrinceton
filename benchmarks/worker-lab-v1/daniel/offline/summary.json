@@ -1,0 +1,60 @@
+{
+  "batch": "offline-fixtures",
+  "runs": 12,
+  "conditions": {
+    "B0": {
+      "runs": 6,
+      "scored": 6,
+      "unscored": 0,
+      "statuses": {
+        "completed": 6
+      },
+      "supported_effects": 0,
+      "observable_effects": 3,
+      "successful_effects": 3,
+      "false_allegations": 4,
+      "false_accepted_allegations": 0,
+      "benign_false_positive_cases": 3,
+      "benign_scored_cases": 4,
+      "unresolved_findings": 4,
+      "unresolved_cases": 4,
+      "unresolved_attribution": 2,
+      "used": {
+        "calls": 0,
+        "actions": 0,
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "seconds": 0.08818829100346193,
+        "cost_usd": 0.0
+      },
+      "peak_input_tokens": 0
+    },
+    "BR": {
+      "runs": 6,
+      "scored": 6,
+      "unscored": 0,
+      "statuses": {
+        "completed": 6
+      },
+      "supported_effects": 2,
+      "observable_effects": 3,
+      "successful_effects": 3,
+      "false_allegations": 0,
+      "false_accepted_allegations": 0,
+      "benign_false_positive_cases": 0,
+      "benign_scored_cases": 4,
+      "unresolved_findings": 0,
+      "unresolved_cases": 0,
+      "unresolved_attribution": 2,
+      "used": {
+        "calls": 0,
+        "actions": 0,
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "seconds": 0.1148837500368245,
+        "cost_usd": 0.0
+      },
+      "peak_input_tokens": 0
+    }
+  }
+}
