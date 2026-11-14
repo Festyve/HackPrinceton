@@ -90,6 +90,17 @@ def wait_state(pg, state: str, timeout=45_000) -> None:
                          arg={"created":"Preparing case", "generating":"Generating evidence", "frozen":"Evidence frozen", "investigating":"Investigating", "awaiting_review":"Awaiting review", "report_locked":"Report locked", "scored":"Revealed", "failed":"Investigation stopped", "cancelled":"Cancelled"}.get(state, state), timeout=timeout)
 
 
+def open_sources(pg):
+    if not pg.locator('dialog[open] [data-testid="source-topology"]').count():
+        pg.click(tid("btn-sources"))
+        pg.wait_for_selector('dialog[open] [data-testid="source-topology"]')
+
+
+def close_sources(pg):
+    if pg.locator('dialog[open] [data-testid="source-topology"]').count():
+        pg.keyboard.press("Escape")
+
+
 def run_case(pg, base: str, preset: str = "hero-coverup") -> None:
     pg.goto(base + "/")
     pg.click(tid(f"preset-{preset}"))
@@ -210,7 +221,8 @@ def test_predefined_explanations_cite_evidence(server, page):
     page.click(tid("explain-missing-line"))
     assert "retention boundary" in page.inner_text(tid("explain-answer"))
     assert page.locator(f'{tid("explain-answer")} [data-testid^="chip-"]').count() >= 3
-    assert page.locator('input[type="text"]').is_disabled()  # unavailable capability is explained, never a fake answer
+    # with no model configured the composer says so; the predefined explanations are never passed off as its answer
+    assert "No model is configured" in page.inner_text(tid("question-composer"))
     shot(page, "05-explain")
 
 
@@ -347,9 +359,11 @@ def test_workbench_layout_and_unavailable_capabilities(server, browser, width, h
             box = pg.locator(selector).first.bounding_box()
             assert box and box["x"] >= 0 and box["x"] + box["width"] <= width
             assert box["y"] >= 0 and box["y"] + box["height"] <= height
-    assert pg.locator("#case-question").is_disabled()
-    assert "unavailable in this server version" in pg.inner_text(tid("question-composer"))
-    assert "unavailable" in pg.inner_text(tid("source-experiment-unavailable"))
+    assert pg.locator("#case-question").is_enabled() and pg.locator(tid("btn-ask")).is_disabled()  # nothing typed yet
+    assert "No model is configured" in pg.inner_text(tid("question-composer"))
+    open_sources(pg)
+    assert "original evidence is not changed" in pg.inner_text(tid("source-experiment"))
+    close_sources(pg)
     assert "confidence (uncalibrated)" not in pg.inner_text("body")
     assert blocked == []
     if SHOTS:
@@ -360,6 +374,7 @@ def test_workbench_layout_and_unavailable_capabilities(server, browser, width, h
 def test_source_selection_and_modal_keyboard_return(server, page):
     base, _ = server
     run_case(page, base)
+    open_sources(page)
     page.click(tid("source-records"))
     assert "records" in page.inner_text(tid("source-detail"))
     assert page.locator(tid("source-records")).get_attribute("aria-pressed") == "true"
@@ -368,7 +383,9 @@ def test_source_selection_and_modal_keyboard_return(server, page):
     page.wait_for_selector(tid("raw-focus-line"))
     assert "records" in page.inner_text(tid("raw-viewer"))
     page.keyboard.press("Escape")
+    open_sources(page)
     page.click(tid("source-workstation"))
+    close_sources(page)
     page.wait_for_selector(tid("compare-row-retained"))
     page.locator(tid("btn-details")).focus()
     page.click(tid("btn-details"))
@@ -393,9 +410,9 @@ def test_direct_recorded_action_and_library_switch_preserve_cases(server, page):
     assert "Recorded AI run" in page.inner_text(tid("badge-inference"))
     assert "REPLAY" in page.inner_text(tid("badge-playback"))
     page.click(tid("tab-benchmark"))
-    page.get_by_role("button", name="Case library", exact=True).click()
-    page.locator('dialog [data-testid="preset-sealed-control"]').click()
-    page.locator('dialog button:has-text("Open selected case")').click()
+    page.click(tid("nav-cases"))
+    page.click(tid("preset-sealed-control"))
+    page.click(tid("btn-run"))
     page.wait_for_function("old => location.href !== old", arg=first_url)
     wait_state(page, "awaiting_review")
     assert page.url != first_url
@@ -413,6 +430,7 @@ def test_empty_library_and_library_connection_error(server, page):
     page.route("**/api/presets", lambda route: route.fulfill(json={"presets": [], "replays": []}))
     page.goto(base + "/")
     page.get_by_text("No cases available", exact=True).wait_for()
+    page.click(tid("nav-cases"))
     assert page.locator(tid("btn-run")).is_disabled()
     page.unroute("**/api/presets")
     page.route("**/api/presets", lambda route: route.fulfill(status=503, json={"error": "Server unavailable"}))
