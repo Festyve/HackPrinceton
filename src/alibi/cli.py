@@ -314,8 +314,12 @@ def _investigate_to_review(orch: Any, case_id: str, resume: bool = False, extra_
     report = orch.view(case_id)["report"]
     for f in report["findings"]:
         print(f"  {f['category']:<22} {f['claim_type']:<28} {f['host']:<12} {f['status']}")
+    stopped = next((q for q in report["open_questions"] if q.startswith("Incomplete run:")), None)
+    if stopped:
+        print(f"  {stopped} Continue it with: alibi investigate {case_id} --resume")
     if not report["findings"]:
-        print("  no findings: nothing in this evidence is reported as an incident")
+        print("  no findings were recorded before it stopped" if stopped else
+              "  no findings: nothing in this evidence is reported as an incident")
     print(f"  account: {report['attribution']['account_used']} · person: {report['attribution']['human_identity'].replace('_', ' ')}")
     print(f"next: alibi ask {case_id} \"...\" · alibi experiment {case_id} --without collector · "
           f"alibi review {case_id} accept")
