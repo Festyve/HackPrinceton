@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "./api";
 import type { Benchmark } from "./api";
 import { ratio } from "./common";
+import { EvaluationSummary } from "./phase2";
 
 export function BenchmarkTab() {
   const [b, setB] = useState<Benchmark | null>(null);
@@ -18,16 +19,21 @@ export function BenchmarkTab() {
   if (!b) return <p className="muted">Loading…</p>;
   if (!b.available)
     return (
-      <div className="panel" data-testid="benchmark-unavailable">
-        <h2>Benchmark not available</h2>
-        <p>{b.reason ?? "No reason given."}</p>
+      <div className="bench">
+        {b.paired_summary && <EvaluationSummary s={b.paired_summary} />}
+        <div className="panel" data-testid="benchmark-unavailable">
+          <h2>Benchmark not available</h2>
+          <p>{b.reason ?? "No reason given."}</p>
+        </div>
       </div>
     );
   const n = (v: number | null | undefined) => (v == null ? "—" : String(v));
   return (
     <div className="bench">
+      {b.paired_summary && <EvaluationSummary s={b.paired_summary} />}
       <h2>
-        Benchmark <small className="mono">{b.suite}</small>
+        {b.paired_summary ? "First run" : "Benchmark"}{" "}
+        <small className="mono">{b.suite}</small>
       </h2>
       <p className="small muted">
         generated {b.generated_at ?? "n/a"} · commit{" "}

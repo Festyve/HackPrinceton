@@ -9,7 +9,6 @@ import { Dialog } from "./dialog";
 import {
   Sources,
   RuntimeDetails,
-  Questions,
   ProgressActivity,
   humanState,
   originLabel,
@@ -17,6 +16,12 @@ import {
 import { EvidenceColumn, RawViewer } from "./evidence";
 import { ScoreOverlay } from "./score";
 import { BenchmarkTab } from "./bench";
+import {
+  DesignerDialog,
+  ExperimentComparison,
+  QuestionPanel,
+  TemperatureRecords,
+} from "./phase2";
 
 const EVENT_TYPES = [
   "state",
@@ -82,6 +87,8 @@ export default function App() {
   const [selectedHost, setSelectedHost] = useState<string | null>(null);
   const [disconnected, setDisconnected] = useState(false);
   const [attaching, setAttaching] = useState(false);
+  const [mode, setMode] = useState<string | null>(null);
+  const [showDesigner, setShowDesigner] = useState(false);
   const rawRequest = useRef(0);
 
   const esRef = useRef<EventSource | null>(null);
@@ -91,16 +98,29 @@ export default function App() {
   const retryRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
-    api
-      .runtime()
-      .then(setRuntime)
-      .catch(() => setRuntime(null));
+    // What the server can do decides what the controls say, so a failed first request is tried again.
+    let live = true;
+    let tries = 0;
+    const loadRuntime = () =>
+      api
+        .runtime()
+        .then((r) => live && setRuntime(r))
+        .catch(() => {
+          if (!live) return;
+          setRuntime(null);
+          tries += 1;
+          if (tries < 8) window.setTimeout(loadRuntime, Math.min(1500 * tries, 8000));
+        });
+    void loadRuntime();
     api
       .presets()
       .then(setPresets)
       .catch((e: unknown) =>
         setPresetErr(String(e instanceof Error ? e.message : e)),
       );
+    return () => {
+      live = false;
+    };
   }, []);
 
   const closeStream = useCallback(() => {
@@ -293,10 +313,11 @@ export default function App() {
       setTab("case");
       const v =
         choice.kind === "preset"
-          ? await api.createCase(choice.id)
+          ? await api.createCase(choice.id, mode)
           : await api.openReplay(choice.id);
       await attach(v.case.case_id, v);
     });
+  const doOpenCase = (id: string) => guard("run", () => attach(id));
   const doReset = () =>
     guard("reset", async () => {
       const id = caseIdRef.current;
@@ -442,10 +463,12 @@ export default function App() {
         </header>
         <section className="case-heading">
           <div>
-            <p className="eyebrow">
+            <p className="eyebrow" data-testid="case-eyebrow">
               {c
                 ? `Case file / ${c.case_id.replace(/^case-/, "").slice(0, 8)}`
                 : "An evidence workbench"}
+              {c?.parent_case_id && " · reduced evidence view"}
+              {c?.scored === false && " · imported evidence, unscored"}
             </p>
             <h1>{view ? title : "The log is missing. The evidence isn’t."}</h1>
           </div>
@@ -536,6 +559,12 @@ export default function App() {
               onRun={(choice) => doRun(choice)}
               busy={busy !== null}
               runtime={runtime}
+              mode={mode}
+              onMode={setMode}
+              onDesign={() => {
+                setShowLibrary(false);
+                setShowDesigner(true);
+              }}
             />
           </main>
         ) : (
@@ -545,11 +574,21 @@ export default function App() {
                 view={view}
                 selectedHost={selectedHost}
                 onSelect={setSelectedHost}
+                onOpenCase={doOpenCase}
               />
               <section
                 className="col evidence-area"
                 aria-label="Evidence comparison"
               >
+                {view.case.parent_case_id && (
+                  <ExperimentComparison view={view} />
+                )}
+                {view.case.card_id === "cold-chain" && hasReport(state) && (
+                  <TemperatureRecords
+                    caseId={view.case.case_id}
+                    stateKey={view.manifest?.bundle_id ?? ""}
+                  />
+                )}
                 {hasReport(state) ? (
                   <EvidenceColumn
                     caseId={view.case.case_id}
@@ -572,7 +611,11 @@ export default function App() {
                 onShowScore={() => setShowScore(true)}
               />
             </main>
-            <Questions caseId={view.case.case_id} available={!!view.report} />
+            <QuestionPanel
+              caseId={view.case.case_id}
+              available={!!view.report}
+              runtime={runtime}
+            />
           </>
         )}
         {showLibrary && (
@@ -593,6 +636,12 @@ export default function App() {
               onRun={(choice) => doRun(choice)}
               busy={busy !== null}
               runtime={runtime}
+              mode={mode}
+              onMode={setMode}
+              onDesign={() => {
+                setShowLibrary(false);
+                setShowDesigner(true);
+              }}
             />
             <div className="modal-actions">
               {err && (
@@ -608,6 +657,22 @@ export default function App() {
                 {busy === "run" ? "Opening case…" : "Open selected case"}
               </button>
             </div>
+          </Dialog>
+        )}
+        {showDesigner && (
+          <Dialog
+            title="Design an environment"
+            onClose={() => setShowDesigner(false)}
+          >
+            <DesignerDialog
+              runtime={runtime}
+              mode={mode}
+              onCase={(v) => {
+                setShowDesigner(false);
+                setTab("case");
+                void attach(v.case.case_id, v);
+              }}
+            />
           </Dialog>
         )}
         {showDetails && (
@@ -647,7 +712,11 @@ function StartState(p: {
   onRun: (s: { kind: "preset" | "replay"; id: string }) => void;
   busy: boolean;
   runtime: Runtime | null;
+  mode: string | null;
+  onMode: (m: string) => void;
+  onDesign: () => void;
 }) {
+  const modes = p.runtime?.capabilities?.investigation_modes;
   if (p.err)
     return (
       <div className="banner err" role="alert">
@@ -708,11 +777,39 @@ function StartState(p: {
           <p className="eyebrow">Case library</p>
           <h2>Fresh investigations</h2>
         </div>
-        <p className="small muted">
-          {p.runtime?.live_inference === "CONFIGURED"
-            ? "Live AI configured. New cases use the server runtime."
-            : "Fresh cases use a scripted fixture. Recorded AI works offline."}
-        </p>
+        <div>
+          <p className="small muted">
+            {p.runtime?.live_inference === "CONFIGURED"
+              ? "Live AI configured. New cases use the server runtime."
+              : "Fresh cases use a scripted fixture. Recorded AI works offline."}
+          </p>
+          {(modes?.available?.length ?? 0) > 1 && (
+            <label className="small mode-picker">
+              Investigation
+              <select
+                data-testid="mode-select"
+                value={p.mode ?? modes?.default ?? ""}
+                onChange={(e) => p.onMode(e.target.value)}
+              >
+                {(modes?.available ?? []).map((m) => (
+                  <option key={m} value={m}>
+                    {modes?.labels?.[m] ?? m}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {p.runtime?.capabilities?.scenario_designer?.endpoint && (
+            <button
+              className="linkish design-link"
+              data-testid="btn-design"
+              disabled={p.busy}
+              onClick={p.onDesign}
+            >
+              Design an environment for a new case
+            </button>
+          )}
+        </div>
       </div>
       <div className="cards">
         {p.presets.presets.map((x) => (

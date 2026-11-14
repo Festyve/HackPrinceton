@@ -3,6 +3,8 @@ import type {
   EvidenceManifest,
   Finding,
   InvestigationReport,
+  QuestionAnswer,
+  QuestionClaim,
   Score,
   Usage,
 } from "./generated/contracts";
@@ -15,10 +17,39 @@ export class ApiError extends Error {
   }
 }
 
+export interface Capabilities {
+  investigation_modes?: {
+    available?: string[];
+    labels?: Record<string, string>;
+    default?: string;
+  };
+  questions?: {
+    endpoint?: boolean;
+    model_answers?: "CONFIGURED" | "BLOCKED";
+    max_question_chars?: number;
+  };
+  source_experiments?: { endpoint?: boolean; max_excluded_sources?: number };
+  report_export?: { endpoint?: boolean };
+  sensor_streams?: { endpoint?: boolean };
+  scenario_designer?: { endpoint?: boolean; model?: "CONFIGURED" | "BLOCKED" };
+}
+/** An ordinary operating environment chosen from fixed options. It never contains an incident. */
+export interface ScenarioDesign {
+  design_id: string;
+  status: "designed" | "default_used" | "refused" | "unavailable" | string;
+  source?: string;
+  label?: string;
+  preview?: string[];
+  design?: Record<string, unknown> | null;
+  fallback_reason?: string | null;
+  fixtures?: string[];
+  model_id?: string | null;
+}
 export interface Runtime {
   runtime_mode?: string;
   live_inference?: "BLOCKED" | "CONFIGURED";
   live_block_reason?: string | null;
+  capabilities?: Capabilities;
 }
 export interface Preset {
   id: string;
@@ -54,13 +85,143 @@ export interface CaseInfo {
   error?: string | null;
   review_decision?: string | null;
   timings?: { generate_s?: number | null; investigate_s?: number | null };
+  card_id?: string;
+  scored?: boolean;
+  investigation_mode?: string | null;
+  parent_case_id?: string | null;
+  excluded_sources?: ExcludedSource[];
   labels: {
     evidence_origin: string;
     inference: string;
     inference_label: string;
     playback: string;
     model_id?: string | null;
+    investigation_mode_label?: string;
   };
+}
+export interface ExcludedSource {
+  source_id: string;
+  source: string;
+  host: string;
+  artifact: string;
+  lines?: number;
+  tamper_exposure?: string;
+}
+/** One claim of the original report, re-checked by the server against the reduced evidence. */
+export interface ExperimentClaim {
+  finding_id: string;
+  claim_type: string;
+  category?: string;
+  host?: string;
+  object_or_session?: string;
+  change: "retains_support" | "loses_support" | "never_supported";
+  reason?: string;
+  evidence_ids_remaining?: string[];
+}
+export interface SourceExperiment {
+  role: "original" | "derived";
+  case_id: string;
+  parent_case_id?: string;
+  excluded_sources?: ExcludedSource[];
+  sources_remaining?: number;
+  events_remaining?: number;
+  events_original?: number;
+  children?: Array<{
+    child_case_id: string;
+    title?: string;
+    state?: string;
+    excluded_sources?: ExcludedSource[];
+  }>;
+  /** Why there is no comparison, e.g. the original case was reset. */
+  note?: string;
+  comparison?: {
+    method?: string;
+    claims?: ExperimentClaim[];
+    attribution?: {
+      change?: string;
+      child_statement?: string;
+      note?: string;
+    } | null;
+    summary?: {
+      retains_support?: number;
+      loses_support?: number;
+      never_supported?: number;
+      claims_total?: number;
+      reading?: string;
+    };
+    coverage?: { child?: { limits?: string[] } };
+  } | null;
+}
+export interface SourceExperimentCreated {
+  child_case_id: string;
+  parent_case_id: string;
+  excluded_sources?: ExcludedSource[];
+}
+export interface Spend {
+  configured: boolean;
+  readable?: boolean;
+  cap_usd?: number;
+  limit_in_force_usd?: number;
+  spent_usd?: number;
+  unreconciled_usd?: number;
+  reserved_usd?: number;
+  calls?: number;
+  note?: string;
+}
+export interface SensorPoint {
+  event_id: string;
+  ts: string;
+  temp_c: number;
+  seq?: number | null;
+}
+export interface SensorSeries {
+  key: "stored" | "reference";
+  source: string;
+  label: string;
+  present: boolean;
+  host?: string | null;
+  tamper_exposure?: string | null;
+  total_points: number;
+  truncated?: boolean;
+  points: SensorPoint[];
+}
+export interface SensorDiscrepancy {
+  discrepancy_id: string;
+  start: string;
+  end: string;
+  reference_range_c: [number, number];
+  local_range_c: [number, number];
+  max_difference_c: number;
+  classification: "unexplained" | "explained_maintenance" | "isolated_reading";
+  maintenance_id?: string | null;
+  reference_event_ids: string[];
+  local_event_ids: string[];
+}
+export interface SensorStreams {
+  applicable: boolean;
+  status: string;
+  status_reason?: string | null;
+  sensor?: string;
+  permitted_range_c?: [number, number];
+  maintenance_windows?: Array<{
+    id?: string | null;
+    start?: string;
+    end?: string;
+    note?: string;
+  }>;
+  series: SensorSeries[];
+  discrepancies?: SensorDiscrepancy[];
+  excursions?: Array<{
+    excursion_id: string;
+    start: string;
+    end: string;
+    peak_c: number;
+    local_agrees: boolean;
+    reference_event_ids: string[];
+  }>;
+  coverage_limits?: string[];
+  limits?: string[];
+  produced_by?: string;
 }
 export interface TruthStep {
   step_id: string;
@@ -250,8 +411,55 @@ export interface BenchSystem {
     tokens_out?: number | null;
   };
 }
+export interface PairedSummary {
+  suites: Array<{ suite: string; run_id: string; cases: number }>;
+  systems: Array<{
+    id: string;
+    label: string;
+    cells: number;
+    censored: number;
+    aggregate: null | {
+      step_recall?: Ratio | null;
+      coverup_detected?: Ratio | null;
+      benign_false_alert?: Ratio | null;
+      false_claims_final?: number | null;
+      unsupported_named_attribution?: number | null;
+      cost_estimate_usd?: number | null;
+    };
+  }>;
+  note?: string;
+  repeats?: Array<{
+    first: { suite: string; run_id: string };
+    repeat: { suite: string; run_id: string };
+    ai_cells: number;
+    ai_cells_same_effects: number;
+    same_evidence_bundles?: boolean;
+    per_system: Array<{
+      id: string;
+      label: string;
+      first: [number, number];
+      repeat: [number, number];
+      stopped_by_a_cap: [number, number];
+    }>;
+    note?: string;
+  }>;
+  model?: string | null;
+  inference?: string | null;
+  incident_cases?: number;
+  benign_cases?: number;
+  verifier_feedback_during_investigation?: boolean;
+  correct_findings_not_counted?: Array<{
+    suite: string;
+    case_ref: string;
+    system_id: string;
+    claim_type: string;
+    status: string;
+    check_result: string;
+  }>;
+}
 export interface Benchmark {
   available: boolean;
+  paired_summary?: PairedSummary | null;
   reason?: string;
   suite?: string;
   generated_at?: string;
@@ -339,8 +547,12 @@ const q = encodeURIComponent;
 export const api = {
   runtime: () => req<Runtime>("/api/runtime"),
   presets: () => req<Presets>("/api/presets"),
-  createCase: (preset_id: string) =>
-    post<CaseView>("/api/cases", { preset_id, client_token: token() }),
+  createCase: (preset_id: string, investigation_mode?: string | null) =>
+    post<CaseView>("/api/cases", {
+      preset_id,
+      client_token: token(),
+      ...(investigation_mode ? { investigation_mode } : {}),
+    }),
   openReplay: (id: string) =>
     post<CaseView>(`/api/replays/${q(id)}/open`, { client_token: token() }),
   getCase: (id: string) => req<CaseView>(`/api/cases/${q(id)}`),
@@ -369,6 +581,56 @@ export const api = {
   explanations: (id: string) =>
     req<{ explanations: Explanation[] }>(`/api/cases/${q(id)}/explanations`),
   benchmark: () => req<Benchmark>("/api/benchmark"),
+  design: (client_token: string) =>
+    post<ScenarioDesign>("/api/scenario-designs", { client_token }),
+  createFromDesign: (
+    design_id: string,
+    design_fixture: string,
+    client_token: string,
+    investigation_mode?: string | null,
+  ) =>
+    post<CaseView>("/api/cases", {
+      design_id,
+      design_fixture,
+      client_token,
+      ...(investigation_mode ? { investigation_mode } : {}),
+    }),
+  questions: (id: string) =>
+    req<{ questions: QuestionAnswer[] }>(`/api/cases/${q(id)}/questions`),
+  ask: (id: string, question: string, client_token: string) =>
+    // a short wait: an answer that needs no model comes back at once; a slow one shows as pending and is polled
+    post<QuestionAnswer>(`/api/cases/${q(id)}/questions?wait_s=2`, {
+      question,
+      client_token,
+    }),
+  question: (id: string, questionId: string) =>
+    req<QuestionAnswer>(`/api/cases/${q(id)}/questions/${q(questionId)}`),
+  sourceExperiment: (id: string) =>
+    req<SourceExperiment>(`/api/cases/${q(id)}/source-experiment`),
+  createSourceExperiment: (
+    id: string,
+    excluded_source_ids: string[],
+    client_token: string,
+  ) =>
+    // The reduced view is examined by the deterministic checks: no model is called and nothing is spent.
+    post<SourceExperimentCreated>(`/api/cases/${q(id)}/source-experiments`, {
+      excluded_source_ids,
+      client_token,
+      runner: "deterministic",
+      autostart: true,
+    }),
+  spend: () => req<Spend>("/api/spend"),
+  sensorStreams: (id: string) =>
+    req<SensorStreams>(`/api/cases/${q(id)}/evidence/sensor-streams`),
+  reportExportUrl: (id: string) =>
+    `/api/cases/${q(id)}/report-export?format=markdown`,
 };
 
-export type { AttributionAssessment, Finding, Usage, Score };
+export type {
+  AttributionAssessment,
+  Finding,
+  Usage,
+  Score,
+  QuestionAnswer,
+  QuestionClaim,
+};
