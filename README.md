@@ -65,7 +65,9 @@ The pilot found equal accuracy and a faster, cheaper single agent. These are sma
 
 ## Live AI and development
 
-Live inference uses a server-side Anthropic key. For this team's continuation, **the total API allowance remains $5, including the first run**. Follow [API setup](docs/next-run/API_SETUP.md); preserve the existing spend ledger. The budget gateway needs the reservation fixes described there before further paid validation.
+Live inference uses a server-side Anthropic key. **The total API allowance is $20 across both runs, including the $2.92 already spent.** Follow [API setup](docs/next-run/API_SETUP.md); preserve the existing spend ledger.
+
+Every model call goes through one budget gateway. It counts the outgoing request before sending it, refuses one that is too large or cannot be counted, reserves tokens and money so parallel agents cannot jointly pass a cap, and keeps the worst-case cost of any call whose billing outcome is unknown until someone reconciles it. Automatic calls stop $0.50 short of the cap. The totals are a conservative estimate at list prices, not a bill; the provider console is the billing authority.
 
 ```sh
 uv run alibi runtime

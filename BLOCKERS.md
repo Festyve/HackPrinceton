@@ -5,7 +5,7 @@ Status after the phase-two review on November 14. Implementation work is assigne
 | Item | Owner | Next action |
 |---|---|---|
 | Runtime key was pasted in an earlier coding chat | Eric | Replace it locally in the existing .env and revoke the old key before sharing transcripts/publication. Do not paste the replacement into chat. |
-| $5 cumulative API cap | Eric | Preserve .alibi/spend.json; compare its totals with Console usage. Fix gateway accounting edges before more paid calls. No additional budget is authorized. |
+| $20 cumulative API cap (raised from $5 by Eric, Nov 14) | Eric | Preserve .alibi/spend.json; compare its totals with Console usage (`uv run alibi spend`). Gateway accounting edges are fixed and regression-tested. Nothing beyond $20 is authorized. |
 | Private GitHub repository | Repo owner | Scan history/worktree with redacted output, then make the submission repo public. Keep its creation history. |
 | Actual venue display | Terry + Daniel | Run the final integrated build on a second machine and the projector. Browser automation alone does not establish projector readability. |
 | IoT-CAD availability | Daniel | Verify the catalog/download/license and ingest a relevant subset if accessible; document the exact external blocker otherwise. |

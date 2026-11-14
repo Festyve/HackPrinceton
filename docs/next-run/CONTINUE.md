@@ -4,7 +4,7 @@ This is an incremental continuation, not a rebuild. Start from the current worki
 
 **Deadline:** Sunday November 15, 2026, 08:00 America/New_York. Feature freeze: Sunday 00:00. Submission target: 06:00. First checkpoint: Saturday 09:00. If starting later, keep the absolute freeze and shorten scope in the order below. Never claim unfinished work is finished.
 
-**Budget:** $5 cumulative, including all earlier usage. No new purchase, paid overage, ledger reset, refusal bypass, or secret in chat. Follow API_SETUP.md. No paid calls before stage 1 passes.
+**Budget:** $20 cumulative (raised from $5 by Eric on November 14), including all earlier usage. No new purchase, paid overage, ledger reset, refusal bypass, or secret in chat. Follow API_SETUP.md. No paid calls before stage 1 passes.
 
 ## Ownership and working method
 
@@ -23,7 +23,7 @@ Files: config.py, agents/gateway.py, checks.py, explain.py; focused tests.
 - Atomically reserve input/output tokens and money across parallel specialists. Clamp the provider output ceiling to the tokens actually reserved. Respect per-run and cumulative caps.
 - Retain worst-case cost for timeouts, absent usage and crashed processes until explicitly reconciled. An old reservation must not vanish and recreate spending capacity. Settlement must be idempotent.
 - Preserve the existing ledger when changing models or branches. A configurable absolute ledger path can support worktrees; migration must carry existing spend forward. Historical usage remains priced as originally recorded.
-- Add a development ceiling of $4.50 cumulative beneath the absolute $5 cap. Only an explicit operator action may use the final demo reserve. Unknown billing outcomes consume headroom.
+- Add a development ceiling of $19.50 cumulative beneath the absolute $20 cap. Only an explicit operator action may use the final demo reserve. Unknown billing outcomes consume headroom.
 - Do not mix models under one price pair. Keep roles homogeneous for this run.
 - Correct missing-prefix/late-start interpretation. Honor source coverage; require both cited brackets before saying “before and after.” Unknown coverage must not become “no anomaly.”
 
