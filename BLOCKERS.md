@@ -19,3 +19,6 @@ Status on November 14 during the second run. This file lists what a person still
 - **The adversary planner stays disabled.** The model declined the one real request to plan an adversary's steps. Do not rephrase that request, add a refusal fallback or switch models to get around it. The scenario designer is a different task (it chooses an ordinary operating environment and no incident step) and must not be described as an AI attacker. Every incident in ALIBI is a scripted scenario and is labeled as one.
 - **`offline-v1` and `ai-pilot-v1` are frozen.** `uv run alibi bench` and `uv run alibi pilot` refuse to rewrite them. New measurements go through `uv run alibi eval`.
 - **The spend ledger is never deleted or reset.** `.alibi/spend.json` carries the first run's $2.92 forward.
+
+Before the repository is made public, the repository owner or Terry should look at `docs/verification/terry-ui/screenshots.txt`: its first line contains an absolute path from a teammate's machine, including a user name. It is Terry's file, so this session did not edit it.
+

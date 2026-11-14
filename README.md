@@ -99,9 +99,11 @@ Second run: six new cases (four incidents, two benign controls), Claude Haiku 5.
 
 No system made an accepted false allegation on the two benign controls, and none named a person. On these cases the checks helped the model in both configurations, one agent did better than three at half the cost, and the deterministic checks by themselves established everything. Three times the three-agent system lost a correct finding because its skeptic agent withdrew it although the check supported it. With one run per cell and four incident cases, this shows how the systems differed here. It is not an accuracy estimate.
 
+We then ran the eight model cells of the first two incident cases once more on the same evidence ([repeat](docs/evaluation-v2-repeat1.md)). **Only 2 of the 8 established the same number of effects as the first time.** Out of 8 effects, one agent with the checks went from 7 to 8, three agents with the checks from 5 to 6, one agent without the checks from 5 to 4, and three agents without stayed at 5. A difference of one or two effects between systems is therefore within what a second run changes. What was the same both times: the deterministic checks established everything, one agent with the checks was ahead of three, only the systems without the checks ran out of budget, and no system made an unsupported accepted allegation or named a person.
+
 ## Live AI and budget
 
-Live inference uses a server-side Anthropic key in a gitignored `.env`. **The total API allowance is $20 across both runs.** About $3.52 has been used. Follow [API setup](docs/next-run/API_SETUP.md) and never delete the spend ledger.
+Live inference uses a server-side Anthropic key in a gitignored `.env`. **The total API allowance is $20 across both runs.** About $3.63 has been used. Follow [API setup](docs/next-run/API_SETUP.md) and never delete the spend ledger.
 
 Every model call goes through one budget gateway. It counts the outgoing request before sending it, refuses one that is too large or cannot be counted, reserves tokens and money so parallel agents cannot jointly pass a cap, and keeps the worst-case cost of any call whose billing outcome is unknown until someone reconciles it. Automatic calls stop $0.50 short of the cap. The totals are a conservative estimate at list prices, not a bill; the provider console is the billing authority.
 

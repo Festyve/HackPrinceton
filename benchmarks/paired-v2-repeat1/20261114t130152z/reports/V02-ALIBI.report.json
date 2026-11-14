@@ -1,0 +1,203 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v02-20261114t130152z-alibi",
+ "bundle_id": "bndl-644137520589f844",
+ "system_id": "ALIBI",
+ "system_label": "Specialist review: lead + integrity-auditor + skeptic with deterministic checks (benchmark arm ALIBI)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-55321f",
+   "claim_type": "local_log_removal",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:14:18Z",
+   "t_end": "2026-11-10T11:14:18Z",
+   "object_or_session": "/var/log/auth.log",
+   "evidence_ids": [
+    "ev_9b3995123e96",
+    "ev_424ebb025874",
+    "ev_0c41efcea0c4",
+    "ev_65f8e01c713e"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.5,
+   "rationale": "The collector retained workstation auth.log seq 29 (jpark login, session 74 at 11:14:18), but the host copy lacks that line while bracketing local entries exist. Absence of one host-writable line; tampering not established.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Host logging or write fault",
+    "Collector ordering artifact"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "1 cited collector record(s) are absent from the local log after the host's retention boundary, bracketed by later local records"
+   ],
+   "skeptic_note": "Single-line absence on host-writable log; removal is an inference, write fault not excluded. Kept at low confidence.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-3accd5",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": "collection",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:15:15Z",
+   "t_end": "2026-11-10T11:15:20Z",
+   "object_or_session": "/tmp/.font-unix/idx-3e08.bin",
+   "evidence_ids": [
+    "ev_3fb5abe9cac6",
+    "ev_7fd4e032ea80",
+    "ev_6472dce3b3e7",
+    "ev_bb842212e4e9",
+    "ev_7f43d4470d7b"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.85,
+   "rationale": "Shell history shows clinic-export of patients_full to a hidden /tmp path; records app logged a 20,578,812-byte export_bulk for jpark from 10.20.1.21; fs_stat shows the file at that size owned by jpark.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Authorized export left in /tmp; no approval record in bundle"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size was written on this host shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": "Shell history, records export log, and fs_stat agree; no approval found.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-06531a",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "jpark",
+   "t_start": "2026-11-10T11:18:27Z",
+   "t_end": "2026-11-10T11:18:40Z",
+   "object_or_session": "10.20.9.87:8080",
+   "evidence_ids": [
+    "ev_647a922ee132"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "Tap flow shows 20,582,305 bytes sent from 10.20.1.21 to 10.20.9.87:8080, above the 5,000,000-byte threshold and not an approved bulk destination (stor-nas-01 10.20.0.45, lab-gw-01 10.20.8.20). Follows the staged export.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Flow is from the tap only; the sending process and the transferred content are not directly observed"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": "Unapproved destination above threshold; workstation mapping is inferred from session overlap, noted as limit.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-954045",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "svc-backup",
+   "t_start": "2026-11-10T11:59:04Z",
+   "t_end": "2026-11-10T11:59:10Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_0a3326346765"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.5,
+   "rationale": "A 20.58 MB transfer from records to stor-nas-01 (approved backup/log archive destination) on rsync port 873; consistent with policy and possibly the scheduled backup.",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": "Approved backup destination; benign.",
+   "produced_by": "lead-investigator"
+  }
+ ],
+ "attribution": {
+  "account_used": "jpark",
+  "session_ref": "workstation#74",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_3fb5abe9cac6",
+   "ev_7fd4e032ea80",
+   "ev_647a922ee132",
+   "ev_9b3995123e96"
+  ],
+  "contrary_evidence_ids": [
+   "ev_0a3326346765"
+  ],
+  "assumptions": [],
+  "limits": [
+   "Account is not a person",
+   "Shared console credentials have been found written down",
+   "Host-local logs writable; collector copies are stronger",
+   "Flow shows bytes, not content"
+  ],
+  "statement": "Account jpark was used on workstation session 74 (11:14–11:20) to run the patients_full export, stage the file, and send it to 10.20.9.87:8080. The human operator is not established: the credential may have been used by someone else, and badge data does not cover remote or tailgated access.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Tip: review records access and transfers. Findings: (1) On workstation (session 74, account jpark, 11:14–11:20 UTC), records-app logged a bulk export of patients_full (20,578,812 bytes) via clinic-export to a hidden path /tmp/.font-unix/idx-3e08.bin; fs_stat confirms the file, owned by jpark. (2) At 11:18:27–11:18:40 the tap recorded 20,582,305 bytes sent from 10.20.1.21 to 10.20.9.87:8080, above the 5 MB threshold and not an approved destination. This is a policy-violating transfer. (3) The collector retained a jpark auth.log line at 11:14:18 that is missing from the host copy; with host-writable logs, this is low-confidence and removal is not established. (4) A 20.58 MB transfer from records to the approved stor-nas-01 (10.20.0.45:873) at 11:59 is policy-consistent and is treated as benign. Attribution: account jpark was used; the human operator is not established.",
+ "open_questions": [
+  "Who was physically or remotely using jpark at 11:15–11:20 (VPN and badge coverage, shared console credentials)?",
+  "What is 10.20.9.87 and was the transfer authorized?",
+  "Does the 10.20.1.21 to workstation mapping hold (inferred from session overlap, not a direct event)?",
+  "Why is the 11:14:18 auth.log line missing from the host copy: deletion or write fault?",
+  "Was the 11:59 NAS transfer a scheduled backup job?",
+  "Was the staged file in /tmp removed after the transfer?"
+ ],
+ "usage": {
+  "llm_calls": 14,
+  "tokens_in": 192729,
+  "tokens_out": 12695,
+  "tokens_cache_read": 132243,
+  "cost_estimate_usd": 0.01523,
+  "wall_seconds": 57.189,
+  "tool_calls": 30,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T13:08:18.702492Z",
+ "report_sha256": "d888241880c08659596751e598208c9e3ad2c4714b685b12c8cb83b94172381a",
+ "review_history": [
+  {
+   "at": "2026-11-14T13:08:18.702492Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

@@ -1,0 +1,55 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v02-20261114t130152z-b1",
+ "bundle_id": "bndl-644137520589f844",
+ "system_id": "B1",
+ "system_label": "Arm B1: one agent with generic evidence tools only (no checks)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [],
+ "attribution": {
+  "account_used": null,
+  "session_ref": null,
+  "human_identity": "not_assessed",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [],
+  "statement": "The investigator did not submit an attribution assessment.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "The investigator did not write a summary.",
+ "open_questions": [
+  "Incomplete run: stopped by the budget gateway: input token cap reached: 221824 used + 0 reserved + 70226 needed > 280000."
+ ],
+ "usage": {
+  "llm_calls": 7,
+  "tokens_in": 221824,
+  "tokens_out": 5344,
+  "tokens_cache_read": 157987,
+  "cost_estimate_usd": 0.012231,
+  "wall_seconds": 26.05,
+  "tool_calls": 26,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T13:07:21.332420Z",
+ "report_sha256": "b59569953a99c1b0d1e7977ed1316539f6e1508d24cb85e0dcfff484c43e4c60",
+ "review_history": [
+  {
+   "at": "2026-11-14T13:07:21.332420Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

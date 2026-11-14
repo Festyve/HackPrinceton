@@ -24,11 +24,11 @@ LangChain deepagents supplies the investigator: one agent in fast mode, or a lea
 
 A fixed keyword recipe missed every removed-log case in both of our evaluations. The comparison checks found all of them.
 
-The AI results were more humbling, and we report them as measured. In the first pilot one agent and three agents were equally accurate and the single agent was faster and cheaper. In the second evaluation, on six new cases where no system was told whether its findings were supported, the checks with no model established 16 of 16 incident effects, one agent with the checks 15 of 16, and three agents 12 of 16. Without the checks the same agents established 10 and 7. The checks clearly helped the model. Delegation did not: three times the skeptic agent withdrew a correct finding. So fast mode is the default, and the model's job is what it is good at here: investigating, explaining alternatives, answering questions and writing the report.
+The AI results were more humbling, and we report them as measured. In the first pilot one agent and three agents were equally accurate and the single agent was faster and cheaper. In the second evaluation, on six new cases where no system was told whether its findings were supported, the checks with no model established 16 of 16 incident effects, one agent with the checks 15 of 16, and three agents 12 of 16. Without the checks the same agents established 10 and 7. When we ran eight of those model cells a second time on the same evidence, only two established the same number of effects, so we do not read anything into a gap of one or two. What held both times: the checks alone established everything, the model did better with the checks than without, and one agent with the checks stayed ahead of three. Delegation did not help: three times in the first runs the skeptic agent withdrew a correct finding. So fast mode is the default, and the model's job is what it is good at here: investigating, explaining alternatives, answering questions and writing the report.
 
 We also asked a model to plan the adversary's steps. It declined, and we kept it declined. Incidents are scripted and labeled scripted.
 
-These are small, simulated measurements with one run per cell. They are not real-world forensic accuracy. An account name is never treated as proof of who was typing.
+These are small, simulated measurements with one run per cell, and one repeat of eight cells that showed how much a second run can differ. They are not real-world forensic accuracy. An account name is never treated as proof of who was typing.
 
 ## What comes next
 

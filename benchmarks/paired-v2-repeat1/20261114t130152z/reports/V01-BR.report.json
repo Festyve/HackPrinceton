@@ -1,0 +1,418 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-BR-bndl-820162c5d101a140",
+ "bundle_id": "bndl-820162c5d101a140",
+ "system_id": "BR",
+ "system_label": "BR · deterministic contradiction checks, templated findings",
+ "inference_mode": "NO_MODEL_BASELINE",
+ "model_id": null,
+ "findings": [
+  {
+   "id": "BR-01",
+   "claim_type": "data_staging",
+   "category": "incident_allegation",
+   "attack_id": "T1074.001",
+   "technique_family": "Local data staging",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T10:26:38Z",
+   "t_end": "2026-11-10T10:27:08Z",
+   "object_or_session": "/home/rhaddad/Downloads/cache-0a91.bin",
+   "evidence_ids": [
+    "ev_ad11135ba4d2",
+    "ev_61a92f53ab5f",
+    "ev_78cff1512ff0",
+    "ev_eb89a8080966"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "file_time_review",
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.7,
+   "rationale": "/home/rhaddad/Downloads/cache-0a91.bin (23,176,722 bytes) reached workstation at 2026-11-10T10:26:38+00:00 according to records independent of that host, shortly before the non-approved transfer of the same size to 10.20.9.62:8080. Its modification time was changed afterwards, so it is identified by its change time.",
+   "assumptions": [
+    "matching size and timing indicate the same object; content was not inspected"
+   ],
+   "alternative_explanations": [
+    "an unrelated file of similar size"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an object of matching size reached this host, per records independent of it, shortly before a non-approved bulk transfer"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-02",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": "Transfer to a non-approved destination (exfiltration mapping is context-dependent)",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T10:27:48Z",
+   "t_end": "2026-11-10T10:28:03Z",
+   "object_or_session": "10.20.9.62:8080",
+   "evidence_ids": [
+    "ev_09b4ad6dcb1f",
+    "ev_2a1a69dae2fb",
+    "ev_f3e53611f8fb"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.8,
+   "rationale": "23,180,407 bytes left workstation for 10.20.9.62:8080 between 2026-11-10T10:27:48+00:00 and 2026-11-10T10:28:03+00:00. destination 10.20.9.62 is not on the approved bulk-destination list (10.20.0.45, 10.20.8.20); no approved change record covers an export to it at this time. It overlaps exactly one session on workstation: workstation#54 (account rhaddad, console; login record seen in: local log, collector copy).",
+   "assumptions": [
+    "the supplied destination policy is complete and current"
+   ],
+   "alternative_explanations": [
+    "an approved destination missing from the supplied policy"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-03",
+   "claim_type": "timestamp_alteration",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": "File modification time contradicted by independent records",
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T10:28:56Z",
+   "t_end": "2026-11-10T10:28:56Z",
+   "object_or_session": "/home/rhaddad/Downloads/cache-0a91.bin",
+   "evidence_ids": [
+    "ev_eb89a8080966",
+    "ev_ad11135ba4d2",
+    "ev_61a92f53ab5f",
+    "ev_78cff1512ff0"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "file_time_review"
+   ],
+   "confidence": 0.75,
+   "rationale": "/home/rhaddad/Downloads/cache-0a91.bin on workstation carries a modification time of 2026-10-11T10:26:42+00:00, but its metadata changed at 2026-11-10T10:28:56+00:00 and records independent of this host show content of this size arriving at 2026-11-10T10:26:38+00:00, after the modification time the file now carries. The recorded modification time is contradicted; who changed it is not shown.",
+   "assumptions": [
+    "matching size identifies the same object; content was not inspected"
+   ],
+   "alternative_explanations": [
+    "an unrelated file of the same size with a legitimately old date"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "an independent record shows the content arriving after the modification time the file carries"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-04",
+   "claim_type": "second_host_session",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": "Session on a second host opened from a monitored host, outside access policy",
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "adm-tkim",
+   "t_start": "2026-11-10T10:30:12Z",
+   "t_end": "2026-11-10T10:30:14Z",
+   "object_or_session": "records#402",
+   "evidence_ids": [
+    "ev_a9ffa48ff362",
+    "ev_1f05ff28f0e1",
+    "ev_98708a555bf3",
+    "ev_2a1a69dae2fb",
+    "ev_f3e53611f8fb"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "cross_host_sessions"
+   ],
+   "confidence": 0.75,
+   "rationale": "Account adm-tkim opened session records#402 on records from 10.20.1.21 (workstation) at 2026-11-10T10:30:12+00:00. 10.20.1.21 (workstation) is not a listed administrator source (10.20.0.250, 10.20.1.90) and no approved change record covers records at this time. Sessions open on workstation at that moment: workstation#54 (rhaddad).",
+   "assumptions": [
+    "the stated administrator source policy is complete and current"
+   ],
+   "alternative_explanations": [
+    "approved work that was not recorded as a change",
+    "the administrator signed in from the shared workstation in person"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a session on this host was opened from another monitored host outside the stated access policy"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-05",
+   "claim_type": "forwarding_stopped",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": "Log forwarding stopped by a recorded command outside approved maintenance",
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "adm-tkim",
+   "t_start": "2026-11-10T10:30:45Z",
+   "t_end": "2026-11-10T10:34:05Z",
+   "object_or_session": "log-forwarder",
+   "evidence_ids": [
+    "ev_bfdef7f743b0",
+    "ev_c602b8a93a8e",
+    "ev_e49249e092de",
+    "ev_bfb2782e7150",
+    "ev_196ace5fc219",
+    "ev_4e197d46ccb4",
+    "ev_570e93bd66fa",
+    "ev_fdb66ba0799c"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "forwarding_review",
+    "heartbeat_gaps"
+   ],
+   "confidence": 0.75,
+   "rationale": "Log forwarding from records stopped for 200 s. A stop command by account adm-tkim is recorded at the start of the gap in session records#402, and no approved change record covers maintenance on that host at that time.",
+   "assumptions": [
+    "the supplied change records are complete for this shift"
+   ],
+   "alternative_explanations": [
+    "maintenance that was approved but not recorded"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a recorded stop command opens this collection gap and no approved change record covers it"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-06",
+   "claim_type": "shell_history_gap",
+   "category": "unresolved",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T10:25:21Z",
+   "t_end": "2026-11-10T10:35:26Z",
+   "object_or_session": "workstation#54",
+   "evidence_ids": [
+    "ev_ad11135ba4d2",
+    "ev_2a1a69dae2fb",
+    "ev_f3e53611f8fb"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "shell_history_review"
+   ],
+   "confidence": 0.4,
+   "rationale": "In session workstation#54 (account rhaddad) the records application logged 1 request(s) from the workstation with no matching shell-history command (0 command(s) recorded in the session). Shell history has no independent copy, so this cannot show that anything was removed.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "the touch-screen client was used; it writes no shell history",
+    "history entries were removed on the host"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-07",
+   "claim_type": "collection_gap",
+   "category": "unresolved",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T10:30:45Z",
+   "t_end": "2026-11-10T10:34:05Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_7f7f8922a6ec",
+    "ev_016cbfadc56f",
+    "ev_b128975b2187",
+    "ev_6531fb87d8f8",
+    "ev_e49249e092de",
+    "ev_bfb2782e7150",
+    "ev_196ace5fc219",
+    "ev_4e197d46ccb4",
+    "ev_570e93bd66fa",
+    "ev_fdb66ba0799c"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "local_vs_collector",
+    "heartbeat_gaps"
+   ],
+   "confidence": 0.6,
+   "rationale": "4 line(s) of /var/log/records-app/access.log exist on records but never reached the collector, during a 200 s heartbeat gap (cause: recorded service restart). This is a collection gap. The evidence does not show why collection stopped.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "forwarder maintenance or restart",
+    "transport loss",
+    "collector outage",
+    "deliberate interruption"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-08",
+   "claim_type": "retention_explained_absence",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T06:27:29Z",
+   "t_end": "2026-11-10T09:08:31Z",
+   "object_or_session": "/var/log/records-app/access.log",
+   "evidence_ids": [
+    "ev_6eaf049c0dc0",
+    "ev_f9e94e1336e3",
+    "ev_bbda3cc55361",
+    "ev_8861b51489ae",
+    "ev_0dcdc55ca908",
+    "ev_a21c2728e861",
+    "ev_35da361d7424"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "local_vs_collector"
+   ],
+   "confidence": 0.9,
+   "rationale": "202 line(s) of /var/log/records-app/access.log on records exist only at the collector, and all of them predate the host's retention boundary at 2026-11-10T09:09:04+00:00 (log rotation). Their absence from the host is expected, not suspicious.",
+   "assumptions": [
+    "the rotation record and the stated retention policy are accurate"
+   ],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  },
+  {
+   "id": "BR-09",
+   "claim_type": "policy_consistent_transfer",
+   "category": "benign_explanation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": null,
+   "t_start": "2026-11-10T12:18:04Z",
+   "t_end": "2026-11-10T12:18:11Z",
+   "object_or_session": "10.20.0.45:873",
+   "evidence_ids": [
+    "ev_ef2290dae9d7"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [
+    "transfer_session_correlation"
+   ],
+   "confidence": 0.9,
+   "rationale": "23,181,922 bytes from records to 10.20.0.45:873. destination 10.20.0.45 is an approved bulk destination: stor-nas-01 (backup and log archive).",
+   "assumptions": [],
+   "alternative_explanations": [],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a deterministic check supports this observation; it is not an incident allegation"
+   ],
+   "skeptic_note": null,
+   "produced_by": "BR"
+  }
+ ],
+ "attribution": {
+  "account_used": "rhaddad",
+  "session_ref": "workstation#54",
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_2a1a69dae2fb",
+   "ev_f3e53611f8fb"
+  ],
+  "contrary_evidence_ids": [
+   "ev_a21bce096427",
+   "ev_fd82e48e97b7"
+  ],
+  "assumptions": [
+   "badge-to-account assignments in the supplied directory are current"
+  ],
+  "limits": [
+   "an account identifies a credential, not the person typing",
+   "badge readers record badge taps, not people; tailgating and shared badges are not visible",
+   "this check cannot establish who operated the session and cannot clear anyone"
+  ],
+  "statement": "Account used: rhaddad. Human operator not established. Account rhaddad opened a console session at 2026-11-10T10:25:21+00:00; the badge assigned to that account (B-3743) was inside the building. That is compatible with the holder using it and equally with anyone else who had the credential.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "5 incident allegation(s), 4 benign explanation(s)/open note(s). Account used: rhaddad. Human operator not established. Account rhaddad opened a console session at 2026-11-10T10:25:21+00:00; the badge assigned to that account (B-3743) was inside the building. That is compatible with the holder using it and equally with anyone else who had the credential.",
+ "open_questions": [
+  "Who had access to the credential used in the linked session?",
+  "Was the destination known to anyone at the clinic?"
+ ],
+ "usage": {
+  "llm_calls": 0,
+  "tokens_in": 0,
+  "tokens_out": 0,
+  "tokens_cache_read": 0,
+  "cost_estimate_usd": 0.0,
+  "wall_seconds": 0.207146,
+  "tool_calls": 0,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": "2026-11-14T13:01:52.971183Z",
+ "locked": true,
+ "locked_at": "2026-11-14T13:01:53.180600Z",
+ "report_sha256": "b6cd46a0f94c7dad9ed0e67b2a49ed22ed48067c99104e0465965fcf3b494af9",
+ "review_history": [
+  {
+   "at": "2026-11-14T13:01:53.180600Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

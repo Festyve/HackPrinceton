@@ -3,7 +3,7 @@
 > Times are America/New_York. Entries record concrete check results, not intentions.
 > Status vocabulary: **OFFLINE-READY**, **AI-READY**, **INCOMPLETE** (PLAN §14).
 
-## Current state — second run, Saturday November 14, 08:10 ET
+## Current state — second run, Saturday November 14, 08:25 ET
 
 This block is the handoff. Everything below it is the build history, oldest first.
 
@@ -13,10 +13,10 @@ This block is the handoff. Everything below it is the build history, oldest firs
 | Launch | `uv sync --frozen && ./start.sh`, then http://127.0.0.1:8000. `./start.sh --port 8010` if the port is busy. |
 | Demo selection | Recorded replays. For the pitch: **Inside job · cover-up** recorded on Claude Opus 5.5 (specialist mode) or on Claude Haiku 5.5 (fast mode, with two recorded question answers). Also recorded on Haiku: **Records heist** and **Cold chain**. No key or network needed. |
 | Model in use | `anthropic:claude-haiku-5-5`, effort low, for every role. Opus 5.5 recordings and pilot are from the first run and unchanged. |
-| Spend | Estimated **$3.517** of the **$20** cap across both runs (543 model calls). This run: about **$0.59**. Reserved: $0. Unreconciled: $0. Automatic calls stop at $19.50. `uv run alibi spend`. |
+| Spend | Estimated **$3.628** of the **$20** cap across both runs (621 model calls). This run: about **$0.71**. Reserved: $0. Unreconciled: $0. Automatic calls stop at $19.50. `uv run alibi spend`. |
 | Tests | `uv run pytest` → **450 passed**: 429 offline, 21 in headless Chrome. On the UI fallback branch the browser count is 30. A fresh clone of the default branch at `c0cf94e` (07:50) installed, built, passed every test and served the recorded demo with no key and no `.env`. |
 | Recordings | `demo/replays/`: 4 real-model runs (1 Opus, 3 Haiku) and 2 scripted-fixture runs. All six reproduce their evidence byte for byte and replay offline. |
-| Measured results | `benchmarks/offline-v1`, `benchmarks/ai-pilot-v1` (first run, frozen); `benchmarks/paired-v2` and `benchmarks/paired-v2-rep1` (this run's evaluation and its replication; summary in `docs/evaluation-summary.md`); `benchmarks/calibration`, `benchmarks/feature-checks`, `benchmarks/paired-v2-dev` (operational checks). |
+| Measured results | `benchmarks/offline-v1`, `benchmarks/ai-pilot-v1` (first run, frozen); `benchmarks/paired-v2` and `benchmarks/paired-v2-rep1` (this run's evaluation and its replication; summary in `docs/evaluation-summary.md`); `benchmarks/paired-v2-repeat1` (eight cells run a second time; `docs/evaluation-v2-repeat1.md`); `benchmarks/calibration`, `benchmarks/feature-checks`, `benchmarks/paired-v2-dev` (operational checks). |
 
 **What works end to end now**
 
@@ -45,7 +45,7 @@ This block is the handoff. Everything below it is the build history, oldest firs
 2. Terry: add UI controls for the new routes, or take `codex/eric-ui-wiring`; rebase on `codex/eric-phase2`. See [`docs/ui-integration-brief.md`](docs/ui-integration-brief.md).
 3. Daniel: push the capture branch with its importer entry point.
 4. Repository owner: make the repository public. A redacted scan of the worktree and of every commit found no credential-like string, and `.env` and the ledger were never committed.
-5. Rayan: decide the pitch from [`docs/claims.md`](docs/claims.md). The honest headline from the measurements is that the deterministic comparison does the detecting (16 of 16 incident effects on the new cases) and the model investigates, explains and answers; the checks lifted one agent from 10 to 15 of 16; one agent did better than three.
+5. Rayan: decide the pitch from [`docs/claims.md`](docs/claims.md). The honest headline from the measurements is that the deterministic comparison does the detecting (16 of 16 incident effects on the new cases) and the model investigates, explains and answers; the checks lifted one agent from 10 to 15 of 16; one agent did better than three. A repeat of eight of those cells changed six of them by one or two effects, so present the order of the systems, which held both times, and not the exact gaps.
 
 ## Pre-existing state (before the overnight goal)
 
@@ -412,3 +412,11 @@ Phase-two model spend so far: about **$0.08** (ledger total $3.006 of the $20 ca
 - **One real-model question through the browser** on the Haiku recording: answered in 7.3 s, labeled "Live model", 3 claims confirmed by a check, 1 cited, 1 marked as the model's interpretation, no person named; 2 model calls, est. $0.0021. The recording's own label and its five findings were unchanged. Saved as `benchmarks/feature-checks/live-question-in-browser-haiku-5-5.json`.
 - **Fresh clone** of the default branch at `c0cf94e`, with no `.env`: `uv sync --frozen`, UI build, all 449 tests of that commit, `./start.sh`, recorded demo opened as "Recorded AI run". Passed.
 - Spend after this stretch: $3.517326, 543 calls, nothing reserved or unreconciled.
+
+### A declared repeat of eight evaluation cells (08:00–08:25)
+
+- Every comparison so far rested on one run per cell. `paired-v2-repeat1` was declared and pushed (`9ebc4b2`) before it ran: the eight model cells of the two incident cases of `paired-v2`, on the same two bundles, same model, prompts, tools, rules and caps. The configuration check refuses it if any of those differs from `paired-v2`'s own declaration.
+- **Result: 2 of 8 model cells established the same number of incident effects as the first time.** Out of 8 effects per system: one agent with the checks 7 then 8; three agents with the checks 5 then 6; one agent without 5 then 4; three agents without 5 then 5. The two systems with no model were identical, and the bundle hashes were the same in both runs.
+- What was the same both times: the deterministic checks established everything; one agent with the checks was ahead of three; only the systems without the checks were stopped by the input cap; no unsupported accepted allegation and no named person in any cell.
+- Consequence: README, the claims register, the judge questions and the Devpost draft now say that a one- or two-effect gap between systems is within what a second run changes. The repeat is reported beside the sums and never added to them; a test pins both.
+- Cost: est. $0.1109 (worst case declared: $0.36 against the $0.4244 left of the evaluation ceiling). Ledger after: $3.628263, 621 calls, nothing reserved or unreconciled. `BENCH_MAX_SYSTEM_RUNS` is back to 0.

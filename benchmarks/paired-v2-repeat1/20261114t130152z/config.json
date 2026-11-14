@@ -1,0 +1,277 @@
+{
+  "suite": "paired-v2-repeat1",
+  "evidence_origin": "SIM",
+  "supersedes": "nothing. offline-v1 and ai-pilot-v1 stay as recorded; this is a separate suite.",
+  "versions": {
+    "simulator": "1.1.0",
+    "scenario_seed_namespace": "1.0.0",
+    "scenario_catalog": "1.1.0",
+    "normalizer": "1.1.0",
+    "checks": "1.1.0",
+    "family_checks": "1.0.0",
+    "verifier": "1.1.0",
+    "scorer": "1.1.0",
+    "b0": "1.0.0",
+    "br": "1.1.0"
+  },
+  "model": {
+    "id": "anthropic:claude-haiku-5-5",
+    "effort": "low",
+    "max_tokens_per_call": 3000,
+    "price_in_per_mtok": 0.1,
+    "price_out_per_mtok": 0.5,
+    "same_for_every_role_and_arm": true,
+    "refusal_fallback": "off"
+  },
+  "caps_per_investigation": {
+    "max_calls": 24,
+    "max_input_tokens": 280000,
+    "max_output_tokens": 20000,
+    "max_seconds": 240.0,
+    "max_input_tokens_per_call": 90000,
+    "tool_result_max_records": 50,
+    "tool_result_max_bytes": 8192,
+    "shared_across": "lead, specialists and retries"
+  },
+  "systems": [
+    {
+      "id": "B0",
+      "label": "Fixed keyword recipe (no model)",
+      "kind": "offline"
+    },
+    {
+      "id": "BR",
+      "label": "Deterministic checks, templated findings (no model)",
+      "kind": "offline"
+    },
+    {
+      "id": "B1",
+      "label": "One agent, generic evidence tools only",
+      "kind": "ai",
+      "graph": "single-agent",
+      "checks": false
+    },
+    {
+      "id": "B1+",
+      "label": "One agent, generic tools + checks",
+      "kind": "ai",
+      "graph": "single-agent",
+      "checks": true
+    },
+    {
+      "id": "B2",
+      "label": "Lead + auditor + skeptic, generic evidence tools only",
+      "kind": "ai",
+      "graph": "alibi",
+      "checks": false
+    },
+    {
+      "id": "ALIBI",
+      "label": "Lead + auditor + skeptic, generic tools + checks",
+      "kind": "ai",
+      "graph": "alibi",
+      "checks": true
+    }
+  ],
+  "tools": {
+    "B1": {
+      "single-agent": [
+        "get_case_brief",
+        "search_events",
+        "count_events",
+        "get_events",
+        "submit_finding",
+        "record_skeptic_verdict",
+        "submit_attribution",
+        "finalize_report"
+      ]
+    },
+    "B1+": {
+      "single-agent": [
+        "get_case_brief",
+        "search_events",
+        "count_events",
+        "get_events",
+        "check_local_vs_collector",
+        "check_transfer_sessions",
+        "check_account_vs_person",
+        "submit_finding",
+        "record_skeptic_verdict",
+        "submit_attribution",
+        "finalize_report"
+      ]
+    },
+    "B2": {
+      "lead-investigator": [
+        "get_case_brief",
+        "search_events",
+        "count_events",
+        "get_events",
+        "submit_finding",
+        "record_skeptic_verdict",
+        "submit_attribution",
+        "finalize_report"
+      ],
+      "integrity-auditor": [
+        "get_case_brief",
+        "search_events",
+        "count_events",
+        "get_events"
+      ],
+      "skeptic": [
+        "get_case_brief",
+        "search_events",
+        "count_events",
+        "get_events"
+      ]
+    },
+    "ALIBI": {
+      "lead-investigator": [
+        "get_case_brief",
+        "search_events",
+        "count_events",
+        "get_events",
+        "submit_finding",
+        "record_skeptic_verdict",
+        "submit_attribution",
+        "finalize_report"
+      ],
+      "integrity-auditor": [
+        "get_case_brief",
+        "search_events",
+        "count_events",
+        "get_events",
+        "check_local_vs_collector",
+        "check_transfer_sessions",
+        "check_account_vs_person"
+      ],
+      "skeptic": [
+        "get_case_brief",
+        "search_events",
+        "count_events",
+        "get_events",
+        "check_local_vs_collector",
+        "check_transfer_sessions"
+      ]
+    },
+    "extra_checks_on_family_bundles": {
+      "tools": [
+        "check_record_exports",
+        "check_cross_host_sessions",
+        "check_forwarding",
+        "check_file_times",
+        "check_shell_history",
+        "check_sensor_streams"
+      ],
+      "given_to": "the same roles that hold the first-run checks; arms B1 and B2 get none"
+    }
+  },
+  "prompt_sha256": {
+    "B1": {
+      "single": "3c14c5bdb397dbb0106ce4ca15afd27f1e5fe2172483aa7d457209b1911f0697"
+    },
+    "B1+": {
+      "single": "c13a2177ac56a5b65b5e373b1a45a988a1f704ae9b5a7e7292292c8cf6a90fa2"
+    },
+    "B2": {
+      "lead": "a3442c5e217537c71beb057589c7c12d96bce73559179e6e580af8fcb222de66",
+      "auditor": "7281b5e47995726237db7f3e492b4e0a427b8fbca711a3a6300340ab22f12501",
+      "skeptic": "a1f0be4aa49455bc4cc4109099f75d606cea0f2da3902068c13ed90967626e31"
+    },
+    "ALIBI": {
+      "lead": "338d6faff5a15ef8a99d3f46d72bc36d0f824cff498377debd650cebdbce5088",
+      "auditor": "0bbef86588f0a2c03d561fadc89edd932c7c7a6d5d89eb506572ab00f4387624",
+      "skeptic": "536e761c2f43a87dfb079a6abbf4b8e4e283295b10c287a7aae1c52941ecb8c4"
+    },
+    "family_addendum": {
+      "vocabulary": "0fbcb950d8d2995ee4647e2a4d6882c654fa41d229f7825c57619656587fceb8",
+      "with_checks": "ddd188ad15606425024188ec2d26d5ff2b67971414d70f0249890d81117ce980",
+      "without_checks": "6135e74310a13b31092ff358bc6fade8d9b92705410e6abe47cf61ba372da43d"
+    }
+  },
+  "verifier_feedback_during_investigation": false,
+  "verifier_feedback_note": "submit_finding confirms form and reference validity only. Rule support is applied after the report is locked, identically for all six systems. The interactive product keeps immediate feedback; that is the one deliberate difference from this evaluation.",
+  "seed_split": {
+    "evaluation": [
+      201,
+      202
+    ],
+    "reserved_unused": [
+      207,
+      208,
+      209,
+      210,
+      211,
+      212
+    ],
+    "note": "These are the seeds of paired-v2's two incident cases. Their bundles existed and their first results were known when this was declared. They are run again unchanged; nothing was tuned on them."
+  },
+  "cases": [
+    {
+      "case_ref": "V01",
+      "variant": "incident_evasion",
+      "seed": 201,
+      "group": "difficult incident",
+      "why": "the inside job plus four attempts to cover it; one of them leaves nothing observable"
+    },
+    {
+      "case_ref": "V02",
+      "variant": "incident_coverup",
+      "seed": 202,
+      "group": "cover-up",
+      "why": "a host log line removed after the transfer"
+    }
+  ],
+  "matrix": {
+    "ai_cells": 8,
+    "runs_per_cell": 1,
+    "offline_cells": 4,
+    "system_order": "randomized per case from the run id and recorded"
+  },
+  "batch_review": "skipped_for_benchmark (approved_by_human=false); the locked output is graded as is",
+  "matching": {
+    "tolerance_s": 120,
+    "max_window_s": 1800,
+    "only_final_accepted_allegations_can_match": true,
+    "rule": "claim type == effect type AND same host AND (same object OR same session) AND the window overlaps within tolerance AND the finding cites a record the executed step produced"
+  },
+  "cost_preflight": {
+    "worst_case_usd_per_cell": 0.045,
+    "worst_case_usd_total": 0.36,
+    "category_ceiling_usd": 0.4244,
+    "basis": "every input token priced as a cache write, the full output cap used"
+  },
+  "error_policy": "every cell is kept: completed, censored by a cap, refused, errored or not started. No replacement seeds, no reruns of a finished cell.",
+  "reported": [
+    "per-case outcomes",
+    "valid citations",
+    "unsupported allegations",
+    "false or unsupported named attribution",
+    "estimated cost",
+    "latency",
+    "sample size"
+  ],
+  "what_this_cannot_show": "One more run of eight cells. Beside the first run it shows whether each outcome happened again once. Two runs are not a variance estimate.",
+  "paid_overage_authorized_usd": 0,
+  "repeats": {
+    "suite": "paired-v2",
+    "note": "A second run of the eight incident cells of paired-v2 on the same two bundles. Declared after paired-v2 and its replication had run and their results had been seen. Nothing is tuned: the model, prompts, tools, rules and caps must equal paired-v2's declaration, and the configuration check refuses the run otherwise. Reported beside paired-v2; never added to the per-system sums.",
+    "must_equal_the_repeated_suite": [
+      "versions",
+      "model",
+      "caps_per_investigation",
+      "systems",
+      "tools",
+      "prompt_sha256",
+      "verifier_feedback_during_investigation",
+      "batch_review",
+      "matching"
+    ],
+    "shared_ceiling_usd": 0.75,
+    "already_used_usd": {
+      "paired-v2": 0.2198,
+      "paired-v2-rep1": 0.1058
+    }
+  },
+  "declared_at": "2026-11-14T13:00:01.782717+00:00"
+}

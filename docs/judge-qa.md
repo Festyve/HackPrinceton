@@ -14,7 +14,7 @@ A line that is no longer in the local log, because an independent collector kept
 
 **Does the model discover the missing line itself, or do the checks do it?**
 
-We measured both. In the second run, on four new incident cases, a single agent with only generic search tools established 10 of 16 incident effects, and half of its runs ran out of budget. The same agent with the deterministic checks established 15 of 16 at about half the cost. The checks with no model at all established 16 of 16. So on these cases the checks carry the detection, and the model's contribution is investigation, explanation, alternatives and answering questions. One run per cell: this is how the systems differed here, not an accuracy estimate.
+We measured both. In the second run, on four new incident cases, a single agent with only generic search tools established 10 of 16 incident effects, and half of its runs ran out of budget. The same agent with the deterministic checks established 15 of 16 at about half the cost. The checks with no model at all established 16 of 16. So on these cases the checks carry the detection, and the model's contribution is investigation, explanation, alternatives and answering questions. One run per cell: this is how the systems differed here, not an accuracy estimate. We repeated eight of those cells once and only two established the same number of effects, so a gap of one or two effects means little; the order (checks alone, then one agent with the checks, then the rest) was the same both times.
 
 **Why multiple agents?**
 
@@ -39,6 +39,14 @@ Evidence is returned to a model as data inside tool results and rendered as text
 **What does removing a witness show?**
 
 Which conclusions depend on which source. Take the collector away and the transfer is still established from the network tap, while the removed log line can no longer be established: the comparison it rests on cannot be run. The answer is "cannot be established from this evidence", which is different from "did not happen". Scoring for such a view lists every original effect and both denominators, so less evidence can never look like better detection.
+
+**Did you run anything twice?**
+
+Yes, once, and it changed how we talk about the results. We declared a repeat of the eight model cells of two incident cases, on the same evidence, with the same model, prompts, tools and budget. Two of the eight established the same number of effects as the first time. One agent with the checks went from 7 to 8 of 8, three agents with the checks from 5 to 6, one agent without the checks from 5 to 4. Nothing unsupported was accepted and nobody was named in either run. Two runs are not a variance estimate, but they are enough to say that a difference of one or two effects between systems is not a finding. The two systems with no model gave identical results, as they must.
+
+**Who checked your code?**
+
+Tests, and two cold reads by a second agent that was told nothing about what to expect: one of the budget code, one of the information barrier and input handling in the new routes. They found fifteen defects, each reproduced before it was reported. The most serious: a derived evidence view could be unsealed while the original report was still open. All are fixed, and each has a regression test.
 
 **Is simulated evidence enough?**
 

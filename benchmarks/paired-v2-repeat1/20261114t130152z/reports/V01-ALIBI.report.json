@@ -1,0 +1,181 @@
+{
+ "schema_version": "1.0.0",
+ "report_id": "rep-eval-v01-20261114t130152z-alibi",
+ "bundle_id": "bndl-820162c5d101a140",
+ "system_id": "ALIBI",
+ "system_label": "Specialist review: lead + integrity-auditor + skeptic with deterministic checks (benchmark arm ALIBI)",
+ "inference_mode": "LIVE_MODEL",
+ "model_id": "anthropic:claude-haiku-5-5",
+ "findings": [
+  {
+   "id": "F-8db130",
+   "claim_type": "policy_violating_transfer",
+   "category": "incident_allegation",
+   "attack_id": "exfiltration",
+   "technique_family": null,
+   "host": "workstation",
+   "actor_claimed": null,
+   "account_used": "rhaddad",
+   "t_start": "2026-11-10T10:27:48Z",
+   "t_end": "2026-11-10T10:28:03Z",
+   "object_or_session": "10.20.9.62:8080",
+   "evidence_ids": [
+    "ev_09b4ad6dcb1f",
+    "ev_61a92f53ab5f",
+    "ev_ad11135ba4d2",
+    "ev_2a1a69dae2fb",
+    "ev_f3e53611f8fb",
+    "ev_e54a71973aad"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.8,
+   "rationale": "23,180,407 bytes sent from 10.20.1.21 to 10.20.9.62:8080, above the 5 MB threshold and not an approved bulk destination. Preceded by a 23 MB patients_full bulk export by rhaddad from the same client IP, 10:26:38. No change record covers it.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Client request export sent to an unlisted endpoint by the account holder",
+    "Another person using the shared console credential"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "bulk transfer to a destination not on the approved list, cited via the flow record"
+   ],
+   "skeptic_note": "Unapproved destination, bytes match the export, no covering change record. Operator not established.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-0b669d",
+   "claim_type": "second_host_session",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "adm-tkim",
+   "t_start": "2026-11-10T10:30:12Z",
+   "t_end": "2026-11-10T10:35:00Z",
+   "object_or_session": "records#402",
+   "evidence_ids": [
+    "ev_a9ffa48ff362",
+    "ev_1f05ff28f0e1",
+    "ev_c8c107da32b4",
+    "ev_55e5f9f5c9f1",
+    "ev_98708a555bf3"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.7,
+   "rationale": "adm-tkim opened an SSH session to records from 10.20.1.21, the nurse workstation IP, which is not a listed admin source. It ran 10:30:12-10:35:00 and overlaps workstation#54 (rhaddad). The remote-access policy only allows adm-lt-01 and vpn-gw-01.",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Admin work by the account holder from a non-listed host",
+    "Admin credential used from the nurse workstation by another person"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a session on this host was opened from another monitored host outside the stated access policy"
+   ],
+   "skeptic_note": "Session from non-listed admin source with no covering change record.",
+   "produced_by": "lead-investigator"
+  },
+  {
+   "id": "F-ea24f6",
+   "claim_type": "forwarding_stopped",
+   "category": "incident_allegation",
+   "attack_id": null,
+   "technique_family": null,
+   "host": "records",
+   "actor_claimed": null,
+   "account_used": "adm-tkim",
+   "t_start": "2026-11-10T10:30:45Z",
+   "t_end": "2026-11-10T10:34:05Z",
+   "object_or_session": "log-forwarder",
+   "evidence_ids": [
+    "ev_bfdef7f743b0",
+    "ev_c602b8a93a8e",
+    "ev_196ace5fc219",
+    "ev_e49249e092de",
+    "ev_bfb2782e7150"
+   ],
+   "counterevidence_ids": [],
+   "check_refs": [],
+   "confidence": 0.75,
+   "rationale": "adm-tkim ran sudo systemctl stop log-forwarder at 10:30:50 in records#402. Collector heartbeats from rec-srv-01 stop after 10:30:45 and resume at 10:34:05. No change record covers the stop (CHG-6914 window is 08:33-09:18).",
+   "assumptions": [],
+   "alternative_explanations": [
+    "Unrecorded maintenance restart by the admin",
+    "Service stopped without operator intent"
+   ],
+   "status": "verified",
+   "verification_status": "supported_observation",
+   "verifier_notes": [
+    "a recorded stop command opens this collection gap and no approved change record covers it"
+   ],
+   "skeptic_note": "Stop command and heartbeat gap verified; CHG-6914 window ended before the event.",
+   "produced_by": "lead-investigator"
+  }
+ ],
+ "attribution": {
+  "account_used": "rhaddad; adm-tkim",
+  "session_ref": null,
+  "human_identity": "insufficient_evidence",
+  "named_person_accused": null,
+  "named_person_exonerated": null,
+  "supporting_evidence_ids": [
+   "ev_2a1a69dae2fb",
+   "ev_61a92f53ab5f",
+   "ev_09b4ad6dcb1f",
+   "ev_a9ffa48ff362",
+   "ev_bfdef7f743b0"
+  ],
+  "contrary_evidence_ids": [],
+  "assumptions": [],
+  "limits": [
+   "Account names are credentials, not persons",
+   "Flow records show bytes, not content",
+   "Shell histories are not forwarded; absence there is not proof of removal",
+   "Metadata snapshots are host-writable"
+  ],
+  "statement": "Two credentials are tied to the activity. rhaddad was used for the workstation console session workstation#54 and the 23 MB patients_full export. adm-tkim was used for records#402 from the nurse workstation IP and for stopping log-forwarder. Account use is established. The human operator is not established. Console credentials have been found written down before, and badge records do not cover remote sessions.",
+  "review_status": "skipped_for_benchmark",
+  "approved_by_human": false,
+  "approved_at": null
+ },
+ "summary": "Tip: review of records access and transfers during the shift (2026-11-10, 10:25-10:35 UTC).\n\nSupported findings (three, all kept by skeptic review):\n1. Policy-violating transfer (F-8db130): workstation 10.20.1.21 sent 23,180,407 bytes to 10.20.9.62:8080 at 10:27:48-10:28:03. That destination is not an approved bulk destination and no change record covers it. It follows a 23 MB patients_full bulk export by account rhaddad from the same client IP at 10:26:38. Account used: rhaddad, in workstation session 54.\n2. Forwarding stopped (F-ea24f6): adm-tkim ran \"systemctl stop log-forwarder\" on records at 10:30:50 within session records#402. The collector heartbeat from rec-srv-01 stops at 10:30:45 and resumes at 10:34:05. CHG-6914 (08:33-09:18) does not cover this.\n3. Second-host session (F-0b669d): adm-tkim opened records#402 from 10.20.1.21, the nurse workstation, which is not a listed admin source (adm-lt-01 or vpn-gw-01). It ran 10:30:12-10:35:00 and overlapped rhaddad's workstation session.\n\nAttribution: account use is established for rhaddad and adm-tkim. The human operator is not established for either account. Credentials at the shared console have been found written down before, and badge records do not cover remote sessions.\n\nNot established: whether data reached 10.20.9.62 or was used; who typed the commands. Shell histories are not forwarded, so their gaps are notes only. The cache-0a91.bin mtime anomaly is host-writable metadata, unresolved. Auditor output was truncated, so other candidates (shell-history gap, records access.log gap) were not independently confirmed.",
+ "open_questions": [
+  "Who was physically or remotely operating rhaddad session workstation#54 and adm-tkim session records#402?",
+  "What is 10.20.9.62 and did it receive and retain the 23 MB export?",
+  "Why was the log-forwarder stopped at 10:30:50, and was any change request raised?",
+  "Why does the cache-0a91.bin mtime (2026-10-11) predate its arrival (2026-11-10)? Is the workstation metadata reliable?",
+  "Do the rhaddad shell history and records access.log gaps reflect rotation, collection loss, or removal?",
+  "Were the truncated auditor candidates (shell-history gap, metadata changes) confirmed?"
+ ],
+ "usage": {
+  "llm_calls": 12,
+  "tokens_in": 160897,
+  "tokens_out": 11976,
+  "tokens_cache_read": 109902,
+  "cost_estimate_usd": 0.013461,
+  "wall_seconds": 51.963,
+  "tool_calls": 28,
+  "scripted_turns": 0,
+  "retries": 0,
+  "errors": 0,
+  "timed_out": false
+ },
+ "created_at": null,
+ "locked": true,
+ "locked_at": "2026-11-14T13:05:14.835675Z",
+ "report_sha256": "d0e31fe5067639a0c40cb281e27a19d6da21a1f8ef14cd7b3f15aba75a1e1fa8",
+ "review_history": [
+  {
+   "at": "2026-11-14T13:05:14.835675Z",
+   "decision": "skipped_for_benchmark",
+   "by_human": false,
+   "note": ""
+  }
+ ],
+ "verifier_version": "1.1.0"
+}

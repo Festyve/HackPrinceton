@@ -264,6 +264,16 @@ def test_the_results_route_serves_the_same_summary_as_the_committed_result_files
     assert {k: v["censored"] for k, v in by.items()} == {"B0": 0, "BR": 0, "B1": 3, "B1+": 0, "B2": 3, "ALIBI": 0}
     assert all(v["aggregate"]["unsupported_named_attribution"] == 0 for v in by.values())
     assert len(got["correct_findings_not_counted"]) >= 3
+    # the declared repeat is reported beside the sums, never inside them (the systems above still have six cells)
+    assert {s["id"]: s["cells"] for s in got["systems"]}["B1+"] == 6
+    again = got["repeats"][0]
+    assert again["repeat"]["suite"] == evaluation.REPEAT_SUITE and again["same_evidence_bundles"] is True
+    assert (again["ai_cells_same_effects"], again["ai_cells"]) == (2, 8) and again["offline_cells_same_effects"] == 4
+    assert {s["id"]: (s["first"], s["repeat"]) for s in again["per_system"]} == {
+        "B0": ([2, 8], [2, 8]), "BR": ([8, 8], [8, 8]), "B1": ([5, 8], [4, 8]), "B1+": ([7, 8], [8, 8]),
+        "B2": ([5, 8], [5, 8]), "ALIBI": ([5, 8], [6, 8])}
+    assert all(c["first"]["unsupported_accepted"] == c["repeat"]["unsupported_accepted"] == 0 and
+               c["first"]["named_a_person"] == c["repeat"]["named_a_person"] == 0 for c in again["cells"])
     # with no result files there is nothing to show, and the route says so with null
     assert evaluation.summary({s: tmp_path / "none" / s for s in evaluation.SUITES}) is None
 

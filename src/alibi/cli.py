@@ -455,7 +455,7 @@ def _cmd_eval(args: argparse.Namespace) -> int:
         if args.summary:
             docs = [d for d in (evaluation.latest(suite=name) for name in evaluation.summed_suites()) if d]
             out = evaluation.REPORT_MD.with_name("evaluation-summary.md")
-            out.write_text(evaluation.render_combined(docs), encoding="utf-8")
+            out.write_text(evaluation.render_combined(docs, (evaluation.summary() or {}).get("repeats")), encoding="utf-8")
             print(f"wrote {out}")
             return 0
         if args.dev_check:
