@@ -413,6 +413,21 @@ export interface PairedSummary {
     };
   }>;
   note?: string;
+  repeats?: Array<{
+    first: { suite: string; run_id: string };
+    repeat: { suite: string; run_id: string };
+    ai_cells: number;
+    ai_cells_same_effects: number;
+    same_evidence_bundles?: boolean;
+    per_system: Array<{
+      id: string;
+      label: string;
+      first: [number, number];
+      repeat: [number, number];
+      stopped_by_a_cap: [number, number];
+    }>;
+    note?: string;
+  }>;
   model?: string | null;
   inference?: string | null;
   incident_cases?: number;

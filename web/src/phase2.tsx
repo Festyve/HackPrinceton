@@ -959,6 +959,53 @@ export function EvaluationSummary({ s }: { s: PairedSummary }) {
         </table>
       </div>
       <p className="note">{s.note}</p>
+      {(s.repeats ?? []).map((r) => (
+        <details
+          className="benchmark-details"
+          key={r.repeat.run_id}
+          data-testid="evaluation-repeat"
+        >
+          <summary>
+            Run once more on the same evidence: {r.ai_cells_same_effects} of{" "}
+            {r.ai_cells} model cells established the same number of effects
+          </summary>
+          <p className="small muted">
+            <span className="mono">{r.repeat.suite}</span> repeats the incident
+            cells of <span className="mono">{r.first.suite}</span>. {r.note}
+          </p>
+          <div className="tablewrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>System</th>
+                  <th>Effects established, first run</th>
+                  <th>Effects established, repeat</th>
+                  <th>Runs stopped by a cap, first / repeat</th>
+                </tr>
+              </thead>
+              <tbody>
+                {r.per_system.map((x) => (
+                  <tr key={x.id} data-system={x.id}>
+                    <td>
+                      <b>{x.id}</b>
+                      <div className="small muted">{x.label}</div>
+                    </td>
+                    <td>
+                      {x.first[0]}/{x.first[1]}
+                    </td>
+                    <td>
+                      {x.repeat[0]}/{x.repeat[1]}
+                    </td>
+                    <td>
+                      {x.stopped_by_a_cap[0]} / {x.stopped_by_a_cap[1]}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      ))}
       {lost.length > 0 && (
         <details className="benchmark-details">
           <summary>

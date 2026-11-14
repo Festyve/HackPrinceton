@@ -249,6 +249,12 @@ def test_the_benchmark_tab_shows_the_six_system_evaluation_with_its_limits(serve
     assert "claude-haiku-5-5" in text and "simulated evidence" in text
     assert "no system was told whether a finding was supported" in text
     assert "correct finding" in text  # the findings that were right but did not count are listed, not hidden
+    # the declared repeat is shown beside the table with what it means, and is not added to it
+    again = page.locator(tid("evaluation-repeat"))
+    assert "2 of 8 model cells established the same number of effects" in again.locator("summary").inner_text()
+    again.locator("summary").click()
+    assert "not a variance estimate" in again.inner_text() and "7/8" in again.locator('tr[data-system="B1+"]').inner_text()
+    assert "8/8" in again.locator('tr[data-system="B1+"]').inner_text() and "15/16" in row("B1+")
     # the first-run results are still there, named as the first run
     assert page.locator(tid("benchmark-summary")).count() == 1 and "First run" in page.inner_text(".bench")
     assert page.errors == []
