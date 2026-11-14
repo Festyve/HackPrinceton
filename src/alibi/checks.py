@@ -468,6 +468,23 @@ def _near(a: int, b: int, tol: float = SIZE_TOLERANCE) -> bool:
     return b > 0 and abs(a - b) <= max(4096, tol * b)
 
 
+def export_approval_for(context: dict[str, Any], src_host: str | None, dst: str, start: datetime) -> dict[str, Any] | None:
+    """The approved bulk-export change record, if any, that covers a transfer from src_host to dst at `start`.
+
+    A record covers exactly what it names: the source host, the destination address and the time window.
+    """
+    for rec in context.get("change_records") or []:
+        if rec.get("kind") != "bulk_export" or rec.get("destination_ip") != dst or rec.get("source_host") != src_host:
+            continue
+        try:
+            lo, hi = _dt(rec["window_start"]), _dt(rec["window_end"])
+        except (KeyError, ValueError):
+            continue
+        if lo <= start <= hi:
+            return rec
+    return None
+
+
 def correlate_transfers(store: EvidenceStore, manifest: EvidenceManifest) -> dict[str, Any]:
     """Bulk outbound flows vs. destination policy, overlapping sessions and staged objects."""
     pol = policy_from(manifest)
@@ -506,6 +523,18 @@ def correlate_transfers(store: EvidenceStore, manifest: EvidenceManifest) -> dic
         else:
             status, note = "not_approved", (f"destination {dst} is not on the approved bulk-destination list "
                                             f"({', '.join(sorted(pol.approved_ips))})")
+        # --- phase two (records family): an approved change record can cover ONE export to a destination that
+        # is not on the standing list. Bundles without change records are untouched by this block.
+        covering = None
+        if status == "not_approved" and "change_records" in manifest.operational_context:
+            covering = export_approval_for(manifest.operational_context, src_host, dst, start)
+            if covering is not None:
+                status = "approved"
+                note = (f"destination {dst} is named in approved change record {covering['id']} "
+                        f"({covering.get('dataset')} to {covering.get('destination_name')}, "
+                        f"{covering['window_start']} to {covering['window_end']})")
+            else:
+                note += "; no approved change record covers an export to it at this time"
         row: dict[str, Any] = {
             "transfer_id": f"xfer-{n}", "flow_event_id": fl.id, "src": src, "src_host": src_host, "dst": dst,
             "dport": fl.attrs["dport"], "bytes_out": fl.attrs["bytes_out"], "start": iso(start), "end": iso(end),
@@ -513,6 +542,8 @@ def correlate_transfers(store: EvidenceStore, manifest: EvidenceManifest) -> dic
             "command_event_ids": [], "staged_object": None,
             "limits": ["a flow record shows bytes moved between two addresses; it does not show the content"],
         }
+        if covering is not None:
+            row["change_record_id"] = covering["id"]
         if src_host in ("workstation", "records"):
             sess = sessions_cache.setdefault(src_host, reconstruct_sessions(store, src_host))
             over = [s for s in sess.values() if s.login_ts and s.login_ts <= start
@@ -535,7 +566,11 @@ def correlate_transfers(store: EvidenceStore, manifest: EvidenceManifest) -> dic
                 size = st.attrs["size"]
                 exports = [e for e in store.scan(source="app", action="export_bulk", t_start=lo, t_end=start)
                            + store.scan(source="collector", action="export_bulk", t_start=lo, t_end=start + timedelta(seconds=5))
-                           if e.attrs.get("client") == src and _near(int(e.attrs.get("bytes", 0)), size)]
+                           if (e.attrs.get("client") == src
+                               # phase two: an export made ON the source host itself is logged with a loopback client
+                               or (e.attrs.get("client") == "127.0.0.1"
+                                   and (e.attrs.get("origin_host") if e.source == "collector" else e.host) == src_host))
+                           and _near(int(e.attrs.get("bytes", 0)), size)]
                 retr = [f for f in bulk_in if f.attrs["src"] == src and lo <= f.ts <= start and _near(f.attrs["bytes_in"], size)]
                 stage_cmds = [e for e in store.scan(source="shell_history", host=src_host, t_start=lo, t_end=start)
                               if (st.object or "\x00") in (e.object or "") and e.id not in row["command_event_ids"]]

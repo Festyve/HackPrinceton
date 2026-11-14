@@ -136,6 +136,9 @@ class World:
         self._sport = 40_000 + rng.randrange(0, 5000)
         self.console_busy_until: datetime | None = None
         self.now: datetime = capture_start
+        # Cold-chain sensor state. Empty in every other case family, and then nothing is rendered for it.
+        self.sensor_local: dict[str, list[dict[str, Any]]] = {}  # the hub's own (host-local, writable) store
+        self.sensor_ref: dict[str, list[dict[str, Any]]] = {}  # an independent reference logger
 
         self.add_log("workstation", AUTH_LOG, forwarded=True, keep=1)
         self.add_log("workstation", SYSLOG, forwarded=True, keep=1)
@@ -238,6 +241,64 @@ class World:
     @staticmethod
     def _stat_row(path: str, st: dict[str, Any]) -> str:
         return f"{path}\t{st['size']}\t{iso(st['mtime'])}\t{iso(st['ctime'])}\t{st['inode']}\t{st['owner']}"
+
+    # ------------------------------------------------------------------ phase-two primitives
+    def set_file_times(self, role: str, path: str, mtime: datetime, ctime: datetime) -> TraceRef:
+        """Change a file's recorded modification time. The inode change time moves to `ctime`, as it
+        does on a real filesystem: metadata edits cannot back-date ctime."""
+        st = self.files[role][path]
+        st["mtime"], st["ctime"] = mtime, ctime
+        return TraceRef(artifact_logical=f"{role}:fs_stat", raw=self._stat_row(path, st), ts=mtime)
+
+    def restore_file(self, role: str, path: str, size: int, owner: str, mtime: datetime, ctime: datetime) -> TraceRef:
+        """A file restored with its original modification time preserved (as an archive restore does)."""
+        prev = self.files[role].get(path)
+        if prev is None:
+            self._inode[role] += self.rng.randrange(1, 40)
+            inode = self._inode[role]
+        else:
+            inode = prev["inode"]
+        self.files[role][path] = {"size": size, "mtime": mtime, "ctime": ctime, "inode": inode, "owner": owner}
+        return TraceRef(artifact_logical=f"{role}:fs_stat", raw=self._stat_row(path, self.files[role][path]), ts=mtime)
+
+    def clear_history(self, role: str, account: str, since: datetime | None) -> list[tuple[datetime, str]]:
+        """Remove shell-history entries (all, or those at/after `since`). Returns what was removed."""
+        cmds = self.histories.get((role, account), [])
+        gone = [c for c in cmds if since is None or c[0] >= since]
+        self.histories[(role, account)] = [c for c in cmds if not (since is None or c[0] >= since)]
+        return gone
+
+    def stop_forwarding(self, role: str, start: datetime, end: datetime) -> None:
+        """Log forwarding from `role` is down in [start, end). Lines written then never reach the collector."""
+        self.forwarder_down.setdefault(role, []).append((start, end))
+
+    def last_flow_ref(self) -> TraceRef:
+        rec = self.flows[-1]
+        return TraceRef(artifact_logical="tap:flows", raw=self._flow_line(rec), ts=datetime.fromisoformat(rec["start"]))
+
+    def sensor_reading(self, sensor: str, ts: datetime, temp_c: float, state: str = "ok") -> dict[str, Any]:
+        """One reading in the hub's own store (the stream a dashboard shows). Host-local and writable."""
+        rows = self.sensor_local.setdefault(sensor, [])
+        rec = {"ts": iso(ts), "sensor": sensor, "seq": (rows[-1]["seq"] + 1 if rows else 1),
+               "temp_c": round(temp_c, 1), "state": state}
+        rows.append(rec)
+        return rec
+
+    def reference_reading(self, logger: str, sensor: str, ts: datetime, temp_c: float) -> dict[str, Any]:
+        """One reading of the independent reference logger (its own probe, clock and storage)."""
+        rows = self.sensor_ref.setdefault(logger, [])
+        rec = {"ts": iso(ts), "logger": logger, "monitors": sensor, "seq": (rows[-1]["seq"] + 1 if rows else 1),
+               "temp_c": round(temp_c, 1)}
+        rows.append(rec)
+        return rec
+
+    @staticmethod
+    def sensor_line(rec: dict[str, Any]) -> str:
+        return json.dumps(rec, separators=(",", ":"))
+
+    @staticmethod
+    def reference_line(rec: dict[str, Any]) -> str:
+        return f"{rec['ts']},{rec['logger']},{rec['monitors']},{rec['seq']},{rec['temp_c']:.1f}"
 
     def flow(self, start: datetime, src: str, dst: str, dport: int, bytes_out: int, bytes_in: int,
              duration_s: float | None = None) -> TraceRef:
@@ -348,6 +409,12 @@ class World:
         arts["collector/var/log/collected/collected.log"] = "".join(r[3] + "\n" for r in merged)
         flows = sorted(self.flows, key=lambda r: (r["start"], r["_order"]))
         arts["tap/flows.jsonl"] = "".join(self._flow_line(r) + "\n" for r in flows)
+        # cold-chain sources exist only in that case family; nothing is added to any other bundle
+        for sensor, rows in sorted(self.sensor_local.items()):
+            arts[f"iot-hub/sensors/{sensor}.jsonl"] = "".join(self.sensor_line(r) + "\n" for r in rows)
+        for logger, rows in sorted(self.sensor_ref.items()):
+            arts[f"reference/coldchain/{logger}.csv"] = "ts,logger,monitors,seq,temp_c\n" + "".join(
+                self.reference_line(r) + "\n" for r in rows)
         return arts
 
 

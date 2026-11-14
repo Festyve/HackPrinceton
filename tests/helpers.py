@@ -99,3 +99,20 @@ def mini_case(tmp_path: Path, artifacts: dict[str, list[str]], ctx: dict | None 
 
 def badge(hms: str, badge_id: str, event: str, seq: int = 1) -> str:
     return '{"ts":"%s","badge":"%s","event":"%s","reader":"door-staff-1","seq":%d}' % (ts(hms), badge_id, event, seq)
+
+
+def without_sources(paths, tmp_path: Path, drop: set[str]) -> tuple[EvidenceStore, EvidenceManifest]:
+    """A view of a frozen episode with whole source kinds left out of BOTH the manifest and the store.
+
+    The frozen bundle is only read. Used to check that an absent witness reads as "not assessable"
+    rather than as a clean result or an allegation.
+    """
+    from alibi.episode import load_manifest
+    from alibi.evidence.normalize import normalize_bundle
+
+    manifest = load_manifest(paths)
+    keep = [s for s in manifest.sources if s.source not in drop]
+    events, _ = normalize_bundle(paths.raw, [s.artifact for s in keep])
+    db = tmp_path / f"subset-{len(list(tmp_path.glob('subset-*')))}.duckdb"
+    build_store(db, events)
+    return EvidenceStore(db), manifest.model_copy(update={"sources": keep, "event_count": len(events)})

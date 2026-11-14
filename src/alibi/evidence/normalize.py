@@ -84,6 +84,11 @@ def classify(artifact: str) -> tuple[str, str, str | None, int]:
         return "badge", role, None, 0
     if rest == "/flows.jsonl":
         return "flow", role, None, 0
+    # --- phase two (additive): cold-chain sources
+    if rest.endswith(".jsonl") and "/sensors/" in rest:
+        return "sensor", role, None, 0
+    if rest.endswith(".csv") and "/coldchain/" in rest:
+        return "reference", role, None, 0
     return "unknown", role, None, 0
 
 
@@ -275,6 +280,34 @@ def normalize_artifact(artifact: str, text: str) -> tuple[list[Event], list[str]
                             "record_type": "simulated flow record (not a packet capture)"})
             except (ValueError, KeyError) as exc:
                 unparsed(n, off, raw, f"bad flow record ({type(exc).__name__})", "flow")
+    elif kind == "sensor":
+        # the hub's own stored readings (the stream a dashboard shows)
+        for n, off, raw in _iter_lines(text):
+            if not raw:
+                continue
+            try:
+                rec = json.loads(raw)
+                emit(n, off, raw, _ts(rec["ts"]), rec["ts"], host=role, source="sensor", actor=rec["sensor"],
+                     action="reading", object=rec["sensor"],
+                     attrs={"seq": int(rec["seq"]), "temp_c": float(rec["temp_c"]), "state": rec.get("state")})
+            except (ValueError, KeyError, TypeError) as exc:
+                unparsed(n, off, raw, f"bad sensor reading ({type(exc).__name__})", "sensor")
+    elif kind == "reference":
+        # an independent reference logger: ts,logger,monitors,seq,temp_c with a header row
+        for n, off, raw in _iter_lines(text):
+            if not raw or n == 1:
+                continue
+            parts = raw.split(",")
+            try:
+                if len(parts) != 5:
+                    raise ValueError("expected 5 fields")
+                ts_raw, logger, monitors, seq, temp = parts
+                emit(n, off, raw, _ts(ts_raw), ts_raw, host=role, source="reference", actor=logger, action="reading",
+                     object=monitors,
+                     attrs={"seq": int(seq), "temp_c": float(temp), "logger": logger,
+                            "clock_note": "the logger's own clock, not network-synchronised; no offset correction applied"})
+            except ValueError as exc:
+                unparsed(n, off, raw, f"bad reference reading ({exc})", "reference")
     else:
         errors.append(f"{artifact}: unsupported artifact type; not normalized")
     return events, errors

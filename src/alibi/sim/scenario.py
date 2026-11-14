@@ -8,6 +8,7 @@ byte-identical raw evidence.
 
 from __future__ import annotations
 
+import math
 import random
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -51,6 +52,62 @@ INCIDENT_VARIANTS = ("incident_plain", "incident_coverup")
 BENIGN_VARIANTS = ("benign_rotation", "benign_approved_transfer", "benign_remote_login", "benign_collection_gap")
 VARIANTS = INCIDENT_VARIANTS + BENIGN_VARIANTS
 
+# ---------------------------------------------------------------------------- phase-two case families
+# The six variants above are the first-run family and are frozen (tests/test_m8_pins.py). Everything
+# below is additive: a new variant never changes what an existing (seed, variant) pair produces.
+CARD_RECORDS_HEIST = "records-heist"
+CARD_COLD_CHAIN = "cold-chain"
+CARDS[CARD_INSIDE_JOB]["difficulties"].append("L3")
+CARDS[CARD_RECORDS_HEIST] = {
+    "id": CARD_RECORDS_HEIST,
+    "title": "Records heist",
+    "audience_setup": (
+        "Someone signs in to the records server itself with an administrator's credential, exports the "
+        "synthetic patient database there and sends it out of the clinic network from the server."
+    ),
+    "tip": "Review exports from the records server during this shift; establish what the evidence supports.",
+    "difficulties": ["H1", "H2"],
+}
+CARDS[CARD_COLD_CHAIN] = {
+    "id": CARD_COLD_CHAIN,
+    "title": "Cold chain",
+    "audience_setup": (
+        "The vaccine refrigerator warms beyond its permitted range and someone overwrites the stored "
+        "readings so the record looks normal."
+    ),
+    "tip": "Review the vaccine refrigerator's temperature record for this shift; establish what the evidence supports.",
+    "difficulties": ["C1"],
+}
+
+EVASION_INCIDENT_VARIANTS = ("incident_evasion",)  # inside job plus the four phase-two steps
+MAINTENANCE_BENIGN_VARIANTS = ("benign_maintenance",)  # their legitimate counterparts
+HEIST_INCIDENT_VARIANTS = ("heist_incident", "heist_coverup")
+HEIST_BENIGN_VARIANTS = ("heist_approved_export",)
+COLDCHAIN_INCIDENT_VARIANTS = ("coldchain_falsified",)
+COLDCHAIN_BENIGN_VARIANTS = ("coldchain_real_excursion", "coldchain_maintenance")
+
+FAMILY_INCIDENT_VARIANTS = EVASION_INCIDENT_VARIANTS + HEIST_INCIDENT_VARIANTS + COLDCHAIN_INCIDENT_VARIANTS
+FAMILY_BENIGN_VARIANTS = MAINTENANCE_BENIGN_VARIANTS + HEIST_BENIGN_VARIANTS + COLDCHAIN_BENIGN_VARIANTS
+FAMILY_VARIANTS = FAMILY_INCIDENT_VARIANTS + FAMILY_BENIGN_VARIANTS
+ALL_INCIDENT_VARIANTS = INCIDENT_VARIANTS + FAMILY_INCIDENT_VARIANTS
+ALL_BENIGN_VARIANTS = BENIGN_VARIANTS + FAMILY_BENIGN_VARIANTS
+ALL_VARIANTS = VARIANTS + FAMILY_VARIANTS
+VARIANT_CARD: dict[str, str] = {
+    **{v: CARD_INSIDE_JOB for v in VARIANTS + EVASION_INCIDENT_VARIANTS + MAINTENANCE_BENIGN_VARIANTS},
+    **{v: CARD_RECORDS_HEIST for v in HEIST_INCIDENT_VARIANTS + HEIST_BENIGN_VARIANTS},
+    **{v: CARD_COLD_CHAIN for v in COLDCHAIN_INCIDENT_VARIANTS + COLDCHAIN_BENIGN_VARIANTS},
+}
+VARIANT_DIFFICULTY: dict[str, str] = {
+    "incident_plain": "L1", "incident_coverup": "L2", "incident_evasion": "L3",
+    "heist_incident": "H1", "heist_coverup": "H2", "coldchain_falsified": "C1",
+}
+SENSOR = "fridge-01"
+REFERENCE_LOGGER = "logger-01"
+SENSOR_RANGE_C = (2.0, 8.0)
+SENSOR_INTERVAL_S = 60
+REFERENCE_INTERVAL_S = 300
+REFERENCE_MAX_OFFSET_S = 120
+
 NURSE_POOL = ["jpark", "mreyes", "aokafor", "lnguyen", "sdubois", "rhaddad", "kcole", "tmori"]
 ADMIN_POOL = ["adm-tkim", "adm-vrao", "adm-bsato"]
 FRONT_DESK = ["fd-alvarez", "fd-moss"]
@@ -64,8 +121,10 @@ def _m(minutes: float) -> timedelta:
 
 def build_spec(seed: int, variant: str, card_id: str = CARD_INSIDE_JOB) -> dict[str, Any]:
     """Derive a complete scenario specification from (seed, variant). Pure and deterministic."""
-    if variant not in VARIANTS:
-        raise ValueError(f"unknown variant {variant!r}; choose from {VARIANTS}")
+    if variant not in ALL_VARIANTS:
+        raise ValueError(f"unknown variant {variant!r}; choose from {ALL_VARIANTS}")
+    if variant in FAMILY_VARIANTS:
+        card_id = VARIANT_CARD[variant]  # a phase-two variant belongs to exactly one card
     if card_id not in CARDS:
         raise ValueError(f"unknown crime card {card_id!r}")
     rw = random.Random(f"alibi-world:{SCENARIO_VERSION}:{seed}")
@@ -95,8 +154,8 @@ def build_spec(seed: int, variant: str, card_id: str = CARD_INSIDE_JOB) -> dict[
         "seed": seed,
         "card_id": card_id,
         "variant": variant,
-        "case_kind": "incident" if variant in INCIDENT_VARIANTS else "benign",
-        "difficulty": {"incident_plain": "L1", "incident_coverup": "L2"}.get(variant, "none"),
+        "case_kind": "incident" if variant in ALL_INCIDENT_VARIANTS else "benign",
+        "difficulty": VARIANT_DIFFICULTY.get(variant, "none"),
         "accounts": {"nurse_a": nurse_a, "nurse_b": nurse_b, "admin": admin},
         "badges": badges,
         "dmz_ips": dmz_ips,
@@ -149,7 +208,113 @@ def build_spec(seed: int, variant: str, card_id: str = CARD_INSIDE_JOB) -> dict[
             "duration_s": rv.randrange(180, 400),
             "cause": rv.choice(["agent_restart", "transport_loss"]),
         }
+    elif variant in FAMILY_VARIANTS:
+        _family_spec(spec, rv, t0, t_backup)
     return spec
+
+
+def _clear_of(start: datetime, other: datetime, minutes: int = 15) -> datetime:
+    """Keep a scripted activity from landing on top of another scheduled one."""
+    return start + _m(27) if abs((start - other).total_seconds()) < minutes * 60 else start
+
+
+def _family_spec(spec: dict[str, Any], rv: random.Random, t0: datetime, t_backup: datetime) -> None:
+    """Scenario parameters of the phase-two variants. Uses only the variant's own random stream."""
+    variant, acc = spec["variant"], spec["accounts"]
+    nurse_a, nurse_b, admin = acc["nurse_a"], acc["nurse_b"], acc["admin"]
+    dmz = spec["dmz_ips"]
+    spec["change_id_base"] = rv.randrange(4100, 9800)  # numbering of the shift's change records
+
+    if variant in HEIST_INCIDENT_VARIANTS + HEIST_BENIGN_VARIANTS:
+        partner = rv.choice(dmz)
+        a0 = t0 + timedelta(seconds=rv.randrange(int(1.2 * 3600), int(2.4 * 3600)))
+        spec["heist"] = {"partner_ip": partner, "approved_start": iso(a0),
+                         "approved_name": f"reg-{rv.randrange(100, 999)}.db"}
+        if variant in HEIST_INCIDENT_VARIANTS:
+            start = _clear_of(t0 + timedelta(seconds=rv.randrange(int(3.2 * 3600), int(6.3 * 3600))), t_backup)
+            sink = rv.choice([ip for ip in dmz if ip != partner])
+            spec["crime"] = {
+                "start": iso(start), "framed_account": admin,
+                # an administrator's credential used remotely: by its holder, or by someone else who has it
+                "operator_person": rv.choice([f"person:{nurse_a}", f"person:{nurse_b}", f"person:{admin}"]),
+                "owner_badged_out": False, "sink_ip": sink,
+            }
+            spec["plan"] = heist_plan(rv, spec["difficulty"], admin, sink)
+    elif variant in EVASION_INCIDENT_VARIANTS:
+        framed = rv.choice([nurse_a, nurse_b])
+        other = nurse_b if framed == nurse_a else nurse_a
+        start = _clear_of(t0 + timedelta(seconds=rv.randrange(3 * 3600, int(6.2 * 3600))), t_backup)
+        sink = rv.choice(dmz)
+        spec["crime"] = {"start": iso(start), "framed_account": framed,
+                         "operator_person": rv.choice([f"person:{other}", f"person:{admin}"]),
+                         "owner_badged_out": rv.random() < 0.5, "sink_ip": sink}
+        spec["plan"] = evasion_plan(rv, framed, admin, sink)
+        # the shift's change record names a maintenance window that does NOT cover the incident
+        spec["benign"] = {"maintenance_start": iso(t0 + timedelta(seconds=rv.randrange(int(1.1 * 3600), int(2.2 * 3600)))),
+                          "parts": []}
+    elif variant in MAINTENANCE_BENIGN_VARIANTS:
+        start = _clear_of(t0 + timedelta(seconds=rv.randrange(int(3.0 * 3600), int(5.8 * 3600))), t_backup, 25)
+        spec["benign"] = {"maintenance_start": iso(start), "forwarder_gap_s": rv.randrange(150, 330),
+                          "gui_actor": rv.choice([nurse_a, nurse_b]),
+                          "parts": ["forwarder_stop", "restore", "second_host", "gui_session"]}
+    else:  # cold chain
+        ex0 = t0 + timedelta(seconds=rv.randrange(int(2.5 * 3600), int(5.5 * 3600)))
+        spec["coldchain"] = {
+            "excursion_start": iso(ex0), "excursion_minutes": rv.randrange(13, 21),
+            "peak_c": round(9.6 + rv.randrange(0, 30) / 10, 1),
+            "reference_clock_offset_s": rv.choice([-75, -40, 35, 60, 90]),
+            "maintenance_start": iso(t0 + timedelta(seconds=rv.randrange(int(0.8 * 3600), int(1.8 * 3600)))),
+            "maintenance_minutes": rv.randrange(8, 14),
+            # the maintenance control has no warming event; the other two have a real one
+            "has_excursion": variant != "coldchain_maintenance",
+        }
+        if variant in COLDCHAIN_INCIDENT_VARIANTS:
+            spec["crime"] = {"start": iso(ex0 + _m(spec["coldchain"]["excursion_minutes"] + rv.randrange(25, 50))),
+                             "framed_account": None,
+                             "operator_person": rv.choice([f"person:{nurse_a}", f"person:{nurse_b}", f"person:{admin}"]),
+                             "owner_badged_out": False, "sink_ip": None}
+            spec["plan"] = [{"step": "falsify_readings", "params": {"sensor": SENSOR, "mode": "flatten"}, "delay_s": 30}]
+
+
+def heist_plan(rv: random.Random, level: str, admin: str, sink_ip: str) -> list[dict[str, Any]]:
+    """Records-server plan. A SCRIPTED SCENARIO: no model chose these steps."""
+    dst_dir, dst_name = rv.choice(list(S.DUMP_DIRS)), rv.choice(STAGING_NAMES)
+    plan: list[dict[str, Any]] = [
+        {"step": "login_remote", "params": {"host": "records", "account": admin, "via": "vpn-gw"}, "delay_s": 20},
+        {"step": "export_dump", "params": {"dataset": "patients_full", "dst_dir": dst_dir, "dst_name": dst_name},
+         "delay_s": rv.randrange(50, 150)},
+        {"step": "exfil_http", "params": {"path": f"{dst_dir}/{dst_name}", "dst": sink_ip}, "delay_s": rv.randrange(60, 200)},
+    ]
+    if level == "H2":
+        if rv.random() < 0.5:  # an attempt against the independent collector: it fails and is recorded
+            plan.append({"step": "delete_log_lines",
+                         "params": {"host": "collector", "file": APP_LOG, "event_selection": "own_exports"},
+                         "delay_s": rv.randrange(30, 90)})
+        plan.append({"step": "delete_log_lines",
+                     "params": {"host": "records", "file": APP_LOG, "event_selection": "own_exports"},
+                     "delay_s": rv.randrange(30, 120)})
+    return plan
+
+
+def evasion_plan(rv: random.Random, account: str, admin: str, sink_ip: str) -> list[dict[str, Any]]:
+    """Inside job plus the four phase-two steps. A SCRIPTED SCENARIO: no model chose these steps."""
+    dst_dir = rv.choice(["/var/tmp/.pkg-cache", "/tmp/.font-unix", "/home/{account}/Downloads"])
+    dst_name = rv.choice(STAGING_NAMES)
+    path = S.staging_path(dst_dir, dst_name, account)
+    return [
+        {"step": "login_as", "params": {"account": account}, "delay_s": 20},
+        {"step": "stage_copy", "params": {"src": "patients_full", "dst_dir": dst_dir, "dst_name": dst_name},
+         "delay_s": rv.randrange(40, 90)},
+        {"step": "exfil_http", "params": {"path": path, "dst": sink_ip}, "delay_s": rv.randrange(40, 100)},
+        {"step": "timestomp", "params": {"path": path, "mode": "backdate_30d"}, "delay_s": rv.randrange(25, 60)},
+        # a nurse account may not control services: this attempt fails and is recorded
+        {"step": "stop_forwarder", "params": {"host": "workstation", "duration_s": rv.randrange(120, 300)},
+         "delay_s": rv.randrange(20, 45)},
+        {"step": "second_host_session", "params": {"host": "records", "account": admin}, "delay_s": rv.randrange(25, 60)},
+        {"step": "stop_forwarder", "params": {"host": "records", "duration_s": rv.randrange(120, 300)},
+         "delay_s": rv.randrange(25, 60)},
+        {"step": "clear_history", "params": {"scope": "own_session"}, "delay_s": rv.randrange(25, 60)},
+    ]
 
 
 def scripted_plan(rv: random.Random, level: str, account: str, sink_ip: str) -> list[dict[str, Any]]:
@@ -186,6 +351,8 @@ def plan_context(spec: dict[str, Any]) -> S.PlanContext:
         accounts=(acc["nurse_a"], acc["nurse_b"]),
         sink_ips=tuple(spec["dmz_ips"]),
         dataset_sizes=dict(spec["dataset_sizes"]),
+        admin_accounts=(acc["admin"],),
+        sensors=(SENSOR,) if spec.get("card_id") == CARD_COLD_CHAIN else (),
     )
 
 
@@ -198,7 +365,7 @@ def operational_context(spec: dict[str, Any]) -> dict[str, Any]:
     inventory += [{"name": f"fd-term-{i + 1:02d}", "ip": ip, "role": "front-desk terminal"} for i, ip in enumerate(FRONT_DESK_IPS)]
     inventory.append({"range": "10.20.9.0/24", "role": "vendor/partner DMZ",
                       "note": "devices in this range are not individually inventoried"})
-    return {
+    ctx: dict[str, Any] = {
         "site": "Northside Clinic (synthetic)",
         "clock_note": "All sources record UTC in this simulated world; no clock skew is modeled.",
         "network_inventory": inventory,
@@ -249,6 +416,87 @@ def operational_context(spec: dict[str, Any]) -> dict[str, Any]:
             "station have been found written down before; badge readers can miss tailgating."
         ),
     }
+    if spec["variant"] in FAMILY_VARIANTS:
+        _family_context(spec, ctx)
+    return ctx
+
+
+def change_records(spec: dict[str, Any]) -> list[dict[str, Any]]:
+    """The shift's approved operational changes, as an investigator would be given them.
+
+    Every phase-two case has the same kinds of record whether or not anything went wrong:
+    a record never says what an incident was, only what was approved.
+    """
+    acc, base = spec["accounts"], spec.get("change_id_base", 4100)
+    variant = spec["variant"]
+    out: list[dict[str, Any]] = []
+    if "heist" in spec:
+        hx = spec["heist"]
+        a0 = _parse(hx["approved_start"])
+        out.append({
+            "id": f"CHG-{base}", "kind": "bulk_export", "requested_by": acc["admin"], "approved_by": "clinic manager",
+            "source_host": "records", "dataset": "immunization_registry",
+            "destination_ip": hx["partner_ip"], "destination_name": "state immunization registry (partner gateway)",
+            "window_start": iso(a0 - _m(20)), "window_end": iso(a0 + _m(40)),
+            "note": "quarterly registry submission; one export to this destination in this window",
+        })
+    if variant in EVASION_INCIDENT_VARIANTS + MAINTENANCE_BENIGN_VARIANTS:
+        m0 = _parse(spec["benign"]["maintenance_start"])
+        out.append({
+            "id": f"CHG-{base + 7}", "kind": "maintenance", "requested_by": acc["admin"], "approved_by": "clinic manager",
+            "hosts": ["workstation", "records"], "window_start": iso(m0 - _m(10)), "window_end": iso(m0 + _m(35)),
+            "activities": ["log forwarder maintenance", "restore of user documents from backup",
+                           "administrator access to the records server from the nurse workstation"],
+            "note": "work carried out by the requesting administrator under this record",
+        })
+    return out
+
+
+def _family_context(spec: dict[str, Any], ctx: dict[str, Any]) -> None:
+    """Operating knowledge that only the phase-two families need. Same shape for incident and benign."""
+    acc = spec["accounts"]
+    ctx["change_records"] = change_records(spec)
+    ctx["change_policy"] = (
+        "Bulk exports made on the records server, stopping log forwarding, and administrator sessions that do not "
+        "come from the administrator laptop or the VPN gateway each need an approved change record covering the "
+        "host and the time. A destination named in an approved export record is approved for that export only."
+    )
+    ctx["remote_access_policy"]["admin_sources"] = [
+        {"name": EXTRA_NAMES["admin-laptop"], "ip": IPS["admin-laptop"]},
+        {"name": EXTRA_NAMES["vpn-gw"], "ip": IPS["vpn-gw"]},
+    ]
+    ctx["remote_access_policy"]["admin_accounts"] = [acc["admin"]]
+    ctx["history_policy"] = {
+        "cli_clients_record_history": True,
+        "note": ("The command-line clinic clients write shell history. The touch-screen charting client does not, "
+                 "so records activity without a matching history command is not by itself evidence of removal."),
+    }
+    if spec["card_id"] == CARD_COLD_CHAIN:
+        cc = spec["coldchain"]
+        m0 = _parse(cc["maintenance_start"])
+        ctx["coldchain_policy"] = {
+            "sensor": SENSOR, "permitted_range_c": list(SENSOR_RANGE_C), "local_interval_s": SENSOR_INTERVAL_S,
+            "local_stream": ("readings stored on the IoT hub and shown on the ward dashboard; the store is writable "
+                             "on the hub"),
+            "reference": {
+                "logger": REFERENCE_LOGGER, "interval_s": REFERENCE_INTERVAL_S,
+                "independence": ("a separate battery logger with its own probe in the same refrigerator; it is not "
+                                 "connected to the hub and cannot be written from it"),
+                "clock": (f"not network-synchronised; its clock may differ from the hub by up to "
+                          f"{REFERENCE_MAX_OFFSET_S} s"),
+                "max_clock_offset_s": REFERENCE_MAX_OFFSET_S,
+                "probe_tolerance_c": 0.8,
+            },
+            "excursion_rule": "two or more consecutive reference readings outside the permitted range",
+            "maintenance_windows": [{
+                "id": f"CAL-{spec.get('change_id_base', 4100) + 3}", "kind": "probe_calibration",
+                "window_start": iso(m0), "window_end": iso(m0 + _m(cc["maintenance_minutes"])),
+                "note": ("the hub's probe is taken out for an ice-point check; its readings are not refrigerator "
+                         "temperatures during this window and its counter restarts afterwards"),
+            }],
+            "note": ("A temperature record describes the refrigerator. It does not show why it warmed or who "
+                     "handled the record."),
+        }
 
 
 # --------------------------------------------------------------------------- simulation
@@ -310,7 +558,8 @@ def simulate(spec: dict[str, Any]) -> SimOutput:
     def move_break(n: str, start: datetime, end: datetime) -> None:
         breaks[n] = (start, end)
 
-    if crime:
+    console_crime = bool(crime) and spec["card_id"] == CARD_INSIDE_JOB  # always true for the first-run family
+    if console_crime:
         framed = crime["framed_account"]
         if crime["owner_badged_out"]:
             move_break(framed, crime_start - _m(rb.randrange(6, 16)), crime_start + _m(rb.randrange(18, 30)))
@@ -345,7 +594,13 @@ def simulate(spec: dict[str, Any]) -> SimOutput:
         kind = kind or rb.choices(
             ["open", "update", "report", "lab", "print", "misc"], weights=[45, 20, 8, 9, 6, 12])[0]
         rid = rb.choice(record_ids)
-        if kind == "open":
+        if kind == "gui_open":
+            # the touch-screen charting client: the same records request, but no shell history is written
+            size = 2000 + rb.randrange(0, 7000)
+            w.log("records", APP_LOG, ts + timedelta(seconds=1), "records-app[880]",
+                  f"user={account} client={client_ip} action=open_record record={rid} bytes={size} status=200")
+            w.flow(ts + timedelta(seconds=1), ws_ip, rec_ip, 443, 500 + rb.randrange(0, 400), size + 300)
+        elif kind == "open":
             w.history("workstation", account, ts, f"clinic-notes open {rid}")
             size = 2000 + rb.randrange(0, 7000)
             w.log("records", APP_LOG, ts + timedelta(seconds=1), "records-app[880]",
@@ -406,8 +661,11 @@ def simulate(spec: dict[str, Any]) -> SimOutput:
 
     # ---------------- reserved console slots
     reserved: list[tuple[datetime, datetime]] = []
-    if crime:
+    if console_crime:
         reserved.append((crime_start - _m(3), crime_start + _m(22)))
+    if variant in MAINTENANCE_BENIGN_VARIANTS:
+        g0 = _parse(benign["maintenance_start"])
+        reserved.append((g0 - _m(2), g0 + _m(16)))  # the touch-screen session of the control
     if variant == "benign_approved_transfer":
         ts0 = _parse(benign["start"])
         reserved.append((ts0 - _m(2), ts0 + _m(14)))
@@ -614,6 +872,19 @@ def simulate(spec: dict[str, Any]) -> SimOutput:
             "workstation", AUTH_LOG, ts, f"login[{w.next_pid()}]",
             f"pam_unix(login:auth): authentication failure; user={text} tty=tty1"))
 
+    # ================= phase two: activity that exists only in the new case families =================
+    # Nothing in this section runs for a first-run variant, so their random streams are untouched.
+    if "heist" in spec:
+        _sim_approved_export(w, rb, spec, admin, outcomes)
+    if variant in MAINTENANCE_BENIGN_VARIANTS:
+        gui = next((n for n in (benign["gui_actor"], nurse_a, nurse_b)
+                    if present(n, _parse(benign["maintenance_start"]) - _m(1), _parse(benign["maintenance_start"]) + _m(14))),
+                   benign["gui_actor"])
+        console_session(gui, _parse(benign["maintenance_start"]) + timedelta(seconds=50), 600, ["gui_open"] * 6)
+        _sim_maintenance(w, rb, spec, admin, gui, t0, outcomes)
+    if spec["card_id"] == CARD_COLD_CHAIN:
+        _sim_cold_chain(w, spec, outcomes)
+
     # ---------------- the adversary (executes the saved plan; nothing else)
     executor: S.StepExecutor | None = None
     if crime and spec["plan"]:
@@ -629,6 +900,9 @@ def simulate(spec: dict[str, Any]) -> SimOutput:
                 nxt = max(res.t_end, ts) + timedelta(seconds=plan[i + 1]["delay_s"])
                 w.schedule(nxt, lambda t2, j=i + 1: _run_step(j, t2))
             elif executor.session is not None:
+                for k, extra in enumerate(executor.extra_sessions.values()):  # second-host sessions close first
+                    w.schedule(max(res.t_end, ts) + timedelta(seconds=15 + 4 * k),
+                               lambda t2, extra=extra: w.close_session(extra, t2))
                 out = max(res.t_end, ts) + timedelta(seconds=40 + (seed % 50))
                 w.schedule(out, lambda t2: (w.close_session(executor.session, t2), setattr(w, "console_busy_until", t2)))
         w.schedule(crime_start + timedelta(seconds=plan[0]["delay_s"]), lambda ts: _run_step(0, ts))
@@ -642,3 +916,188 @@ def simulate(spec: dict[str, Any]) -> SimOutput:
         adversary_session=executor.session.session_id if executor and executor.session else None,
         world=w,
     )
+
+
+# --------------------------------------------------------------------------- phase-two legitimate activity
+# Each function below writes ordinary, legitimate activity into the world. They are called only for
+# the phase-two variants and record what they did as sealed benign outcomes.
+
+
+def _sudo(w: World, role: str, admin: str, session_no: int, ts: datetime, cmd: str) -> None:
+    w.history(role, admin, ts, f"sudo {cmd}")
+    w.log(role, AUTH_LOG, ts, f"sudo[{w.next_pid()}]", f"{admin} : TTY=pts/0 ; COMMAND={cmd} (session {session_no})")
+
+
+def _sim_approved_export(w: World, rb: random.Random, spec: dict[str, Any], admin: str,
+                         outcomes: list[dict[str, Any]]) -> None:
+    """The quarterly registry submission: an export made ON the records server under an approved change
+    record and sent to the partner it names. It is in every records-family case, incident or not."""
+    hx = spec["heist"]
+    a0, partner, rec_ip = _parse(hx["approved_start"]), hx["partner_ip"], IPS["records"]
+    size = spec["dataset_sizes"]["immunization_registry"]
+    path = f"/srv/records/tmp/{hx['approved_name']}"
+    t_dump = a0 + timedelta(seconds=40 + rb.randrange(0, 30))
+    t_send = t_dump + timedelta(seconds=80 + rb.randrange(0, 60))
+    t_close = t_send + timedelta(seconds=90 + rb.randrange(0, 120))
+    state: dict[str, Any] = {}
+
+    def _open(ts: datetime) -> None:
+        state["sess"], _ = w.open_session("records", admin, ts, origin="remote", src_ip=IPS["vpn-gw"])
+
+    def _dump(ts: datetime) -> None:
+        w.history("records", admin, ts, f"records-dump --dataset immunization_registry --out {path}")
+        w.log("records", APP_LOG, ts + timedelta(seconds=1), "records-app[880]",
+              f"user={admin} client=127.0.0.1 action=export_bulk dataset=immunization_registry bytes={size} status=200")
+        w.write_file("records", path, size, admin, ts + timedelta(seconds=max(3, size // 6_000_000)))
+
+    def _send(ts: datetime) -> None:
+        w.history("records", admin, ts, f"curl -s -T {path} https://{partner}:8443/submit/{hx['approved_name']}")
+        w.flow(ts, rec_ip, partner, 8443, size + 3300 + rb.randrange(0, 700), 410 + rb.randrange(0, 90),
+               duration_s=max(4, size // 1_500_000))
+
+    w.schedule(a0, _open)
+    w.schedule(t_dump, _dump)
+    w.schedule(t_send, _send)
+    w.schedule(t_close, lambda ts: w.close_session(state["sess"], ts))
+    outcomes.append({"kind": "approved_bulk_transfer", "host": "records", "actor_account": admin,
+                     "t_start": t_dump, "t_end": t_send + timedelta(seconds=30),
+                     "description": ("registry export made on the records server and sent to the partner gateway "
+                                     "named in an approved change record")})
+
+
+def _sim_maintenance(w: World, rb: random.Random, spec: dict[str, Any], admin: str, gui: str, t0: datetime,
+                     outcomes: list[dict[str, Any]]) -> None:
+    """Approved maintenance by the administrator: the legitimate counterparts of the four phase-two steps.
+
+    forwarder stop/start  <-> stop_forwarder         (a collection gap with a recorded, approved cause)
+    restore from backup   <-> timestomp              (old modification times with a recent change time)
+    hop to the records server <-> second_host_session (an administrator session from the nurse workstation)
+    touch-screen session  <-> clear_history          (records activity with no shell history; see caller)
+    """
+    benign = spec["benign"]
+    m0, gap_s = _parse(benign["maintenance_start"]), benign["forwarder_gap_s"]
+    ws_ip, day = IPS["workstation"], timedelta(days=1)
+    t_stop = m0 + timedelta(seconds=45)
+    t_start = t_stop + timedelta(seconds=1 + gap_s)
+    t_restore = t_start + timedelta(seconds=50 + rb.randrange(0, 40))
+    t_hop = t_restore + timedelta(seconds=60 + rb.randrange(0, 40))
+    t_hop_end = t_hop + timedelta(seconds=120 + rb.randrange(0, 90))
+    t_close = t_hop_end + timedelta(seconds=30 + rb.randrange(0, 60))
+    state: dict[str, Any] = {}
+
+    def _open(ts: datetime) -> None:
+        state["sess"], _ = w.open_session("workstation", admin, ts, origin="remote", src_ip=IPS["admin-laptop"])
+
+    def _stop(ts: datetime) -> None:
+        _sudo(w, "workstation", admin, state["sess"].number, ts, "/usr/bin/systemctl stop log-forwarder")
+        w.log("workstation", SYSLOG, ts, "systemd[1]", "Stopping log-forwarder.service...")
+        w.stop_forwarding("workstation", ts + timedelta(seconds=1), t_start)
+
+    def _start(ts: datetime) -> None:
+        _sudo(w, "workstation", admin, state["sess"].number, ts, "/usr/bin/systemctl start log-forwarder")
+        w.log("workstation", SYSLOG, ts + timedelta(seconds=1), "systemd[1]", "Started log-forwarder.service.")
+
+    def _restore(ts: datetime) -> None:
+        src = f"{EXTRA_NAMES['backup-nas']}:/backup/{HOSTNAMES['workstation']}/home/{gui}/Documents/"
+        _sudo(w, "workstation", admin, state["sess"].number, ts, f"/usr/bin/rsync -a {src} /home/{gui}/Documents/")
+        total = 0
+        for i in range(3):
+            size = 60_000 + rb.randrange(0, 240_000)
+            total += size
+            w.restore_file("workstation", f"/home/{gui}/Documents/census-10{20 + i}.csv", size, gui,
+                           t0 - day * (12 - i) + _m(rb.randrange(0, 400)), ts + timedelta(seconds=2 + i))
+        # the workstation pulls from the backup store: it is the client of this connection
+        w.flow(ts + timedelta(seconds=1), ws_ip, IPS["backup-nas"], 873, 2400 + rb.randrange(0, 600), total + 5000, duration_s=3)
+
+    def _hop(ts: datetime) -> None:
+        w.history("workstation", admin, ts - timedelta(seconds=2), f"ssh {HOSTNAMES['records']}")
+        s2, _ = w.open_session("records", admin, ts, origin="remote", src_ip=ws_ip)
+        state["s2"] = s2
+        for off, cmd in ((25, "df -h"), (60, "/usr/bin/systemctl status records-app")):
+            if cmd.startswith("/"):
+                w.schedule(ts + timedelta(seconds=off), lambda t2, cmd=cmd: _sudo(w, "records", admin, s2.number, t2, cmd))
+            else:
+                w.schedule(ts + timedelta(seconds=off), lambda t2, cmd=cmd: w.history("records", admin, t2, cmd))
+
+    w.schedule(m0, _open)
+    w.schedule(t_stop, _stop)
+    w.schedule(t_start, _start)
+    w.schedule(t_restore, _restore)
+    w.schedule(t_hop, _hop)
+    w.schedule(t_hop_end, lambda ts: w.close_session(state["s2"], ts))
+    w.schedule(t_close, lambda ts: w.close_session(state["sess"], ts))
+    outcomes += [
+        {"kind": "approved_forwarder_stop", "host": "workstation", "actor_account": admin, "t_start": t_stop,
+         "t_end": t_start, "description": "log forwarding stopped and restarted for maintenance under an approved change record"},
+        {"kind": "restore_from_backup", "host": "workstation", "actor_account": admin, "t_start": t_restore,
+         "t_end": t_restore + timedelta(seconds=6),
+         "description": "documents restored from backup with their original modification times preserved"},
+        {"kind": "approved_second_host_session", "host": "records", "actor_account": admin, "t_start": t_hop,
+         "t_end": t_hop_end, "description": "administrator session on the records server opened from the nurse workstation under the change record"},
+        {"kind": "touch_screen_session", "host": "workstation", "actor_account": gui, "t_start": m0 + timedelta(seconds=50),
+         "t_end": m0 + timedelta(seconds=650), "description": "charting through the touch-screen client, which writes no shell history"},
+    ]
+
+
+def _sim_cold_chain(w: World, spec: dict[str, Any], outcomes: list[dict[str, Any]]) -> None:
+    """The vaccine refrigerator: the hub's own stored readings and an independent reference logger.
+
+    Both describe one simulated temperature. A real warming event (in two of the three variants) appears
+    in both. The reference logger keeps its own clock and is not reachable from the hub.
+    """
+    cc, seed, variant = spec["coldchain"], spec["seed"], spec["variant"]
+    rs = random.Random(f"alibi-sensor:{spec['scenario_version']}:{seed}:{variant}")
+    lo, hi = SENSOR_RANGE_C
+    w.sensor_range = SENSOR_RANGE_C
+    w.reference_clock_offset_s = cc["reference_clock_offset_s"]
+    cs, ce = w.capture_start, w.capture_end
+    ex0, ex_min, peak = _parse(cc["excursion_start"]), cc["excursion_minutes"], cc["peak_c"]
+    m_start = _parse(cc["maintenance_start"])
+    m_end = m_start + _m(cc["maintenance_minutes"])
+    offset = timedelta(seconds=cc["reference_clock_offset_s"])
+
+    def true_temp(ts: datetime) -> float:
+        temp = 4.6 + 0.6 * math.sin((ts - cs).total_seconds() / 540.0)  # compressor cycle
+        if cc["has_excursion"]:
+            x = (ts - ex0).total_seconds() / 60.0
+            if 0 <= x <= ex_min + 12:
+                rise = min(1.0, x / 6.0)
+                fall = 1.0 if x <= ex_min else max(0.0, 1.0 - (x - ex_min) / 12.0)
+                temp += (peak - 4.6) * rise * fall
+        return temp
+
+    state = {"calibrating": False}
+
+    def _read(ts: datetime) -> None:
+        if m_start <= ts < m_end:  # the hub's probe is in an ice bath for its calibration check
+            rec = w.sensor_reading(SENSOR, ts, 0.1 + rs.randrange(0, 4) / 10, "calibration")
+            state["calibrating"] = True
+        else:
+            temp = true_temp(ts) + rs.uniform(-0.15, 0.15)
+            rec = w.sensor_reading(SENSOR, ts, temp, "ok" if lo <= round(temp, 1) <= hi else "alarm")
+            if state["calibrating"]:
+                rec["seq"] = 1  # the probe was reconnected: its counter starts again
+                state["calibrating"] = False
+        w._mqtt_mid += 1
+        w.log("iot-hub", MQTT_LOG, ts, "mosquitto[410]",
+              f"Received PUBLISH from {SENSOR} (q1, m{w._mqtt_mid}, 'clinic/coldchain/{SENSOR}/temp', "
+              f"{len(w.sensor_line(rec))} bytes)")
+
+    t = cs + timedelta(seconds=20)
+    while t <= ce:
+        w.schedule(t, _read)
+        t += timedelta(seconds=SENSOR_INTERVAL_S)
+    t = cs + timedelta(seconds=95)
+    while t <= ce:
+        w.schedule(t, lambda ts: w.reference_reading(REFERENCE_LOGGER, SENSOR, ts + offset,
+                                                     true_temp(ts) + 0.2 + rs.uniform(-0.2, 0.2)))
+        t += timedelta(seconds=REFERENCE_INTERVAL_S)
+
+    outcomes.append({"kind": "sensor_maintenance", "host": "iot-hub", "actor_account": None, "t_start": m_start,
+                     "t_end": m_end, "description": "scheduled ice-point calibration of the hub's probe (stated in the policy)"})
+    outcomes.append({"kind": "reference_clock_offset", "host": "reference", "actor_account": None, "t_start": cs,
+                     "t_end": ce, "description": f"the reference logger's clock differs from the hub by {cc['reference_clock_offset_s']} s"})
+    if cc["has_excursion"]:
+        outcomes.append({"kind": "temperature_excursion", "host": "iot-hub", "actor_account": None, "t_start": ex0,
+                         "t_end": ex0 + _m(ex_min + 12),
+                         "description": "the refrigerator door was left ajar during restocking: a real warming event"})
