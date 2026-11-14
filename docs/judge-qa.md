@@ -2,40 +2,52 @@
 
 **Where is the AI?**
 
-The investigator. A real Claude model ran the DeepAgents graph, used evidence tools, delegated, wrote findings and paused for review. The committed recording and eight pilot reports document that. The incident itself is scripted. Replay is labeled Recorded AI run; it is not live inference.
+Three places, all run on real models: the investigator that reconstructs a case, the question answering over a case, and a designer that picks an ordinary operating environment from fixed options. The committed recordings are saved runs of Claude Opus 5.5 and Claude Haiku 5.5. A replay is labeled "Recorded AI run"; it is not live inference. The incident itself is always a scripted scenario.
+
+**Does an AI stage the attack?**
+
+No. We asked a model once to plan an adversary's steps from a bounded list and it declined. We left it declined: that route is disabled and we did not rephrase the request or switch models. The designer is a different task. It chooses how busy a normal day is and which routine condition occurs. It has no field for a step, a command or a destination.
 
 **What does it find that keyword search misses?**
 
-A line that is no longer in the local log. The collector retained a copy. Our fixed keyword recipe detected zero of four cover-ups; the comparison checks detected four. This is a comparison with that recipe, not a claim that existing forensic tools cannot compare logs.
+A line that is no longer in the local log, because an independent collector kept a copy. Across both runs our fixed keyword recipe established 0 of 6 cover-ups; the comparison checks established 6 of 6. That is a comparison with that recipe, not a claim that existing forensic tools cannot compare logs.
 
-**Does the model discover the missing line itself?**
+**Does the model discover the missing line itself, or do the checks do it?**
 
-The deterministic checks identify the discrepancy. The model uses those observations to investigate, explain alternatives and produce a cited report. The original pilot did not measure discovery without the checks; the next evaluation adds those arms.
+We measured both. In the second run, a single agent with only generic search tools established 5 of 8 incident effects on two new incident cases, and half of those runs ran out of budget. The same agent with the deterministic checks established 7 of 8 at about half the cost. The checks with no model at all established 8 of 8. So on these cases the checks carry most of the detection, and the model's contribution is investigation, explanation, alternatives and answering questions. One run per cell: this is how the systems differed here, not an accuracy estimate.
 
 **Why multiple agents?**
 
-They separate collection/integrity work from skeptical review and produce an inspectable investigation. In our four-case pilot they did not improve accuracy and cost more. That result supports offering a faster single-agent mode; it does not support a claim that delegation wins.
+They separate integrity work from skeptical review and leave an inspectable trail. They did not improve accuracy in either run: equal in the first pilot at 2.6 times the cost, and lower in the second (5 of 8 against 7 of 8 for one agent with the same checks). That is why fast mode, one agent, is the default for a live investigation. Specialist mode stays available and its results stay published.
 
 **How do you know a finding is correct?**
 
-We distinguish a valid citation, a supported modeled observation, and agreement with executed ground truth. The answer key is checked only after report lock. None of those establishes legal truth or human identity.
+Three different things, kept apart: a citation that resolves to a real record; an observation a deterministic check supports; and agreement with the executed ground truth, which is checked only after the report is locked. None of them establishes legal truth or who a person is.
+
+**In the second evaluation, did the systems get hints?**
+
+No. In the first pilot, submitting a finding returned the verifier's verdict, so a system without the checks could have recovered their answers by trial. In the second evaluation a submission only confirms the finding is well-formed and its ids exist. Support was applied after each report was locked, the same way for all six systems. The configuration was committed before the run.
 
 **Can the investigator read the answer key?**
 
-Its tools do not expose it. It has no shell, arbitrary SQL, filesystem path or URL tool. Canary and hostile-tool tests check the boundary. This is a tested agent capability boundary, not an operating-system security claim.
+Its tools do not expose it. It has no shell, no SQL, no filesystem path and no URL tool. Canary and hostile-tool tests check that boundary, including for questions asked after a case is unsealed. This is a tested agent capability boundary, not an operating-system security claim.
 
 **What about malicious instructions inside logs?**
 
-Logs are untrusted data and render as text. Tool-boundary tests cover hostile content. A real model's behavior on injected evidence needs its own measured test; we do not infer that from a scripted test.
+Evidence is returned to a model as data inside tool results and rendered as text in the interface. Tests plant an instruction in a log and have a stand-in model obey it: the tools it asks for do not exist, the ids it invents are dropped, and nothing is revealed. How a real model behaves on planted text was tried informally, not measured.
 
-**Is synthetic evidence enough?**
+**What does removing a witness show?**
 
-It gives a reproducible answer key and controlled comparisons. It does not establish real-world performance. The independent capture work is designed to test the same pipeline on process-produced Linux artifacts, with its own provenance and controls.
+Which conclusions depend on which source. Take the collector away and the transfer is still established from the network tap, while the removed log line can no longer be established: the comparison it rests on cannot be run. The answer is "cannot be established from this evidence", which is different from "did not happen". Scoring for such a view lists every original effect and both denominators, so less evidence can never look like better detection.
+
+**Is simulated evidence enough?**
+
+It gives a reproducible answer key and controlled comparisons. It does not establish real-world performance. Capture from real Linux processes is being built by a teammate; until it is merged, everything here is simulated and labeled so.
 
 **Could someone use this?**
 
-Training teams can inspect how an investigator reached a conclusion. Builders can compare investigator configurations against the same sealed case. The source-removal experiment adds a practical question for log owners: which conclusions depend on keeping this witness?
+Training teams can see how an investigator reached a conclusion and check every citation. Builders can compare investigator configurations on the same sealed case. Log owners get a practical question answered: which conclusions would we lose if this source were gone?
 
 **How much does it cost?**
 
-The recorded demo costs no model calls. The first pilot cost approximately $0.50 for four single-agent runs and $1.30 for four specialist runs. New runtime costs must be measured on the selected model. The team has authorized $20 total across development and demonstration, tracked by a ledger that reserves before each call and keeps unknown outcomes at their worst case; Console billing remains authoritative.
+Replaying a recording costs nothing. A fresh fast investigation on Claude Haiku 5.5 took about 25 seconds and under one cent; a question took two or three model calls and about a quarter of a cent. The whole second-run evaluation, sixteen investigations, was an estimated $0.22. The team authorized $20 in total and an estimated $3.34 has been used. A ledger reserves before each call and keeps unknown outcomes at their worst case; the provider console is the billing authority.
