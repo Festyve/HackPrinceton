@@ -548,6 +548,23 @@ def combined(docs: list[dict[str, Any]]) -> dict[str, Any]:
             "note": "Sums over completed cells of separately declared suites, one run per cell. Not an accuracy estimate."}
 
 
+def summary(out_roots: dict[str, Path] | None = None) -> dict[str, Any] | None:
+    """The latest result of every declared suite, summed per system, for a results display. Read-only.
+
+    The same figures as docs/evaluation-summary.md, from the same result files. None when no suite has run.
+    """
+    docs = [d for d in (latest((out_roots or {}).get(s), suite=s) for s in SUITES) if d]
+    if not docs:
+        return None
+    return {**combined(docs), "model": docs[0].get("model"), "inference": docs[0].get("inference"),
+            "evidence_origin": docs[0].get("evidence_origin"),
+            "verifier_feedback_during_investigation": any(d.get("verifier_feedback_during_investigation") for d in docs),
+            "incident_cases": sum(c["kind"] == "incident" for d in docs for c in d["cases"]),
+            "benign_cases": sum(c["kind"] != "incident" for d in docs for c in d["cases"]),
+            "correct_findings_not_counted": [x for d in docs for x in true_findings_not_accepted(d)],
+            "reports": ["docs/evaluation-summary.md"]}
+
+
 def true_findings_not_accepted(doc: dict[str, Any]) -> list[dict[str, Any]]:
     """Findings that matched an executed effect but did not count, and what stopped them.
 
