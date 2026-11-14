@@ -1,5 +1,59 @@
 # Daniel’s worker-lab verification
 
+## Release handoff, November 14
+
+GitHub’s default branch is `codex/alibi-build`. At `0814d24` it already
+contains Daniel’s `dbc2936`, Terry’s worker Lab UI, and Eric’s two matrix
+batches. Daniel has no separate merge to make. The published Eric checkpoint
+`a829b09` is three commits ahead. It adds the scheduler-backed worker/account
+link, two live examples and the acceptance writeup. Eric should confirm the
+final release SHA before the release owner integrates those follow-up commits.
+
+### Checks completed on `a829b09`
+
+- Daniel’s frozen `benchmarks/worker-lab-v1/protocol.json` matches `dbc2936`
+  byte for byte. Eric’s separate declaration is
+  `benchmarks/worker-lab-eric-matrix/protocol.json`. His runner’s `--check`
+  passed, and the saved runtime matrix has all 18 cells, with 17 complete
+  and one stopped.
+- Daniel’s offline and runtime results and Eric’s eight-cell live batch passed
+  `python -m scripts.daniel.evaluate validate`. The live batch has seven
+  completed runs and one capped run, four benign cells with zero accepted
+  false allegations, and about $0.040 in recorded model cost. Both workflows
+  missed the dependent lead. See
+  `benchmarks/worker-lab-v1/eric/live/{results.json,summary.md,reports/}`.
+- Recomputed the input audit from all eight saved payload files (50 captured
+  requests). Their payload digests and computed audits match `input-audit.json`.
+  The scanner found no private fields or canary. These eight cells had no
+  evidence-linked plan revisions or successful later note reads under the
+  audit criteria. The separate live resume trace records both, once. The
+  worker-link feature check shows a cited scheduler assignment in two runs
+  on one seed. The process that used the credential remains unresolved. See
+  `benchmarks/feature-checks/worker-lab-resume-across-processes-haiku-5-5.json`
+  and `benchmarks/feature-checks/worker-lab-worker-link-haiku-5-5.json`.
+- In a clean checkout on Daniel’s machine, the locked dependencies installed,
+  the frontend built, and the keyless release smoke passed. It covered startup,
+  recorded replay, imported Docker evidence with three exact citations,
+  report lock and Markdown export. All 40 tests in `tests/test_browser_lab.py`
+  and `tests/test_m19_worker_lab.py` passed, including incident and benign
+  control, comparisons, review and operator sealing.
+
+### Final release checklist
+
+1. Confirm Eric’s final published SHA and the intended release target. Check
+   that the target contains `dbc2936` and that both declarations still resolve.
+2. If the final SHA differs from the checked candidate, rerun the relevant
+   validators and release checks on that SHA. Build with `npm --prefix web run
+   build`, run the smoke command below against a clean checkout, and run
+   `python -m pytest tests/test_browser_lab.py tests/test_m19_worker_lab.py`
+   with `RUNTIME_MODE=offline` and `LLM_MAX_USD=0`. Save the clean launch
+   record from Daniel’s machine for the released SHA.
+3. Give Rayan the final SHA, these results, and the acceptance record. The
+   fault actions remain scripted. The human usability review and final demo
+   and submission remain release owner actions.
+
+## Earlier work and findings
+
 The six independent cases are in `tests/fixtures/daniel/worker-lab`. The
 [protocol](../../../benchmarks/worker-lab-v1/protocol.json) was frozen at
 `20f6d7d`. It pins the runtime and prompt sources separately from the latest
