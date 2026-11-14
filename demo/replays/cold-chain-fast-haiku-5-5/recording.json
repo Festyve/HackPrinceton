@@ -7,9 +7,9 @@
   "model_id": "anthropic:claude-haiku-5-5",
   "runner_id": "agent-live",
   "investigation_mode": "fast",
-  "recorded_at": "2026-11-14T10:37:22.321759+00:00",
-  "git_commit": "e1676bd",
-  "note": "Real model run (claude-haiku-5-5, fast mode: one agent) through the budget gateway. The incident is a scripted scenario.",
+  "recorded_at": "2026-11-14T11:53:06.150284+00:00",
+  "git_commit": "93ad802",
+  "note": "Real model run (claude-haiku-5-5, fast mode: one agent) through the budget gateway, with one recorded question answer. The incident is a scripted scenario.",
   "simulator_version": "1.1.0",
   "raw_bundle_sha256": "6e5377674fe74e66286c7a0f8256c73dd7497cd8e6d0f9eb014658c387bd39b5"
  },
@@ -81,7 +81,7 @@
  "events": [
   {
    "seq": 9,
-   "ts": "2026-11-14T10:37:00.769772+00:00",
+   "ts": "2026-11-14T11:52:30.920611+00:00",
    "type": "agent",
    "data": {
     "agent": "single-agent",
@@ -91,7 +91,28 @@
   },
   {
    "seq": 10,
-   "ts": "2026-11-14T10:37:02.417437+00:00",
+   "ts": "2026-11-14T11:52:33.339617+00:00",
+   "type": "todo",
+   "data": {
+    "items": [
+     {
+      "text": "Read case brief and run all deterministic checks",
+      "status": "in_progress"
+     },
+     {
+      "text": "Verify key evidence events",
+      "status": "pending"
+     },
+     {
+      "text": "Submit findings, attribution, and finalize report",
+      "status": "pending"
+     }
+    ]
+   }
+  },
+  {
+   "seq": 11,
+   "ts": "2026-11-14T11:52:33.346869+00:00",
    "type": "tool",
    "data": {
     "agent": "single-agent",
@@ -104,8 +125,8 @@
    }
   },
   {
-   "seq": 11,
-   "ts": "2026-11-14T10:37:02.511388+00:00",
+   "seq": 12,
+   "ts": "2026-11-14T11:52:33.447502+00:00",
    "type": "tool",
    "data": {
     "agent": "single-agent",
@@ -116,12 +137,12 @@
      "ev_48455952f88d"
     ],
     "ok": true,
-    "ms": 97
+    "ms": 103
    }
   },
   {
-   "seq": 12,
-   "ts": "2026-11-14T10:37:02.625542+00:00",
+   "seq": 13,
+   "ts": "2026-11-14T11:52:33.566418+00:00",
    "type": "tool",
    "data": {
     "agent": "single-agent",
@@ -130,71 +151,12 @@
     "result_summary": "6 forwarded logs compared: 0 line(s) unexplainedly absent on the host, 183 explained by rotation, 0 collection gap(s)",
     "evidence_ids": [],
     "ok": true,
-    "ms": 209
-   }
-  },
-  {
-   "seq": 13,
-   "ts": "2026-11-14T10:37:02.651892+00:00",
-   "type": "tool",
-   "data": {
-    "agent": "single-agent",
-    "tool": "check_forwarding",
-    "args": {},
-    "result_summary": "0 gaps reviewed, 0 outside policy or unexplained",
-    "evidence_ids": [],
-    "ok": true,
-    "ms": 237
+    "ms": 218
    }
   },
   {
    "seq": 14,
-   "ts": "2026-11-14T10:37:02.652174+00:00",
-   "type": "tool",
-   "data": {
-    "agent": "single-agent",
-    "tool": "check_file_times",
-    "args": {},
-    "result_summary": "0 files reviewed, 0 outside policy or unexplained",
-    "evidence_ids": [],
-    "ok": true,
-    "ms": 237
-   }
-  },
-  {
-   "seq": 15,
-   "ts": "2026-11-14T10:37:02.652324+00:00",
-   "type": "tool",
-   "data": {
-    "agent": "single-agent",
-    "tool": "check_record_exports",
-    "args": {},
-    "result_summary": "1 exports reviewed, 0 outside policy or unexplained",
-    "evidence_ids": [
-     "ev_a1fbcb5365e8",
-     "ev_404348bcf132"
-    ],
-    "ok": true,
-    "ms": 236
-   }
-  },
-  {
-   "seq": 16,
-   "ts": "2026-11-14T10:37:02.652784+00:00",
-   "type": "tool",
-   "data": {
-    "agent": "single-agent",
-    "tool": "check_shell_history",
-    "args": {},
-    "result_summary": "0 sessions reviewed, 0 outside policy or unexplained",
-    "evidence_ids": [],
-    "ok": true,
-    "ms": 236
-   }
-  },
-  {
-   "seq": 17,
-   "ts": "2026-11-14T10:37:02.653022+00:00",
+   "ts": "2026-11-14T11:52:33.594808+00:00",
    "type": "tool",
    "data": {
     "agent": "single-agent",
@@ -212,12 +174,12 @@
      "ev_945bcfc48184"
     ],
     "ok": true,
-    "ms": 235
+    "ms": 250
    }
   },
   {
-   "seq": 18,
-   "ts": "2026-11-14T10:37:02.653328+00:00",
+   "seq": 15,
+   "ts": "2026-11-14T11:52:33.595075+00:00",
    "type": "tool",
    "data": {
     "agent": "single-agent",
@@ -226,42 +188,106 @@
     "result_summary": "0 sessions reviewed, 0 outside policy or unexplained",
     "evidence_ids": [],
     "ok": true,
-    "ms": 235
+    "ms": 249
+   }
+  },
+  {
+   "seq": 16,
+   "ts": "2026-11-14T11:52:33.595392+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "check_forwarding",
+    "args": {},
+    "result_summary": "0 gaps reviewed, 0 outside policy or unexplained",
+    "evidence_ids": [],
+    "ok": true,
+    "ms": 247
+   }
+  },
+  {
+   "seq": 17,
+   "ts": "2026-11-14T11:52:33.595695+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "check_file_times",
+    "args": {},
+    "result_summary": "0 files reviewed, 0 outside policy or unexplained",
+    "evidence_ids": [],
+    "ok": true,
+    "ms": 247
+   }
+  },
+  {
+   "seq": 18,
+   "ts": "2026-11-14T11:52:33.595872+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "check_record_exports",
+    "args": {},
+    "result_summary": "1 exports reviewed, 0 outside policy or unexplained",
+    "evidence_ids": [
+     "ev_a1fbcb5365e8",
+     "ev_404348bcf132"
+    ],
+    "ok": true,
+    "ms": 246
    }
   },
   {
    "seq": 19,
-   "ts": "2026-11-14T10:37:06.205589+00:00",
+   "ts": "2026-11-14T11:52:33.596331+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "check_shell_history",
+    "args": {},
+    "result_summary": "0 sessions reviewed, 0 outside policy or unexplained",
+    "evidence_ids": [],
+    "ok": true,
+    "ms": 245
+   }
+  },
+  {
+   "seq": 20,
+   "ts": "2026-11-14T11:52:36.513177+00:00",
    "type": "tool",
    "data": {
     "agent": "single-agent",
     "tool": "get_events",
     "args": {
      "ids": [
-      "ev_b9db27bf4d8f",
       "ev_f7fe7bdb5eea",
-      "ev_6d157d3593e1",
+      "ev_945bcfc48184",
+      "ev_deeb64355b24",
+      "ev_b9db27bf4d8f",
+      "ev_70bd6004200f",
+      "ev_27e2d145b634",
       "ev_d4061da4e30e",
       "ev_d5d4317a5932",
       "ev_34f7362f052f"
      ]
     },
-    "result_summary": "6 of 6 id(s) resolved",
+    "result_summary": "9 of 9 id(s) resolved",
     "evidence_ids": [
-     "ev_b9db27bf4d8f",
      "ev_f7fe7bdb5eea",
-     "ev_6d157d3593e1",
+     "ev_945bcfc48184",
+     "ev_deeb64355b24",
+     "ev_b9db27bf4d8f",
+     "ev_70bd6004200f",
+     "ev_27e2d145b634",
      "ev_d4061da4e30e",
-     "ev_d5d4317a5932",
-     "ev_34f7362f052f"
+     "ev_d5d4317a5932"
     ],
     "ok": true,
-    "ms": 2
+    "ms": 6
    }
   },
   {
-   "seq": 20,
-   "ts": "2026-11-14T10:37:06.210959+00:00",
+   "seq": 21,
+   "ts": "2026-11-14T11:52:36.517585+00:00",
    "type": "tool",
    "data": {
     "agent": "single-agent",
@@ -285,16 +311,16 @@
      "ev_c53f63830db4"
     ],
     "ok": true,
-    "ms": 7
+    "ms": 10
    }
   },
   {
-   "seq": 21,
-   "ts": "2026-11-14T10:37:17.623650+00:00",
+   "seq": 22,
+   "ts": "2026-11-14T11:52:48.006788+00:00",
    "type": "finding",
    "data": {
     "finding": {
-     "id": "F-d53303",
+     "id": "F-ef7fac",
      "claim_type": "sensor_stream_discrepancy",
      "category": "incident_allegation",
      "attack_id": null,
@@ -302,32 +328,27 @@
      "host": "iot-hub",
      "actor_claimed": null,
      "account_used": null,
-     "t_start": "2026-11-10T11:54:05Z",
-     "t_end": "2026-11-10T12:14:05Z",
+     "t_start": "2026-11-10T11:51:20Z",
+     "t_end": "2026-11-10T12:16:20Z",
      "object_or_session": "fridge-01",
      "evidence_ids": [
       "ev_f7fe7bdb5eea",
-      "ev_6d157d3593e1",
+      "ev_945bcfc48184",
+      "ev_deeb64355b24",
+      "ev_10ac424b028c",
       "ev_b9db27bf4d8f",
       "ev_70bd6004200f",
       "ev_f8b98a85974b",
-      "ev_0c14b3352e0e"
+      "ev_27e2d145b634"
      ],
-     "counterevidence_ids": [
-      "ev_d4061da4e30e",
-      "ev_d5d4317a5932",
-      "ev_34f7362f052f"
-     ],
+     "counterevidence_ids": [],
      "check_refs": [],
-     "confidence": 0.6,
-     "rationale": "Between 11:54 and 12:14 UTC the independent reference logger recorded 8.3-12.0 C (out of the 2-8 C range), while the hub's stored fridge-01 readings for the same window read 4.5-7.5 C and in range. The difference (up to 6.6 C) exceeds the 0.8 C tolerance and is not covered by any maintenance record (disc-2 classified unexplained). The hub's publish count matches its readings, so the stored stream differs from what the reference measured. This shows a disagreement only; it does not show whether the hub value, the probe, or the reference was wrong, or who or what caused it.",
-     "assumptions": [
-      "Reference logger probe is accurate within the stated 0.8 C tolerance",
-      "Hub stored readings are the stream a dashboard shows"
-     ],
+     "confidence": 0.8,
+     "rationale": "Between 11:54 and 12:14 UTC the independent reference logger (logger-01) recorded fridge-01 at 9.7, 11.8 and 12.0 C (above the 2-8 C range), while the hub's stored readings for the same window read 4.8-5.5 C (state ok). The hub stream is the one a dashboard shows and is host-local writable. The check classifies this as unexplained: no maintenance record covers it. This shows the two records disagree; it does not show who changed the hub copy, when, or why.",
+     "assumptions": [],
      "alternative_explanations": [
-      "Sensor or probe fault on fridge-01 not recorded in the maintenance log",
-      "Reference logger fault (its clock is not network-synchronised; clock allowance is 150 s, which does not explain a 20-minute offset in level)"
+      "Clock offset between the reference logger and hub (allowance 120-150 s) does not explain a 4-7 C difference sustained for 20 minutes.",
+      "Probe fault on either the hub sensor or the reference logger; not excluded by the bundle."
      ],
      "status": "verified",
      "verification_status": "supported_observation",
@@ -341,17 +362,17 @@
    }
   },
   {
-   "seq": 22,
-   "ts": "2026-11-14T10:37:17.625734+00:00",
+   "seq": 23,
+   "ts": "2026-11-14T11:52:48.008853+00:00",
    "type": "finding",
    "data": {
     "finding": {
-     "id": "F-73e7a9",
+     "id": "F-2ad197",
      "claim_type": "temperature_excursion",
      "category": "neutral_reconstruction",
      "attack_id": null,
      "technique_family": null,
-     "host": "iot-hub",
+     "host": "reference",
      "actor_claimed": null,
      "account_used": null,
      "t_start": "2026-11-10T11:54:05Z",
@@ -359,51 +380,14 @@
      "object_or_session": "fridge-01",
      "evidence_ids": [
       "ev_f7fe7bdb5eea",
+      "ev_945bcfc48184",
+      "ev_deeb64355b24",
       "ev_6d157d3593e1"
      ],
      "counterevidence_ids": [],
      "check_refs": [],
-     "confidence": 0.8,
-     "rationale": "The reference logger recorded fridge-01 above the permitted 2-8 C range from 11:54:05 to 12:14:05 UTC, peaking at 12.0 C. This is a real excursion as the independent reference records it. The hub's stored readings do not show it (see the sensor discrepancy finding). Temperature alone does not indicate intent.",
-     "assumptions": [],
-     "alternative_explanations": [],
-     "status": "verified",
-     "verification_status": "supported_observation",
-     "verifier_notes": [
-      "a deterministic check supports this observation; it is not an incident allegation"
-     ],
-     "skeptic_note": null,
-     "produced_by": "single-agent"
-    },
-    "phase": "proposed"
-   }
-  },
-  {
-   "seq": 23,
-   "ts": "2026-11-14T10:37:17.625832+00:00",
-   "type": "finding",
-   "data": {
-    "finding": {
-     "id": "F-395b0e",
-     "claim_type": "sensor_maintenance",
-     "category": "benign_explanation",
-     "attack_id": null,
-     "technique_family": null,
-     "host": "iot-hub",
-     "actor_claimed": null,
-     "account_used": null,
-     "t_start": "2026-11-10T08:32:20Z",
-     "t_end": "2026-11-10T08:40:20Z",
-     "object_or_session": "fridge-01",
-     "evidence_ids": [
-      "ev_d4061da4e30e",
-      "ev_d5d4317a5932",
-      "ev_34f7362f052f"
-     ],
-     "counterevidence_ids": [],
-     "check_refs": [],
-     "confidence": 0.7,
-     "rationale": "An earlier divergence (08:32-08:36 UTC) where the hub read about 0.1-0.4 C during state 'calibration' while the reference read 5.3 C is covered by maintenance record CAL-7868, and the hub stream restarted at 08:40 within the maintenance window. Explained by planned calibration.",
+     "confidence": 0.85,
+     "rationale": "The independent reference logger records fridge-01 above the permitted 8.0 C maximum for about 20 minutes, peaking at 12.0 C. This is a real excursion as recorded by the reference. It is a neutral fact and is not evidence of intent.",
      "assumptions": [],
      "alternative_explanations": [],
      "status": "verified",
@@ -419,7 +403,46 @@
   },
   {
    "seq": 24,
-   "ts": "2026-11-14T10:37:17.625908+00:00",
+   "ts": "2026-11-14T11:52:48.008951+00:00",
+   "type": "finding",
+   "data": {
+    "finding": {
+     "id": "F-395b0e",
+     "claim_type": "sensor_maintenance",
+     "category": "benign_explanation",
+     "attack_id": null,
+     "technique_family": null,
+     "host": "iot-hub",
+     "actor_claimed": null,
+     "account_used": null,
+     "t_start": "2026-11-10T08:32:20Z",
+     "t_end": "2026-11-10T08:40:20Z",
+     "object_or_session": "fridge-01",
+     "evidence_ids": [
+      "ev_d5d4317a5932",
+      "ev_d4061da4e30e",
+      "ev_34f7362f052f"
+     ],
+     "counterevidence_ids": [],
+     "check_refs": [],
+     "confidence": 0.8,
+     "rationale": "An 08:32-08:36 UTC divergence (hub 0.3 C in calibration state versus reference 5.3 C) falls under calibration record CAL-7868, and the hub stream restarts at 08:40 inside the maintenance window. This is explained maintenance.",
+     "assumptions": [],
+     "alternative_explanations": [],
+     "status": "verified",
+     "verification_status": "supported_observation",
+     "verifier_notes": [
+      "a deterministic check supports this observation; it is not an incident allegation"
+     ],
+     "skeptic_note": null,
+     "produced_by": "single-agent"
+    },
+    "phase": "proposed"
+   }
+  },
+  {
+   "seq": 25,
+   "ts": "2026-11-14T11:52:48.009061+00:00",
    "type": "finding",
    "data": {
     "finding": {
@@ -436,15 +459,15 @@
      "object_or_session": "10.20.0.45:873",
      "evidence_ids": [
       "ev_48455952f88d",
-      "ev_a1fbcb5365e8",
       "ev_404348bcf132",
+      "ev_a1fbcb5365e8",
       "ev_e91eb05d8862",
       "ev_af301244e3ef"
      ],
      "counterevidence_ids": [],
      "check_refs": [],
-     "confidence": 0.7,
-     "rationale": "A 19.5 MB transfer from records to 10.20.0.45 (stor-nas-01, approved backup and log archive destination) was started by the svc-backup scheduled job after an export of the patients_full dataset. The destination is on the approved list, so it is not a policy violation on its face. Note that the dataset is a full patient export, so the scheduled job's scope is worth review, but no evidence shows misuse.",
+     "confidence": 0.8,
+     "rationale": "A 19.5 MB transfer from records to 10.20.0.45 (stor-nas-01, an approved backup destination) follows a patients_full export by svc-backup at 11:59:02. The export was started by a scheduled job. Destination and job are both policy-consistent.",
      "assumptions": [],
      "alternative_explanations": [],
      "status": "verified",
@@ -459,8 +482,8 @@
    }
   },
   {
-   "seq": 25,
-   "ts": "2026-11-14T10:37:17.625972+00:00",
+   "seq": 26,
+   "ts": "2026-11-14T11:52:48.009121+00:00",
    "type": "tool",
    "data": {
     "agent": "single-agent",
@@ -474,18 +497,18 @@
     "result_summary": "F-20aa0e policy_consistent_transfer: supported_observation",
     "evidence_ids": [
      "ev_48455952f88d",
-     "ev_a1fbcb5365e8",
      "ev_404348bcf132",
+     "ev_a1fbcb5365e8",
      "ev_e91eb05d8862",
      "ev_af301244e3ef"
     ],
     "ok": true,
-    "ms": 241
+    "ms": 234
    }
   },
   {
-   "seq": 26,
-   "ts": "2026-11-14T10:37:17.626094+00:00",
+   "seq": 27,
+   "ts": "2026-11-14T11:52:48.009241+00:00",
    "type": "tool",
    "data": {
     "agent": "single-agent",
@@ -493,21 +516,23 @@
     "args": {
      "claim_type": "temperature_excursion",
      "category": "neutral_reconstruction",
-     "host": "iot-hub",
+     "host": "reference",
      "object_or_session": "fridge-01"
     },
-    "result_summary": "F-73e7a9 temperature_excursion: supported_observation",
+    "result_summary": "F-2ad197 temperature_excursion: supported_observation",
     "evidence_ids": [
      "ev_f7fe7bdb5eea",
+     "ev_945bcfc48184",
+     "ev_deeb64355b24",
      "ev_6d157d3593e1"
     ],
     "ok": true,
-    "ms": 242
+    "ms": 235
    }
   },
   {
-   "seq": 27,
-   "ts": "2026-11-14T10:37:17.626309+00:00",
+   "seq": 28,
+   "ts": "2026-11-14T11:52:48.009482+00:00",
    "type": "tool",
    "data": {
     "agent": "single-agent",
@@ -520,17 +545,17 @@
     },
     "result_summary": "F-395b0e sensor_maintenance: supported_observation",
     "evidence_ids": [
-     "ev_d4061da4e30e",
      "ev_d5d4317a5932",
+     "ev_d4061da4e30e",
      "ev_34f7362f052f"
     ],
     "ok": true,
-    "ms": 242
+    "ms": 234
    }
   },
   {
-   "seq": 28,
-   "ts": "2026-11-14T10:37:17.626672+00:00",
+   "seq": 29,
+   "ts": "2026-11-14T11:52:48.009863+00:00",
    "type": "tool",
    "data": {
     "agent": "single-agent",
@@ -541,22 +566,24 @@
      "host": "iot-hub",
      "object_or_session": "fridge-01"
     },
-    "result_summary": "F-d53303 sensor_stream_discrepancy: supported_observation",
+    "result_summary": "F-ef7fac sensor_stream_discrepancy: supported_observation",
     "evidence_ids": [
      "ev_f7fe7bdb5eea",
-     "ev_6d157d3593e1",
+     "ev_945bcfc48184",
+     "ev_deeb64355b24",
+     "ev_10ac424b028c",
      "ev_b9db27bf4d8f",
      "ev_70bd6004200f",
      "ev_f8b98a85974b",
-     "ev_0c14b3352e0e"
+     "ev_27e2d145b634"
     ],
     "ok": true,
-    "ms": 243
+    "ms": 236
    }
   },
   {
-   "seq": 30,
-   "ts": "2026-11-14T10:37:22.026755+00:00",
+   "seq": 31,
+   "ts": "2026-11-14T11:52:51.759220+00:00",
    "type": "tool",
    "data": {
     "agent": "single-agent",
@@ -567,27 +594,91 @@
     },
     "result_summary": "account svc-backup; human identity insufficient_evidence",
     "evidence_ids": [
-     "ev_e91eb05d8862",
-     "ev_af301244e3ef"
+     "ev_404348bcf132",
+     "ev_e91eb05d8862"
     ],
     "ok": true,
-    "ms": 0
+    "ms": 1
    }
   },
   {
-   "seq": 31,
-   "ts": "2026-11-14T10:37:22.030603+00:00",
+   "seq": 32,
+   "ts": "2026-11-14T11:52:51.760197+00:00",
+   "type": "finding",
+   "data": {
+    "finding": {
+     "id": "F-7b2891",
+     "claim_type": "retention_explained_absence",
+     "category": "benign_explanation",
+     "attack_id": null,
+     "technique_family": null,
+     "host": "records",
+     "actor_claimed": null,
+     "account_used": null,
+     "t_start": "2026-11-10T06:29:50Z",
+     "t_end": "2026-11-10T09:06:15Z",
+     "object_or_session": "/var/log/records-app/access.log",
+     "evidence_ids": [
+      "ev_12d5d4357edc",
+      "ev_e81af02b8eaa",
+      "ev_cd735debe5d9",
+      "ev_c62b09bcc8aa"
+     ],
+     "counterevidence_ids": [],
+     "check_refs": [],
+     "confidence": 0.8,
+     "rationale": "The collector holds 183 access-log lines from 06:29:50 to 09:06:15 that are absent on records. They predate the oldest log generation kept on the host, and the rotation at 09:07:04 was archived off-host. This is normal retention, not removal.",
+     "assumptions": [],
+     "alternative_explanations": [],
+     "status": "verified",
+     "verification_status": "supported_observation",
+     "verifier_notes": [
+      "a deterministic check supports this observation; it is not an incident allegation"
+     ],
+     "skeptic_note": null,
+     "produced_by": "single-agent"
+    },
+    "phase": "proposed"
+   }
+  },
+  {
+   "seq": 33,
+   "ts": "2026-11-14T11:52:51.760293+00:00",
+   "type": "tool",
+   "data": {
+    "agent": "single-agent",
+    "tool": "submit_finding",
+    "args": {
+     "claim_type": "retention_explained_absence",
+     "category": "benign_explanation",
+     "host": "records",
+     "object_or_session": "/var/log/records-app/access.log"
+    },
+    "result_summary": "F-7b2891 retention_explained_absence: supported_observation",
+    "evidence_ids": [
+     "ev_12d5d4357edc",
+     "ev_e81af02b8eaa",
+     "ev_cd735debe5d9",
+     "ev_c62b09bcc8aa"
+    ],
+    "ok": true,
+    "ms": 3
+   }
+  },
+  {
+   "seq": 34,
+   "ts": "2026-11-14T11:52:56.087637+00:00",
    "type": "agent",
    "data": {
     "agent": "single-agent",
     "status": "finished",
-    "summary": "4 finding(s) submitted for review"
+    "summary": "5 finding(s) submitted for review"
    }
   }
  ],
  "report": {
   "schema_version": "1.0.0",
-  "report_id": "rep-case-466c1f636e56",
+  "report_id": "rep-case-51c6729435cb",
   "bundle_id": "bndl-6e5377674fe74e66",
   "system_id": "B1+",
   "system_label": "Fast investigation: one agent with deterministic checks, no delegation (same configuration as benchmark arm B1+)",
@@ -595,7 +686,7 @@
   "model_id": "anthropic:claude-haiku-5-5",
   "findings": [
    {
-    "id": "F-d53303",
+    "id": "F-ef7fac",
     "claim_type": "sensor_stream_discrepancy",
     "category": "incident_allegation",
     "attack_id": null,
@@ -603,37 +694,64 @@
     "host": "iot-hub",
     "actor_claimed": null,
     "account_used": null,
-    "t_start": "2026-11-10T11:54:05Z",
-    "t_end": "2026-11-10T12:14:05Z",
+    "t_start": "2026-11-10T11:51:20Z",
+    "t_end": "2026-11-10T12:16:20Z",
     "object_or_session": "fridge-01",
     "evidence_ids": [
      "ev_f7fe7bdb5eea",
-     "ev_6d157d3593e1",
+     "ev_945bcfc48184",
+     "ev_deeb64355b24",
+     "ev_10ac424b028c",
      "ev_b9db27bf4d8f",
      "ev_70bd6004200f",
      "ev_f8b98a85974b",
-     "ev_0c14b3352e0e"
+     "ev_27e2d145b634"
     ],
-    "counterevidence_ids": [
-     "ev_d4061da4e30e",
-     "ev_d5d4317a5932",
-     "ev_34f7362f052f"
-    ],
+    "counterevidence_ids": [],
     "check_refs": [],
-    "confidence": 0.6,
-    "rationale": "Between 11:54 and 12:14 UTC the independent reference logger recorded 8.3-12.0 C (out of the 2-8 C range), while the hub's stored fridge-01 readings for the same window read 4.5-7.5 C and in range. The difference (up to 6.6 C) exceeds the 0.8 C tolerance and is not covered by any maintenance record (disc-2 classified unexplained). The hub's publish count matches its readings, so the stored stream differs from what the reference measured. This shows a disagreement only; it does not show whether the hub value, the probe, or the reference was wrong, or who or what caused it.",
-    "assumptions": [
-     "Reference logger probe is accurate within the stated 0.8 C tolerance",
-     "Hub stored readings are the stream a dashboard shows"
-    ],
+    "confidence": 0.8,
+    "rationale": "Between 11:54 and 12:14 UTC the independent reference logger (logger-01) recorded fridge-01 at 9.7, 11.8 and 12.0 C (above the 2-8 C range), while the hub's stored readings for the same window read 4.8-5.5 C (state ok). The hub stream is the one a dashboard shows and is host-local writable. The check classifies this as unexplained: no maintenance record covers it. This shows the two records disagree; it does not show who changed the hub copy, when, or why.",
+    "assumptions": [],
     "alternative_explanations": [
-     "Sensor or probe fault on fridge-01 not recorded in the maintenance log",
-     "Reference logger fault (its clock is not network-synchronised; clock allowance is 150 s, which does not explain a 20-minute offset in level)"
+     "Clock offset between the reference logger and hub (allowance 120-150 s) does not explain a 4-7 C difference sustained for 20 minutes.",
+     "Probe fault on either the hub sensor or the reference logger; not excluded by the bundle."
     ],
     "status": "verified",
     "verification_status": "supported_observation",
     "verifier_notes": [
      "the hub's stored readings and the independent reference disagree beyond the stated tolerance, outside every stated maintenance window"
+    ],
+    "skeptic_note": null,
+    "produced_by": "single-agent"
+   },
+   {
+    "id": "F-7b2891",
+    "claim_type": "retention_explained_absence",
+    "category": "benign_explanation",
+    "attack_id": null,
+    "technique_family": null,
+    "host": "records",
+    "actor_claimed": null,
+    "account_used": null,
+    "t_start": "2026-11-10T06:29:50Z",
+    "t_end": "2026-11-10T09:06:15Z",
+    "object_or_session": "/var/log/records-app/access.log",
+    "evidence_ids": [
+     "ev_12d5d4357edc",
+     "ev_e81af02b8eaa",
+     "ev_cd735debe5d9",
+     "ev_c62b09bcc8aa"
+    ],
+    "counterevidence_ids": [],
+    "check_refs": [],
+    "confidence": 0.8,
+    "rationale": "The collector holds 183 access-log lines from 06:29:50 to 09:06:15 that are absent on records. They predate the oldest log generation kept on the host, and the rotation at 09:07:04 was archived off-host. This is normal retention, not removal.",
+    "assumptions": [],
+    "alternative_explanations": [],
+    "status": "verified",
+    "verification_status": "supported_observation",
+    "verifier_notes": [
+     "a deterministic check supports this observation; it is not an incident allegation"
     ],
     "skeptic_note": null,
     "produced_by": "single-agent"
@@ -651,14 +769,14 @@
     "t_end": "2026-11-10T08:40:20Z",
     "object_or_session": "fridge-01",
     "evidence_ids": [
-     "ev_d4061da4e30e",
      "ev_d5d4317a5932",
+     "ev_d4061da4e30e",
      "ev_34f7362f052f"
     ],
     "counterevidence_ids": [],
     "check_refs": [],
-    "confidence": 0.7,
-    "rationale": "An earlier divergence (08:32-08:36 UTC) where the hub read about 0.1-0.4 C during state 'calibration' while the reference read 5.3 C is covered by maintenance record CAL-7868, and the hub stream restarted at 08:40 within the maintenance window. Explained by planned calibration.",
+    "confidence": 0.8,
+    "rationale": "An 08:32-08:36 UTC divergence (hub 0.3 C in calibration state versus reference 5.3 C) falls under calibration record CAL-7868, and the hub stream restarts at 08:40 inside the maintenance window. This is explained maintenance.",
     "assumptions": [],
     "alternative_explanations": [],
     "status": "verified",
@@ -683,15 +801,15 @@
     "object_or_session": "10.20.0.45:873",
     "evidence_ids": [
      "ev_48455952f88d",
-     "ev_a1fbcb5365e8",
      "ev_404348bcf132",
+     "ev_a1fbcb5365e8",
      "ev_e91eb05d8862",
      "ev_af301244e3ef"
     ],
     "counterevidence_ids": [],
     "check_refs": [],
-    "confidence": 0.7,
-    "rationale": "A 19.5 MB transfer from records to 10.20.0.45 (stor-nas-01, approved backup and log archive destination) was started by the svc-backup scheduled job after an export of the patients_full dataset. The destination is on the approved list, so it is not a policy violation on its face. Note that the dataset is a full patient export, so the scheduled job's scope is worth review, but no evidence shows misuse.",
+    "confidence": 0.8,
+    "rationale": "A 19.5 MB transfer from records to 10.20.0.45 (stor-nas-01, an approved backup destination) follows a patients_full export by svc-backup at 11:59:02. The export was started by a scheduled job. Destination and job are both policy-consistent.",
     "assumptions": [],
     "alternative_explanations": [],
     "status": "verified",
@@ -703,12 +821,12 @@
     "produced_by": "single-agent"
    },
    {
-    "id": "F-73e7a9",
+    "id": "F-2ad197",
     "claim_type": "temperature_excursion",
     "category": "neutral_reconstruction",
     "attack_id": null,
     "technique_family": null,
-    "host": "iot-hub",
+    "host": "reference",
     "actor_claimed": null,
     "account_used": null,
     "t_start": "2026-11-10T11:54:05Z",
@@ -716,12 +834,14 @@
     "object_or_session": "fridge-01",
     "evidence_ids": [
      "ev_f7fe7bdb5eea",
+     "ev_945bcfc48184",
+     "ev_deeb64355b24",
      "ev_6d157d3593e1"
     ],
     "counterevidence_ids": [],
     "check_refs": [],
-    "confidence": 0.8,
-    "rationale": "The reference logger recorded fridge-01 above the permitted 2-8 C range from 11:54:05 to 12:14:05 UTC, peaking at 12.0 C. This is a real excursion as the independent reference records it. The hub's stored readings do not show it (see the sensor discrepancy finding). Temperature alone does not indicate intent.",
+    "confidence": 0.85,
+    "rationale": "The independent reference logger records fridge-01 above the permitted 8.0 C maximum for about 20 minutes, peaking at 12.0 C. This is a real excursion as recorded by the reference. It is a neutral fact and is not evidence of intent.",
     "assumptions": [],
     "alternative_explanations": [],
     "status": "verified",
@@ -740,46 +860,169 @@
    "named_person_accused": null,
    "named_person_exonerated": null,
    "supporting_evidence_ids": [
-    "ev_e91eb05d8862",
-    "ev_af301244e3ef"
+    "ev_404348bcf132",
+    "ev_e91eb05d8862"
    ],
    "contrary_evidence_ids": [],
    "assumptions": [],
    "limits": [
-    "An account name identifies a credential, not a person",
-    "Badge records do not cover remote sessions and cannot clear or accuse anyone",
-    "No cross-host sessions were found in the window"
+    "No session on the hub or any host is tied to the stored-reading change.",
+    "Hub stream is host-local writable and not forwarded as a write-audit.",
+    "Account names identify credentials, not people."
    ],
-   "statement": "The account used for the bulk export and transfer is svc-backup, a scheduled service job. No evidence identifies a human operator. For the fridge-01 stream discrepancy, the evidence does not show who or what produced the stored hub readings; the hub's stored stream disagrees with the reference logger and the cause is open.",
+   "statement": "The fridge-01 hub-versus-reference discrepancy (11:54-12:14 UTC) is an unexplained data disagreement. The bundle does not identify any account or person that changed the hub's stored readings. The one bulk transfer (svc-backup export to approved stor-nas-01) is a scheduled job. Default conclusion: no human operator established.",
    "review_status": "pending",
    "approved_by_human": false,
    "approved_at": null
   },
-  "summary": "Tip: review the vaccine refrigerator (fridge-01) temperature record for the shift. Findings: (1) Real excursion: the independent reference logger recorded fridge-01 above 8 C from 11:54 to 12:14 UTC, peaking at 12.0 C. (2) Sensor stream discrepancy (unexplained): during the same window the hub's stored readings showed 4.5-7.5 C, in range, while the reference showed 8.3-12.0 C. The disagreement exceeds tolerance and is not covered by maintenance. It is a fact about the records; the cause (hub value, probe fault, reference fault, or alteration) is not established, and no person is identified. (3) An earlier 08:32-08:36 divergence coincides with calibration record CAL-7868 and is explained. (4) A 19.5 MB transfer to approved NAS 10.20.0.45 came from the svc-backup scheduled export of patients_full; it is policy-consistent. Checks with no findings: log removal (local and collector logs consistent; the only absence is retention-explained rotation), forwarding gaps (none), file timestamp changes (none), cross-host sessions (none), shell history (consistent).",
+  "summary": "Tip: review the vaccine refrigerator (fridge-01) temperature record for this shift. What the evidence supports:\n\n1. Real excursion (neutral): the independent reference logger recorded fridge-01 above the 8.0 C maximum from about 11:54 to 12:14 UTC, peaking at 12.0 C (ev_f7fe7bdb5eea, ev_945bcfc48184, ev_deeb64355b24).\n\n2. Incident-type discrepancy (unresolved as to cause): over the same window, the hub's stored readings (the stream a dashboard shows) read 4.8-5.5 C with state \"ok\" (e.g. ev_f8b98a85974b, ev_70bd6004200f, ev_27e2d145b634). The two records disagree by up to 6.6 C beyond tolerance, with no maintenance cover. The hub copy is host-local writable, so the evidence shows the records disagree. It does not show who changed what, when, or why. Clock offset and probe fault are not excluded by the bundle.\n\n3. Benign: an 08:32-08:36 UTC divergence is covered by calibration record CAL-7868 and a restart in the maintenance window (ev_d5d4317a5932, ev_d4061da4e30e, ev_34f7362f052f).\n\n4. Benign: one 19.5 MB transfer from records to approved backup destination 10.20.0.45:873 is a scheduled svc-backup export of patients_full (ev_48455952f88d, ev_a1fbcb5365e8, ev_e91eb05d8862).\n\n5. Benign: 183 records access-log lines absent on the host are explained by normal retention and off-host archival of rotated logs.\n\nChecks with no finding: local-vs-collector log comparison (no unexplained removal), forwarding (no interruptions), cross-host sessions (none), file timestamps (none), shell history (consistent).\n\nAttribution: the account used for the bulk export is svc-backup, a scheduled job. No human operator is established for the fridge-stream discrepancy. Account names are credentials, not people; no person is named or cleared.",
   "open_questions": [
-   "Why the hub's stored fridge-01 readings differ from the reference logger during 11:54-12:14, and whether the hub value was altered or the probe failed",
-   "Whether the patients_full scheduled export scope to stor-nas-01 is authorized as intended",
-   "Whether any vaccines were affected by the 8-12 C excursion (outside the evidence bundle)"
+   "Who or what wrote the hub's stored fridge-01 readings for 11:54-12:14 UTC, and why they differ from the reference logger. Needs a hub-side write audit or sensor/probe inspection, which this bundle does not contain.",
+   "Whether the reference logger or the hub sensor had a probe fault during the window.",
+   "Whether any physical access to the shared console coincided with the window (badge reader can miss tailgating)."
   ],
   "usage": {
-   "llm_calls": 4,
-   "tokens_in": 68630,
-   "tokens_out": 4728,
-   "tokens_cache_read": 44213,
-   "cost_estimate_usd": 0.005858,
-   "wall_seconds": 21.74,
-   "tool_calls": 16,
+   "llm_calls": 5,
+   "tokens_in": 96886,
+   "tokens_out": 5719,
+   "tokens_cache_read": 70611,
+   "cost_estimate_usd": 0.00685,
+   "wall_seconds": 25.71,
+   "tool_calls": 17,
    "scripted_turns": 0,
    "retries": 0,
    "errors": 0,
    "timed_out": false
   },
-  "created_at": "2026-11-14T10:37:22.269574Z",
+  "created_at": "2026-11-14T11:52:56.317384Z",
   "locked": false,
   "locked_at": null,
   "report_sha256": null,
   "review_history": [],
   "verifier_version": "1.1.0"
  },
- "questions": []
+ "questions": [
+  {
+   "schema_version": "1.0.0",
+   "question_id": "q-9f47e881a5",
+   "case_id": "case-51c6729435cb",
+   "bundle_id": "bndl-6e5377674fe74e66",
+   "question": "Was the temperature record altered, and did the refrigerator actually get warm?",
+   "status": "answered",
+   "answer": "Yes, the fridge got warm according to the independent reference logger: about 11:54 to 12:14 UTC, peaking at 12.0 C against an 8.0 C maximum. The hub's stored readings for that window show 4.5 to 7.5 C with state ok, so the stored record disagrees with the reference by up to 6.6 C. The bundle shows the two records disagree and that the hub copy is host-local writable. It does not show that the hub record was altered, by whom, or why. Probe fault or clock offset is not excluded. No account or session is tied to the stored-reading change.",
+   "claims": [
+    {
+     "text": "The independent reference logger recorded fridge-01 above the 8.0 C maximum from about 11:54 to 12:14 UTC, peaking at 12.0 C.",
+     "evidence_ids": [
+      "ev_f7fe7bdb5eea",
+      "ev_945bcfc48184",
+      "ev_deeb64355b24",
+      "ev_6d157d3593e1"
+     ],
+     "support": "checked",
+     "kind": "temperature_excursion",
+     "basis": "the deterministic check for this kind of evidence reports it for the cited records: The reference logger recorded temperatures outside the permitted range from 2026-11-10T11:54:05+00:00 to 2026-11-10T12:14:05+00:00 (peak 12.0 C). The hub's stored readings do not show it. A temperature record does not sh"
+    },
+    {
+     "text": "Over 11:54 to 12:14 UTC the hub's stored fridge-01 readings (4.5 to 7.5 C, state ok) disagree with the reference by up to 6.6 C, beyond tolerance, with no maintenance record covering it.",
+     "evidence_ids": [
+      "ev_f8b98a85974b",
+      "ev_70bd6004200f",
+      "ev_27e2d145b634"
+     ],
+     "support": "checked",
+     "kind": "sensor_stream_discrepancy",
+     "basis": "the deterministic check for this kind of evidence reports it for the cited records: Between 2026-11-10T11:54:05+00:00 and 2026-11-10T12:14:05+00:00 the reference logger reads 8.3-12.0 C while the hub's stored readings for the same period read 4.5-7.5 C (difference up to 6.6 C). The difference is larger "
+    },
+    {
+     "text": "The hub's stored readings were published on schedule with contiguous message counters, and the collector holds 540 publish records matching the 540 local readings, so the stored stream shows no sequence gap.",
+     "evidence_ids": [
+      "ev_b90c0ca8032b",
+      "ev_fceaceecc68b",
+      "ev_64438259b417"
+     ],
+     "support": "cited",
+     "kind": "record",
+     "basis": "the cited records exist in this bundle; that they say this was not machine-checked"
+    },
+    {
+     "text": "The separate 08:32-08:36 UTC divergence is covered by calibration record CAL-7868 and a restart inside the maintenance window, so it is not part of the incident discrepancy.",
+     "evidence_ids": [
+      "ev_d5d4317a5932",
+      "ev_d4061da4e30e",
+      "ev_34f7362f052f"
+     ],
+     "support": "checked",
+     "kind": "sensor_maintenance",
+     "basis": "the deterministic check for this kind of evidence reports it for the cited records: Between 2026-11-10T08:34:05+00:00 and 2026-11-10T08:34:05+00:00 the reference logger reads 5.3-5.3 C while the hub's stored readings for the same period read 0.1-0.4 C (difference up to 4.9 C). This falls inside stated m"
+    },
+    {
+     "text": "Whether the hub record was altered or the sensor or reference probe was faulty cannot be determined from this bundle; the hub stream is writable on the host and no hub-side write audit is present.",
+     "evidence_ids": [
+      "ev_f8b98a85974b"
+     ],
+     "support": "interpretation",
+     "kind": "interpretation",
+     "basis": "the model's reading of the evidence; not machine-checked"
+    }
+   ],
+   "limitations": [
+    "No hub-side write audit or sensor/probe inspection is in the bundle.",
+    "The file-time check found no timestamp alterations, but file metadata is host-local and cannot rule out edits.",
+    "Account names identify credentials, not people; no human operator is established."
+   ],
+   "follow_up_evidence": [
+    "Hub-side write audit or database change log for the fridge-01 stored readings, 11:54-12:14 UTC.",
+    "Physical inspection of the fridge-01 probe and the reference logger, including calibration records.",
+    "Collector-side copies of the hub's readings compared against the hub's stored values for the same window."
+   ],
+   "dropped_evidence_ids": [],
+   "trace": [
+    {
+     "tool": "check_sensor_streams",
+     "args": {},
+     "result_summary": "2 discrepancies reviewed, 1 outside policy or unexplained, 1 excursion(s)",
+     "ok": true
+    },
+    {
+     "tool": "check_file_times",
+     "args": {},
+     "result_summary": "0 files reviewed, 0 outside policy or unexplained",
+     "ok": true
+    },
+    {
+     "tool": "search_events",
+     "args": {
+      "source": "mqtt",
+      "host": "iot-hub",
+      "t_start": "2026-11-10T11:50:00+00:00",
+      "t_end": "2026-11-10T12:20:00+00:00",
+      "limit": 50,
+      "offset": 0
+     },
+     "result_summary": "31 event(s) match; 31 returned",
+     "ok": true
+    }
+   ],
+   "inference_mode": "LIVE_MODEL",
+   "inference_label": "Live model",
+   "model_id": "anthropic:claude-haiku-5-5",
+   "usage": {
+    "llm_calls": 2,
+    "tokens_in": 26262,
+    "tokens_out": 1932,
+    "tokens_cache_read": 9733,
+    "cost_estimate_usd": 0.003129,
+    "wall_seconds": 9.706,
+    "tool_calls": 0,
+    "scripted_turns": 0,
+    "retries": 0,
+    "errors": 0,
+    "timed_out": false
+   },
+   "error": null,
+   "asked_at": "2026-11-14T11:52:56.342286Z",
+   "answered_at": "2026-11-14T11:53:06.055500Z"
+  }
+ ]
 }
