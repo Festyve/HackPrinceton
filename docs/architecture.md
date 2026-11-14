@@ -1,6 +1,6 @@
 # Architecture
 
-Status: OFFLINE-READY. Evidence origin: simulated (`SIM`). No live model has run.
+Status: OFFLINE-READY, with the investigator demonstrated on a real model (Claude Opus 5.5). Evidence origin: simulated (`SIM`). The adversary is a scripted scenario.
 
 ## Components
 
@@ -51,7 +51,7 @@ What this is **not**: an operating-system boundary. Everything runs as one user 
 
 Deterministic code computes observations under explicit coverage assumptions (retention boundary, bracketing records, heartbeat gaps, destination policy). Models are meant to plan, delegate, interpret and explain, and are never allowed to invent an event, a timestamp or a score. The verifier re-checks every allegation against the same predicates, so a model cannot cite its way into a supported claim.
 
-Whether delegation adds anything over one agent with the same checks (B1+ vs ALIBI) is an open, unmeasured question until a model runtime exists. The offline results show only what the engineering does by itself (BR) against a keyword recipe (B0).
+Whether delegation adds anything over one agent with the same checks (B1+ vs ALIBI) was measured in a small pilot: on 4 cases both were equally accurate and the three-agent system cost about 2.6 times as much (see `docs/benchmark.md`). The offline results show what the engineering does by itself (BR) against a keyword recipe (B0).
 
 ## DeepAgents integration (verified against installed deepagents 0.7.38)
 
@@ -59,7 +59,14 @@ Whether delegation adds anything over one agent with the same checks (B1+ vs ALI
 - Every model, scripted or real, is wrapped by `BudgetedChatModel`, which reserves and commits each call in one shared persisted ledger and reports `ls_provider = alibi_gateway` so one harness profile applies to all of them.
 - Case notes written with the virtual `write_file` exist only in graph state; trusted code exports them to `runs/<id>/case/notes/` afterwards.
 - The offline path replaces the model with `ScriptedPolicyModel`, hand-written control flow that reuses the BR templating. It is labeled as a scripted fixture everywhere and can never be recorded as an AI benchmark arm (`bench.validate_ai_run`).
+- Three things only a real model exposed, now handled and tested: findings must name their object in an exact form (`check_object_format`), a report tool called in the same turn as `finalize_report` is applied ahead of the review pause and not re-run on resume, and a refusal (`stop_reason: refusal`) is recorded and ends the run as incomplete instead of being retried or rerouted.
+- The bounded adversary planner (`agents/adversary.py`) is one planning response plus at most one repair, validated against the step library. With a real model the request was declined; the labeled scripted fallback ran. The model-planned preset is therefore opt-in (`ALIBI_ENABLE_MODEL_ADVERSARY=1`).
 
 ## Budget and runtime modes
 
-`RUNTIME_MODE=offline` (default) constructs no network model. Live mode needs an explicit `LIVE_PROVIDER_KIND` (`local`, or `included_credits` with a credit cap and known prices). Caps per investigation: 12 model calls, 40,000 input tokens, 6,000 output tokens, 90 seconds, shared across lead, specialists and retries; tool results are capped at 50 records and 8 KB. One bounded retry for transient errors; credential or credit errors disable the route. Paid overage is never authorized.
+`RUNTIME_MODE=offline` (default) constructs no network model. Live mode needs an explicit `LIVE_PROVIDER_KIND` (`local`, or `included_credits` with a spend cap and known prices).
+
+- **Total cap.** `LLM_MAX_USD` bounds the estimated cost of every billed call across all runs and processes through one file-locked ledger (`.alibi/spend.json`): a worst-case amount is reserved before each call and settled after it. Cost is estimated at list price with conservative cache multipliers; the provider console is the authority on actual spend.
+- **Caps per investigation**, shared across lead, specialists and retries: 16 model calls, 200,000 input tokens, 10,000 output tokens, 180 seconds; tool results are capped at 50 records and 8 KB. These were revised once from the first measured run (the planning guess of 40,000 input tokens stopped a correct run after 5 calls) and are part of the frozen evaluation config.
+- **Model arguments.** For Claude: reasoning effort `low`, 3,000 output tokens per call, no sampling parameters, SDK retries off (the gateway does the single bounded retry and accounts for every attempt), automatic prompt caching for the agent loop.
+- One bounded retry for transient errors; credential or credit errors disable the route. No automatic switch to another provider or model. Paid overage is never authorized.
