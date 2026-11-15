@@ -310,7 +310,7 @@ function CompareTable({
                       className={"row-" + m.cls + (r.focus ? " focus" : "")}
                       data-testid={
                         r.status === "retained_by_collector"
-                          ? "compare-row-retained"
+                          ? "compare-table-row-retained"
                           : undefined
                       }
                     >
