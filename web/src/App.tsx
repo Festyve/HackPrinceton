@@ -16,13 +16,8 @@ import { Sources, RuntimeDetails, humanState } from "./workbench";
 import { RawViewer } from "./evidence";
 import { InvestigationWorkspace, InvModeLabel } from "./inv-workspace";
 import { BenchmarkTab } from "./bench";
-import {
-  Navigation,
-  CommandPalette,
-  SavedCases,
-  Pip,
-  ShortHelp,
-} from "./shell";
+import { Navigation, CommandPalette, Pip, ShortHelp } from "./shell";
+import { CasesWorkspace } from "./case-files";
 import type { Workspace, PaletteAction } from "./shell";
 import { Lab } from "./lab";
 import { LabExperiments } from "./lab-experiments";
@@ -708,9 +703,10 @@ export default function App() {
                   currentId={c?.case_id}
                   runtime={runtime}
                   onOpen={doOpenCase}
-                />
-                <SavedComparison cases={savedCases} onOpen={doOpenCase} />
-                <BenchmarkTab />
+                >
+                  <SavedComparison cases={savedCases} onOpen={doOpenCase} />
+                  <BenchmarkTab />
+                </LabExperiments>
               </main>
             ) : workspace === "cases" || workspace === "lab" || !view ? (
               <main className="single library-workspace">
@@ -730,23 +726,19 @@ export default function App() {
                   />
                 )}
                 {workspace === "cases" && (
-                  <>
-                    {savedError ? (
-                      <p role="status" className="amber">
-                        Saved cases could not be loaded. Existing recordings
-                        remain available below.
-                      </p>
-                    ) : (
-                      <SavedCases cases={savedCases} onOpen={doOpenCase} />
-                    )}
-                  </>
+                  <CasesWorkspace
+                    cases={savedCases}
+                    casesError={savedError}
+                    currentId={c?.case_id}
+                    onOpen={doOpenCase}
+                    {...libraryProps}
+                  />
                 )}
                 {attaching && (
                   <p role="status">
                     Opening the saved case and restoring its evidence…
                   </p>
                 )}
-                {workspace === "cases" && <StartState {...libraryProps} />}
               </main>
             ) : (
               <InvestigationWorkspace

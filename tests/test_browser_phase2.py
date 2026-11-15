@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests.test_browser import browser, page, run_case, server, tid, wait_state, open_sources  # noqa: F401  (fixtures)
+from tests.test_browser import browser, page, run_case, server, tid, wait_state, open_sources, open_more  # noqa: F401  (fixtures)
 
 pytestmark = pytest.mark.browser
 
@@ -197,6 +197,7 @@ def test_the_chosen_investigation_mode_is_recorded_with_the_case_and_spend_is_st
     base, _ = server
     page.goto(base + "/")
     page.click(tid("nav-cases"))
+    open_more(page)
     page.wait_for_selector(tid("mode-select"))
     assert page.locator(tid("mode-select")).input_value() == "specialist"  # the scripted fixture's default
     page.select_option(tid("mode-select"), "fast")
@@ -251,6 +252,7 @@ def test_the_benchmark_tab_shows_the_six_system_evaluation_with_its_limits(serve
     page.goto(base + "/")
     page.click(tid("nav-cases"))
     page.click(tid("tab-benchmark"))
+    page.click(f'{tid("experiment-details")} > summary')  # the benchmark sits under Details
     page.wait_for_selector(tid("evaluation-table"))
     row = lambda system: page.locator(f'{tid("evaluation-table")} tr[data-system="{system}"]').inner_text()  # noqa: E731
     # the committed measurements, as the server reports them
@@ -276,6 +278,7 @@ def test_a_designed_environment_is_previewed_labeled_and_generated_without_showi
     base, _ = server
     page.goto(base + "/")
     page.click(tid("nav-cases"))
+    open_more(page)
     page.click(tid("btn-design"))
     page.wait_for_selector(tid("designer"))
     intro = page.inner_text(tid("designer"))
@@ -615,6 +618,7 @@ def test_two_designed_cases_look_the_same_whatever_the_operator_placed(server, p
     for choice in ("none", "inside-job-coverup"):
         page.goto(base + "/")
         page.click(tid("nav-cases"))
+        open_more(page)
         page.click(tid("btn-design"))
         page.click(tid("btn-design-ask"))
         page.wait_for_selector(tid("design-label"))
