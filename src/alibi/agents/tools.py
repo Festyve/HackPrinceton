@@ -29,6 +29,9 @@ from alibi.evidence.store import GROUPABLE, EvidenceStore
 
 MAX_RECORDS = 50
 MAX_BYTES = 8192
+# A worker-lab day has many routine and unassigned transfers; a registered check's own result there may be
+# longer than one search result, and cutting it to an error would hide what the check found. Lab bundles only.
+LAB_CHECK_MAX_BYTES = 32768
 RAW_PREVIEW = 220
 
 EVIDENCE_TOOLS = ("get_case_brief", "search_events", "count_events", "get_events")
@@ -210,9 +213,9 @@ class CaseToolbox:
         return row
 
     @staticmethod
-    def _cap(obj: dict[str, Any]) -> str:
+    def _cap(obj: dict[str, Any], limit: int = MAX_BYTES) -> str:
         text = json.dumps(obj, separators=(",", ":"), default=str)
-        if len(text.encode("utf-8")) <= MAX_BYTES:
+        if len(text.encode("utf-8")) <= limit:
             return text
         rows = obj.get("events")
         if isinstance(rows, list):
@@ -269,7 +272,8 @@ class CaseToolbox:
             ok = True
         except Exception as exc:  # noqa: BLE001 - a tool error is a message to the agent, never a crash
             result, summary, ids, ok = {"error": f"{type(exc).__name__}: {exc}"[:300]}, f"error: {exc}"[:160], [], False
-        out = self._cap(result)
+        lab_check = (name in CHECK_TOOLS or name == "check_job_assignments") and "lab" in self.manifest.operational_context
+        out = self._cap(result, LAB_CHECK_MAX_BYTES if lab_check else MAX_BYTES)
         self._emit("tool", {"agent": role, "tool": name, "args": {k: v for k, v in args.items() if v not in (None, "", [])},
                             "result_summary": summary, "evidence_ids": ids[:8], "ok": ok,
                             "ms": int((time.perf_counter() - t0) * 1000)})

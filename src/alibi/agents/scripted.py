@@ -311,8 +311,101 @@ _SINGLE_TODOS = ["Read the brief and source inventory", "Run the contradiction c
                  "Submit the report for human review"]
 
 
+_LAB_TODOS = ["Read the brief and source inventory", "Compare the local log with the collector's copy",
+              "Correlate bulk transfers with the destination policy", "Check staged exports and the linked session",
+              "Compare activity with the scheduler's assignments", "Assess account use vs. worker identity",
+              "Submit the report for human review"]
+
+
+def _submitted_types(messages: list[BaseMessage]) -> set[str]:
+    return {str((tc.get("args") or {}).get("claim_type")) for m in messages if isinstance(m, AIMessage)
+            for tc in m.tool_calls if tc["name"] == "submit_finding"}
+
+
+def lab_single_policy(messages: list[BaseMessage], bound: tuple[str, ...] = ()) -> AIMessage:
+    """Fast investigation of a worker-lab bundle, one step per request, in a fixed order.
+
+    Each turn below is one request against the run's allowance: the brief; the local-vs-collector comparison;
+    recording what it shows; the transfer correlation; recording the transfers; the staged exports and the
+    linked session; the scheduler's assignments; the attribution; the report. Findings are recorded as soon as
+    the check that supports them has run, so a run stopped at its allowance keeps what it had established.
+    Same templating as the BR baseline; no model is involved.
+    """
+    from alibi.lab import assignments as lab_assignments
+
+    role = "single-agent"
+    called = _calls(messages)
+    done = _submitted_types(messages)
+    if not called:
+        return _ai(role, messages, [("write_todos", _todos(0, 0, _LAB_TODOS)), ("get_case_brief", {})])
+    if "check_local_vs_collector" not in called:
+        return _ai(role, messages, [("check_local_vs_collector", {})])
+    rec = (_results(messages, "check_local_vs_collector") or [{}])[0]
+    from alibi.runners import lab_removal_findings
+
+    rec_found = lab_removal_findings(rec, produced_by=role) if _usable(rec, "files") else []
+    if rec_found and not done & {f.claim_type for f in rec_found}:
+        return _ai(role, messages, [("submit_finding", _finding_args(f.model_dump(mode="json"))) for f in rec_found])
+    if "check_transfer_sessions" not in called:
+        return _ai(role, messages, [("write_todos", _todos(2, 2, _LAB_TODOS)), ("check_transfer_sessions", {})])
+    xfer = (_results(messages, "check_transfer_sessions") or [{}])[0]
+    x_found = baselines.findings_from_transfers(xfer, produced_by=role) if _usable(xfer, "transfers") else []
+    moved = [f for f in x_found if f.claim_type != "data_staging"]
+    staged = [f for f in x_found if f.claim_type == "data_staging"]
+    if moved and not done & {f.claim_type for f in moved}:
+        return _ai(role, messages, [("submit_finding", _finding_args(f.model_dump(mode="json"))) for f in moved])
+    linked = [t for t in (xfer.get("transfers", []) if _usable(xfer, "transfers") else [])
+              if t["policy_status"] == "not_approved" and t["session_link"] == "single_overlapping_session"]
+    step: list[tuple[str, dict[str, Any]]] = []
+    if linked and "check_account_vs_person" not in called:
+        step.append(("check_account_vs_person", {"session_id": linked[0]["sessions"][0]["session_id"]}))
+    if staged and "data_staging" not in done:
+        step += [("submit_finding", _finding_args(f.model_dump(mode="json"))) for f in staged]
+    if step:
+        return _ai(role, messages, step)
+    if "check_job_assignments" not in called:
+        return _ai(role, messages, [("write_todos", _todos(4, 4, _LAB_TODOS)), ("check_job_assignments", {})])
+    more = _family_calls(role, messages, bound)
+    if more is not None:
+        return more
+    presence = (_results(messages, "check_account_vs_person") or [None])[0]
+    assigned = (_results(messages, "check_job_assignments") or [None])[0]
+    found = rec_found + x_found
+    attribution = baselines.attribution_from(xfer if _usable(xfer, "transfers") else {"transfers": []}, presence, found)
+    if isinstance(assigned, dict) and "error" not in assigned:
+        try:
+            attribution = lab_assignments.worker_link(attribution, assigned)
+        except Exception:  # noqa: BLE001 - an unreadable result leaves the account-level statement
+            pass
+    candidates = [c.model_dump(mode="json") for c in found]
+    n_inc = sum(c["category"] == "incident_allegation" for c in candidates)
+    if "submit_attribution" not in called:
+        lines = ["# Case notes (scripted fixture, single agent, worker lab)", "",
+                 f"The checks produced {len(candidates)} candidate(s); {n_inc} incident allegation(s).", ""]
+        lines += [f"- [{c['category']}] {c['claim_type']} on {c['host']} ({c.get('object_or_session')}): "
+                  f"{len(c['evidence_ids'])} cited record(s)" for c in candidates]
+        att = {k: v for k, v in attribution.model_dump(mode="json").items()
+               if k in ("statement", "account_used", "human_identity", "session_ref", "supporting_evidence_ids",
+                        "contrary_evidence_ids", "limits", "assumptions") and v not in (None, [], "")}
+        return _ai(role, messages, [("write_file", {"file_path": "/case/notes.md", "content": "\n".join(lines) + "\n"}),
+                                    ("write_todos", _todos(6, 6, _LAB_TODOS)), ("submit_attribution", att)])
+    if "finalize_report" not in called:
+        limits = _limits(rec, xfer, {})
+        summary = (f"{n_inc} incident allegation(s), {len(candidates) - n_inc} benign explanation(s)/open note(s). "
+                   + attribution.statement + (_UNKNOWN if limits else ""))
+        questions = ["Who had access to the credential used in the linked session?"] if n_inc else []
+        questions += [f"Coverage limit: {x}"[:300] for x in limits]
+        return _ai(role, messages, [("finalize_report", {"summary": summary, "open_questions": questions[:8]})])
+    last = messages[-1]
+    approved = isinstance(last, ToolMessage) and "finalized" in str(last.content)
+    return AIMessage(content="The reviewer accepted the report; it is frozen for scoring." if approved else
+                     "The reviewer did not accept the report. The original proposal is kept unchanged with the review history.")
+
+
 def single_policy(messages: list[BaseMessage], bound: tuple[str, ...] = ()) -> AIMessage:
     """One agent, no delegation: runs the checks itself, then reports. Same templating as the BR baseline."""
+    if "check_job_assignments" in bound:  # a worker-lab bundle: one step per request (see lab_single_policy)
+        return lab_single_policy(messages, bound)
     role = "single-agent"
     called = _calls(messages)
     if not called:

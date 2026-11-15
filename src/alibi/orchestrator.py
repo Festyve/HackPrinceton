@@ -692,8 +692,12 @@ class Orchestrator:
         runner_id = runner_id or default_runner_id(self.settings)
         mode = resolve_mode(runner_id, investigation_mode)
         runner = get_runner(runner_id, self.settings, mode)
-        # a request allowance limits model requests; a scripted fixture and the checks alone make none
-        conditions = {**conditions, "allowance_enforced": runner.inference_mode == "LIVE_MODEL"}
+        # A live run's allowance limits its model requests. Offline, the deterministic checks and the fast scripted
+        # fixture count each check or scripted step as one request of the same allowance (never a model call).
+        # The scripted specialist graph is not limited by it.
+        unit = ("model request" if runner.inference_mode == "LIVE_MODEL" else "deterministic check"
+                if runner_id == "deterministic" else "scripted turn" if mode == "fast" else None)
+        conditions = {**conditions, "allowance_enforced": unit is not None, "allowance_unit": unit}
         prov = spec["lab"]["provenance"]
         work_label = self._lab_work_label(prov["normal_work"])
         missing = (prov.get("ordinary_requests") or {}).get("no_saved_choice", 0)
@@ -846,6 +850,7 @@ class Orchestrator:
                 "summary": {"routine": sum(e["kind"] == "routine" for e in events),
                             "unassigned": sum(e["kind"] == "unassigned" for e in events),
                             "local_records_missing": len(missing), "collector_records": view["activity_total"],
+                            "copies_out": sum(e["kind"] == "unassigned" and e["action"] == "export_bulk" for e in events),
                             "workers_with_unassigned_activity": flagged}}
 
     def case_files(self, case_id: str) -> dict[str, Any]:
@@ -1236,7 +1241,10 @@ class Orchestrator:
             # More requests, never more than this server allows one investigation in total. The token caps
             # are the server's and are not raised.
             used, extra = resume["used"], int(resume["extra_requests"])
-            caps = replace(self.settings.caps, max_calls=min(self.settings.caps.max_calls, used["llm_calls"] + extra))
+            if rec.inference_mode == "LIVE_MODEL":
+                caps = replace(self.settings.caps, max_calls=min(self.settings.caps.max_calls, used["llm_calls"] + extra))
+            else:  # an offline lab run counts its allowance in scripted turns, never model calls
+                caps = replace(self.settings.caps, max_calls=int(used.get("scripted_turns", 0)) + extra)
         return RunContext(case_id=rec.case_id, store=store, manifest=load_manifest(paths), case_dir=paths.case,
                           settings=self.settings, emit=lambda t, d: log.append(t, d), pace_s=pace,
                           is_cancelled=cancel.is_set, caps=caps, resume=resume)

@@ -20,7 +20,7 @@ from typing import Any, Callable, Protocol
 from alibi import baselines, checks, checks_families
 from alibi.lab import assignments as lab_assignments
 from alibi.config import Settings
-from alibi.contracts import EvidenceManifest, InvestigationReport, Usage
+from alibi.contracts import AttributionAssessment, EvidenceManifest, InvestigationReport, Usage
 from alibi.evidence.store import EvidenceStore
 
 
@@ -143,6 +143,36 @@ def summarize_family(key: str, res: dict[str, Any]) -> tuple[str, list[str]]:
     return f"{len(rows)} {_FAMILY_ROWS[key]} reviewed, {len(flagged)} outside policy or unexplained{extra}", list(dict.fromkeys(ids))
 
 
+def lab_removal_findings(rec: dict[str, Any], produced_by: str = "BR") -> list[Any]:
+    """Worker lab: the BR reconcile findings, one per burst of removed lines instead of one per file.
+
+    On a long lab day the removed lines are hours apart, and one finding spanning all of them is wider than the
+    verifier accepts for an allegation. The rows are grouped into windows the verifier accepts and each group is
+    templated by the BR baseline's own function, unchanged."""
+    from datetime import datetime
+
+    from alibi.verifier import MAX_ALLEGATION_WINDOW_S
+
+    def ts(row: dict[str, Any]) -> datetime:
+        v = row["line_ts"]
+        return v if isinstance(v, datetime) else datetime.fromisoformat(str(v))
+
+    # every other observation (rotation, collection gaps) exactly as the baseline makes it
+    out: list[Any] = [x for x in baselines.findings_from_reconcile(rec, produced_by) if x.claim_type != "local_log_removal"]
+    for f in rec["files"]:
+        rows = sorted(f["unexplained_local_absence"], key=ts)
+        groups: list[list[dict[str, Any]]] = []
+        for row in rows:
+            if groups and (ts(row) - ts(groups[-1][0])).total_seconds() <= MAX_ALLEGATION_WINDOW_S:
+                groups[-1].append(row)
+            else:
+                groups.append([row])
+        for g in groups:
+            one = {**rec, "heartbeat_gaps": [], "files": [{**f, "unexplained_local_absence": g}]}
+            out += [x for x in baselines.findings_from_reconcile(one, produced_by) if x.claim_type == "local_log_removal"]
+    return out
+
+
 class DeterministicRunner:
     """BR: contradiction checks with templated findings. No model, no DeepAgents graph."""
 
@@ -152,6 +182,11 @@ class DeterministicRunner:
     system_id = "BR"
 
     def run(self, ctx: RunContext) -> InvestigationReport:
+        if ctx.caps is not None and lab_assignments.applies(ctx.manifest):
+            return self._run_lab(ctx, int(ctx.caps.max_calls))
+        return self._run(ctx)
+
+    def _run(self, ctx: RunContext) -> InvestigationReport:
         t0 = time.perf_counter()
         steps = ["Reconcile host logs with collector copies", "Correlate bulk transfers with policy and sessions",
                  "Assess account use vs. physical presence", "Draft report for review"]
@@ -231,6 +266,111 @@ class DeterministicRunner:
             inference_mode="NO_MODEL_BASELINE", findings=findings, attribution=body["attribution"],
             summary=body["summary"], open_questions=body["open_questions"],
             usage=Usage(wall_seconds=round(wall, 3), tool_calls=tool_calls),
+        )
+
+    def _run_lab(self, ctx: RunContext, allowance: int) -> InvestigationReport:
+        """A worker-lab run under the investigator's request allowance. Each check is one request, in a fixed
+        order: local-vs-collector reconciliation, transfer correlation, staged exports and the linked session,
+        the scheduler's assignments, the attribution. When the allowance runs out the run stops and says so;
+        what the completed checks support is kept. Not a model: the requests are counted as scripted turns.
+        The checks and templating are the BR baseline's own (alibi.checks, alibi.baselines), unchanged."""
+        t0 = time.perf_counter()
+        agent = "deterministic-checks"
+        steps = ["Reconcile host logs with collector copies", "Correlate bulk transfers with policy and sessions",
+                 "Check staged exports and the linked session", "Compare activity with the scheduler's assignments",
+                 "Assess account use vs. worker identity", "Draft report for review"]
+        used = {"n": 0}
+
+        def todo(done: int) -> None:
+            ctx.emit("todo", {"items": [
+                {"text": t, "status": "completed" if i < done else ("in_progress" if i == done else "pending")}
+                for i, t in enumerate(steps)]})
+
+        def room() -> bool:
+            if used["n"] >= allowance:
+                return False
+            used["n"] += 1
+            return True
+
+        def tool(name: str, args: dict[str, Any], summary: str, ids: list[str], started: float) -> None:
+            ctx.emit("tool", {"agent": agent, "tool": name, "args": args, "result_summary": summary,
+                              "evidence_ids": ids[:8], "ok": True, "ms": int((time.perf_counter() - started) * 1000)})
+            ctx.pace()
+
+        todo(0)
+        ctx.emit("agent", {"agent": agent, "status": "started",
+                           "task": f"run the registered checks, one per request ({allowance} allowed)"})
+        ctx.pace()
+        rec = xfer = presence = assigned = None
+        staged_checked = attributed = False
+        if room():
+            t = time.perf_counter()
+            rec = checks.reconcile_logs(ctx.store, ctx.manifest)
+            tool("check_local_vs_collector", {}, *summarize_reconcile(rec), t)
+            todo(1)
+        if rec is not None and room():
+            t = time.perf_counter()
+            xfer = checks.correlate_transfers(ctx.store, ctx.manifest)
+            tool("check_transfer_sessions", {}, *summarize_transfers(xfer), t)
+            todo(2)
+        sid = baselines.linked_session(xfer) if xfer is not None else None
+        if xfer is not None:
+            if not sid:
+                staged_checked = True  # no linked session to check: this step needs no request
+            elif room():
+                t = time.perf_counter()
+                presence = checks.assess_presence(ctx.store, ctx.manifest, sid)
+                tool("check_account_vs_person", {"session_id": sid}, presence.get("observation", ""),
+                     list(presence.get("badge_event_ids", [])), t)
+                staged_checked = True
+            todo(3)
+        if staged_checked and room():
+            t = time.perf_counter()
+            assigned = lab_assignments.job_assignments(ctx.store, ctx.manifest)
+            summary, ids = lab_assignments.summary(assigned)
+            tool("check_job_assignments", {}, summary, ids, t)
+            todo(4)
+        if assigned is not None and room():
+            attributed = True
+            todo(5)
+        if attributed:
+            body = baselines.compose(rec, xfer, presence, {}, "F")
+            # one removal finding per burst of removed lines (see lab_removal_findings)
+            split = lab_removal_findings(rec, "BR") + baselines.findings_from_transfers(xfer, "BR")
+            body["findings"] = baselines.number_findings(split, "F")
+            before = body["attribution"]
+            body["attribution"] = lab_assignments.worker_link(before, assigned)
+            body["summary"] = body["summary"].replace(before.statement, body["attribution"].statement)
+            findings, attribution, summary, questions = (body["findings"], body["attribution"], body["summary"],
+                                                         body["open_questions"])
+        else:
+            found = lab_removal_findings(rec, "BR") if rec is not None else []
+            if xfer is not None:
+                found += [f for f in baselines.findings_from_transfers(xfer, "BR")
+                          if staged_checked or f.claim_type != "data_staging"]
+            findings = baselines.number_findings(found, "F")
+            n_inc = sum(f.category == "incident_allegation" for f in findings)
+            attribution = AttributionAssessment(
+                human_identity="not_assessed",
+                statement="The run stopped at its request allowance before the attribution was assessed.")
+            summary = (f"Incomplete: {n_inc} incident allegation(s) recorded before the run stopped at its request "
+                       f"allowance ({used['n']} of {allowance} requests used).")
+            questions = [f"Incomplete run: stopped at its request allowance ({allowance} deterministic check request(s); "
+                         "no model was called)."]
+        for f in findings:
+            ctx.emit("finding", {"finding": f.model_dump(mode="json"), "phase": "proposed"})
+            ctx.pace(0.6)
+        ctx.emit("agent", {"agent": agent, "status": "finished",
+                           "summary": f"{len(findings)} templated finding(s)" if attributed else
+                           f"stopped at its request allowance after {used['n']} request(s)"})
+        wall = max(0.0, time.perf_counter() - t0 - ctx.paced_seconds)
+        tool_calls = sum(x is not None for x in (rec, xfer, presence, assigned))
+        return InvestigationReport(
+            report_id=f"rep-{ctx.case_id}", bundle_id=ctx.manifest.bundle_id, system_id=self.system_id,
+            system_label="Deterministic contradiction checks with templated findings",
+            inference_mode="NO_MODEL_BASELINE", findings=findings, attribution=attribution,
+            summary=summary, open_questions=questions,
+            usage=Usage(wall_seconds=round(wall, 3), tool_calls=tool_calls, scripted_turns=used["n"]),
         )
 
     def resume(self, ctx: RunContext, decision: str) -> None:
