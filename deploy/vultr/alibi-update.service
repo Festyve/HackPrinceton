@@ -1,0 +1,11 @@
+[Unit]
+Description=ALIBI auto-deploy: pull new commits from GitHub and redeploy
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/env bash /root/alibi-deploy-src/deploy/vultr/alibi-update.sh
+StandardOutput=append:/var/log/alibi-update.log
+StandardError=append:/var/log/alibi-update.log
+TimeoutStartSec=30min
