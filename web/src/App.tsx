@@ -23,9 +23,15 @@ import {
 import { EvidenceColumn, RawViewer } from "./evidence";
 import { ScoreOverlay } from "./score";
 import { BenchmarkTab } from "./bench";
-import { Navigation, CommandPalette, SavedCases, Pip } from "./shell";
+import {
+  Navigation,
+  CommandPalette,
+  SavedCases,
+  Pip,
+  ShortHelp,
+} from "./shell";
 import type { Workspace, PaletteAction } from "./shell";
-import { Lab, WorkerActivity } from "./lab";
+import { Lab } from "./lab";
 import { LabExperiments } from "./lab-experiments";
 import { useActionToken } from "./features/operation";
 import { SavedComparison } from "./comparisons";
@@ -35,7 +41,6 @@ import {
   PlanView,
   TraceView,
   CaseFile,
-  Help,
 } from "./investigation";
 import {
   DesignerDialog,
@@ -275,11 +280,12 @@ export default function App() {
   );
 
   const attach = useCallback(
-    async (id: string, initial?: CaseView) => {
+    async (id: string, initial?: CaseView, stay = false) => {
       closeStream();
       const gen = genRef.current;
       caseIdRef.current = id;
-      setWorkspace("investigation");
+      // A sandbox run started on Lab stays on Lab until "Open investigation" is clicked.
+      if (!stay) setWorkspace("investigation");
       setShowSources(false);
       setPanelDialog(null);
       setAttaching(true);
@@ -349,10 +355,10 @@ export default function App() {
     }
   };
 
-  const doRun = (choice = selected) =>
+  const doRun = (choice = selected, stay = false) =>
     guard("run", async () => {
       if (!choice) return;
-      setWorkspace("investigation");
+      if (!stay) setWorkspace("investigation");
       try {
         const requestToken = creation.take(
           `${choice.kind}:${choice.id}:${mode ?? "default"}`,
@@ -362,13 +368,24 @@ export default function App() {
             ? await api.createCase(choice.id, mode, requestToken)
             : await api.openReplay(choice.id, requestToken);
         creation.done();
-        await attach(v.case.case_id, v);
+        await attach(v.case.case_id, v, stay);
       } catch (e) {
         creation.done(e);
         throw e;
       }
     });
   const doOpenCase = (id: string) => guard("run", () => attach(id));
+  // Lab runs, and lab runs reopened while on Lab, keep the Lab screen.
+  const doOpenLabCase = (id: string) =>
+    guard("run", () => attach(id, undefined, true));
+  const openRecent = (id: string) =>
+    workspaceRef.current === "lab" &&
+    savedCases.find((x) => x.case_id === id)?.lab
+      ? doOpenLabCase(id)
+      : doOpenCase(id);
+  const labRecording =
+    presets?.replays.find((x) => x.id.startsWith("lab-run-a")) ??
+    presets?.replays.find((x) => x.id.startsWith("lab-run"));
   const doReset = () =>
     guard("reset", async () => {
       const id = caseIdRef.current;
@@ -566,11 +583,6 @@ export default function App() {
         aria-busy={attaching || busy === "run"}
       >
         <header className="hdr app-bar">
-          <span className="window-dots" aria-hidden="true">
-            <i />
-            <i />
-            <i />
-          </span>
           <span className="window-title">
             alibi —{" "}
             {workspace === "lab"
@@ -589,15 +601,6 @@ export default function App() {
             <span aria-hidden="true">⌕</span> Search cases & actions{" "}
             <kbd>⌘ K</kbd>
           </button>
-          {!labeledCase && (
-            <div className="badges">
-              <span className="badge" data-testid="badge-inference">
-                {presets?.replays.length
-                  ? "Offline replay available"
-                  : "Connecting to the lab"}
-              </span>
-            </div>
-          )}
           <button
             data-testid="btn-details"
             onClick={() => setShowDetails(true)}
@@ -612,29 +615,21 @@ export default function App() {
             state={state}
             onHelp={() => setShowHelp(true)}
             cases={savedCases}
-            onOpen={doOpenCase}
+            onOpen={openRecent}
             onDetails={() => setShowDetails(true)}
           />
           <div className="workspace-content">
             <section className="case-heading">
               <div>
-                <p className="eyebrow" data-testid="case-eyebrow">
-                  {workspace === "lab"
-                    ? "Worker lab · synthetic environment"
-                    : workspace === "experiments"
-                      ? "Change one condition"
-                      : workspace === "cases"
-                        ? "Recorded runs & frozen evidence"
-                        : c
-                          ? `Case file / ${c.case_id.replace(/^case-/, "").slice(0, 8)}`
-                          : "Choose an investigation"}
-                  {workspace === "investigation" &&
-                    c?.parent_case_id &&
-                    " · reduced evidence view"}
-                  {workspace === "investigation" &&
-                    c?.scored === false &&
-                    " · imported evidence, unscored"}
-                </p>
+                {workspace === "investigation" && (
+                  <p className="eyebrow" data-testid="case-eyebrow">
+                    {c
+                      ? `Case file / ${c.case_id.replace(/^case-/, "").slice(0, 8)}`
+                      : "Choose an investigation"}
+                    {c?.parent_case_id && " · reduced evidence view"}
+                    {c?.scored === false && " · imported evidence, unscored"}
+                  </p>
+                )}
                 <h1>
                   {workspace === "lab"
                     ? "Lab"
@@ -653,10 +648,7 @@ export default function App() {
                     aria-label="Run provenance"
                   >
                     <span className="badge" data-testid="badge-inference">
-                      {labeledCase?.labels.inference_label ??
-                        (presets?.replays.length
-                          ? "Offline replay available"
-                          : "Connecting to the lab")}
+                      {labeledCase.labels.inference_label}
                     </span>
                     {labeledCase && (
                       <span className="badge" data-testid="badge-evidence">
@@ -704,40 +696,11 @@ export default function App() {
                       {busy === "reset" ? "Resetting…" : "Reset"}
                     </button>
                   </>
-                ) : workspace === "lab" && c?.lab ? (
-                  <button
-                    className="primary"
-                    data-testid="btn-return-investigation"
-                    onClick={() => setWorkspace("investigation")}
-                  >
-                    Open investigation <span aria-hidden="true">→</span>
-                  </button>
                 ) : workspace === "experiments" ? (
                   <button onClick={() => setWorkspace("cases")}>
                     Browse saved cases <span aria-hidden="true">↗</span>
                   </button>
-                ) : workspace === "lab" &&
-                  !selected &&
-                  presets?.replays.some((x) => x.presentation_default) ? (
-                  <button
-                    className={
-                      runtime?.capabilities?.worker_lab?.endpoint
-                        ? ""
-                        : "primary"
-                    }
-                    data-testid="btn-lab-replay"
-                    disabled={busy !== null}
-                    onClick={() => {
-                      const r = presets.replays.find(
-                        (x) => x.presentation_default,
-                      );
-                      if (r) void doRun({ kind: "replay", id: r.id });
-                    }}
-                  >
-                    Open recorded investigation{" "}
-                    <span aria-hidden="true">→</span>
-                  </button>
-                ) : (
+                ) : workspace === "lab" ? null : (
                   <button
                     className={selected ? "primary" : ""}
                     data-testid="btn-run"
@@ -798,32 +761,19 @@ export default function App() {
             ) : workspace === "cases" || workspace === "lab" || !view ? (
               <main className="single library-workspace">
                 {workspace === "lab" && (
-                  <>
-                    {c?.lab && (
-                      <WorkerActivity
-                        key={c.case_id}
-                        caseId={c.case_id}
-                        state={state}
-                        onInvestigate={() => setWorkspace("investigation")}
-                      />
-                    )}
-                    {c?.lab ? (
-                      <details className="new-worker-experiment">
-                        <summary>Configure another worker experiment</summary>
-                        <Lab
-                          runtime={runtime}
-                          onCases={() => setWorkspace("cases")}
-                          onCase={doOpenCase}
-                        />
-                      </details>
-                    ) : (
-                      <Lab
-                        runtime={runtime}
-                        onCases={() => setWorkspace("cases")}
-                        onCase={doOpenCase}
-                      />
-                    )}
-                  </>
+                  <Lab
+                    runtime={runtime}
+                    current={c?.lab ? c : null}
+                    state={state}
+                    onCases={() => setWorkspace("cases")}
+                    onCase={doOpenLabCase}
+                    onRecording={
+                      labRecording
+                        ? () => doRun({ kind: "replay", id: labRecording.id }, true)
+                        : null
+                    }
+                    onInvestigate={() => setWorkspace("investigation")}
+                  />
                 )}
                 {workspace === "cases" && (
                   <>
@@ -994,7 +944,7 @@ export default function App() {
             )}
           </div>
         </div>
-        <div className="pip-dock">
+        <div className="pip-dock" hidden={workspace === "lab"}>
           {pipOpen && (
             <section className="pip-feed" aria-label="Pip activity feed">
               <header>
@@ -1059,7 +1009,7 @@ export default function App() {
         {palette && (
           <CommandPalette actions={actions} onClose={() => setPalette(false)} />
         )}
-        {showHelp && <Help onClose={() => setShowHelp(false)} />}
+        {showHelp && <ShortHelp onClose={() => setShowHelp(false)} />}
         {showSources && view && (
           <Dialog
             title="Sources & witnesses"

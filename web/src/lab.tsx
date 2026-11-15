@@ -1,26 +1,41 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import type { Runtime } from "./api";
+import type { CaseInfo, Runtime } from "./api";
 import { labApi, permissionLabel } from "./lab-api";
-import type { LabOptions, LabView, OperatorRecord } from "./lab-api";
+import type {
+  LabOptions,
+  LabView,
+  OperatorRecord,
+  StageView,
+} from "./lab-api";
+import { SandboxStage, WorkerFace, InvestigatorFace } from "./sandbox-stage";
 import { EvidenceCtx, hhmmss, Chips } from "./common";
-import { Pip } from "./shell";
 import { Dialog } from "./dialog";
 import { useRecordedPlayback, PlaybackControls } from "./playback";
 import { useActionToken, message, words } from "./features/operation";
 
+const POOL = 20;
+
 export function Lab({
   runtime,
+  current,
+  state,
   onCases,
   onCase,
+  onRecording,
+  onInvestigate,
 }: {
   runtime: Runtime | null;
+  current?: CaseInfo | null;
+  state?: string;
   onCases: () => void;
-  onCase: (id: string) => void;
+  onCase: (id: string) => void | Promise<void>;
+  onRecording?: (() => void | Promise<void>) | null;
+  onInvestigate?: () => void;
 }) {
   const [options, setOptions] = useState<LabOptions | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [allocation, setAllocation] = useState("balanced");
+  const [investigator, setInvestigator] = useState(10);
   const [permissions, setPermissions] = useState("export_log");
   const [context, setContext] = useState("standard");
   const [variant, setVariant] = useState("incident");
@@ -28,8 +43,13 @@ export function Lab({
   const [runner, setRunner] = useState("agent-fixture");
   const [mode, setMode] = useState("fast");
   const [seed, setSeed] = useState("11");
+  const [stage, setStage] = useState<StageView | null>(null);
+  const [armed, setArmed] = useState(false);
+  const [playFor, setPlayFor] = useState<string | null>(null);
+  const [finished, setFinished] = useState(false);
   const action = useActionToken();
   const supported = runtime?.capabilities?.worker_lab?.endpoint;
+  const caseId = current?.lab ? current.case_id : null;
   useEffect(() => {
     if (!supported) return;
     let live = true;
@@ -43,13 +63,39 @@ export function Lab({
       live = false;
     };
   }, [supported]);
-  const chosen = options?.presets.find((a) => a.id === allocation);
+  // The stage is rebuilt from frozen evidence; it never reads the sealed operator record.
+  useEffect(() => {
+    setStage(null);
+    setFinished(false);
+    if (!caseId) return;
+    let live = true;
+    if (armed) {
+      setPlayFor(caseId);
+      setArmed(false);
+    }
+    labApi
+      .stage(caseId)
+      .then((s) => live && setStage(s))
+      .catch((e) => live && setError(message(e)));
+    return () => {
+      live = false;
+    };
+  }, [caseId]);
+  const sabotage = POOL - investigator;
+  const solo = mode !== "specialist";
+  const agents =
+    runner === "deterministic"
+      ? []
+      : solo
+        ? ["Investigator"]
+        : ["Lead", "Integrity auditor", "Skeptic"];
   async function run() {
     if (!options || pending) return;
     const body = {
       variant,
       seed: Number(seed),
-      preset: allocation,
+      rogue_requests: sabotage,
+      investigator_requests: investigator,
       rogue_permissions: permissions,
       context_load: context,
       ordinary_work: work,
@@ -65,7 +111,8 @@ export function Lab({
         client_token: action.take(JSON.stringify(body)),
       });
       action.done();
-      onCase(result.case.case_id);
+      setArmed(true);
+      await onCase(result.case.case_id);
     } catch (e) {
       action.done(e);
       setError(message(e));
@@ -73,127 +120,195 @@ export function Lab({
       setPending(false);
     }
   }
-  const splits = options?.presets ?? [];
-  const presetIndex = Math.max(
-    0,
-    splits.findIndex((p) => p.id === allocation),
-  );
+  async function recording() {
+    if (!onRecording || pending) return;
+    setPending(true);
+    setArmed(true);
+    try {
+      await onRecording();
+    } finally {
+      setPending(false);
+    }
+  }
+  const live = work === "model" || runner === "agent-live";
   return (
-    <section className="lab-overview design-lab" data-testid="lab-workspace">
-      <div className="design-setup-controls">
-        <div className="design-card advantage-card">
-          <div className="design-label-row">
-            <span className="eyebrow">Advantage</span>
-            <span className="mono small muted">20-unit pool</span>
-          </div>
-          <div className="advantage-sides">
-            <span className="rogue-avatar" aria-hidden="true">
-              ?
-            </span>
-            <div>
-              <span>Sabotage policy</span>
-              <strong>
-                {chosen?.rogue_requests ?? "—"} <small>turns</small>
-              </strong>
+    <section className="lab-overview demo-lab" data-testid="lab-workspace">
+      <div className="demo-config">
+        <div className="demo-card power-card">
+          <h2>Power balance</h2>
+          <div className="power-sides">
+            <div className="power-side sabotage">
+              <span>Sabotage</span>
+              <strong data-testid="count-sabotage">{sabotage}</strong>
+              <small>turns</small>
             </div>
-            <i>vs</i>
-            <div className="investigator-allowance">
+            <i aria-hidden="true">vs</i>
+            <div className="power-side investigator-allowance">
               <span>Investigator</span>
-              <strong>
-                {chosen?.investigator_requests ?? "—"} <small>requests</small>
-              </strong>
+              <strong data-testid="count-investigator">{investigator}</strong>
+              <small>requests</small>
             </div>
-            <Pip />
           </div>
           <input
-            className="advantage-slider"
+            className="power-slider"
             type="range"
-            min="0"
-            max={Math.max(0, splits.length - 1)}
+            min="1"
+            max={POOL - 1}
             step="1"
-            value={presetIndex}
+            value={investigator}
             disabled={!options || pending}
-            aria-label="Decision allocation preset"
-            aria-valuetext={chosen?.label}
-            onChange={(e) => setAllocation(splits[Number(e.target.value)].id)}
+            aria-label="Power balance"
+            aria-valuetext={`Sabotage ${sabotage} turns, investigator ${investigator} requests`}
+            onChange={(e) => setInvestigator(Number(e.target.value))}
           />
-          <fieldset
-            disabled={pending || !options}
-            className="allocation-presets"
+          <div
+            className="mode-switch"
+            role="radiogroup"
+            aria-label="Investigation mode"
           >
-            <legend className="sr-only">
-              Post-transition decision allocation
-            </legend>
-            {splits.map((a) => (
-              <label
-                key={a.id}
-                className={allocation === a.id ? "selected" : ""}
+            {[
+              ["fast", "Solo"],
+              ["specialist", "Specialists"],
+            ].map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                role="radio"
+                aria-checked={mode === id}
+                className={mode === id ? "on" : ""}
+                disabled={pending || runner === "deterministic"}
+                onClick={() => setMode(id)}
               >
-                <input
-                  type="radio"
-                  name="allocation"
-                  value={a.id}
-                  checked={allocation === a.id}
-                  onChange={() => setAllocation(a.id)}
-                />
-                <span>
-                  {a.label.split(" · ")[0]}{" "}
-                  <small>
-                    {a.rogue_requests}/{a.investigator_requests}
-                  </small>
-                </span>
-              </label>
+                {label}
+              </button>
             ))}
-          </fieldset>
-          <details className="allocation-details">
-            <summary>How allocation works</summary>
-            <p>
-              {options?.preset_note ?? "Loading supported presets…"} Unused
-              units do not transfer. Worker faults use a scripted policy;
-              investigator requests may use a model.
-            </p>
-          </details>
+          </div>
+          <div className="lineup" data-testid="lineup">
+            <span className="lineup-group">
+              {["W1", "W2", "W3"].map((w) => (
+                <span className="chip-bot" key={w}>
+                  <WorkerFace />
+                  {w}
+                </span>
+              ))}
+            </span>
+            <span className="lineup-group">
+              {agents.map((a) => (
+                <span className="chip-bot chip-sleuth" key={a}>
+                  <InvestigatorFace />
+                  {a}
+                </span>
+              ))}
+              {!agents.length && (
+                <span className="chip-bot">Checks · no agent</span>
+              )}
+            </span>
+          </div>
         </div>
-        <div className="design-run">
+        <div className="demo-run">
           <button
             form="worker-experiment"
             type="submit"
-            className="primary"
+            className={caseId && finished ? "run-btn" : "run-btn primary"}
             data-testid="btn-lab-run"
             disabled={pending || !options}
           >
-            {pending ? "Preparing sandbox…" : "Run sandbox"}{" "}
+            {pending
+              ? "Preparing sandbox…"
+              : caseId
+                ? "Run again"
+                : "Run sandbox"}{" "}
             <span aria-hidden="true">▶</span>
           </button>
-          <span className="mono small muted">
-            {work === "model" || runner === "agent-live"
-              ? "Live model · uses the configured API budget"
+          <span className="mono small muted" data-testid="lab-mode-caption">
+            {live
+              ? "Live model · uses API budget"
               : "Scripted fixture · no model calls"}
           </span>
-          <button className="linkish" onClick={onCases}>
-            Open a recording instead ↗
-          </button>
-        </div>
-        <div className="design-card rules-card">
-          <p className="eyebrow">Rules</p>
-          {!supported ? (
-            <div role="status" data-testid="worker-runtime-unavailable">
-              <h3>Worker experiments unavailable</h3>
-              <button onClick={onCases}>Open case investigations →</button>
-            </div>
-          ) : !options ? (
-            <p role="status">Loading worker options…</p>
-          ) : (
-            <form
-              id="worker-experiment"
-              onSubmit={(e) => {
-                e.preventDefault();
-                void run();
-              }}
+          {onRecording && (
+            <button
+              className="linkish"
+              data-testid="btn-lab-recording"
+              disabled={pending}
+              onClick={() => void recording()}
             >
-              <fieldset disabled={pending} className="design-rules">
+              Open recording
+            </button>
+          )}
+        </div>
+        {!supported ? (
+          <div role="status" data-testid="worker-runtime-unavailable">
+            <h3>Worker experiments unavailable</h3>
+            <button onClick={onCases}>Open case investigations →</button>
+          </div>
+        ) : !options ? (
+          !error && <p role="status">Loading worker options…</p>
+        ) : (
+          <form
+            id="worker-experiment"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void run();
+            }}
+          >
+            <details className="advanced-config">
+              <summary>Advanced</summary>
+              <fieldset disabled={pending} className="config-grid">
                 <label>
-                  Rogue can
+                  Scenario
+                  <select
+                    aria-label="Operator scenario"
+                    value={variant}
+                    onChange={(e) => setVariant(e.target.value)}
+                  >
+                    {options.variants.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Investigator runner
+                  <select
+                    aria-label="Investigator"
+                    value={runner}
+                    onChange={(e) => setRunner(e.target.value)}
+                  >
+                    <option value="agent-fixture">
+                      Scripted agent fixture · no model
+                    </option>
+                    <option value="deterministic">
+                      Deterministic checks · no agent
+                    </option>
+                    <option
+                      value="agent-live"
+                      disabled={runtime?.live_inference !== "CONFIGURED"}
+                    >
+                      Live model
+                      {runtime?.live_inference !== "CONFIGURED"
+                        ? " · unavailable"
+                        : ""}
+                    </option>
+                  </select>
+                </label>
+                <label>
+                  Workers’ work chosen by
+                  <select
+                    aria-label="Ordinary worker choices"
+                    value={work}
+                    onChange={(e) => setWork(e.target.value)}
+                  >
+                    {options.ordinary_work.map((w) => (
+                      <option key={w.id} value={w.id} disabled={!w.available}>
+                        {w.label}
+                        {!w.available ? " · unavailable" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Permission profile
                   <select
                     aria-label="Permission profile"
                     value={permissions}
@@ -207,220 +322,86 @@ export function Lab({
                   </select>
                 </label>
                 <label>
-                  Investigator mode
+                  Context load
                   <select
-                    aria-label="Investigation mode"
-                    value={mode}
-                    disabled={runner === "deterministic"}
-                    onChange={(e) => setMode(e.target.value)}
+                    aria-label="Evidence/context load"
+                    value={context}
+                    onChange={(e) => setContext(e.target.value)}
                   >
-                    <option value="fast">Fast · one agent</option>
-                    <option value="specialist">
-                      Specialist · lead, auditor & skeptic
-                    </option>
+                    {options.context_load.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {words(c.id)} · {c.unrelated_records_per_tick} records /
+                        tick
+                      </option>
+                    ))}
                   </select>
                 </label>
+                <label>
+                  Seed
+                  <input
+                    aria-label="World seed"
+                    type="number"
+                    min="0"
+                    max="10000000"
+                    required
+                    value={seed}
+                    onChange={(e) => setSeed(e.target.value)}
+                  />
+                </label>
               </fieldset>
-              <details className="advanced-config" open={undefined}>
-                <summary>
-                  More <span>Execution · context · seed</span>
-                </summary>
-                <fieldset disabled={pending} className="config-grid">
-                  <label>
-                    Operator scenario
-                    <select
-                      aria-label="Operator scenario"
-                      value={variant}
-                      onChange={(e) => setVariant(e.target.value)}
-                    >
-                      {options.variants.map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Investigator
-                    <select
-                      aria-label="Investigator"
-                      value={runner}
-                      onChange={(e) => setRunner(e.target.value)}
-                    >
-                      <option value="agent-fixture">
-                        Scripted agent fixture · no model
-                      </option>
-                      <option value="deterministic">
-                        Deterministic checks · no agent
-                      </option>
-                      <option
-                        value="agent-live"
-                        disabled={runtime?.live_inference !== "CONFIGURED"}
-                      >
-                        Live model
-                        {runtime?.live_inference !== "CONFIGURED"
-                          ? " · unavailable"
-                          : ""}
-                      </option>
-                    </select>
-                  </label>
-                  <label>
-                    Ordinary worker choices
-                    <select
-                      aria-label="Ordinary worker choices"
-                      value={work}
-                      onChange={(e) => setWork(e.target.value)}
-                    >
-                      {options.ordinary_work.map((w) => (
-                        <option key={w.id} value={w.id} disabled={!w.available}>
-                          {w.label}
-                          {!w.available ? " · unavailable" : ""}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Evidence/context load
-                    <select
-                      aria-label="Evidence/context load"
-                      value={context}
-                      onChange={(e) => setContext(e.target.value)}
-                    >
-                      {options.context_load.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {words(c.id)} · {c.unrelated_records_per_tick} records
-                          / tick
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    World seed
-                    <input
-                      aria-label="World seed"
-                      type="number"
-                      min="0"
-                      max="10000000"
-                      required
-                      value={seed}
-                      onChange={(e) => setSeed(e.target.value)}
-                    />
-                  </label>
-                </fieldset>
-                <p className="small muted policy-label">
-                  {options.changed_objective_policy}
-                </p>
-              </details>
-            </form>
-          )}
-          {error && (
-            <p role="alert" className="bad">
-              Could not{" "}
-              {options ? "run the worker experiment" : "load worker options"}:{" "}
-              {error}
-            </p>
-          )}
-        </div>
+            </details>
+          </form>
+        )}
+        {error && (
+          <p role="alert" className="bad">
+            Could not{" "}
+            {options ? "run the worker experiment" : "load worker options"}:{" "}
+            {error}
+          </p>
+        )}
       </div>
-      <SandboxPreview />
-    </section>
-  );
-}
-
-function SandboxPreview() {
-  const files = [
-    ["/srv/lab/raw/", "W1", "Ingest datasets", "◇ local"],
-    ["/srv/lab/reports/", "W2", "Write summaries", "◇ local"],
-    ["Approved archive", "W3", "Archive reports", "◆ archive store"],
-    ["/srv/lab/tmp/", "—", "Temporary exports", "◇ local"],
-    [
-      "Worker activity log",
-      "All",
-      "Record job actions",
-      "◇ local · ◆ collector",
-    ],
-    ["Scheduler records", "All", "Assign jobs", "◆ independent"],
-  ];
-  return (
-    <div className="sandbox-preview">
-      <div className="outside-investigator">
-        <div>
-          Investigator waits outside
-          <small>Read-only access after evidence freezes</small>
-        </div>
-        <Pip />
-      </div>
-      <section
-        className="sandbox-boundary"
-        aria-label="Planned sandbox structure"
-      >
-        <span className="boundary-caption">Sandbox boundary</span>
-        <header>
-          <h2>Sandbox</h2>
-          <span className="mono small muted">Synthetic lab · 3 workers</span>
-          <span className="tag">IDLE</span>
-        </header>
-        <div className="sandbox-files">
-          <div className="sandbox-file table-label">
-            <span></span>
-            <span>Object / path</span>
-            <span>Worker</span>
-            <span>Planned work</span>
-            <span>Copies</span>
-          </div>
-          {files.map(([path, worker, job, copies]) => (
-            <div className="sandbox-file" key={path}>
-              <span className="file-glyph" aria-hidden="true">
-                ▯
+      <div className="demo-watch">
+        <SandboxStage
+          stage={caseId ? stage : null}
+          autoplay={!!caseId && playFor === caseId}
+          loading={pending}
+          onDone={() => setFinished(true)}
+        />
+        <div className="demo-next">
+          {caseId && finished && stage && (
+            <>
+              <span className="demo-result">
+                {stage.summary.unassigned
+                  ? `${stage.summary.workers_with_unassigned_activity.join(", ")}: ${stage.summary.unassigned} unassigned actions · ${stage.summary.local_records_missing} local records missing`
+                  : `${stage.summary.routine} routine actions · nothing unassigned`}
               </span>
-              <code>{path}</code>
-              <span className="worker-bubble">{worker}</span>
-              <span>{job}</span>
-              <small>{copies}</small>
-            </div>
-          ))}
+              <button
+                className="primary next-btn"
+                data-testid="btn-open-investigation"
+                onClick={onInvestigate}
+              >
+                Open investigation <span aria-hidden="true">→</span>
+              </button>
+            </>
+          )}
         </div>
-        <div className="sandbox-workers">
-          {[
-            ["W1", "Ingest", "wk-ingest"],
-            ["W2", "Summarize", "wk-report"],
-            ["W3", "Archive", "wk-archive"],
-          ].map(([id, job, acct]) => (
-            <article key={id}>
-              <span className="worker-bubble">{id}</span>
-              <div>
-                {job}
-                <small>{acct}</small>
-              </div>
-            </article>
-          ))}
-        </div>
-        <div className="rogue-notice">
-          <span className="rogue-avatar">?</span>
-          <div>
-            One may change objective
-            <small>Scripted fault policy · selected by the scenario</small>
-          </div>
-        </div>
-      </section>
-      <div className="independent-witnesses">
-        <span className="eyebrow">Beyond the workers’ reach</span>
-        <span>◆ Log collector</span>
-        <span>◆ Network tap</span>
-        <small>◇ host-local copy · ◆ independent witness</small>
       </div>
-    </div>
+      {caseId && (
+        <details className="lab-details">
+          <summary>Details</summary>
+          <WorkerActivity key={caseId} caseId={caseId} state={state ?? ""} />
+        </details>
+      )}
+    </section>
   );
 }
 
 export function WorkerActivity({
   caseId,
   state,
-  onInvestigate,
 }: {
   caseId: string;
   state: string;
-  onInvestigate?: () => void;
 }) {
   const [view, setView] = useState<LabView | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -458,22 +439,6 @@ export function WorkerActivity({
   if (!view) return <p role="status">Reading frozen worker activity…</p>;
   return (
     <section className="worker-activity" data-testid="worker-activity">
-      <div className="section-heading">
-        <div>
-          <p className="eyebrow">Worker lab · frozen evidence</p>
-          <h2>Sandbox recording</h2>
-        </div>
-        {onInvestigate && (
-          <button className="primary" onClick={onInvestigate}>
-            Open investigation →
-          </button>
-        )}
-      </div>
-      <p className="small provenance-label">
-        {view.provenance.ordinary_work_label}
-        <br />
-        {view.provenance.changed_objective_label}
-      </p>
       <div className="worker-cards">
         {view.config.workers.map((w) => (
           <article key={w.id}>
@@ -487,15 +452,6 @@ export function WorkerActivity({
             </small>
           </article>
         ))}
-      </div>
-      <div className="worker-conditions">
-        <span>{view.conditions.preset_label}</span>
-        <span>
-          {view.conditions.rogue_requests} scripted turns /{" "}
-          {view.conditions.investigator_requests} investigator requests
-        </span>
-        <span>{permissionLabel(view.conditions.rogue_permissions)}</span>
-        <span>{words(view.conditions.context_load)} context</span>
       </div>
       <h3>What the collector recorded</h3>
       <p className="small muted">

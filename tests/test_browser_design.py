@@ -11,24 +11,44 @@ def test_design_setup_controls_and_navigation(server, page):
     page.set_viewport_size({"width": 1920, "height": 1080})
     page.goto(base)
     lab = page.locator(tid("lab-workspace"))
-    slider = lab.get_by_label("Decision allocation preset")
+    slider = lab.get_by_label("Power balance")
     expect(slider).to_be_enabled()
     slider.focus()
     slider.press("Home")
-    expect(lab.get_by_role("radio", name="Offense-heavy", exact=False)).to_be_checked()
-    expect(lab.locator(".investigator-allowance")).to_contain_text("4")
+    expect(lab.locator(tid("count-investigator"))).to_have_text("1")
+    expect(lab.locator(tid("count-sabotage"))).to_have_text("19")
     slider.press("End")
-    expect(lab.get_by_role("radio", name="Defense-heavy", exact=False)).to_be_checked()
-    expect(lab.locator(".investigator-allowance")).to_contain_text("16")
-    page.locator(".pip-trigger").click()
-    expect(page.locator(".pip-feed")).to_be_visible()
-    page.locator(".pip-trigger").click()
+    expect(lab.locator(tid("count-investigator"))).to_have_text("19")
+    expect(lab.locator(tid("count-sabotage"))).to_have_text("1")
+    for _ in range(6):
+        slider.press("ArrowLeft")
+    expect(lab.locator(tid("count-investigator"))).to_have_text("13")
+    expect(lab.locator(tid("count-sabotage"))).to_have_text("7")
     shot(page, "design-lab-1920")
     for width, height in [(1920,1080),(1280,720),(390,844)]:
         page.set_viewport_size({"width":width,"height":height})
         assert page.locator(".workspace-content").evaluate("e => e.scrollWidth <= e.clientWidth + 1")
-    page.get_by_role("button", name="Open a recording instead", exact=False).click()
-    expect(page.locator(tid("nav-cases"))).to_have_attribute("aria-current","page")
+    # The slider sends exactly the numbers shown, and the run stays on Lab.
+    page.set_viewport_size({"width": 1280, "height": 720})
+    page.emulate_media(reduced_motion="reduce")
+    page.click(tid("btn-lab-run"))
+    opener = page.locator(tid("btn-open-investigation"))
+    expect(opener).to_be_visible()
+    box = opener.bounding_box()
+    assert box["y"] + box["height"] <= 720
+    expect(page.locator(tid("nav-lab"))).to_have_attribute("aria-current","page")
+    cid = page.url.split("case=")[1]
+    conditions = page.request.get(f"{base}/api/cases/{cid}").json()["case"]["lab"]["conditions"]
+    assert (conditions["rogue_requests"], conditions["investigator_requests"]) == (7, 13)
+    assert page.get_by_role("button", name="Open investigation", exact=False).count() == 1
+    opener.click()
+    expect(page.locator(tid("tab-case"))).to_have_attribute("aria-current","page")
+    # The recording link opens a worker-lab recording, still on Lab.
+    page.click(tid("nav-lab"))
+    page.click(tid("btn-lab-recording"))
+    page.wait_for_function("old => !location.hash.endsWith(old)", arg=cid)
+    expect(page.locator(tid("app-root"))).to_have_attribute("data-case-family", "worker-lab")
+    expect(page.locator(tid("nav-lab"))).to_have_attribute("aria-current","page")
     assert page.errors == []
 
 

@@ -6,8 +6,8 @@ import { humanState } from "./workbench";
 export type Workspace = "lab" | "cases" | "investigation" | "experiments";
 const NAV: Array<[Workspace, string, string]> = [
   ["lab", "Lab", "◇"],
-  ["cases", "Cases", "▤"],
   ["investigation", "Investigation", "⌕"],
+  ["cases", "Cases", "▤"],
   ["experiments", "Experiments", "⇄"],
 ];
 
@@ -100,9 +100,7 @@ export function Navigation({
         onClick={() => onNavigate("lab")}
       >
         alibi<span className="brand-dot">.</span>
-        <small>LAB / 01</small>
       </button>
-      <p className="rail-caption">Workspace</p>
       <nav aria-label="Main navigation">
         {NAV.map(([key, label, glyph]) => (
           <button
@@ -150,6 +148,19 @@ export function Navigation({
         </button>
       </div>
     </aside>
+  );
+}
+
+export function ShortHelp({ onClose }: { onClose: () => void }) {
+  return (
+    <Dialog title="Help" onClose={onClose}>
+      <ol className="short-help" data-testid="short-help">
+        <li>Lab: set the balance, run the sandbox.</li>
+        <li>Investigation: follow the evidence to findings.</li>
+        <li>Lock the report, then reveal the result.</li>
+        <li>⌘K searches cases and actions.</li>
+      </ol>
+    </Dialog>
   );
 }
 

@@ -117,6 +117,33 @@ export interface LabRuns {
     } | null;
   }>;
 }
+export interface StageEvent {
+  t: string | null;
+  line_t?: string | null;
+  worker: string;
+  account: string;
+  action: string;
+  dataset: string | null;
+  station: string;
+  kind: "routine" | "unassigned" | "local_record_missing";
+  reason: string | null;
+  evidence_id: string;
+  kept_by_collector: boolean;
+  missing_from_local_log: boolean;
+}
+export interface StageView {
+  label: string;
+  workers: Array<{ id: string; account: string; job: string }>;
+  stations: Array<{ id: string; label: string; path: string }>;
+  events: StageEvent[];
+  summary: {
+    routine: number;
+    unassigned: number;
+    local_records_missing: number;
+    collector_records: number;
+    workers_with_unassigned_activity: string[];
+  };
+}
 const q = encodeURIComponent;
 const post = <T>(path: string, body: unknown) =>
   req<T>(path, {
@@ -129,6 +156,7 @@ export const labApi = {
   create: (body: Record<string, unknown>) =>
     post<{ case: CaseInfo; lab: LabView }>("/api/lab/experiments", body),
   view: (id: string) => req<LabView>(`/api/cases/${q(id)}/lab`),
+  stage: (id: string) => req<StageView>(`/api/cases/${q(id)}/lab/stage`),
   operator: (id: string) =>
     req<OperatorRecord>(`/api/cases/${q(id)}/lab/operator`),
   comparisons: (id: string) =>

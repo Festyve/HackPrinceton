@@ -15,6 +15,10 @@ def create_lab(page, base, variant="incident"):
     lab.get_by_label("Investigator", exact=True).select_option("deterministic")
     lab.get_by_label("World seed", exact=True).fill("11")
     page.click(tid("btn-lab-run"))
+    # A lab run stays on Lab; only "Open investigation" changes workspace.
+    page.locator(tid("btn-stage-skip")).click() if page.locator(tid("sandbox-stage") + '[data-stage="playing"]').count() else None
+    page.click(tid("btn-open-investigation"))
+    expect(page.locator(tid("app-root"))).to_have_attribute("data-workspace", "investigation")
     wait_state(page, "awaiting_review")
     return page.url.split("case=")[1]
 
@@ -27,6 +31,9 @@ def test_worker_flow_uses_actual_evidence_and_opens_operator_record_only_after_l
     expect(page.locator(tid("worker-provenance"))).to_contain_text("scripted fixture")
     expect(page.locator(tid("worker-provenance"))).to_contain_text("no model chooses them")
     page.click(tid("nav-lab"))
+    expect(page.locator(tid("sandbox-stage"))).to_have_attribute("data-stage", "done")
+    expect(page.locator(tid("stage-label"))).to_contain_text("not the sealed operator record")
+    page.locator(".lab-details > summary").click()
     activity = page.locator(tid("worker-activity"))
     expect(activity.locator(".worker-cards article")).to_have_count(3)
     public = page.request.get(f"{base}/api/cases/{cid}/lab").json()
@@ -47,6 +54,7 @@ def test_worker_flow_uses_actual_evidence_and_opens_operator_record_only_after_l
     page.click(tid("btn-accept"))
     wait_state(page, "report_locked")
     page.click(tid("nav-lab"))
+    page.locator(".lab-details > summary").click()
     page.click(tid("btn-operator-record"))
     record = page.request.get(f"{base}/api/cases/{cid}/lab/operator").json()
     pane = page.locator(tid("operator-record"))
@@ -156,6 +164,7 @@ def test_worker_screens_fit_requested_sizes_and_keep_proof_accessible(server, pa
         question_top = page.locator(tid("question-composer")).bounding_box()["y"]
         assert row["y"] >= 0 and row["y"] + row["height"] <= question_top
     page.click(tid("nav-lab"))
+    page.locator(".lab-details > summary").click()
     expect(page.locator(".worker-cards article")).to_have_count(3)
     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
     page.get_by_role("button", name="Open worker record", exact=False).first.click()
@@ -172,6 +181,10 @@ def test_default_scripted_lab_agent_reaches_real_review(server, page):
     base, _ = server
     page.goto(base)
     page.click(tid("btn-lab-run"))
+    expect(page.locator(tid("sandbox-stage"))).to_have_attribute("data-stage", "playing")
+    expect(page.locator(tid("app-root"))).to_have_attribute("data-workspace", "lab")
+    page.click(tid("btn-stage-skip"))
+    page.click(tid("btn-open-investigation"))
     wait_state(page, "awaiting_review")
     expect(page.locator(tid("badge-inference"))).to_contain_text("Scripted fixture")
     row = page.locator(tid("compare-row-retained")).first
