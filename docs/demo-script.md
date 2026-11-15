@@ -30,6 +30,17 @@ This applies only if the build you present includes the branch `codex/eric-ui-wi
 - **Results:** the Benchmark tab starts with the six systems on the six new cases, and the repeat of eight cells below it.
 - **Design an environment:** the link under the "Investigation" selector on the case library. With no model configured it returns a default and says so.
 
+## The click path (current interface, November 15)
+
+Launch: `git pull && npm --prefix web ci && npm --prefix web run build && RUNTIME_MODE=offline ./start.sh`, then http://127.0.0.1:8000. `RUNTIME_MODE=offline` matters on a machine whose `.env` enables the live model.
+
+1. **Lab.** Set the Power balance slider (saboteur actions vs investigator checks, a 20-unit pool) and Solo or Specialists. Press **Run sandbox**. The page stays on Lab: workers move between stations, the changed worker turns red, exports data and erases its own log lines while the collector keeps its copy; then the investigator walks to the stations its recorded checks examined. The animation is rebuilt from frozen evidence and says so. A strip under it gives what happened ("5 copies out · 5 log lines erased · collector kept 41") and the settings used.
+2. **Open investigation →.** Four numbered steps: 1 what the investigator did, 2 what it found (cards with **View evidence**, led by Local: missing / Collector: retained), 3 your call (**Lock report**), 4 result after **Reveal results** (caught / missed per real effect, which worker changed). Plan, trace, notes, questions, export and reset are under **Go deeper**.
+3. **Cases.** One row per run with its settings and outcome; clicking a run replays its sandbox on Lab first. **Files** opens the run's notes, plan, report and trace read-only.
+4. **Experiments.** "Caught vs investigator budget": one dot per revealed run, Solo vs Specialists, above the comparison table.
+
+The balance changes the outcome offline (scripted policy and scripted investigator, seed 11, Solo, measured November 14 at about 23:15 ET, one run each, before removal findings were split per erased line): 16/4 caught 2 of 15 (stopped at its allowance), 10/10 caught 8 of 12, 4/16 caught 7 of 7. One run per setting; not a rate. The scripted three-agent investigator does not enforce the allowance offline; use Solo to show the effect.
+
 ## The worker lab, from recordings
 
 The pitch itself is in [`docs/overhaul/DEMO.md`](overhaul/DEMO.md). These are the saved runs it can use, all real model runs that replay with no key. The application does not say which run had an objective changed until its report is locked; this page does, for the presenter:
