@@ -125,7 +125,7 @@ def test_hero_flow_in_the_browser_and_reset_twice(server, page):
     page.goto(base + "/")
     page.click(tid("nav-cases"))
     page.wait_for_selector(tid("preset-hero-coverup"))
-    assert "Offline replay available" in page.inner_text(tid("badge-inference"))
+    assert page.locator(tid("badge-inference")).count() == 0  # no provenance badge before a case is open
     shot(page, "01-start")
     for attempt in (1, 2):
         page.click(tid("preset-hero-coverup"))
@@ -323,7 +323,7 @@ def test_recorded_real_run_replays_as_a_recorded_ai_run_never_as_live(server, pa
     page.wait_for_selector(tid(f"replay-{real[0]}"))
     card = page.inner_text(tid(f"replay-{real[0]}"))
     assert "REPLAY" in card and "Recorded AI run" in card and "claude" in card
-    assert "Offline replay available" in page.inner_text(tid("badge-inference"))  # nothing live is available here
+    assert page.locator(tid("badge-inference")).count() == 0  # no case open: no provenance badge, nothing live claimed
     page.click(tid(f"replay-{real[0]}"))
     page.click(tid("btn-run"))
     wait_state(page, "awaiting_review", timeout=90_000)
