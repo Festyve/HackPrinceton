@@ -413,7 +413,7 @@ function RunRow(p: {
         <button
           className="run-main"
           aria-current={p.current ? "true" : undefined}
-          // TODO(lab-replay): swap onOpen for the App.tsx handler that opens a lab case on Lab and replays its sandbox.
+          // a lab run opens on Lab and replays its sandbox first (App.tsx openRecent)
           onClick={() => p.onOpen(c.case_id)}
         >
           <b>{c.title ?? c.case_id}</b>

@@ -720,7 +720,7 @@ export default function App() {
                     cases={savedCases}
                     casesError={savedError}
                     currentId={c?.case_id}
-                    onOpen={doOpenCase}
+                    onOpen={openRecent}
                     {...libraryProps}
                   />
                 )}
