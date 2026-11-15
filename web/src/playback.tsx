@@ -33,6 +33,10 @@ export function useRecordedPlayback(total: number) {
       setPlaying(false);
       setCount(null);
     },
+    seek: (n: number) => {
+      setPlaying(false);
+      setCount(Math.max(0, Math.min(n, total)));
+    },
     setSpeed,
   };
 }
@@ -61,6 +65,14 @@ export function PlaybackControls({
       <button disabled={p.shown === p.total && !p.playing} onClick={p.all}>
         Show all records
       </button>
+      <input
+        type="range"
+        aria-label="Playback position"
+        min="0"
+        max={p.total}
+        value={p.shown}
+        onChange={(e) => p.seek(Number(e.target.value))}
+      />
       <label>
         Display pace
         <select
@@ -71,6 +83,7 @@ export function PlaybackControls({
           <option value="0.5">0.5×</option>
           <option value="1">1×</option>
           <option value="2">2×</option>
+          <option value="4">4×</option>
         </select>
       </label>
       <span className="small muted" role="status">

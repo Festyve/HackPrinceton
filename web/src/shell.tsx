@@ -79,16 +79,29 @@ export function Pip({ state = "ready" }: { state?: string }) {
 export function Navigation({
   current,
   onNavigate,
-  state,
   onHelp,
+  cases = [],
+  onOpen,
+  onDetails,
 }: {
   current: Workspace;
   onNavigate: (w: Workspace) => void;
   state?: string;
   onHelp: () => void;
+  cases?: CaseInfo[];
+  onOpen?: (id: string) => void;
+  onDetails?: () => void;
 }) {
   return (
     <aside className="workspace-rail">
+      <button
+        className="rail-brand wordmark"
+        aria-label="ALIBI Lab"
+        onClick={() => onNavigate("lab")}
+      >
+        alibi<span className="brand-dot">.</span>
+        <small>LAB / 01</small>
+      </button>
       <p className="rail-caption">Workspace</p>
       <nav aria-label="Main navigation">
         {NAV.map(([key, label, glyph]) => (
@@ -110,30 +123,31 @@ export function Navigation({
           </button>
         ))}
       </nav>
+      <div className="recent-runs">
+        <p className="rail-caption">Recent runs</p>
+        {cases.slice(0, 4).map((c) => (
+          <button key={c.case_id} onClick={() => onOpen?.(c.case_id)}>
+            <span className={c.state === "scored" ? "ok" : "amber"}>●</span>
+            <span>
+              {c.title ?? c.case_id}
+              <small>
+                {c.case_id.slice(-6)} · {humanState(c.state)}
+              </small>
+            </span>
+          </button>
+        ))}
+        {!cases.length && <p className="small muted">No saved runs yet.</p>}
+      </div>
       <div className="rail-bottom">
-        <div className="pip-note">
-          <Pip state={state} />
-          <div>
-            <b>Pip</b>
-            <small>
-              {state === "awaiting_review"
-                ? "Your review is needed"
-                : state === "investigating"
-                  ? "Following the evidence"
-                  : state === "scored"
-                    ? "Evidence, then answers"
-                    : "A little curiosity helps"}
-            </small>
-          </div>
-        </div>
         <button className="help-link" onClick={onHelp}>
-          How the lab works <span aria-hidden="true">↗</span>
+          ⓘ <span>Help</span>
         </button>
-        <p className="rail-footnote">
-          A controlled research environment.
-          <br />
-          Every conclusion needs a source.
-        </p>
+        <button className="operator-profile" onClick={onDetails}>
+          <span className="profile-avatar">OP</span>
+          <span>
+            Operator<small>Local server</small>
+          </span>
+        </button>
       </div>
     </aside>
   );
