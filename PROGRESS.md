@@ -609,7 +609,7 @@ Reviewed the already committed Claude Design implementation at d180212 in an iso
 
 ## After the release check (November 15, 01:30 – 08:30 ET)
 - `8a3cb6e` (PR #6) and `ac937c0` (PR #7), merged by teammates: the hosting record (`docs/integrations/HOSTING.md`; https://whats-the-alibi.us serves the offline demo from this branch, no key on the server) and a rewritten README with screenshots. Documentation only.
-- `57581ff`, merged at `c6722b1` on the owner's instruction: character images on the lab stage and a reworked Experiments view. `npm --prefix web run build` passed; **no tests were run on this commit** by the owner's decision, so the 662-test result applies to `97cbfb4`, not to `c6722b1`.
+- `57581ff`, merged at `c6722b1` on the owner's instruction: character images on the lab stage and a reworked Experiments view. `npm --prefix web run build` passed; **no tests were run before the merge** by the owner's decision. Run afterwards at `64ab750` (09:45): `uv run pytest -q` → 662 passed, exit 0.
 - Not merged: `integrations-side-prizes` (Vultr deploy scripts, optional Gemini question route); awaiting the owner.
 - Ledger at 08:30: $3.985519, 1126 calls, nothing unreconciled. The 22 calls since 00:34 came from a live run outside this session; this session made no model call.
 - Launch: `git pull && npm --prefix web ci && npm --prefix web run build && RUNTIME_MODE=offline ./start.sh`, then http://127.0.0.1:8000. Click path: `docs/demo-script.md`.
