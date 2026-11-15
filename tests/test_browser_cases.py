@@ -1,5 +1,6 @@
 """The Cases workspace: a read-only browser of one case's own files, isolated per case."""
 from __future__ import annotations
+import re
 import pytest
 from playwright.sync_api import expect
 from .test_browser import browser, page, server, tid  # noqa: F401
@@ -38,7 +39,7 @@ def test_case_files_open_after_the_lock_and_never_leak_into_another_case(server,
     report = tree.locator('[data-file="report.md"]')
     expect(report).to_be_disabled()
     expect(report).to_contain_text("available once the report is reviewed and locked")
-    expect(preview).to_have_attribute("data-path", "findings.json")  # the default when there is no report
+    expect(preview).to_have_attribute("data-path", re.compile(r"^(notes/.+\.md|plan\.md)$"))  # notes or plan first, never raw JSON
     assert page.request.get(f"{base}/api/cases/{first}/files/content?path=report.md").status == 409
     # lock the first case's report: it becomes readable and is rendered as Markdown
     assert page.request.post(f"{base}/api/cases/{first}/review", data={"decision": "accept", "note": ""}).ok
@@ -48,12 +49,12 @@ def test_case_files_open_after_the_lock_and_never_leak_into_another_case(server,
     expect(preview).to_have_attribute("data-path", "report.md")
     expect(preview.locator(".md h2")).to_contain_text("Investigation report")
     expect(preview).to_contain_text(first)
-    expect(files).to_contain_text("Read-only.")
+    expect(files).to_have_attribute("title", re.compile("^Read-only."))
     # switching case: nothing of the first case stays on screen, and the second one's report is still closed
     page.click(f'[data-case="{second}"]')
     expect(files).to_have_attribute("data-case-id", second)
     assert first not in files.inner_text() and "Investigation report" not in preview.inner_text()
-    expect(preview).to_have_attribute("data-path", "findings.json")
+    expect(preview).to_have_attribute("data-path", re.compile(r"^(notes/.+\.md|plan\.md)$"))
     assert first not in files.inner_text()
     expect(tree.locator('[data-file="report.md"]')).to_be_disabled()
     # nothing sealed was asked for

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { api } from "./api";
 import type { CaseInfo, Presets, Runtime } from "./api";
 import { filesApi } from "./files-api";
 import type { CaseFileEntry, CaseFileListing } from "./files-api";
@@ -180,15 +181,19 @@ const BRACES =
 
 /* ------------------------------------------------------------------ one case's files */
 
-function FileBrowser({
-  caseId,
-  title,
-  onOpen,
-}: {
-  caseId: string;
-  title: string;
-  onOpen: (id: string) => void;
-}) {
+/** The first file worth reading: the agent's notes, then its plan, then the report. Never raw JSON first. */
+function firstReadable(l: CaseFileListing): string | null {
+  const ok = (f: CaseFileEntry) => f.available && f.kind === "markdown";
+  return (
+    l.files.find((f) => ok(f) && f.path.startsWith("notes/") && f.path !== "notes/")?.path ??
+    l.files.find((f) => ok(f) && f.path === "plan.md")?.path ??
+    l.files.find((f) => ok(f) && f.path === "report.md")?.path ??
+    l.files.find(ok)?.path ??
+    null
+  );
+}
+
+function FileBrowser({ caseId }: { caseId: string }) {
   const [listing, setListing] = useState<CaseFileListing | null>(null);
   const [path, setPath] = useState<string | null>(null);
   const [file, setFile] = useState<{ path: string; content: string } | null>(
@@ -206,15 +211,7 @@ function FileBrowser({
         setListing(l);
         setError(null);
         const ok = (p: string) => l.files.some((f) => f.path === p && f.available);
-        setPath((old) =>
-          old && ok(old) && tick > 0
-            ? old
-            : ok("report.md")
-              ? "report.md"
-              : ok("findings.json")
-                ? "findings.json"
-                : (l.files.find((f) => f.available)?.path ?? null),
-        );
+        setPath((old) => (old && ok(old) && tick > 0 ? old : firstReadable(l)));
       })
       .catch((e) => live && setError(message(e)));
     return () => {
@@ -239,8 +236,6 @@ function FileBrowser({
   }, [caseId, path, tick]);
   const entry = listing?.files.find((f) => f.path === path);
   const shown = file && file.path === path ? file : null;
-  const available = (p: string) =>
-    !!listing?.files.some((f) => f.path === p && f.available);
   const top = listing?.files.filter((f) => !f.path.includes("/")) ?? [];
   const folders = ["notes", "evidence"]
     .map((name) => ({
@@ -270,44 +265,12 @@ function FileBrowser({
     );
   };
   return (
-    <div className="cf" data-testid="case-files" data-case-id={caseId}>
-      <header className="cf-head">
-        <div className="cf-title">
-          <b>{title}</b>
-          <span className="mono">{caseId.replace(/^case-/, "").slice(0, 6)}</span>
-          {listing && <span>{humanState(listing.state)}</span>}
-        </div>
-        <nav className="cf-links" aria-label="Case shortcuts">
-          <button
-            className="linkish"
-            data-testid="case-open-investigation"
-            onClick={() => onOpen(caseId)}
-          >
-            Open investigation
-          </button>
-          <button
-            className="linkish"
-            disabled={!available("findings.json")}
-            onClick={() => setPath("findings.json")}
-          >
-            Findings
-          </button>
-          <button
-            className="linkish"
-            disabled={!available("trace.json")}
-            onClick={() => setPath("trace.json")}
-          >
-            Trace
-          </button>
-          <button
-            className="linkish"
-            data-testid="case-files-refresh"
-            onClick={() => setTick((t) => t + 1)}
-          >
-            Refresh
-          </button>
-        </nav>
-      </header>
+    <div
+      className="cf"
+      data-testid="case-files"
+      data-case-id={caseId}
+      title={listing?.note}
+    >
       {error && (
         <p role="alert" className="cf-error">
           {error}
@@ -332,6 +295,13 @@ function FileBrowser({
             ))}
             {top.map((f) => row(f))}
           </ul>
+          <button
+            className="linkish cf-refresh"
+            data-testid="case-files-refresh"
+            onClick={() => setTick((t) => t + 1)}
+          >
+            Refresh
+          </button>
         </nav>
         <section
           className="cf-preview"
@@ -358,7 +328,7 @@ function FileBrowser({
           )}
           <div className="cf-content">
             {!entry ? (
-              listing && <p className="cf-none">No readable file yet.</p>
+              listing && <p className="cf-none">Pick a file.</p>
             ) : !shown ? (
               <p role="status">Loading…</p>
             ) : entry.kind === "markdown" ? (
@@ -369,8 +339,99 @@ function FileBrowser({
           </div>
         </section>
       </div>
-      {listing && <p className="cf-note">{listing.note}</p>}
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ one run, as a row */
+
+const MODE: Record<string, string> = { fast: "Solo", specialist: "Specialists" };
+
+function settings(c: CaseInfo): string {
+  const k = c.lab?.conditions;
+  const mode = c.investigation_mode ? (MODE[c.investigation_mode] ?? "") : "";
+  const counts = k ? `${k.rogue_requests} / ${k.investigator_requests}` : "";
+  return [counts, mode].filter(Boolean).join(" · ") || c.labels.inference_label;
+}
+
+function Outcome({ c }: { c: CaseInfo }) {
+  const [text, setText] = useState<{ t: string; tone: string } | null>(null);
+  useEffect(() => {
+    if (c.state !== "scored") return;
+    let live = true;
+    api
+      .getCase(c.case_id)
+      .then((v) => {
+        const s = v.reveal?.score;
+        if (!live || !s) return;
+        if (s.case_kind === "benign" || v.reveal?.truth.case_kind === "benign") {
+          setText(
+            s.benign_false_alert
+              ? { t: "False alarm", tone: "bad" }
+              : { t: "Clean · nothing alleged", tone: "ok" },
+          );
+          return;
+        }
+        const obs = (s.effect_outcomes ?? []).filter((e) => e.outcome !== "unobservable");
+        const caught = obs.filter((e) => e.outcome === "caught").length;
+        const [n, d] = obs.length
+          ? [caught, obs.length]
+          : [s.step_recall?.num ?? 0, s.step_recall?.den ?? 0];
+        setText({ t: `Caught ${n} / ${d}`, tone: n === d ? "ok" : "warn" });
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [c.case_id, c.state]);
+  const label =
+    c.state === "scored"
+      ? (text?.t ?? "Revealed")
+      : c.state === "report_locked"
+        ? "Report locked"
+        : c.state === "awaiting_review"
+          ? "Awaiting review"
+          : humanState(c.state);
+  return (
+    <span className={`run-outcome ${text?.tone ?? ""}`} data-testid="run-outcome">
+      {label}
+    </span>
+  );
+}
+
+function RunRow(p: {
+  c: CaseInfo;
+  current: boolean;
+  open: boolean;
+  onToggle: () => void;
+  onOpen: (id: string) => void;
+}) {
+  const { c } = p;
+  return (
+    <li className={`run-row ${p.open ? "expanded" : ""}`} data-run={c.case_id}>
+      <div className="run-line">
+        <button
+          className="run-main"
+          aria-current={p.current ? "true" : undefined}
+          // TODO(lab-replay): swap onOpen for the App.tsx handler that opens a lab case on Lab and replays its sandbox.
+          onClick={() => p.onOpen(c.case_id)}
+        >
+          <b>{c.title ?? c.case_id}</b>
+          <span className="run-settings">{settings(c)}</span>
+          <Outcome c={c} />
+        </button>
+        <button
+          className="run-files"
+          data-case={c.case_id}
+          data-testid="case-files-toggle"
+          aria-expanded={p.open}
+          onClick={p.onToggle}
+        >
+          Files <span aria-hidden="true">{p.open ? "▴" : "▾"}</span>
+        </button>
+      </div>
+      {p.open && <FileBrowser caseId={c.case_id} />}
+    </li>
   );
 }
 
@@ -392,170 +453,147 @@ export function CasesWorkspace(p: {
   onMode: (m: string) => void;
   onDesign: () => void;
 }) {
-  const [picked, setPicked] = useState<string | null>(p.currentId ?? null);
-  const id =
-    picked && p.cases.some((c) => c.case_id === picked)
-      ? picked
-      : (p.cases[0]?.case_id ?? null);
-  const chosen = p.cases.find((c) => c.case_id === id);
+  const [filesFor, setFilesFor] = useState<string | null>(null);
+  const runs = p.cases.filter((c) => c.lab);
+  const others = p.cases.filter((c) => !c.lab);
   const modes = p.runtime?.capabilities?.investigation_modes;
   const is = (kind: Choice["kind"], x: string) =>
     p.selected?.kind === kind && p.selected.id === x;
+  const rows = (list: CaseInfo[], testid: string) => (
+    <ul className="run-list" data-testid={testid}>
+      {list.map((c) => (
+        <RunRow
+          key={c.case_id}
+          c={c}
+          current={c.case_id === p.currentId}
+          open={filesFor === c.case_id}
+          onToggle={() => setFilesFor((v) => (v === c.case_id ? null : c.case_id))}
+          onOpen={p.onOpen}
+        />
+      ))}
+    </ul>
+  );
   return (
     <div className="cases-ws">
-      <aside className="cases-rail">
-        <h2>On this server</h2>
+      <section className="cases-section" aria-label="Lab runs">
         {p.casesError ? (
           <p role="status" className="amber">
-            Saved cases could not be loaded.
+            Saved runs could not be loaded.
           </p>
-        ) : !p.cases.length ? (
-          <p className="cases-empty">None yet.</p>
+        ) : !runs.length ? (
+          <p className="cases-empty">No lab runs yet. Run one from Lab.</p>
         ) : (
-          <ul className="cases-list" data-testid="case-list">
-            {p.cases.map((c) => (
-              <li key={c.case_id}>
-                <button
-                  className={c.case_id === id ? "sel" : ""}
-                  data-case={c.case_id}
-                  aria-current={c.case_id === id ? "true" : undefined}
-                  onClick={() => setPicked(c.case_id)}
-                >
-                  <i className={`dot ${c.state}`} aria-hidden="true" />
-                  <span>
-                    <b>{c.title ?? c.case_id}</b>
-                    <small>
-                      <span className="mono">
-                        {c.case_id.replace(/^case-/, "").slice(0, 6)}
-                      </span>{" "}
-                      · {humanState(c.state)}
-                    </small>
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
+          rows(runs, "case-list")
         )}
+      </section>
+
+      <section className="cases-section" aria-label="Recordings">
         <h2>Recordings</h2>
         {p.err ? (
           <div className="banner err" role="alert">
-            Could not load the case library: {p.err}. Reload to reconnect.
+            Could not load recordings: {p.err}. Reload to reconnect.
           </div>
         ) : !p.presets ? (
           <p role="status">Loading…</p>
         ) : !p.presets.replays.length ? (
-          <p className="cases-empty">
-            {p.presets.presets.length ? "None saved." : "No cases available"}
-          </p>
+          <p className="cases-empty">None saved.</p>
         ) : (
-          <ul className="cases-list recordings">
+          <ul className="run-list recordings">
             {p.presets.replays.map((x) => (
-              <li key={x.id}>
-                <button
-                  data-testid={`replay-${x.id}`}
-                  className={is("replay", x.id) ? "sel" : ""}
-                  aria-pressed={is("replay", x.id)}
-                  onClick={() => p.onSelect({ kind: "replay", id: x.id })}
-                >
-                  <span>
+              <li key={x.id} className="run-row">
+                <div className="run-line">
+                  <button
+                    className={`run-main ${is("replay", x.id) ? "sel" : ""}`}
+                    data-testid={`replay-${x.id}`}
+                    aria-pressed={is("replay", x.id)}
+                    onClick={() => p.onSelect({ kind: "replay", id: x.id })}
+                  >
                     <b>{x.title}</b>
-                    <small>
+                    <span className="run-settings">
                       <span className="tag">REPLAY</span>{" "}
                       {x.inference_label ?? x.inference_mode}
-                    </small>
-                    <small className="mono">{x.model_id}</small>
-                  </span>
-                </button>
-                <button
-                  className="open"
-                  data-testid={
-                    x.presentation_default === true
-                      ? "btn-recorded-demo"
-                      : `open-replay-${x.id}`
-                  }
-                  aria-label={`Open ${x.title}`}
-                  disabled={p.busy}
-                  onClick={() => p.onRun({ kind: "replay", id: x.id })}
-                >
-                  Open
-                </button>
+                    </span>
+                    <span className="run-model mono">{x.model_id}</span>
+                  </button>
+                  <button
+                    className="run-files"
+                    data-testid={
+                      x.presentation_default === true
+                        ? "btn-recorded-demo"
+                        : `open-replay-${x.id}`
+                    }
+                    aria-label={`Open ${x.title}`}
+                    disabled={p.busy}
+                    onClick={() => p.onRun({ kind: "replay", id: x.id })}
+                  >
+                    Open
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
         )}
-      </aside>
-      <div className="cases-main">
-        {chosen ? (
-          <FileBrowser
-            key={chosen.case_id}
-            caseId={chosen.case_id}
-            title={chosen.title ?? chosen.case_id}
-            onOpen={p.onOpen}
-          />
-        ) : (
-          <p className="cases-empty big">
-            No case on this server yet. Open a recording.
-          </p>
-        )}
-        <details className="cases-more" data-testid="cases-more">
-          <summary>More</summary>
-          <div className="cases-more-tools">
-            {(modes?.available?.length ?? 0) > 1 && (
-              <label>
-                Investigation
-                <select
-                  data-testid="mode-select"
-                  value={p.mode ?? modes?.default ?? ""}
-                  onChange={(e) => p.onMode(e.target.value)}
-                >
-                  {(modes?.available ?? []).map((m) => (
-                    <option key={m} value={m}>
-                      {modes?.labels?.[m] ?? m}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-            {p.runtime?.capabilities?.scenario_designer?.endpoint && (
-              <button
-                data-testid="btn-design"
-                disabled={p.busy}
-                onClick={p.onDesign}
+      </section>
+
+      <details className="cases-more" data-testid="cases-more">
+        <summary>Other scenarios</summary>
+        <div className="cases-more-tools">
+          {(modes?.available?.length ?? 0) > 1 && (
+            <label>
+              Investigation
+              <select
+                data-testid="mode-select"
+                value={p.mode ?? modes?.default ?? ""}
+                onChange={(e) => p.onMode(e.target.value)}
               >
-                Design an environment
+                {(modes?.available ?? []).map((m) => (
+                  <option key={m} value={m}>
+                    {modes?.labels?.[m] ?? m}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {p.runtime?.capabilities?.scenario_designer?.endpoint && (
+            <button
+              data-testid="btn-design"
+              disabled={p.busy}
+              onClick={p.onDesign}
+            >
+              Design an environment
+            </button>
+          )}
+        </div>
+        <ul className="cases-presets">
+          {(p.presets?.presets ?? []).map((x) => (
+            <li key={x.id}>
+              <button
+                data-testid={`preset-${x.id}`}
+                className={is("preset", x.id) ? "sel" : ""}
+                aria-pressed={is("preset", x.id)}
+                onClick={() => p.onSelect({ kind: "preset", id: x.id })}
+              >
+                <b>{x.title}</b>
+                <small>
+                  {x.difficulty} ·{" "}
+                  {p.runtime?.live_inference === "CONFIGURED"
+                    ? "Live AI configured"
+                    : "Scripted fixture"}
+                </small>
               </button>
-            )}
-          </div>
-          <ul className="cases-presets">
-            {(p.presets?.presets ?? []).map((x) => (
-              <li key={x.id}>
-                <button
-                  data-testid={`preset-${x.id}`}
-                  className={is("preset", x.id) ? "sel" : ""}
-                  aria-pressed={is("preset", x.id)}
-                  onClick={() => p.onSelect({ kind: "preset", id: x.id })}
-                >
-                  <b>{x.title}</b>
-                  <small>
-                    {x.difficulty} ·{" "}
-                    {p.runtime?.live_inference === "CONFIGURED"
-                      ? "Live AI configured"
-                      : "Scripted fixture"}
-                  </small>
-                </button>
-                <button
-                  className="open"
-                  aria-label={`Open ${x.title}`}
-                  disabled={p.busy}
-                  onClick={() => p.onRun({ kind: "preset", id: x.id })}
-                >
-                  Open
-                </button>
-              </li>
-            ))}
-          </ul>
-        </details>
-      </div>
+              <button
+                className="open"
+                aria-label={`Open ${x.title}`}
+                disabled={p.busy}
+                onClick={() => p.onRun({ kind: "preset", id: x.id })}
+              >
+                Open
+              </button>
+            </li>
+          ))}
+        </ul>
+        {!!others.length && rows(others, "other-case-list")}
+      </details>
     </div>
   );
 }
