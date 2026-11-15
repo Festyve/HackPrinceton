@@ -105,11 +105,12 @@ type Point = {
   x: number;
   turns: number;
   solo: boolean;
+  model: boolean;
   num: number | null;
   den: number | null;
 };
 
-/** Caught vs investigator budget: one dot per lab run on this server. */
+/** Caught vs investigator budget: one dot per revealed lab run on this server. */
 function ExperimentsChart({
   cases,
   onOpen,
@@ -148,36 +149,61 @@ function ExperimentsChart({
   const points: Point[] = labs.map((c) => {
     const r = recall[c.case_id];
     const ok = r && r.den != null && r.den > 0 && r.num != null;
+    const inf = c.labels?.inference;
     return {
       id: c.case_id,
       x: c.lab!.conditions.investigator_requests,
       turns: c.lab!.conditions.rogue_requests,
       solo: c.investigation_mode === "fast",
+      model: inf === "LIVE_MODEL" || inf === "RECORDED_MODEL",
       num: ok ? r!.num! : null,
       den: ok ? r!.den! : null,
     };
   });
-  const revealed = points.filter((p) => p.den != null);
+  const scored = points.filter((p) => p.den != null);
+  const waiting = points.length - scored.length;
   const W = 920,
-    H = 210,
-    L = 44,
-    R = 16,
-    T = 14,
-    B = 38;
-  const sx = (x: number) => L + ((x - 1) / 18) * (W - L - R);
+    H = 260,
+    L = 70,
+    R = 24,
+    T = 16,
+    B = 46;
+  const xMax = Math.max(20, ...scored.map((p) => p.x));
+  const sx = (x: number) => L + (x / xMax) * (W - L - R);
   const sy = (f: number) => T + (1 - f) * (H - T - B);
-  // spread dots that share a spot
+  const xs = [...new Set(scored.map((p) => p.x))].sort((a, b) => a - b);
+  // spread dots that land on the same spot
   const seen: Record<string, number> = {};
   const nudge = (p: Point) => {
-    const k = `${p.x}:${p.den == null ? "u" : (p.num! / p.den!).toFixed(3)}`;
+    const k = `${p.x}:${(p.num! / p.den!).toFixed(3)}`;
     const n = (seen[k] = (seen[k] ?? -1) + 1);
-    return n === 0 ? 0 : (n % 2 ? 1 : -1) * Math.ceil(n / 2) * 9;
+    return n === 0 ? 0 : (n % 2 ? 1 : -1) * Math.ceil(n / 2) * 14;
   };
+  // average share caught per budget, per lineup, for the trend lines
+  const trend = (solo: boolean) => {
+    const by: Record<number, number[]> = {};
+    for (const p of scored)
+      if (p.solo === solo) (by[p.x] ??= []).push(p.num! / p.den!);
+    return Object.entries(by)
+      .map(([x, v]) => ({ x: Number(x), y: v.reduce((a, b) => a + b, 0) / v.length }))
+      .sort((a, b) => a.x - b.x);
+  };
+  const lines = [
+    { solo: true, pts: trend(true) },
+    { solo: false, pts: trend(false) },
+  ].filter((l) => l.pts.length >= 2);
   return (
     <figure className="xc" data-testid="experiments-chart">
       <figcaption className="xc-head">
-        <h3>Caught vs investigator budget</h3>
-        {revealed.length >= 2 && (
+        <div>
+          <h3>Does more investigator budget catch more?</h3>
+          <p className="xc-sub">
+            Each mark is one finished run. Higher means the investigator caught
+            more of what the rogue worker actually did. Further right means it was
+            allowed more requests. Click a mark to open that run.
+          </p>
+        </div>
+        {scored.length > 0 && (
           <span className="xc-legend">
             <span>
               <i className="xc-dot solo" /> Solo
@@ -186,42 +212,46 @@ function ExperimentsChart({
               <i className="xc-dot spec" /> Specialists
             </span>
             <span>
-              <i className="xc-dot hollow" /> Not revealed
+              <i className="xc-dot shape" /> AI model
+            </span>
+            <span>
+              <i className="xc-dot shape sq" /> Scripted
             </span>
           </span>
         )}
       </figcaption>
-      {revealed.length < 2 ? (
+      {scored.length === 0 ? (
         <p className="xc-empty">
-          Run the lab at a few settings and reveal the results to compare.
+          No scored runs yet. Run the lab, then lock and reveal the report to put
+          the run on this chart.
         </p>
       ) : (
         <svg
           viewBox={`0 0 ${W} ${H}`}
           role="img"
-          aria-label="Effects caught by investigator requests"
+          aria-label="Share of the rogue's actions caught, by investigator budget"
           className="xc-svg"
         >
-          {[0, 0.5, 1].map((f) => (
+          {[0, 0.25, 0.5, 0.75, 1].map((f) => (
             <g key={f}>
               <line
-                className="xc-grid"
+                className={"xc-grid" + (f === 0 ? " base" : "")}
                 x1={L}
                 x2={W - R}
                 y1={sy(f)}
                 y2={sy(f)}
               />
-              <text className="xc-tick" x={L - 8} y={sy(f) + 4} textAnchor="end">
+              <text className="xc-tick" x={L - 10} y={sy(f) + 4} textAnchor="end">
                 {Math.round(f * 100)}%
               </text>
             </g>
           ))}
-          {[1, 5, 10, 15, 19].map((x) => (
+          {xs.map((x) => (
             <text
               key={x}
               className="xc-tick"
               x={sx(x)}
-              y={H - B + 16}
+              y={H - B + 18}
               textAnchor="middle"
             >
               {x}
@@ -230,34 +260,70 @@ function ExperimentsChart({
           <text
             className="xc-axis"
             x={(L + W - R) / 2}
-            y={H - 4}
+            y={H - 6}
             textAnchor="middle"
           >
-            Investigator requests
+            Investigator budget (requests allowed) →
           </text>
-          {points.map((p) => {
-            const hollow = p.den == null;
-            const cx = sx(Math.min(19, Math.max(1, p.x))) + nudge(p);
-            const cy = hollow ? sy(0) : sy(p.num! / p.den!);
+          <text
+            className="xc-axis"
+            transform={`translate(16 ${(T + H - B) / 2}) rotate(-90)`}
+            textAnchor="middle"
+          >
+            Rogue actions caught →
+          </text>
+          {lines.map((l) => (
+            <polyline
+              key={String(l.solo)}
+              className={`xc-trend ${l.solo ? "solo" : "spec"}`}
+              points={l.pts.map((p) => `${sx(p.x)},${sy(p.y)}`).join(" ")}
+            />
+          ))}
+          {scored.map((p) => {
+            const cx = sx(p.x) + nudge(p);
+            const cy = sy(p.num! / p.den!);
+            const cls = `xc-pt ${p.solo ? "solo" : "spec"}`;
+            const tip = `${p.solo ? "Solo" : "Specialists"} · ${p.model ? "AI model" : "scripted"} · budget ${p.x} requests · rogue had ${p.turns} turns · caught ${p.num} of ${p.den}`;
             return (
-              <circle
+              <g
                 key={p.id}
                 data-run={p.id}
-                className={`xc-pt ${p.solo ? "solo" : "spec"} ${hollow ? "hollow" : ""}`}
-                cx={cx}
-                cy={cy}
-                r={hollow ? 5 : 6.5}
+                className="xc-mark"
                 onClick={() => onOpen(p.id)}
               >
-                <title>
-                  {`${p.solo ? "Solo" : "Specialists"} · ${p.x} investigator requests · ${p.turns} saboteur turns · ${
-                    hollow ? "not revealed" : `${p.num} / ${p.den} caught`
-                  }`}
-                </title>
-              </circle>
+                {p.model ? (
+                  <circle className={cls} cx={cx} cy={cy} r={7} />
+                ) : (
+                  <rect
+                    className={cls}
+                    x={cx - 6.5}
+                    y={cy - 6.5}
+                    width={13}
+                    height={13}
+                    rx={2}
+                  />
+                )}
+                <text className="xc-val" x={cx + 11} y={cy + 4}>
+                  {p.num}/{p.den}
+                </text>
+                <title>{tip}</title>
+              </g>
             );
           })}
         </svg>
+      )}
+      {waiting > 0 && (
+        <p className="xc-note">
+          {waiting} more run{waiting === 1 ? " isn't" : "s aren't"} shown because
+          {waiting === 1 ? " its report hasn't" : " their reports haven't"} been
+          locked and revealed yet.
+        </p>
+      )}
+      {scored.length > 0 && (
+        <p className="xc-note">
+          One run per mark, on different evidence unless they come from the same
+          experiment below. Treat it as a direction, not a rate.
+        </p>
       )}
     </figure>
   );

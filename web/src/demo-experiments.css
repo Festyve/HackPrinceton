@@ -94,8 +94,51 @@
 .xp .xc-pt.hollow.spec {
   stroke: var(--spec);
 }
-.xp .xc-pt:hover {
+.xp .xc-pt:hover,
+.xp .xc-mark:hover .xc-pt {
   stroke: #fff;
+}
+.xp .xc-mark {
+  cursor: pointer;
+}
+.xp .xc-sub {
+  margin: 4px 0 0;
+  max-width: 62ch;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--soft);
+}
+.xp .xc-dot.shape {
+  background: var(--soft);
+}
+.xp .xc-dot.shape.sq {
+  border-radius: 2px;
+}
+.xp .xc-grid.base {
+  stroke: rgba(255, 255, 255, 0.28);
+}
+.xp .xc-trend {
+  fill: none;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+  opacity: 0.7;
+}
+.xp .xc-trend.solo {
+  stroke: var(--solo);
+}
+.xp .xc-trend.spec {
+  stroke: var(--spec);
+}
+.xp .xc-val {
+  fill: var(--ink);
+  font-size: 11px;
+  font-family: var(--mono);
+  pointer-events: none;
+}
+.xp .xc-note {
+  margin: 2px 0 4px;
+  font-size: 12px;
+  color: var(--soft);
 }
 .xp .xp-rule {
   font-size: 12px;
