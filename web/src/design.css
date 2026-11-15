@@ -1443,3 +1443,20 @@ h3 {
   overflow: visible;
   flex: 0 0 auto;
 }
+
+/* Run provenance stays visible at every width, separately from decorative window chrome. */
+.case-heading .run-provenance {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+.case-heading .run-provenance .badge {
+  display: inline-flex;
+  height: auto;
+  max-width: 100%;
+  overflow: visible;
+  white-space: normal;
+  line-height: 1.4;
+  padding: 4px 8px;
+}

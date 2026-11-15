@@ -271,11 +271,15 @@ export function LabExperiments({
                     {r.allowed.investigator_requests}
                   </span>
                 </span>
-                <progress
-                  aria-label={`Requests used for ${r.case_id}`}
-                  max={r.allowed.investigator_requests}
-                  value={r.used?.llm_calls ?? 0}
-                />
+                {r.used?.llm_calls != null ? (
+                  <progress
+                    aria-label={`Requests used for ${r.case_id}`}
+                    max={r.allowed.investigator_requests}
+                    value={r.used.llm_calls}
+                  />
+                ) : (
+                  <small className="muted">Usage not recorded</small>
+                )}
                 <span className="mono muted">
                   ◆ {r.bundle_id.slice(0, 14)}…
                 </span>

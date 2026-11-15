@@ -50,3 +50,7 @@ The work is on `codex/design-implementation` in `owly1/HackPrinceton`. It is alr
 3. Run the build and browser checks above. Open Lab, run an offline case, inspect a citation, lock and reveal, open Experiments, and verify keyboard/dialog behavior.
 4. Merge the design PR into `codex/alibi-build` once checks pass. If the base moved, resolve conflicts preserving both backend functionality and the imported design. Do not copy files over newer work or duplicate the commit.
 5. Pull the merged branch on the demo machine, rebuild `web/dist`, and restart the server. Git does not distribute the ignored build output.
+
+## PR #5 integration review
+
+See [the integration review](design-review.md) for observed checks and the fixes made during review: visible provenance on desktop/phone, case-scoped embedded playback, and an explicit unknown-usage state. These are corrections on the existing design branch, not another import or redesign. Review evidence is under `docs/verification/design-review/`.

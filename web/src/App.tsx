@@ -589,28 +589,15 @@ export default function App() {
             <span aria-hidden="true">⌕</span> Search cases & actions{" "}
             <kbd>⌘ K</kbd>
           </button>
-          <div className="badges">
-            <span className="badge" data-testid="badge-inference">
-              {labeledCase?.labels.inference_label ??
-                (presets?.replays.length
+          {!labeledCase && (
+            <div className="badges">
+              <span className="badge" data-testid="badge-inference">
+                {presets?.replays.length
                   ? "Offline replay available"
-                  : "Connecting to the lab")}
-            </span>
-            {labeledCase && (
-              <span className="badge" data-testid="badge-evidence">
-                {originLabel(labeledCase.labels.evidence_origin)}
+                  : "Connecting to the lab"}
               </span>
-            )}
-            {labeledCase && (
-              <span className="badge playback" data-testid="badge-playback">
-                {labeledCase.labels.playback === "REPLAY"
-                  ? "REPLAY · recorded playback"
-                  : labeledCase.labels.playback === "LIVE"
-                    ? "LIVE · fresh case"
-                    : labeledCase.labels.playback}
-              </span>
-            )}
-          </div>
+            </div>
+          )}
           <button
             data-testid="btn-details"
             onClick={() => setShowDetails(true)}
@@ -659,6 +646,37 @@ export default function App() {
                           ? title
                           : "Open a case to begin."}
                 </h1>
+                {labeledCase && (
+                  <div
+                    className="badges run-provenance"
+                    role="group"
+                    aria-label="Run provenance"
+                  >
+                    <span className="badge" data-testid="badge-inference">
+                      {labeledCase?.labels.inference_label ??
+                        (presets?.replays.length
+                          ? "Offline replay available"
+                          : "Connecting to the lab")}
+                    </span>
+                    {labeledCase && (
+                      <span className="badge" data-testid="badge-evidence">
+                        {originLabel(labeledCase.labels.evidence_origin)}
+                      </span>
+                    )}
+                    {labeledCase && (
+                      <span
+                        className="badge playback"
+                        data-testid="badge-playback"
+                      >
+                        {labeledCase.labels.playback === "REPLAY"
+                          ? "REPLAY · recorded playback"
+                          : labeledCase.labels.playback === "LIVE"
+                            ? "LIVE · fresh case"
+                            : labeledCase.labels.playback}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="heading-actions">
                 {view && workspace === "investigation" ? (
@@ -893,7 +911,12 @@ export default function App() {
                         / {run.todo.length} done
                       </span>
                     </header>
-                    <PlanView run={run} caseId={view.case.case_id} embedded />
+                    <PlanView
+                      key={view.case.case_id}
+                      run={run}
+                      caseId={view.case.case_id}
+                      embedded
+                    />
                   </section>
                   <section className="design-card design-activity">
                     <header>
@@ -902,7 +925,12 @@ export default function App() {
                         Recorded tool events
                       </span>
                     </header>
-                    <TraceView run={run} caseId={view.case.case_id} embedded />
+                    <TraceView
+                      key={view.case.case_id}
+                      run={run}
+                      caseId={view.case.case_id}
+                      embedded
+                    />
                   </section>
                 </div>
                 <div
