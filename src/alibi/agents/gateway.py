@@ -60,6 +60,10 @@ class BudgetExceeded(RuntimeError):
     """A cap was reached. The run stops; it is reported as censored, never retried silently."""
 
 
+class AllowanceReached(BudgetExceeded):
+    """A scripted run used its whole request allowance (worker lab, offline). No model call is involved."""
+
+
 class LedgerError(BudgetExceeded):
     """The cumulative ledger cannot be read or written. Nothing is spent while that is true.
 
@@ -360,6 +364,9 @@ class BudgetLedger:
         self.max_tokens_per_call = min(max_tokens_per_call or DEFAULT_MAX_TOKENS_PER_CALL, caps.max_output_tokens)
         self.label = label
         self.model = model
+        # Worker lab, offline: the investigator's request allowance in scripted turns. A scripted turn is not a
+        # model call; it is counted against the allowance the same way so the allowance means the same thing.
+        self.turn_allowance: int | None = None
         self._lock = threading.Lock()
         self.state: dict[str, Any] = {
             "kind": kind, "llm_calls": 0, "scripted_turns": 0, "reserved": 0, "reserved_in": 0, "reserved_out": 0,
@@ -405,6 +412,8 @@ class BudgetLedger:
             if self.kind == "scripted":
                 if s["scripted_turns"] + s["reserved"] >= SCRIPTED_TURN_CAP:
                     raise BudgetExceeded(f"scripted turn cap ({SCRIPTED_TURN_CAP}) reached")
+                if self.turn_allowance is not None and s["scripted_turns"] + s["reserved"] >= self.turn_allowance:
+                    raise AllowanceReached(f"{self.turn_allowance} scripted turns used; no model was called")
                 s["reserved"] += 1
                 self._persist()
                 return Reservation()

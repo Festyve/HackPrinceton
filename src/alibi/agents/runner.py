@@ -116,6 +116,9 @@ class AgentRunner:
     def _parts(self, ctx: RunContext) -> tuple[CaseToolbox, gateway.BudgetLedger, sqlite3.Connection]:
         ctx.case_dir.mkdir(parents=True, exist_ok=True)
         ledger = gateway.make_ledger(self.settings, ctx.case_dir / "budget.json", scripted=self.scripted, caps=ctx.caps)
+        if self.scripted and ctx.caps is not None and self.architecture == "single-agent" and "lab" in ctx.manifest.operational_context:
+            # worker lab, fast mode offline: each scripted step is one request of the investigator's allowance
+            ledger.turn_allowance = int(ctx.caps.max_calls)
         if ctx.resume:
             ledger.reopen(str(ctx.resume.get("note", "resumed")))
         toolbox = CaseToolbox(ctx.store, ctx.manifest, ctx.case_dir / "draft_state.json", emit=ctx.emit,
@@ -168,6 +171,8 @@ class AgentRunner:
                             continue
                         for msg in update.get("messages") or []:
                             self._observe(ctx, toolbox, msg, pending_tasks)
+            except gateway.AllowanceReached as exc:
+                stop_reason = f"stopped at its request allowance ({exc})"
             except gateway.BudgetExceeded as exc:
                 stop_reason = f"stopped by the budget gateway: {exc}"
             except gateway.ModelRefused as exc:

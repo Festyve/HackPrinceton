@@ -1029,3 +1029,33 @@ def test_a_cases_files_are_listed_read_only_and_the_report_only_after_the_lock(e
     everything = json.dumps([c.get(f"/api/cases/{cid}/files/content", params={"path": p}).json() for p, f in
                              {f["path"]: f for f in c.get(f"/api/cases/{cid}/files").json()["files"]}.items() if f["available"]])
     assert "operator_true" not in everything and "lab_incident" not in everything
+
+
+# ---------------------------------------------------------------- the balance changes an offline run
+
+
+def test_more_changed_objective_turns_copy_more_on_the_same_seed():
+    def copies(n):
+        _, run = _run(rogue_requests=n)
+        return sum(r["objective"] == "changed" and r["action"] == "copy_restricted" and r["status"] == "succeeded"
+                   for r in run.records)
+
+    assert copies(16) > copies(4) >= 1
+
+
+def test_a_smaller_investigator_allowance_establishes_less_and_stops(env):
+    _, _, c, _ = env
+    out = {}
+    for n in (2, 16):
+        cid = _create(c, variant="incident", runner="agent-fixture", investigation_mode="fast",
+                      investigator_requests=n, rogue_requests=10, client_token=f"inv-{n}")["case"]["case_id"]
+        _wait(c, cid)
+        report = c.get(f"/api/cases/{cid}").json()["report"]
+        assert report["usage"]["llm_calls"] == 0 and report["usage"]["scripted_turns"] <= n
+        c.post(f"/api/cases/{cid}/review", json={"decision": "accept", "note": ""})
+        rv = c.post(f"/api/cases/{cid}/reveal").json()["reveal"]
+        row = next(r for r in c.get(f"/api/cases/{cid}/lab/comparisons").json()["runs"] if r["case_id"] == cid)
+        out[n] = (rv["score"]["step_recall"]["num"], row["outcome"], report["open_questions"])
+    assert out[2][0] < out[16][0]
+    assert out[2][1] == "stopped" and any(q.startswith("Incomplete run: stopped at its request allowance") for q in out[2][2])
+    assert out[16][1] == "complete"
