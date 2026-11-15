@@ -612,7 +612,7 @@ export default function App() {
                     : workspace === "experiments"
                       ? "Experiments"
                       : workspace === "cases"
-                        ? "Case library"
+                        ? "Cases"
                         : view
                           ? title
                           : "Open a case to begin."}
@@ -645,11 +645,7 @@ export default function App() {
                       {busy === "reset" ? "Resetting…" : "Reset"}
                     </button>
                   </>
-                ) : workspace === "experiments" ? (
-                  <button onClick={() => setWorkspace("cases")}>
-                    Browse saved cases <span aria-hidden="true">↗</span>
-                  </button>
-                ) : workspace === "lab" ? null : (
+                ) : workspace === "lab" || workspace === "experiments" || !selected ? null : (
                   <button
                     className={selected ? "primary" : ""}
                     data-testid="btn-run"

@@ -379,7 +379,7 @@ export function LabExperiments({
                             {r.used?.llm_calls == null ? (
                               <span className="xp-muted">Not recorded</span>
                             ) : (
-                              `${r.used.llm_calls} of ${r.allowed.investigator_requests}`
+                              `${r.used.llm_calls} of ${r.allowed.investigator_requests + ((r.allowed as { extra_requests_granted_on_resume?: number }).extra_requests_granted_on_resume ?? 0)}`
                             )}
                           </td>
                         </tr>
