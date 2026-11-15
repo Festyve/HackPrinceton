@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
-import type { StageEvent, StageView } from "./lab-api";
+import type { InvestigatorStep, StageEvent, StageView } from "./lab-api";
 
 /* The audience's view of the sandbox, replayed from frozen evidence (GET /lab/stage).
    It never reads the sealed operator record. */
@@ -84,15 +84,31 @@ export function InvestigatorFace() {
   );
 }
 
+type Phase = "idle" | "workers" | "wait" | "inv" | "end";
+// Where the investigator stands for each kind of check (scene percentages).
+const INV_AT: Record<InvestigatorStep["station"], { x: number; y: number }> = {
+  log: { x: 76, y: 66 },
+  tmp: { x: 24, y: 66 },
+  sched: { x: 50, y: 36 },
+  center: { x: 50, y: 66 },
+};
+
 export function SandboxStage({
   stage,
   autoplay,
+  playKey = 0,
   loading = false,
+  checks = null,
+  checksWaiting = false,
   onDone,
 }: {
   stage: StageView | null;
   autoplay: boolean;
+  playKey?: number;
   loading?: boolean;
+  /** The investigator's recorded checks; null while its trace is not ready yet. */
+  checks?: InvestigatorStep[] | null;
+  checksWaiting?: boolean;
   onDone?: () => void;
 }) {
   const events = useMemo<StageEvent[]>(() => {
@@ -103,29 +119,79 @@ export function SandboxStage({
     ];
   }, [stage]);
   const n = events.length;
-  // step: -1 idle, 0..n-1 the event being shown, n the end state
+  const m = checks?.length ?? 0;
+  const [phase, setPhase] = useState<Phase>("idle");
+  // step: index of the worker event being shown (n = all shown)
   const [step, setStep] = useState(-1);
+  const [inv, setInv] = useState(0);
   useEffect(() => {
     if (!stage) {
+      setPhase("idle");
       setStep(-1);
       return;
     }
-    setStep(autoplay && !reduced() && n ? 0 : n);
-  }, [stage, autoplay, n]);
-  const beat = Math.max(380, Math.min(1100, 10000 / Math.max(n, 1)));
+    setInv(0);
+    if (autoplay && !reduced() && n) {
+      setStep(0);
+      setPhase("workers");
+    } else {
+      setStep(n);
+      setPhase("end");
+    }
+  }, [stage, autoplay, n, playKey]);
+  // About 8 s for the workers however many events there are, then about 3.5 s for the investigator.
+  const beat = Math.max(110, Math.min(1100, 8000 / Math.max(n, 1)));
+  const invBeat = Math.max(450, Math.min(1100, 3600 / Math.max(m, 1)));
+  const afterWorkers = () => {
+    if (m) {
+      setInv(0);
+      setPhase("inv");
+    } else setPhase(checks === null && checksWaiting ? "wait" : "end");
+  };
   useEffect(() => {
-    if (!stage || step < 0) return;
+    if (phase !== "workers") return;
     if (step >= n) {
-      onDone?.();
+      afterWorkers();
       return;
     }
     const id = window.setTimeout(() => setStep((s) => s + 1), beat);
     return () => window.clearTimeout(id);
-  }, [stage, step, n, beat]);
+  }, [phase, step, n, beat]);
+  useEffect(() => {
+    if (phase !== "wait") return;
+    if (m) {
+      setInv(0);
+      setPhase("inv");
+    } else if (!checksWaiting) setPhase("end");
+  }, [phase, m, checksWaiting]);
+  useEffect(() => {
+    if (phase !== "inv") return;
+    if (inv >= m) {
+      setPhase("end");
+      return;
+    }
+    const id = window.setTimeout(() => setInv((i) => i + 1), invBeat);
+    return () => window.clearTimeout(id);
+  }, [phase, inv, m, invBeat]);
+  useEffect(() => {
+    if (phase === "end") onDone?.();
+  }, [phase]);
 
   const workers = stage?.workers ?? IDLE_WORKERS;
+  const k = workers.length;
+  const home = (id: string, i: number) =>
+    (k <= 3 && HOME[id]) || { x: ((i + 1) * 100) / (k + 1), y: 50 };
+  const homeOf = (id: string) =>
+    home(
+      id,
+      Math.max(
+        0,
+        workers.findIndex((w) => w.id === id),
+      ),
+    );
   const shown = events.slice(0, Math.min(step + 1, n));
-  const now = step >= 0 && step < n ? events[step] : null;
+  const now = phase === "workers" && step >= 0 && step < n ? events[step] : null;
+  const check = phase === "inv" && inv < m && checks ? checks[inv] : null;
   const red = new Set(
     shown.filter((e) => e.kind !== "routine").map((e) => e.worker),
   );
@@ -138,19 +204,23 @@ export function SandboxStage({
   const timed = shown.filter((e) => e.t !== null);
   const collector = timed.filter((e) => e.kept_by_collector).length;
   const local = timed.length - gone.size;
-  const playing = !!now;
-  const done = !!stage && step >= n;
+  const playing = phase === "workers" || phase === "wait" || phase === "inv";
+  const done = !!stage && phase === "end";
+  const investigatorIn = phase === "inv" || phase === "wait";
   const caption = !stage
     ? loading
       ? "preparing sandbox…"
-      : "idle · no run yet"
+      : ""
     : now
       ? now.kind === "local_record_missing"
-        ? `${now.worker} · log line ${clock(now.line_t)} · Local: missing · Collector: retained`
+        ? `${now.worker} erases log line ${clock(now.line_t)} · collector keeps its copy`
         : `${now.worker} ${now.action.replace(/_/g, " ")} ${now.dataset ?? ""}${now.kind === "unassigned" ? " · unassigned" : ""}`
-      : stage.summary.unassigned || stage.summary.local_records_missing
-        ? `done · ${stage.summary.routine} routine · ${stage.summary.unassigned} unassigned · ${stage.summary.local_records_missing} local records missing`
-        : `done · ${stage.summary.routine} routine · nothing unassigned`;
+      : phase === "wait"
+        ? "Investigator starting…"
+        : check
+          ? `Investigator · ${check.caption}`
+          : "done";
+  const invPos = check ? INV_AT[check.station] : INV_AT.center;
   return (
     <section
       className={
@@ -158,6 +228,7 @@ export function SandboxStage({
       }
       data-testid="sandbox-stage"
       data-stage={!stage ? "idle" : done ? "done" : "playing"}
+      data-phase={phase}
       aria-label="Sandbox stage"
     >
       <header className="vm-bar">
@@ -172,7 +243,11 @@ export function SandboxStage({
                 type="button"
                 data-testid="btn-stage-replay"
                 disabled={!n}
-                onClick={() => setStep(0)}
+                onClick={() => {
+                  setInv(0);
+                  setStep(0);
+                  setPhase("workers");
+                }}
               >
                 ↻ Replay
               </button>
@@ -180,29 +255,43 @@ export function SandboxStage({
                 type="button"
                 data-testid="btn-stage-skip"
                 disabled={!playing}
-                onClick={() => setStep(n)}
+                onClick={() => {
+                  setStep(n);
+                  setPhase("end");
+                }}
               >
                 Skip ⏭
               </button>
             </>
           )}
           <span className="vm-state">
-            {!stage ? "IDLE" : playing ? "REPLAY" : "END"}
+            {!stage
+              ? "IDLE"
+              : phase === "workers"
+                ? "WORKERS"
+                : investigatorIn
+                  ? "INVESTIGATOR"
+                  : "END"}
           </span>
         </span>
       </header>
       <div className="vm-outside">
-        <div className="vm-sleuth">
+        <div className={"vm-sleuth" + (investigatorIn ? " away" : "")}>
           <span>Investigator</span>
           <InvestigatorFace />
         </div>
-        <div className={"vm-collector" + (collector ? " has" : "")}>
+        <div
+          className={
+            "vm-collector" +
+            (collector ? " has" : "") +
+            (check?.collector ? " checked" : "")
+          }
+        >
           <span className="vm-collector-n" data-testid="collector-count">
             {collector}
           </span>
           <div>
             <b>Collector</b>
-            <small>beyond the workers’ reach</small>
           </div>
         </div>
       </div>
@@ -214,7 +303,9 @@ export function SandboxStage({
             className={
               "vm-station vm-station-" +
               s.id +
-              (now?.station === s.id ? " active" : "") +
+              (now?.station === s.id || check?.station === s.id
+                ? " active"
+                : "") +
               (now?.station === s.id && now.kind !== "routine" ? " alert" : "")
             }
             style={{ left: `${s.x}%`, top: `${s.y}%` }}
@@ -226,7 +317,7 @@ export function SandboxStage({
                 <span>
                   local {local} · collector {collector}
                 </span>
-                {flagged.map((e) => (
+                {flagged.slice(-4).map((e) => (
                   <code
                     key={e.evidence_id}
                     className={gone.has(e.evidence_id) ? "gone" : ""}
@@ -242,14 +333,17 @@ export function SandboxStage({
         ))}
         {workers.map((w, i) => {
           const mine = now?.worker === w.id ? now : null;
-          const pos = (mine && AT[mine.station]) ||
-            HOME[w.id] || { x: 20 + i * 30, y: 54 };
+          const pos = (mine && AT[mine.station]) || home(w.id, i);
           const isRed = red.has(w.id);
+          const checked = check?.station === "sched";
           return (
             <div
               key={w.id}
               className={
-                "vm-worker" + (mine ? " busy" : "") + (isRed ? " red" : "")
+                "vm-worker" +
+                (mine ? " busy" : "") +
+                (isRed ? " red" : "") +
+                (checked ? " checked" : "")
               }
               data-worker={w.id}
               data-red={isRed ? "true" : "false"}
@@ -272,14 +366,34 @@ export function SandboxStage({
             </div>
           );
         })}
+        {investigatorIn && (
+          <div
+            className="vm-inv"
+            data-testid="stage-investigator"
+            data-station={check?.station ?? "entering"}
+            style={{ left: `${invPos.x}%`, top: `${invPos.y}%` }}
+          >
+            <InvestigatorFace />
+            {check?.delegate && (
+              <span
+                className="vm-inv-delegate"
+                data-testid="stage-delegate"
+                title={check.delegate}
+              >
+                <i aria-hidden="true" />
+                {check.delegate.replace(/[-_]/g, " ")}
+              </span>
+            )}
+          </div>
+        )}
         {now && now.t !== null && now.kept_by_collector && (
           <i
             key={step}
             className={"vm-packet" + (now.kind !== "routine" ? " red" : "")}
             style={
               {
-                "--fx": `${(AT[now.station] ?? HOME[now.worker]).x}%`,
-                "--fy": `${(AT[now.station] ?? HOME[now.worker]).y}%`,
+                "--fx": `${(AT[now.station] ?? homeOf(now.worker)).x}%`,
+                "--fy": `${(AT[now.station] ?? homeOf(now.worker)).y}%`,
                 animationDuration: `${Math.round(beat * 0.8)}ms`,
               } as CSSProperties
             }
@@ -288,7 +402,7 @@ export function SandboxStage({
       </div>
       <footer className="vm-foot">
         <span className="vm-caption" data-testid="stage-caption">
-          <b>&gt;</b> {caption}
+          {caption && <b>&gt;</b>} {caption}
         </span>
         <small data-testid="stage-label">{stage?.label ?? ""}</small>
       </footer>

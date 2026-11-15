@@ -3,6 +3,17 @@ import { Dialog } from "./dialog";
 import type { CaseInfo } from "./api";
 import { humanState } from "./workbench";
 
+const runStatus = (state: string) =>
+  state === "investigating"
+    ? "Investigating"
+    : state === "awaiting_review"
+      ? "Awaiting review"
+      : state === "report_locked"
+        ? "Report locked"
+        : state === "scored"
+          ? "Revealed"
+          : humanState(state);
+
 export type Workspace = "lab" | "cases" | "investigation" | "experiments";
 const NAV: Array<[Workspace, string, string]> = [
   ["lab", "Lab", "◇"],
@@ -11,78 +22,12 @@ const NAV: Array<[Workspace, string, string]> = [
   ["experiments", "Experiments", "⇄"],
 ];
 
-export function Pip({ state = "ready" }: { state?: string }) {
-  const pose =
-    state === "scored"
-      ? "finished"
-      : state === "awaiting_review"
-        ? "waiting for review"
-        : state === "investigating"
-          ? "inspecting"
-          : "ready";
-  return (
-    <svg
-      className={`pip pip-${pose.split(" ")[0]}`}
-      viewBox="0 0 64 64"
-      role="img"
-      aria-label={`Pip, ${pose}`}
-    >
-      <g aria-hidden="true">
-        <path d="M17 44c-5 1-9 7-9 12h35c0-9-5-13-11-14" fill="#70796f" />
-        <path
-          d="M18 24c-5 4-4 17 0 21 5 6 18 5 23-2 3-5 5-15-1-20"
-          fill="#dcc4a0"
-        />
-        <path d="M12 27c1-8 5-14 16-14 10 0 17 5 17 14z" fill="#d9ae73" />
-        <path
-          d="M11 27h37"
-          fill="none"
-          stroke="#eacb9d"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-        <circle cx="25" cy="34" r="2" fill="#27302e" />
-        <circle cx="36" cy="34" r="2" fill="#27302e" />
-        <path
-          d={pose === "finished" ? "M26 42q5 4 9-1" : "M28 42h5"}
-          fill="none"
-          stroke="#574c3d"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        <circle
-          cx="44"
-          cy="41"
-          r="10"
-          fill="#27383c"
-          fillOpacity=".8"
-          stroke="#e2b978"
-          strokeWidth="3"
-        />
-        <path
-          d="m51 49 8 9"
-          stroke="#e2b978"
-          strokeWidth="5"
-          strokeLinecap="round"
-        />
-        <path
-          d="m40 37 4-2"
-          stroke="#dce6df"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-      </g>
-    </svg>
-  );
-}
-
 export function Navigation({
   current,
   onNavigate,
   onHelp,
   cases = [],
   onOpen,
-  onDetails,
 }: {
   current: Workspace;
   onNavigate: (w: Workspace) => void;
@@ -90,8 +35,8 @@ export function Navigation({
   onHelp: () => void;
   cases?: CaseInfo[];
   onOpen?: (id: string) => void;
-  onDetails?: () => void;
 }) {
+  const labRuns = cases.filter((c) => c.lab);
   return (
     <aside className="workspace-rail">
       <button
@@ -121,30 +66,22 @@ export function Navigation({
           </button>
         ))}
       </nav>
-      <div className="recent-runs">
+      <div className="recent-runs" data-testid="recent-runs">
         <p className="rail-caption">Recent runs</p>
-        {cases.slice(0, 3).map((c) => (
+        {labRuns.slice(0, 4).map((c) => (
           <button key={c.case_id} onClick={() => onOpen?.(c.case_id)}>
             <span className={c.state === "scored" ? "ok" : "amber"}>●</span>
             <span>
               {c.title ?? c.case_id}
-              <small>
-                {c.case_id.slice(-6)} · {humanState(c.state)}
-              </small>
+              <small>{runStatus(c.state)}</small>
             </span>
           </button>
         ))}
-        {!cases.length && <p className="small muted">No saved runs yet.</p>}
+        {!labRuns.length && <p className="small muted">No runs yet.</p>}
       </div>
       <div className="rail-bottom">
         <button className="help-link" onClick={onHelp}>
           ⓘ <span>Help</span>
-        </button>
-        <button className="operator-profile" onClick={onDetails}>
-          <span className="profile-avatar">OP</span>
-          <span>
-            Operator<small>Local server</small>
-          </span>
         </button>
       </div>
     </aside>

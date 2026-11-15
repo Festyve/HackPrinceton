@@ -670,3 +670,100 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Power balance: what the numbers mean */
+.power-meaning {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -6px 0 14px;
+  font-size: 14px;
+  color: #c9cdc7;
+}
+.power-meaning b {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.power-meaning .sabotage b {
+  color: #ff8d86;
+}
+.power-meaning .investigator-allowance b {
+  color: #8db8ff;
+}
+/* Result strip under the stage */
+.demo-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+.demo-result .result-item {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #1b232a;
+  border: 1px solid #2d3a42;
+  font-size: 14px;
+}
+.demo-result .ran-with {
+  font: 12px var(--mono);
+  color: var(--muted);
+  margin-left: 4px;
+}
+/* Investigator phase */
+.vm-sleuth.away {
+  opacity: 0.18;
+}
+.vm-collector.checked {
+  border-color: #4f8ff7;
+  box-shadow: 0 0 0 2px #4f8ff755;
+}
+.vm-worker.checked .bot {
+  box-shadow:
+    0 3px 0 rgba(0, 0, 0, 0.35),
+    0 0 0 2px #4f8ff7;
+}
+.vm-inv {
+  position: absolute;
+  z-index: 3;
+  transform: translate(-50%, -50%);
+  transition:
+    left 0.45s cubic-bezier(0.3, 0.9, 0.3, 1),
+    top 0.45s cubic-bezier(0.3, 0.9, 0.3, 1);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: next-in 0.35s ease-out;
+}
+.vm-inv .sleuth {
+  width: 40px;
+  height: 44px;
+}
+.vm-inv-delegate {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #cfe0ff;
+  white-space: nowrap;
+}
+.vm-inv-delegate i {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: #4f8ff7;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+}
+/* Sidebar: recent runs never push Help off-screen */
+.workspace-rail .recent-runs {
+  min-height: 0;
+  overflow: hidden;
+}
+.workspace-rail .recent-runs > button > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.workspace-rail .rail-bottom {
+  flex-shrink: 0;
+}

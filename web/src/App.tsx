@@ -16,7 +16,7 @@ import { Sources, RuntimeDetails, humanState } from "./workbench";
 import { RawViewer } from "./evidence";
 import { InvestigationWorkspace, InvModeLabel } from "./inv-workspace";
 import { BenchmarkTab } from "./bench";
-import { Navigation, CommandPalette, Pip, ShortHelp } from "./shell";
+import { Navigation, CommandPalette, ShortHelp } from "./shell";
 import { CasesWorkspace } from "./case-files";
 import type { Workspace, PaletteAction } from "./shell";
 import { Lab } from "./lab";
@@ -72,7 +72,6 @@ export default function App() {
   const workspaceRef = useRef(workspace);
   workspaceRef.current = workspace;
   const [palette, setPalette] = useState(false);
-  const [pipOpen, setPipOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showSources, setShowSources] = useState(false);
   const [panelDialog, setPanelDialog] = useState<
@@ -358,10 +357,20 @@ export default function App() {
   // Lab runs, and lab runs reopened while on Lab, keep the Lab screen.
   const doOpenLabCase = (id: string) =>
     guard("run", () => attach(id, undefined, true));
+  // A past lab run opens on Lab and replays its sandbox from the start; other cases open the investigation.
+  const [labReplay, setLabReplay] = useState<{ id: string; k: number } | null>(
+    null,
+  );
+  const openLabCaseOnLab = (id: string) => {
+    setWorkspace("lab");
+    setLabReplay({ id, k: Date.now() });
+    return caseIdRef.current === id && view
+      ? Promise.resolve()
+      : doOpenLabCase(id);
+  };
   const openRecent = (id: string) =>
-    workspaceRef.current === "lab" &&
     savedCases.find((x) => x.case_id === id)?.lab
-      ? doOpenLabCase(id)
+      ? openLabCaseOnLab(id)
       : doOpenCase(id);
   const labRecording =
     presets?.replays.find((x) => x.id.startsWith("lab-run-a")) ??
@@ -562,16 +571,6 @@ export default function App() {
         aria-busy={attaching || busy === "run"}
       >
         <header className="hdr app-bar">
-          <span className="window-title">
-            alibi —{" "}
-            {workspace === "lab"
-              ? "Lab"
-              : workspace === "experiments"
-                ? "Experiments"
-                : workspace === "cases"
-                  ? "Cases"
-                  : "Investigator"}
-          </span>
           <button
             className="command-trigger"
             data-testid="btn-command"
@@ -579,12 +578,6 @@ export default function App() {
           >
             <span aria-hidden="true">⌕</span> Search cases & actions{" "}
             <kbd>⌘ K</kbd>
-          </button>
-          <button
-            data-testid="btn-details"
-            onClick={() => setShowDetails(true)}
-          >
-            Details
           </button>
         </header>
         <div className="workspace-body">
@@ -595,7 +588,6 @@ export default function App() {
             onHelp={() => setShowHelp(true)}
             cases={savedCases}
             onOpen={openRecent}
-            onDetails={() => setShowDetails(true)}
           />
           <div className="workspace-content">
             <section className="case-heading">
@@ -722,6 +714,7 @@ export default function App() {
                         : null
                     }
                     onInvestigate={() => setWorkspace("investigation")}
+                    replay={labReplay}
                   />
                 )}
                 {workspace === "cases" && (
@@ -764,68 +757,6 @@ export default function App() {
               </span>
             )}
           </div>
-        </div>
-        <div className="pip-dock" hidden={workspace === "lab" || workspace === "investigation"}>
-          {pipOpen && (
-            <section className="pip-feed" aria-label="Pip activity feed">
-              <header>
-                <span className="eyebrow">Investigator feed</span>
-                <button
-                  aria-label="Close Pip feed"
-                  onClick={() => setPipOpen(false)}
-                >
-                  ×
-                </button>
-              </header>
-              <p className="small muted">
-                Recorded tool events · not hidden reasoning
-              </p>
-              {run.tools.length ? (
-                run.tools.slice(-4).map((t) => (
-                  <div key={t.seq}>
-                    <span className="mono small amber">
-                      #{t.seq} · {t.agent}
-                    </span>
-                    <p>{t.tool.replace(/_/g, " ")}</p>
-                    <small>{t.ok ? "Completed" : "Error"}</small>
-                  </div>
-                ))
-              ) : (
-                <p className="small muted">No investigator activity yet.</p>
-              )}
-              <button
-                onClick={() => {
-                  setPipOpen(false);
-                  if (view) setPanelDialog("trace");
-                  else setWorkspace("cases");
-                }}
-              >
-                {view ? "Open full trace" : "Open a saved case"} ↗
-              </button>
-            </section>
-          )}
-          <button
-            className="pip-trigger"
-            aria-expanded={pipOpen}
-            onClick={() => setPipOpen((v) => !v)}
-          >
-            <Pip state={state} />
-            <span>
-              Pip
-              <small>
-                {state === "awaiting_review"
-                  ? "Awaiting your review"
-                  : state === "investigating"
-                    ? "Investigating"
-                    : state === "report_locked"
-                      ? "Report locked"
-                      : state === "scored"
-                        ? "Report revealed"
-                        : "Ready"}
-              </small>
-            </span>
-            <span aria-hidden="true">{pipOpen ? "⌄" : "⌃"}</span>
-          </button>
         </div>
         {palette && (
           <CommandPalette actions={actions} onClose={() => setPalette(false)} />

@@ -1,7 +1,8 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import type { CaseInfo, Runtime } from "./api";
-import { labApi, permissionLabel } from "./lab-api";
+import { labApi, permissionLabel, investigatorSteps } from "./lab-api";
 import type {
+  InvestigatorStep,
   LabOptions,
   LabView,
   OperatorRecord,
@@ -14,6 +15,9 @@ import { useRecordedPlayback, PlaybackControls } from "./playback";
 import { useActionToken, message, words } from "./features/operation";
 
 const POOL = 20;
+// A replay request is used once, even if Lab mounts again later.
+let usedReplay = 0;
+const TRACE_WAIT_MS = 15000;
 
 export function Lab({
   runtime,
@@ -23,6 +27,7 @@ export function Lab({
   onCase,
   onRecording,
   onInvestigate,
+  replay = null,
 }: {
   runtime: Runtime | null;
   current?: CaseInfo | null;
@@ -31,6 +36,8 @@ export function Lab({
   onCase: (id: string) => void | Promise<void>;
   onRecording?: (() => void | Promise<void>) | null;
   onInvestigate?: () => void;
+  /** Set when a past lab run is opened: replay its sandbox from the start. */
+  replay?: { id: string; k: number } | null;
 }) {
   const [options, setOptions] = useState<LabOptions | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +54,11 @@ export function Lab({
   const [armed, setArmed] = useState(false);
   const [playFor, setPlayFor] = useState<string | null>(null);
   const [finished, setFinished] = useState(false);
+  const [playKey, setPlayKey] = useState(0);
+  const [checks, setChecks] = useState<InvestigatorStep[] | null>(null);
+  const [checksWaiting, setChecksWaiting] = useState(false);
+  const stateRef = useRef(state);
+  stateRef.current = state;
   const action = useActionToken();
   const supported = runtime?.capabilities?.worker_lab?.endpoint;
   const caseId = current?.lab ? current.case_id : null;
@@ -71,7 +83,12 @@ export function Lab({
     let live = true;
     if (armed) {
       setPlayFor(caseId);
+      setPlayKey((x) => x + 1);
       setArmed(false);
+    } else if (replay && replay.id === caseId && usedReplay !== replay.k) {
+      usedReplay = replay.k;
+      setPlayFor(caseId);
+      setPlayKey((x) => x + 1);
     }
     labApi
       .stage(caseId)
@@ -81,6 +98,60 @@ export function Lab({
       live = false;
     };
   }, [caseId]);
+  // Reopening the run that is already loaded replays it too.
+  useEffect(() => {
+    if (!replay || replay.id !== caseId || usedReplay === replay.k) return;
+    usedReplay = replay.k;
+    setFinished(false);
+    setPlayFor(caseId);
+    setPlayKey((x) => x + 1);
+  }, [replay?.k]);
+  // The run's settings drive the controls, so a past run shows what it ran with.
+  const conditions = current?.lab?.conditions;
+  useEffect(() => {
+    if (!conditions) return;
+    setInvestigator(
+      Math.max(1, Math.min(POOL - 1, conditions.investigator_requests)),
+    );
+    if (current?.investigation_mode === "specialist") setMode("specialist");
+    else if (current?.investigation_mode) setMode("fast");
+  }, [caseId]);
+  // The investigator's walk comes from its recorded trace only; poll while it is still being written.
+  const playing = !!caseId && playFor === caseId;
+  useEffect(() => {
+    setChecks(null);
+    setChecksWaiting(false);
+    if (!caseId || !playing) return;
+    let live = true;
+    let timer = 0;
+    const started = Date.now();
+    setChecksWaiting(true);
+    const poll = () => {
+      labApi
+        .trace(caseId)
+        .then((t) => {
+          if (!live) return;
+          const steps = investigatorSteps(t);
+          const over = Date.now() - started > TRACE_WAIT_MS;
+          if ((steps.length && stateRef.current !== "investigating") || over) {
+            setChecks(steps);
+            setChecksWaiting(false);
+          } else timer = window.setTimeout(poll, 1500);
+        })
+        .catch(() => {
+          if (!live) return;
+          if (Date.now() - started > TRACE_WAIT_MS) {
+            setChecks([]);
+            setChecksWaiting(false);
+          } else timer = window.setTimeout(poll, 1500);
+        });
+    };
+    poll();
+    return () => {
+      live = false;
+      window.clearTimeout(timer);
+    };
+  }, [caseId, playing, playKey]);
   const sabotage = POOL - investigator;
   const solo = mode !== "specialist";
   const agents =
@@ -138,15 +209,13 @@ export function Lab({
           <h2>Power balance</h2>
           <div className="power-sides">
             <div className="power-side sabotage">
-              <span>Sabotage</span>
+              <span>Saboteur</span>
               <strong data-testid="count-sabotage">{sabotage}</strong>
-              <small>turns</small>
             </div>
             <i aria-hidden="true">vs</i>
             <div className="power-side investigator-allowance">
               <span>Investigator</span>
               <strong data-testid="count-investigator">{investigator}</strong>
-              <small>requests</small>
             </div>
           </div>
           <input
@@ -161,6 +230,14 @@ export function Lab({
             aria-valuetext={`Sabotage ${sabotage} turns, investigator ${investigator} requests`}
             onChange={(e) => setInvestigator(Number(e.target.value))}
           />
+          <div className="power-meaning" data-testid="power-meaning">
+            <span className="sabotage">
+              Saboteur: up to <b>{sabotage}</b> actions
+            </span>
+            <span className="investigator-allowance">
+              Investigator: up to <b>{investigator}</b> checks
+            </span>
+          </div>
           <div
             className="mode-switch"
             role="radiogroup"
@@ -365,17 +442,35 @@ export function Lab({
       <div className="demo-watch">
         <SandboxStage
           stage={caseId ? stage : null}
-          autoplay={!!caseId && playFor === caseId}
+          autoplay={playing}
+          playKey={playKey}
+          checks={checks}
+          checksWaiting={checksWaiting}
           loading={pending}
           onDone={() => setFinished(true)}
         />
         <div className="demo-next">
           {caseId && finished && stage && (
             <>
-              <span className="demo-result">
-                {stage.summary.unassigned
-                  ? `${stage.summary.workers_with_unassigned_activity.join(", ")}: ${stage.summary.unassigned} unassigned actions · ${stage.summary.local_records_missing} local records missing`
-                  : `${stage.summary.routine} routine actions · nothing unassigned`}
+              <span className="demo-result" data-testid="lab-result">
+                {resultItems(stage).map((r) => (
+                  <span key={r} className="result-item">
+                    {r}
+                  </span>
+                ))}
+                {conditions && (
+                  <span className="ran-with" data-testid="lab-ran-with">
+                    Ran with {conditions.rogue_requests} /{" "}
+                    {conditions.investigator_requests} ·{" "}
+                    {current?.investigation_mode === "specialist"
+                      ? "Specialists"
+                      : current?.investigation_mode
+                        ? "Solo"
+                        : "Checks only"}
+                    {conditions.allowance_enforced === false &&
+                      " · limit not enforced (scripted)"}
+                  </span>
+                )}
               </span>
               <button
                 className="primary next-btn"
@@ -396,6 +491,25 @@ export function Lab({
       )}
     </section>
   );
+}
+
+// Built only from the stage summary the server returns.
+function resultItems(stage: StageView): string[] {
+  const s = stage.summary;
+  const out: string[] = [];
+  if (typeof s.copies_out === "number")
+    out.push(`${s.copies_out} ${s.copies_out === 1 ? "copy" : "copies"} out`);
+  if (s.unassigned)
+    out.push(
+      `${s.unassigned} unassigned ${s.unassigned === 1 ? "action" : "actions"}`,
+    );
+  else out.push("nothing unassigned");
+  if (s.local_records_missing)
+    out.push(
+      `${s.local_records_missing} log ${s.local_records_missing === 1 ? "line" : "lines"} erased`,
+    );
+  out.push(`collector kept ${s.collector_records}`);
+  return out;
 }
 
 export function WorkerActivity({
