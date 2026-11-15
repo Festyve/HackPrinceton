@@ -49,7 +49,7 @@ export function EvidenceInspector({
       <header>
         <div>
           <p className="eyebrow">Evidence inspector</p>
-          <h2>Go back to the source.</h2>
+          <h2>Evidence</h2>
         </div>
         <button
           ref={closeButton}
@@ -136,13 +136,25 @@ export function PlanSummary({ run, onOpen }: { run: Run; onOpen: () => void }) {
   );
 }
 
-export function PlanView({ run, caseId }: { run: Run; caseId: string }) {
+export function PlanView({
+  run,
+  caseId,
+  embedded = false,
+}: {
+  run: Run;
+  caseId: string;
+  embedded?: boolean;
+}) {
   const { trace, error } = useRecordedTrace(caseId, run.lastSeq);
   return (
-    <section className="plan-view" data-testid="investigation-plan">
+    <section
+      className="plan-view"
+      data-testid={embedded ? undefined : "investigation-plan"}
+    >
       <p className="small muted">
-        Tasks and status come from the actual investigation trace. Nothing
-        completes just because time has passed.
+        {embedded
+          ? "Recorded tasks · current status"
+          : "Tasks and status come from the actual investigation trace. Nothing completes just because time has passed."}
       </p>
       {!run.todo.length ? (
         <p>No plan event has been received for this run.</p>
@@ -256,7 +268,15 @@ export function PlanView({ run, caseId }: { run: Run; caseId: string }) {
   );
 }
 
-export function TraceView({ run, caseId }: { run: Run; caseId: string }) {
+export function TraceView({
+  run,
+  caseId,
+  embedded = false,
+}: {
+  run: Run;
+  caseId: string;
+  embedded?: boolean;
+}) {
   const { trace, error } = useRecordedTrace(caseId, run.lastSeq);
   const spans: TraceSpan[] =
     trace?.spans ??
@@ -287,10 +307,15 @@ export function TraceView({ run, caseId }: { run: Run; caseId: string }) {
     return Math.min(level, 3);
   }
   return (
-    <section className="trace-view" data-testid="investigation-trace">
+    <section
+      className="trace-view"
+      data-testid={embedded ? undefined : "investigation-trace"}
+    >
       <p className="small muted">
-        {trace?.note ??
-          "Actual received tool events. Model thoughts are not exposed or reconstructed."}
+        {embedded
+          ? "Recorded tool calls · expand to inspect"
+          : (trace?.note ??
+            "Actual received tool events. Model thoughts are not exposed or reconstructed.")}
       </p>
       {error && (
         <p className="small amber">

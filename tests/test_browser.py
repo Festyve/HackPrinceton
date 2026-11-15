@@ -103,6 +103,7 @@ def close_sources(pg):
 
 def run_case(pg, base: str, preset: str = "hero-coverup") -> None:
     pg.goto(base + "/")
+    pg.click(tid("nav-cases"))
     pg.click(tid(f"preset-{preset}"))
     pg.click(tid("btn-run"))
     wait_state(pg, "awaiting_review")
@@ -122,6 +123,7 @@ def in_viewport(pg, selector: str) -> bool:
 def test_hero_flow_in_the_browser_and_reset_twice(server, page):
     base, _ = server
     page.goto(base + "/")
+    page.click(tid("nav-cases"))
     page.wait_for_selector(tid("preset-hero-coverup"))
     assert "Offline replay available" in page.inner_text(tid("badge-inference"))
     shot(page, "01-start")
@@ -132,11 +134,14 @@ def test_hero_flow_in_the_browser_and_reset_twice(server, page):
         # honest labels, verbatim
         assert "Scripted fixture · no model inference" in page.inner_text(tid("badge-inference"))
         assert "Simulated evidence" in page.inner_text(tid("badge-evidence")) and "LIVE" in page.inner_text(tid("badge-playback"))
-        # the discrepancy is on screen without scrolling at 1280x720
+        # The design puts the plan/trace first; evidence and review remain reachable by scrolling.
         page.wait_for_selector(tid("compare-row-retained"))
         row = page.inner_text(tid("compare-row-retained"))
         assert "absent from host log" in row and "retained by collector" in row and "session opened for user" in row
-        assert in_viewport(page, tid("compare-row-retained")) and in_viewport(page, tid("btn-accept"))
+        page.locator(tid("compare-row-retained")).scroll_into_view_if_needed()
+        assert in_viewport(page, tid("compare-row-retained"))
+        page.locator(tid("btn-accept")).scroll_into_view_if_needed()
+        assert in_viewport(page, tid("btn-accept"))
         assert page.locator('[data-testid^="finding-"]').count() == 5
         assert "not established" in page.inner_text(tid("attribution-panel"))
         if attempt == 1:
@@ -236,8 +241,8 @@ def test_hostile_evidence_is_rendered_as_text(server, page):
     page.goto(f"{base}/#case={rec.case_id}")
     wait_state(page, "awaiting_review")
     page.wait_for_selector(tid("compare-table"))
-    if page.locator('button:has-text("Show all")').count():
-        page.locator('button:has-text("Show all")').first.click()
+    if page.locator('.evidence-area button:has-text("Show all")').count():
+        page.locator('.evidence-area button:has-text("Show all")').first.click()
     page.wait_for_function("() => document.querySelector('[data-testid=\"compare-table\"]').innerText.includes('IGNORE ALL PREVIOUS')")
     table = page.inner_text(tid("compare-table"))
     assert '<script>window.__alibi_pwned=1</script>' in table  # shown literally
@@ -251,6 +256,7 @@ def test_hostile_evidence_is_rendered_as_text(server, page):
 def test_benchmark_tab_renders_results_or_says_why_not(server, page):
     base, _ = server
     page.goto(base + "/")
+    page.click(tid("nav-cases"))
     page.click(tid("tab-benchmark"))
     page.wait_for_selector(f'{tid("benchmark-summary")}, {tid("benchmark-unavailable")}')
     text = page.inner_text("body")
@@ -282,6 +288,7 @@ def test_failed_case_shows_an_error_banner_not_a_spinner(server, page):
 def test_recorded_fixture_replays_in_the_browser_with_replay_labels(server, page):
     base, _ = server
     page.goto(base + "/")
+    page.click(tid("nav-cases"))
     page.wait_for_selector(tid("replay-hero-coverup-fixture"))
     card = page.inner_text(tid("replay-hero-coverup-fixture"))
     assert "REPLAY" in card and "Scripted fixture · no model inference" in card
@@ -312,6 +319,7 @@ def test_recorded_real_run_replays_as_a_recorded_ai_run_never_as_live(server, pa
         pytest.skip("no recording of a real model run is committed")
     base, _ = server
     page.goto(base + "/")
+    page.click(tid("nav-cases"))
     page.wait_for_selector(tid(f"replay-{real[0]}"))
     card = page.inner_text(tid(f"replay-{real[0]}"))
     assert "REPLAY" in card and "Recorded AI run" in card and "claude" in card
@@ -356,6 +364,7 @@ def test_workbench_layout_and_unavailable_capabilities(server, browser, width, h
     assert pg.evaluate("document.documentElement.scrollWidth <= innerWidth")
     if width >= 1280:
         for selector in (tid("compare-row-retained"), tid("btn-accept")):
+            pg.locator(selector).first.scroll_into_view_if_needed()
             box = pg.locator(selector).first.bounding_box()
             assert box and box["x"] >= 0 and box["x"] + box["width"] <= width
             assert box["y"] >= 0 and box["y"] + box["height"] <= height
@@ -403,6 +412,7 @@ def test_source_selection_and_modal_keyboard_return(server, page):
 def test_direct_recorded_action_and_library_switch_preserve_cases(server, page):
     base, _ = server
     page.goto(base + "/")
+    page.click(tid("nav-cases"))
     page.wait_for_selector(tid("btn-recorded-demo"))
     page.click(tid("btn-recorded-demo"))
     wait_state(page, "awaiting_review", timeout=90_000)
@@ -429,12 +439,14 @@ def test_empty_library_and_library_connection_error(server, page):
     base, _ = server
     page.route("**/api/presets", lambda route: route.fulfill(json={"presets": [], "replays": []}))
     page.goto(base + "/")
+    page.click(tid("nav-cases"))
     page.get_by_text("No cases available", exact=True).wait_for()
     page.click(tid("nav-cases"))
     assert page.locator(tid("btn-run")).is_disabled()
     page.unroute("**/api/presets")
     page.route("**/api/presets", lambda route: route.fulfill(status=503, json={"error": "Server unavailable"}))
     page.reload()
+    page.click(tid("nav-cases"))
     page.get_by_role("alert").wait_for()
     assert "Could not load the case library" in page.inner_text("body")
     assert "Reload to reconnect" in page.inner_text("body")

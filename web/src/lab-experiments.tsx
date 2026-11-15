@@ -236,6 +236,62 @@ export function LabExperiments({
       {runs && (
         <>
           <p className="small muted">{runs.note}</p>
+          <div
+            className="design-run-cards"
+            aria-label="Comparison run summaries"
+          >
+            {runs.runs.map((r) => (
+              <article className="design-run-card" key={r.case_id}>
+                <header>
+                  <span>RUN {r.case_id.slice(-6)}</span>
+                  <span>{humanState(r.state)}</span>
+                </header>
+                <h3>
+                  {r.lineage.changed
+                    ? Object.entries(r.lineage.changed)
+                        .map(
+                          ([key, val]) =>
+                            `${words(key)}: ${val.from} → ${val.to}`,
+                        )
+                        .join("; ")
+                    : "Original execution"}
+                </h3>
+                <div className="effect-count">
+                  {r.scored
+                    ? `${r.scored.effects_established.num}/${r.scored.effects_established.den}`
+                    : "—"}{" "}
+                  <small>
+                    {r.scored ? "effects established" : "not revealed"}
+                  </small>
+                </div>
+                <span className="small muted">
+                  Investigator requests{" "}
+                  <span className="mono">
+                    {r.used?.llm_calls ?? "—"} /{" "}
+                    {r.allowed.investigator_requests}
+                  </span>
+                </span>
+                <progress
+                  aria-label={`Requests used for ${r.case_id}`}
+                  max={r.allowed.investigator_requests}
+                  value={r.used?.llm_calls ?? 0}
+                />
+                <span className="mono muted">
+                  ◆ {r.bundle_id.slice(0, 14)}…
+                </span>
+                <small className="muted">
+                  {r.lineage.comparison === "rogue_permissions"
+                    ? "New execution"
+                    : r.lineage.same_evidence_as_parent
+                      ? "Same frozen evidence"
+                      : "Original frozen evidence"}
+                </small>
+                <button onClick={() => onOpen(r.case_id)}>
+                  Open investigation ↗
+                </button>
+              </article>
+            ))}
+          </div>
           <div className="tablewrap">
             <table data-testid="lab-comparison-table">
               <thead>

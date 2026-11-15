@@ -23,7 +23,7 @@ import {
 import { EvidenceColumn, RawViewer } from "./evidence";
 import { ScoreOverlay } from "./score";
 import { BenchmarkTab } from "./bench";
-import { Navigation, CommandPalette, SavedCases } from "./shell";
+import { Navigation, CommandPalette, SavedCases, Pip } from "./shell";
 import type { Workspace, PaletteAction } from "./shell";
 import { Lab, WorkerActivity } from "./lab";
 import { LabExperiments } from "./lab-experiments";
@@ -33,7 +33,6 @@ import {
   EvidenceInspector,
   InvestigationTools,
   PlanView,
-  PlanSummary,
   TraceView,
   CaseFile,
   Help,
@@ -91,6 +90,7 @@ export default function App() {
   const workspaceRef = useRef(workspace);
   workspaceRef.current = workspace;
   const [palette, setPalette] = useState(false);
+  const [pipOpen, setPipOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showSources, setShowSources] = useState(false);
   const [panelDialog, setPanelDialog] = useState<
@@ -566,18 +566,20 @@ export default function App() {
         aria-busy={attaching || busy === "run"}
       >
         <header className="hdr app-bar">
-          <button
-            className="wordmark"
-            aria-label="ALIBI Lab"
-            onClick={() => setWorkspace("lab")}
-          >
-            alibi
-            <span className="brand-dot" aria-hidden="true">
-              .
-            </span>
-          </button>
-          <span className="product-label">
-            Research lab <span className="edition">/ 01</span>
+          <span className="window-dots" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+          </span>
+          <span className="window-title">
+            alibi —{" "}
+            {workspace === "lab"
+              ? "Lab"
+              : workspace === "experiments"
+                ? "Experiments"
+                : workspace === "cases"
+                  ? "Cases"
+                  : "Investigator"}
           </span>
           <button
             className="command-trigger"
@@ -622,15 +624,18 @@ export default function App() {
             onNavigate={setWorkspace}
             state={state}
             onHelp={() => setShowHelp(true)}
+            cases={savedCases}
+            onOpen={doOpenCase}
+            onDetails={() => setShowDetails(true)}
           />
           <div className="workspace-content">
             <section className="case-heading">
               <div>
                 <p className="eyebrow" data-testid="case-eyebrow">
                   {workspace === "lab"
-                    ? "Configure / observe / investigate"
+                    ? "Worker lab · synthetic environment"
                     : workspace === "experiments"
-                      ? "Conditions, evidence & outcomes"
+                      ? "Change one condition"
                       : workspace === "cases"
                         ? "Recorded runs & frozen evidence"
                         : c
@@ -645,9 +650,9 @@ export default function App() {
                 </p>
                 <h1>
                   {workspace === "lab"
-                    ? "The worker research lab"
+                    ? "Lab"
                     : workspace === "experiments"
-                      ? "Compare the conditions."
+                      ? "Experiments"
                       : workspace === "cases"
                         ? "Case library"
                         : view
@@ -781,6 +786,7 @@ export default function App() {
                         key={c.case_id}
                         caseId={c.case_id}
                         state={state}
+                        onInvestigate={() => setWorkspace("investigation")}
                       />
                     )}
                     {c?.lab ? (
@@ -818,7 +824,7 @@ export default function App() {
                     Opening the saved case and restoring its evidence…
                   </p>
                 )}
-                <StartState {...libraryProps} />
+                {workspace === "cases" && <StartState {...libraryProps} />}
               </main>
             ) : (
               <>
@@ -875,7 +881,30 @@ export default function App() {
                       ?.focus()
                   }
                 />
-                <PlanSummary run={run} onOpen={() => setPanelDialog("plan")} />
+                <div className="design-investigation-top">
+                  <section className="design-card design-plan">
+                    <header>
+                      <h2>Plan</h2>
+                      <span className="mono small muted">
+                        {
+                          run.todo.filter((t) => t.status === "completed")
+                            .length
+                        }{" "}
+                        / {run.todo.length} done
+                      </span>
+                    </header>
+                    <PlanView run={run} caseId={view.case.case_id} embedded />
+                  </section>
+                  <section className="design-card design-activity">
+                    <header>
+                      <h2>Activity</h2>
+                      <span className="mono small muted">
+                        Recorded tool events
+                      </span>
+                    </header>
+                    <TraceView run={run} caseId={view.case.case_id} embedded />
+                  </section>
+                </div>
                 <div
                   className={
                     "case-workspace" + (raw && !narrow ? " inspector-open" : "")
@@ -936,6 +965,68 @@ export default function App() {
               </span>
             )}
           </div>
+        </div>
+        <div className="pip-dock">
+          {pipOpen && (
+            <section className="pip-feed" aria-label="Pip activity feed">
+              <header>
+                <span className="eyebrow">Investigator feed</span>
+                <button
+                  aria-label="Close Pip feed"
+                  onClick={() => setPipOpen(false)}
+                >
+                  ×
+                </button>
+              </header>
+              <p className="small muted">
+                Recorded tool events · not hidden reasoning
+              </p>
+              {run.tools.length ? (
+                run.tools.slice(-4).map((t) => (
+                  <div key={t.seq}>
+                    <span className="mono small amber">
+                      #{t.seq} · {t.agent}
+                    </span>
+                    <p>{t.tool.replace(/_/g, " ")}</p>
+                    <small>{t.ok ? "Completed" : "Error"}</small>
+                  </div>
+                ))
+              ) : (
+                <p className="small muted">No investigator activity yet.</p>
+              )}
+              <button
+                onClick={() => {
+                  setPipOpen(false);
+                  if (view) setPanelDialog("trace");
+                  else setWorkspace("cases");
+                }}
+              >
+                {view ? "Open full trace" : "Open a saved case"} ↗
+              </button>
+            </section>
+          )}
+          <button
+            className="pip-trigger"
+            aria-expanded={pipOpen}
+            onClick={() => setPipOpen((v) => !v)}
+          >
+            <Pip state={state} />
+            <span>
+              Pip
+              <small>
+                {state === "awaiting_review"
+                  ? "Awaiting your review"
+                  : state === "investigating"
+                    ? "Investigating"
+                    : state === "report_locked"
+                      ? "Report locked"
+                      : state === "scored"
+                        ? "Report revealed"
+                        : "Ready"}
+              </small>
+            </span>
+            <span aria-hidden="true">{pipOpen ? "⌄" : "⌃"}</span>
+          </button>
         </div>
         {palette && (
           <CommandPalette actions={actions} onClose={() => setPalette(false)} />
