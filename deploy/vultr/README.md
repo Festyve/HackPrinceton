@@ -4,6 +4,8 @@ This serves the **existing offline recorded demo** (the same app as `./start.sh`
 with automatic HTTPS once a domain points at it. It changes nothing in the app, `start.sh` or local hosting.
 The server runs with `RUNTIME_MODE=offline` and `LLM_MAX_USD=0`: no model calls, no API key, no spend.
 
+**Live deployment record** (domain registrar, DNS records, instance, billing): [`docs/integrations/HOSTING.md`](../../docs/integrations/HOSTING.md).
+
 Files: `bootstrap.sh` (idempotent installer/updater), `alibi.service` (systemd unit), `cloud-init.yaml` (paste as
 User Data so a new server sets itself up).
 

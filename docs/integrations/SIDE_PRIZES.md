@@ -5,11 +5,18 @@ unchanged; no existing file was edited. Branch: `claude/compassionate-planck-v5i
 
 | Piece | Files | State |
 |---|---|---|
-| Domain `whats-the-alibi.us` | this document | **Available** (registry lookup, 2026-11-15). Not registered: needs your account. |
-| Vultr hosting of the offline demo | `deploy/vultr/*` | Config written; the served command was verified locally. No server created. |
+| Domain `whats-the-alibi.us` | this document, [`HOSTING.md`](HOSTING.md) | **Registered at Porkbun** and pointed at Vultr (2026-11-15). |
+| Vultr hosting of the offline demo | `deploy/vultr/*`, [`HOSTING.md`](HOSTING.md) | **Live** at https://whats-the-alibi.us since 2026-11-15 (instance `alibi-demo`). |
+
+**Current live setup:** see [`HOSTING.md`](HOSTING.md). It covers the registrar, DNS records, the Vultr instance,
+billing and how to shut it down. The sections below are the original planning notes.
 | Gemini evidence questions | `src/alibi/integrations/gemini_qa.py`, `tests/test_integration_gemini.py` | Works: 5 offline tests, plus one live question answered and checked. |
 
-## 1. Domain: `whats-the-alibi.us` on GoDaddy
+## 1. Domain: `whats-the-alibi.us` (GoDaddy Registry `.us`)
+
+> **Update 2026-11-15:** the domain was registered at **Porkbun**, not GoDaddy's retail site, and its DNS is managed
+> in Porkbun. The `.us` registry is still GoDaddy Registry. The GoDaddy DNS steps below were applied in Porkbun
+> instead; the exact records are in [`HOSTING.md`](HOSTING.md).
 
 **Availability:** a read-only registry lookup on 2026-11-15 returned `available: true`. Availability can change at
 any moment until it is registered.

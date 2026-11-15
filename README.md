@@ -130,6 +130,7 @@ Tests use fixtures and need no model key.
 - [New experiment protocol](docs/overhaul/EXPERIMENTS.md) · [Next-release demo](docs/overhaul/DEMO.md) · [Release acceptance](docs/overhaul/ACCEPTANCE.md)
 - [Architecture](docs/architecture.md) · [API added in the second run](docs/api.md) · [claims and their support](docs/claims.md)
 - [Two-minute demo](docs/demo-script.md) · [judge questions](docs/judge-qa.md)
+- [Live hosting: whats-the-alibi.us on Vultr + Porkbun DNS](docs/integrations/HOSTING.md) · [Vultr setup](deploy/vultr/README.md) · [domain and side prizes](docs/integrations/SIDE_PRIZES.md)
 - [Build history and handoff](PROGRESS.md) · [engineering decisions](DECISIONS.md) · [remaining owner actions](BLOCKERS.md)
 
 `src/alibi/` contains the backend; `web/` the React case board; `tests/` the checks; `benchmarks/` the measured results; and `demo/replays/` the recordings.
