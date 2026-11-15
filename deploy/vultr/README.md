@@ -7,7 +7,15 @@ The server runs with `RUNTIME_MODE=offline` and `LLM_MAX_USD=0`: no model calls,
 **Live deployment record** (domain registrar, DNS records, instance, billing): [`docs/integrations/HOSTING.md`](../../docs/integrations/HOSTING.md).
 
 Files: `bootstrap.sh` (idempotent installer/updater), `alibi.service` (systemd unit), `cloud-init.yaml` (paste as
-User Data so a new server sets itself up).
+User Data so a new server sets itself up), `alibi-update.sh` + `alibi-update.service` + `alibi-update.timer`
+(continuous deployment, below).
+
+**Continuous deployment.** `bootstrap.sh` installs `alibi-update.timer`. Every 5 minutes it checks GitHub. When
+`ALIBI_REF` (the app branch) or the deploy branch has a new commit, it pulls the change and reruns `bootstrap.sh`,
+which rebuilds the app and restarts it. With no new commit it does nothing. Pushing to `codex/alibi-build` therefore
+puts the change live in about 5 to 10 minutes, with no SSH, no secrets and no CI runner. `https://<domain>/deploy.json`
+shows the commit that is live. The log of each update is in `/var/log/alibi-update.log`; the full build output is in
+`/var/log/alibi-bootstrap.log`. Settings live in `/etc/alibi-deploy.env`.
 
 ## Verified in the dev container
 
@@ -36,8 +44,8 @@ Without a domain: rerun `bash /root/alibi-deploy-src/deploy/vultr/bootstrap.sh` 
 
 ## Operating it
 
-- Update to the newest demo commit: `ALIBI_DOMAIN=whats-the-alibi.us bash /root/alibi-deploy-src/deploy/vultr/bootstrap.sh`
-  (pin a commit with `ALIBI_REF=<sha>` to freeze the demo before judging).
+- Updates are automatic (see above). To force one now: `systemctl start alibi-update.service`. To freeze the demo
+  before judging, set `ALIBI_REF=<sha>` in `/etc/alibi-deploy.env`; to stop updates, `systemctl disable --now alibi-update.timer`.
 - Logs: `journalctl -u alibi -f`, `journalctl -u caddy -f`.
 - Optional login in front of the demo: `caddy hash-password`, then rerun bootstrap with
   `ALIBI_BASIC_AUTH_USER=judge ALIBI_BASIC_AUTH_HASH='<hash>'`.
