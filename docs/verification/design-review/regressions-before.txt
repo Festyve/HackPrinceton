@@ -1,0 +1,4 @@
+FAILED tests/test_browser_design.py::test_design_keeps_origin_and_playback_labels_visible[1920-1080]
+FAILED tests/test_browser_design.py::test_design_keeps_origin_and_playback_labels_visible[390-844]
+FAILED tests/test_browser_design.py::test_opening_another_case_resets_embedded_playback
+3 failed in 27.49s

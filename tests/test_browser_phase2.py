@@ -20,6 +20,7 @@ HAIKU_HERO = "hero-coverup-fast-haiku-5-5"
 
 def open_replay(pg, base: str, replay: str) -> None:
     pg.goto(base + "/")
+    pg.click(tid("nav-cases"))
     pg.click(tid(f"replay-{replay}"))
     pg.click(tid("btn-run"))
     wait_state(pg, "awaiting_review")
@@ -137,6 +138,7 @@ def test_cold_chain_shows_two_temperature_records_and_where_they_disagree(server
     # the finding is named in words, not by its internal claim type
     assert "sensor_stream_discrepancy" not in page.inner_text("body")
     # pointer and keyboard both read values from both records
+    panel.locator(".temp-plot svg").scroll_into_view_if_needed()
     box = panel.locator(".temp-plot svg").bounding_box()
     page.mouse.move(box["x"] + box["width"] * 0.5, box["y"] + box["height"] * 0.5)
     tip = page.inner_text(tid("temperature-tip"))
@@ -194,6 +196,7 @@ def test_the_locked_report_can_be_downloaded_and_holds_no_answer(server, page):
 def test_the_chosen_investigation_mode_is_recorded_with_the_case_and_spend_is_stated(server, page):
     base, _ = server
     page.goto(base + "/")
+    page.click(tid("nav-cases"))
     page.wait_for_selector(tid("mode-select"))
     assert page.locator(tid("mode-select")).input_value() == "specialist"  # the scripted fixture's default
     page.select_option(tid("mode-select"), "fast")
@@ -246,6 +249,7 @@ def test_a_derived_view_is_not_unsealed_before_the_original_report_is_locked(ser
 def test_the_benchmark_tab_shows_the_six_system_evaluation_with_its_limits(server, page):
     base, _ = server
     page.goto(base + "/")
+    page.click(tid("nav-cases"))
     page.click(tid("tab-benchmark"))
     page.wait_for_selector(tid("evaluation-table"))
     row = lambda system: page.locator(f'{tid("evaluation-table")} tr[data-system="{system}"]').inner_text()  # noqa: E731
@@ -271,6 +275,7 @@ def test_the_benchmark_tab_shows_the_six_system_evaluation_with_its_limits(serve
 def test_a_designed_environment_is_previewed_labeled_and_generated_without_showing_the_operators_choice(server, page):
     base, _ = server
     page.goto(base + "/")
+    page.click(tid("nav-cases"))
     page.click(tid("btn-design"))
     page.wait_for_selector(tid("designer"))
     intro = page.inner_text(tid("designer"))
@@ -609,6 +614,7 @@ def test_two_designed_cases_look_the_same_whatever_the_operator_placed(server, p
     seen = []
     for choice in ("none", "inside-job-coverup"):
         page.goto(base + "/")
+        page.click(tid("nav-cases"))
         page.click(tid("btn-design"))
         page.click(tid("btn-design-ask"))
         page.wait_for_selector(tid("design-label"))
@@ -621,7 +627,7 @@ def test_two_designed_cases_look_the_same_whatever_the_operator_placed(server, p
             assert words not in body, (choice, words)
         case = page.request.get(f"{base}/api/cases/{cid}").json()["case"]
         seen.append({
-            "heading": page.inner_text("h1"), "eyebrow": page.inner_text(tid("case-eyebrow")).replace(cid.replace("case-", "")[:8], "…"),
+            "heading": page.inner_text("h1"), "eyebrow": page.inner_text(tid("case-eyebrow")).replace(cid.replace("case-", "")[:8], "…").replace(cid.replace("case-", "")[:8].upper(), "…"),
             "badges": [page.inner_text(tid(b)) for b in ("badge-inference", "badge-evidence", "badge-playback")],
             # each press of "Ask for a design" is a new design with its own exercise number, so title and seed
             # differ between the two for that reason; tests/test_m14_designer.py pins them for one design

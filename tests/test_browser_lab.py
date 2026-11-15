@@ -130,7 +130,7 @@ def test_lab_options_error_and_budget_stopped_run_remain_honest(server, page):
     page.route("**/api/lab/options", lambda r: r.fulfill(status=503, json={"error":"Worker service unavailable"}))
     page.goto(base)
     expect(page.get_by_role("alert")).to_contain_text("Worker service unavailable")
-    assert page.locator(tid("btn-lab-run")).count() == 0
+    expect(page.locator(tid("btn-lab-run"))).to_be_disabled()
     page.unroute("**/api/lab/options")
     cid = create_lab(page, base)
     rec = orch.record(cid)
