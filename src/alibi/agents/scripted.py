@@ -97,7 +97,9 @@ def auditor_policy(messages: list[BaseMessage], bound: tuple[str, ...] = ()) -> 
     candidates: list[Finding] = []
     problems = list(fam_problems)
     if _usable(rec, "files"):
-        candidates += baselines.findings_from_reconcile(rec, produced_by="integrity-auditor")
+        from alibi.runners import lab_removal_findings  # one finding per removed line, as on the fast path
+
+        candidates += lab_removal_findings(rec, produced_by="integrity-auditor")
     else:
         problems.append("local/collector reconciliation result unavailable")
     if _usable(xfer, "transfers"):
@@ -427,7 +429,9 @@ def single_policy(messages: list[BaseMessage], bound: tuple[str, ...] = ()) -> A
     fam, _ = _family_obs(messages, bound)
     found: list[Finding] = []
     if _usable(rec, "files"):
-        found += baselines.findings_from_reconcile(rec, produced_by=role)
+        from alibi.runners import lab_removal_findings
+
+        found += lab_removal_findings(rec, produced_by=role)
     if _usable(xfer, "transfers"):
         found += baselines.findings_from_transfers(xfer, produced_by=role)
     found += checks_families.findings(fam, produced_by=role) if fam else []

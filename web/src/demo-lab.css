@@ -767,3 +767,39 @@
 .workspace-rail .rail-bottom {
   flex-shrink: 0;
 }
+
+/* The window never scrolls; only the workspace content inside the app frame does. */
+@media (min-width: 651px) {
+  html,
+  body,
+  #root {
+    height: 100%;
+    overflow: clip; /* clip, not hidden: scrollIntoView cannot move a clipped box */
+    overscroll-behavior: none;
+  }
+  .app {
+    /* fixed to the viewport, so the document has nothing to scroll */
+    position: fixed;
+    inset: 24px 28px;
+    width: auto;
+    height: auto;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: clip;
+    box-sizing: border-box;
+  }
+  .app > .workspace-body {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  .workspace-body > .workspace-content {
+    min-height: 0;
+    overflow-y: auto;
+  }
+}
+@media (min-width: 651px) and (max-width: 1150px) {
+  .app {
+    inset: 12px;
+  }
+}

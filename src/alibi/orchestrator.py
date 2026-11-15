@@ -1244,7 +1244,7 @@ class Orchestrator:
             if rec.inference_mode == "LIVE_MODEL":
                 caps = replace(self.settings.caps, max_calls=min(self.settings.caps.max_calls, used["llm_calls"] + extra))
             else:  # an offline lab run counts its allowance in scripted turns, never model calls
-                caps = replace(self.settings.caps, max_calls=int(used.get("scripted_turns", 0)) + extra)
+                caps = replace(self.settings.caps, max_calls=min(self.settings.caps.max_calls, int(used.get("scripted_turns", 0)) + extra))
         return RunContext(case_id=rec.case_id, store=store, manifest=load_manifest(paths), case_dir=paths.case,
                           settings=self.settings, emit=lambda t, d: log.append(t, d), pace_s=pace,
                           is_cancelled=cancel.is_set, caps=caps, resume=resume)
@@ -1936,7 +1936,7 @@ class Orchestrator:
                 "conditions": {"preset": preset, "preset_label": lab_engine.PRESETS[preset]["label"] if preset else "Custom",
                                "rogue_requests": lab["limits"]["rogue_requests"], "investigator_requests": allowance,
                                "rogue_permissions": lab["permissions"], "context_load": lab["context_load"],
-                               "allowance_enforced": False},
+                               "allowance_enforced": False, "allowance_unit": None},
                 "provenance": {"ordinary_work": list(prov.get("normal_work") or []),
                                "ordinary_work_label": self._lab_work_label(list(prov.get("normal_work") or [])).replace(
                                    "live model", "recorded choices of a model"),

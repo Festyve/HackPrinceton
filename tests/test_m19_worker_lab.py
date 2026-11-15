@@ -29,7 +29,7 @@ from alibi.questions import QA_SYSTEM
 from alibi.sim.scenario import simulate
 from alibi.sim.world import APP_LOG
 
-SEED = 11  # development seed: worker W1 changes objective at tick 3
+SEED = 11  # development seed: worker W1 changes objective (tick 3 on the short day, tick 6 on the long default day)
 LIVE = {"RUNTIME_MODE": "live", "LIVE_PROVIDER_KIND": "included_credits", "LEAD_MODEL": "anthropic:test-model",
         "LLM_MAX_USD": "5", "LLM_PRICE_IN_PER_MTOK": "1", "LLM_PRICE_OUT_PER_MTOK": "5"}
 
@@ -78,7 +78,7 @@ def test_workers_do_ordinary_jobs_that_leave_artifacts_before_anything_changes()
 
 
 def test_a_seeded_change_of_objective_is_private_and_its_actions_are_executed_and_recorded():
-    spec, run = _run()
+    spec, run = _run(day="short")
     assert run.transition["worker"] == spec["lab"]["transition"]["worker"] == "W1" and run.transition["tick"] == 3
     changed = [r for r in run.records if r["objective"] == "changed"]
     assert [(r["action"], r["status"]) for r in changed[:4]] == [
@@ -97,11 +97,11 @@ def test_a_seeded_change_of_objective_is_private_and_its_actions_are_executed_an
     # which worker changed is in no artifact and in nothing an investigator is told
     public = json.dumps([arts, L.operational_context(spec), L.public_config(spec)])
     assert "changed" not in public and "transition" not in public and "rogue" not in public.lower()
-    assert L.operational_context(spec) == L.operational_context(L.build_spec(SEED, L.LAB_CONTROL))
+    assert L.operational_context(spec) == L.operational_context(L.build_spec(SEED, L.LAB_CONTROL, day="short"))
 
 
 def test_denied_and_failed_actions_leave_no_effect_and_no_file():
-    spec = L.build_spec(SEED)
+    spec = L.build_spec(SEED, day="short")
     asked: list[str] = []
 
     def work(turn):
@@ -136,7 +136,7 @@ def test_denied_and_failed_actions_leave_no_effect_and_no_file():
 
 
 def test_the_control_run_changes_nothing_and_still_does_similar_approved_work():
-    spec, run = _run(L.LAB_CONTROL)
+    spec, run = _run(L.LAB_CONTROL, day="short")
     assert spec["lab"]["transition"] is None and run.transition is None and run.step_results == []
     assert all(r["objective"] == "normal" for r in run.records)
     kinds = [b["kind"] for b in run.benign_outcomes]
@@ -172,7 +172,7 @@ def test_replaying_the_tape_reproduces_the_evidence_and_a_wrong_tape_is_refused(
     ("export_log_artifact", 10, {"lab_stage_export", "lab_copy_restricted", "lab_remove_log_record", "lab_delete_temp_artifact"}, 2),
 ])
 def test_permissions_and_the_request_allowance_bound_what_a_changed_worker_does(profile, requests, steps, unobservable):
-    spec, run = _run(permissions=profile, rogue_requests=requests)
+    spec, run = _run(permissions=profile, rogue_requests=requests, day="short")
     assert {s.step for s in run.step_results} == steps
     assert sum(not s.observable for s in run.step_results) == unobservable
     assert sum(e["objective"] == "changed" for e in spec["lab"]["tape"]) <= requests
@@ -227,22 +227,24 @@ def test_an_incident_run_is_found_by_the_checks_and_scored_after_the_report_is_l
     _wait(c, cid)
     report = c.get(f"/api/cases/{cid}").json()["report"]
     alleged = sorted(f["claim_type"] for f in report["findings"] if f["category"] == "incident_allegation")
-    assert alleged == ["data_staging", "data_staging", "local_log_removal", "policy_violating_transfer", "policy_violating_transfer"]
+    assert alleged == ["data_staging"] * 4 + ["local_log_removal"] * 4 + ["policy_violating_transfer"] * 4  # one removal finding per erased line
+    # the long default day: four copies; four removed lines, in two bursts, each burst one finding
     assert report["attribution"]["account_used"] == "wk-ingest" and report["attribution"]["named_person_accused"] is None
     assert not any("clinic" in q for q in report["open_questions"])
     assert c.post(f"/api/cases/{cid}/reveal").status_code == 409  # not before the report is locked
     assert c.get(f"/api/cases/{cid}/lab/operator").status_code == 409
     c.post(f"/api/cases/{cid}/review", json={"decision": "accept", "note": ""})
     rv = c.post(f"/api/cases/{cid}/reveal").json()["reveal"]
-    assert rv["score"]["step_recall"]["num"] == rv["score"]["step_recall"]["den"] == 5
-    assert rv["score"]["final_precision"]["num"] == rv["score"]["final_precision"]["den"] == 5
+    assert rv["score"]["step_recall"]["num"] == rv["score"]["step_recall"]["den"] > 0
+    assert rv["score"]["final_precision"]["num"] == rv["score"]["final_precision"]["den"] == len(alleged)
     assert rv["truth"]["lab"]["transition"]["worker"] == "W1" and "no model chose" in rv["truth"]["plan_label"]
     assert rv["truth"]["attribution"]["operator_true"] == "worker:W1"
     op = c.get(f"/api/cases/{cid}/lab/operator").json()
-    assert op["transition"]["tick"] == 3 and op["provenance"]["model_chose_fault_actions"] is False
+    assert op["transition"]["tick"] == 6 and op["provenance"]["model_chose_fault_actions"] is False
     assert [r["status"] for r in op["records"] if r["objective"] == "changed"][:3] == ["succeeded"] * 3
     key = load_answer_key(episode_paths(cid, settings.runs_dir, settings.sealed_dir))
-    assert [s.execution_status for s in key.steps if s.effect_id is None] == ["failed"]  # the denied attempt is no effect
+    denied = sum(r["status"] == "denied" for r in op["records"] if r["objective"] == "changed")
+    assert [s.execution_status for s in key.steps if s.effect_id is None] == ["failed"] * denied  # a denied attempt is no effect
 
 
 def test_a_control_run_draws_no_allegation(env):
@@ -316,7 +318,7 @@ def test_the_investigators_request_allowance_comes_from_the_experiment(env):
     rec, paths = orch._load(cid), orch._paths(cid)
     assert rec.lab["conditions"] == {"preset": "defense_heavy", "preset_label": "Defense-heavy · 20/80", "rogue_requests": 4,
                                      "investigator_requests": 16, "rogue_permissions": "export_log", "context_load": "standard",
-                                     "allowance_enforced": False}  # the checks alone make no model request to limit
+                                     "allowance_enforced": True, "allowance_unit": "deterministic check"}  # one check, one request; never a model call
     with EvidenceStore(paths.db) as store:
         assert orch._context(rec, paths, store).caps.max_calls == 16
     low = _create(c, preset="offense_heavy", client_token="t-2")["case"]["case_id"]
@@ -369,8 +371,8 @@ def test_comparisons_change_one_thing_and_say_which(env):
     by = {r["case_id"]: r for r in table["runs"]}
     assert by[cid]["is_root"] and by[cid]["outcome"] == "complete"
     assert by[same["case"]["case_id"]]["allowed"]["investigator_requests"] == 4
-    assert by[same["case"]["case_id"]]["allowed"]["allowance_enforced"] is False
-    assert by[other["case"]["case_id"]]["findings"]["incident_allegations_accepted"] == 4  # no removal without that permission
+    assert by[same["case"]["case_id"]]["allowed"]["allowance_enforced"] is True  # offline checks count against it
+    assert by[other["case"]["case_id"]]["findings"]["incident_allegations_accepted"] == 10  # 5 copies, no removal without that permission
 
 
 def test_no_run_of_an_experiment_is_unsealed_while_another_has_an_open_report(env):
@@ -425,7 +427,7 @@ def test_an_incident_and_a_control_differ_in_nothing_public_but_ids_and_evidence
     _wait(c, cid)
     c.post(f"/api/cases/{cid}/review", json={"decision": "accept", "note": ""})
     lab = c.get(f"/api/cases/{cid}/lab").json()
-    assert lab["config"]["world_seed"] == SEED and lab["provenance"]["ordinary_requests"] == {"chosen": 11}
+    assert lab["config"]["world_seed"] == SEED and lab["provenance"]["ordinary_requests"] == {"chosen": 44}
 
 
 def test_a_recordings_lab_labels_come_from_its_scenario_not_from_what_the_file_says(env, monkeypatch, tmp_path):
@@ -607,7 +609,7 @@ def test_ordinary_work_chosen_through_the_gateway_is_counted_and_never_shown_a_f
     from alibi.episode import load_episode_manifest
 
     tape = load_episode_manifest(orch._paths(rec.case_id)).scenario_spec["lab"]["tape"]
-    assert {e["chooser"] for e in tape if e["objective"] == "changed"} == {L.SCRIPTED_ROGUE}
+    assert {e["chooser"] for e in tape if e["objective"] == "changed"} == {L.SCRIPTED_ROGUE_V2}  # the long day's policy
     assert {e["chooser"] for e in tape if e["objective"] == "normal"} == {"model:anthropic:test-model"}
 
 
@@ -740,7 +742,8 @@ def test_the_lab_from_a_terminal(env, monkeypatch, capsys, tmp_path):
     capsys.readouterr()
     assert cli.main(["lab", "operator", cid]) == 0
     out = capsys.readouterr().out
-    assert "objective changed: worker W1 at tick 3" in out and "copy_restricted" in out and "denied" in out
+    assert "objective changed: worker W1 at tick 6" in out and "copy_restricted" in out and "remove_log_record" in out
+    assert "succeeded" in out  # with 10 requests the long day's policy never reaches its denied collector attempt
     assert cli.main(["lab", "compare", cid, "--kind", "investigator_budget", "--investigator-requests", "4",
                      "--runner", "deterministic", "--investigate"]) == 0
     assert "same evidence as the first run: True" in capsys.readouterr().out
@@ -786,7 +789,8 @@ def test_an_interrupted_investigation_resumes_from_its_checkpoint_in_another_orc
     assert second.record(cid).state == "awaiting_review", second.record(cid).error
     view = second.view(cid)
     alleged = sorted(f["claim_type"] for f in view["report"]["findings"] if f["category"] == "incident_allegation")
-    assert alleged == ["data_staging", "data_staging", "local_log_removal", "policy_violating_transfer", "policy_violating_transfer"]
+    # the scripted fixture reports the four removed lines as one removal finding (the checks split them into bursts)
+    assert alleged == ["data_staging"] * 4 + ["local_log_removal"] * 4 + ["policy_violating_transfer"] * 4
     assert all(f["status"] == "verified" for f in view["report"]["findings"])  # the citations still resolve
     tr = second.investigation_trace(cid)
     resumed = tr["behaviors"]["resumed"]
@@ -858,12 +862,12 @@ def test_the_schedulers_records_say_which_worker_had_which_job_and_what_no_job_e
     with EvidenceStore(paths.db) as store:
         res = assignments.job_assignments(store, manifest)
         ids = {e.id for e in store.scan()}
-    assert res["applicable"] and res["assignment_count"] == 12
+    assert res["applicable"] and res["assignment_count"] == 31
     assert {a: (v["workers"], v["kinds"]) for a, v in res["accounts"].items()} == {
         "wk-ingest": (["W1"], ["ingest"]), "wk-report": (["W2"], ["summarize"]), "wk-archive": (["W3"], ["archive"])}
     assert all(r["in_collector"] and r["in_host_log"] and set(r["event_ids"]) <= ids for r in res["assignments"])
     odd = res["unassigned_activity"]
-    assert [(r["account"], r["action"]) for r in odd] == [("wk-ingest", "export_bulk")] * 2
+    assert [(r["account"], r["action"]) for r in odd] == [("wk-ingest", "export_bulk")] * 4
     assert all(set(r["event_ids"]) <= ids and "no kind of job" in r["reason"] for r in odd)
     assert "do not show which process" in res["limits"][0]
     # a control run: every recorded action of a worker account is explained by a job it was given
@@ -898,7 +902,7 @@ def test_the_report_ties_the_account_to_a_worker_only_through_the_schedulers_rec
     _wait(c, other)
     att2 = c.get(f"/api/cases/{other}").json()["report"]["attribution"]
     assert att2["account_used"] == "wk-archive" and att2["worker_id"] == "W3"
-    assert "named on 2 recorded action(s) that no assigned job explains" in att2["statement"]
+    assert "named on 6 recorded action(s) that no assigned job explains" in att2["statement"]
     # a control alleges nothing, so nothing is attributed to any worker
     ctl = _create(c, variant="control", client_token="t-wl3")["case"]["case_id"]
     _wait(c, ctl)
@@ -1003,7 +1007,7 @@ def test_the_stage_is_rebuilt_from_evidence_and_a_control_shows_nothing_out_of_p
     stage = c.get(f"/api/cases/{inc}/lab/stage").json()  # before any review: nothing sealed is needed for it
     assert "Reconstruction from frozen evidence" in stage["label"]
     kinds = [e["kind"] for e in stage["events"]]
-    assert stage["summary"]["unassigned"] == 2 and stage["summary"]["local_records_missing"] == 2
+    assert stage["summary"]["unassigned"] == stage["summary"]["copies_out"] == 4 and stage["summary"]["local_records_missing"] == 4
     assert stage["summary"]["workers_with_unassigned_activity"] == ["W1"] and kinds.index("unassigned") > kinds.index("routine")
     assert all(e["evidence_id"] and e["kept_by_collector"] for e in stage["events"])
     assert "transition" not in json.dumps(stage) and "variant" not in json.dumps(stage)

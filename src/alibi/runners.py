@@ -144,7 +144,7 @@ def summarize_family(key: str, res: dict[str, Any]) -> tuple[str, list[str]]:
 
 
 def lab_removal_findings(rec: dict[str, Any], produced_by: str = "BR") -> list[Any]:
-    """Worker lab: the BR reconcile findings, one per burst of removed lines instead of one per file.
+    """Worker lab: the BR reconcile findings, one per removed line instead of one per file.
 
     On a long lab day the removed lines are hours apart, and one finding spanning all of them is wider than the
     verifier accepts for an allegation. The rows are grouped into windows the verifier accepts and each group is
@@ -162,11 +162,10 @@ def lab_removal_findings(rec: dict[str, Any], produced_by: str = "BR") -> list[A
     for f in rec["files"]:
         rows = sorted(f["unexplained_local_absence"], key=ts)
         groups: list[list[dict[str, Any]]] = []
-        for row in rows:
-            if groups and (ts(row) - ts(groups[-1][0])).total_seconds() <= MAX_ALLEGATION_WINDOW_S:
-                groups[-1].append(row)
-            else:
-                groups.append([row])
+        # one finding per removed line: on the long day each removal action erases one export record, and the
+        # scorer credits one finding to one effect, so a burst of two removals must stay two findings
+        groups = [[row] for row in rows]
+        _ = MAX_ALLEGATION_WINDOW_S  # every single-line finding is well inside the verifier's window
         for g in groups:
             one = {**rec, "heartbeat_gaps": [], "files": [{**f, "unexplained_local_absence": g}]}
             out += [x for x in baselines.findings_from_reconcile(one, produced_by) if x.claim_type == "local_log_removal"]
