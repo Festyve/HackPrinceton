@@ -693,3 +693,128 @@
 .lab-experiments.xp .xp-table td {
   vertical-align: middle;
 }
+
+/* ---------------------------------------------------------------- Cases: a list of runs */
+.cases-ws {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 26px;
+  max-width: 1040px;
+}
+.cases-section {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.cases-section h2 {
+  margin: 0;
+  font: 500 18px var(--serif);
+  color: var(--soft);
+}
+.run-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.run-row {
+  border: 1px solid var(--edge);
+  border-radius: 14px;
+  background: var(--panel);
+  overflow: hidden;
+}
+.run-row.expanded {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+.run-line {
+  display: flex;
+  align-items: stretch;
+}
+.run-main {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, auto) 170px;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 18px;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.run-main:hover,
+.run-main.sel {
+  background: var(--panel-2);
+}
+.run-main b {
+  font: 500 18px/1.2 var(--display);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.run-settings {
+  color: var(--soft);
+  font: 14px var(--mono);
+  white-space: nowrap;
+}
+.run-model {
+  color: var(--soft);
+  font-size: 12px;
+}
+.run-outcome {
+  min-width: 150px;
+  text-align: right;
+  font-size: 15px;
+  color: var(--soft);
+  white-space: nowrap;
+}
+.run-outcome.ok {
+  color: var(--ok);
+}
+.run-outcome.warn {
+  color: #e9c37c;
+}
+.run-outcome.bad {
+  color: #f0a08c;
+}
+.run-files {
+  flex: none;
+  min-width: 92px;
+  border: 0;
+  border-left: 1px solid var(--edge);
+  border-radius: 0;
+  background: none;
+  color: var(--ink);
+  font-size: 14px;
+  cursor: pointer;
+}
+.run-files:hover {
+  background: var(--panel-2);
+}
+.run-row .cf {
+  padding: 0 12px 12px;
+}
+.run-row .cf-body {
+  height: min(460px, calc(100vh - 320px));
+}
+.cf-refresh {
+  margin: 10px 8px 0;
+  font-size: 13px !important;
+  color: var(--soft) !important;
+}
+.cases-more .run-list {
+  margin-top: 14px;
+}
+@media (max-width: 720px) {
+  .run-main {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+  .run-outcome {
+    text-align: left;
+  }
+}

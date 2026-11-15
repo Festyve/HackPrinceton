@@ -593,9 +593,17 @@ export default function App() {
             <section className="case-heading">
               <div>
                 {workspace === "investigation" && (
-                  <p className="eyebrow" data-testid="case-eyebrow">
+                  <p
+                    className={
+                      c?.parent_case_id || c?.scored === false
+                        ? "eyebrow"
+                        : "eyebrow sr-only"
+                    }
+                    data-testid="case-eyebrow"
+                    title={c?.case_id}
+                  >
                     {c
-                      ? `Case file / ${c.case_id.replace(/^case-/, "").slice(0, 8)}`
+                      ? `Case ${c.case_id.replace(/^case-/, "").slice(0, 8)}`
                       : "Choose an investigation"}
                     {c?.parent_case_id && " · reduced evidence view"}
                     {c?.scored === false && " · imported evidence, unscored"}
@@ -617,9 +625,6 @@ export default function App() {
               <div className="heading-actions">
                 {view && workspace === "investigation" ? (
                   <>
-                    <button onClick={() => setShowLibrary(true)}>
-                      Case library
-                    </button>
                     {state === "investigating" &&
                       c?.labels.playback !== "REPLAY" && (
                         <button
@@ -632,13 +637,6 @@ export default function App() {
                             : "Cancel investigation"}
                         </button>
                       )}
-                    <button
-                      data-testid="btn-reset"
-                      disabled={busy !== null}
-                      onClick={doReset}
-                    >
-                      {busy === "reset" ? "Resetting…" : "Reset"}
-                    </button>
                   </>
                 ) : workspace === "lab" || workspace === "experiments" || !selected ? null : (
                   <button
@@ -749,6 +747,7 @@ export default function App() {
                 onSources={() => setShowSources(true)}
                 onPanel={setPanelDialog}
                 onLab={() => setWorkspace("lab")}
+                onReset={doReset}
               />
             )}
             {(workspace !== "investigation" || !view) && (

@@ -47,10 +47,7 @@ export function EvidenceInspector({
       data-testid="evidence-inspector"
     >
       <header>
-        <div>
-          <p className="eyebrow">Evidence inspector</p>
-          <h2>Evidence</h2>
-        </div>
+        <h2>Evidence</h2>
         <button
           ref={closeButton}
           onClick={onClose}
@@ -59,10 +56,6 @@ export function EvidenceInspector({
           ×
         </button>
       </header>
-      <p className="small muted">
-        Read-only source bytes. Scroll the record horizontally; Escape returns
-        to your finding.
-      </p>
       <RawViewer raw={raw} />
     </aside>
   );

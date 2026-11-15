@@ -123,7 +123,7 @@ def inv_tool(pg, name: str):
 
 
 def open_inv_more(pg) -> None:
-    """Explanations, the question composer, the comparison table and the timeline are under "More tools"."""
+    """Explanations, the question composer, the comparison table and the timeline are under "Go deeper"."""
     skip_playback(pg)
     pg.wait_for_selector(tid("inv-more"))
     if not pg.locator(f'{tid("inv-more")}[open]').count():
@@ -219,6 +219,7 @@ def test_hero_flow_in_the_browser_and_reset_twice(server, page):
         page.locator(tid("btn-accept")).scroll_into_view_if_needed()
         assert in_viewport(page, tid("btn-accept"))
         assert page.locator('[data-testid^="finding-"]').count() == 5
+        open_inv_more(page)  # the attribution line sits under "Go deeper"
         assert "not established" in page.inner_text(tid("attribution-panel"))
         if attempt == 1:
             shot(page, "02-review")
@@ -250,6 +251,7 @@ def test_hero_flow_in_the_browser_and_reset_twice(server, page):
         page.keyboard.press("Escape")
         if page.locator(f'{tid("score-panel")} button:has-text("Close")').count():
             page.locator(f'{tid("score-panel")} button:has-text("Close")').first.click()
+        open_inv_more(page)  # Reset sits under "Go deeper"
         page.click(tid("btn-reset"))
         page.wait_for_function("() => !location.hash.includes('case=')")
         page.click(tid("nav-cases"))
@@ -275,6 +277,7 @@ def test_refresh_during_review_preserves_the_case(server, page):
     assert "rejected" in page.inner_text("body")
     page.reload()
     wait_state(page, "report_locked")
+    open_inv_more(page)  # Reset sits under "Go deeper"
     page.click(tid("btn-reset"))
     page.wait_for_function("() => !location.hash.includes('case=')")
     page.click(tid("nav-cases"))
@@ -288,6 +291,7 @@ def test_sealed_control_case_shows_no_incident(server, page):
     assert page.locator(tid("compare-row-retained")).count() == 0
     body = page.inner_text("body")
     assert "No problems found" in body and page.locator(tid("inv-clean")).count() == 1
+    open_inv_more(page)  # the attribution line sits under "Go deeper"
     assert "not assessed" in page.inner_text(tid("attribution-panel"))
     page.click(tid("btn-accept"))
     wait_state(page, "report_locked")
@@ -364,6 +368,7 @@ def test_failed_case_shows_an_error_banner_not_a_spinner(server, page):
     page.goto(f"{base}/#case={rec.case_id}")
     wait_state(page, "failed")
     assert "server restart" in page.inner_text(tid("error-banner"))
+    open_inv_more(page)  # Reset sits under "Go deeper"
     page.click(tid("btn-reset"))
     page.wait_for_function("() => !location.hash.includes('case=')")
     page.click(tid("nav-cases"))
@@ -425,6 +430,7 @@ def test_recorded_real_run_replays_as_a_recorded_ai_run_never_as_live(server, pa
     details = provenance(page)
     assert "REPLAY" in details and "Live model" not in details
     page.wait_for_selector(tid("compare-row-retained"))
+    open_inv_more(page)  # the attribution line sits under "Go deeper"
     assert "not established" in page.inner_text(tid("attribution-panel"))
     shot(page, "09-recorded-ai-review")
     page.click(tid("btn-accept"))

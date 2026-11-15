@@ -90,7 +90,12 @@ function useRows(caseId: string, run: Run) {
     if (trace) {
       for (const s of trace.spans) {
         if (s.kind === "run")
-          raw.push({ seq: s.start_seq, kind: "start", title: "Investigation started", n: 1 });
+          raw.push({
+            seq: s.start_seq,
+            kind: "start",
+            title: "Investigation started",
+            n: 1,
+          });
         else if (s.kind === "delegation")
           raw.push({
             seq: s.start_seq,
@@ -98,7 +103,10 @@ function useRows(caseId: string, run: Run) {
             title: `Delegated to ${s.actor.replace(/[_-]+/g, " ")}`,
             n: 1,
           });
-        else if (s.tool && !["write_todos", "write_file", "edit_file"].includes(s.tool))
+        else if (
+          s.tool &&
+          !["write_todos", "write_file", "edit_file"].includes(s.tool)
+        )
           raw.push({
             seq: s.start_seq,
             kind: "tool",
@@ -107,16 +115,27 @@ function useRows(caseId: string, run: Run) {
           });
       }
       trace.plan.forEach((p, i) => {
-        if (i === 0) raw.push({ seq: p.seq, kind: "plan", title: "Wrote a plan", n: 1 });
+        if (i === 0)
+          raw.push({ seq: p.seq, kind: "plan", title: "Wrote a plan", n: 1 });
         else if (p.added.length || p.removed.length)
           raw.push({ seq: p.seq, kind: "plan", title: "Plan updated", n: 1 });
       });
       for (const f of trace.case_file)
         if (/write|edit/.test(f.op))
-          raw.push({ seq: f.seq, kind: "note", title: "Wrote case note", n: 1 });
+          raw.push({
+            seq: f.seq,
+            kind: "note",
+            title: "Wrote case note",
+            n: 1,
+          });
     } else if (error) {
       for (const t of run.tools)
-        raw.push({ seq: t.seq, kind: "tool", title: TOOL_TITLES[t.tool] ?? nice(t.tool), n: 1 });
+        raw.push({
+          seq: t.seq,
+          kind: "tool",
+          title: TOOL_TITLES[t.tool] ?? nice(t.tool),
+          n: 1,
+        });
     }
     raw.sort((a, b) => a.seq - b.seq);
     const out: Row[] = [];
@@ -158,9 +177,9 @@ function Recap({ stage }: { stage: Stage }) {
     .filter((n) => !Number.isNaN(n));
   const t0 = Math.min(...times),
     span = Math.max(1, Math.max(...times) - t0);
-  const workers =
-    stage.workers?.map((w) => w.id) ??
-    [...new Set(stage.events.map((e) => e.worker))];
+  const workers = stage.workers?.map((w) => w.id) ?? [
+    ...new Set(stage.events.map((e) => e.worker)),
+  ];
   return (
     <div className="inv-recap" data-testid="inv-recap">
       {workers.map((w) => (
@@ -176,19 +195,16 @@ function Recap({ stage }: { stage: Stage }) {
                     key={i}
                     className={"inv-dot k-" + e.kind}
                     title={`${hhmmss(e.t ?? e.line_t)} · ${e.action.replace(/_/g, " ")}`}
-                    style={{ left: `${p * 100}%`, animationDelay: `${p * 2.4}s` }}
+                    style={{
+                      left: `${p * 100}%`,
+                      animationDelay: `${p * 2.4}s`,
+                    }}
                   />
                 );
               })}
           </div>
         </div>
       ))}
-      <p className="inv-legend">
-        <span><i className="inv-dot k-routine" /> Routine</span>
-        <span><i className="inv-dot k-unassigned" /> Unassigned action</span>
-        <span><i className="inv-dot k-local_record_missing" /> Local record missing</span>
-        <span className="inv-recap-label">{stage.label}</span>
-      </p>
     </div>
   );
 }
@@ -268,7 +284,10 @@ function GapVisual({ caseId, f }: { caseId: string; f: Finding }) {
       live = false;
     };
   }, [caseId, f.host, f.object_or_session]);
-  const i = data?.rows.findIndex((r) => r.status === "retained_by_collector" && r.collector) ?? -1;
+  const i =
+    data?.rows.findIndex(
+      (r) => r.status === "retained_by_collector" && r.collector,
+    ) ?? -1;
   if (!data || i < 0) return null;
   const row = data.rows[i];
   const near = [...data.rows.slice(0, i)].reverse().find((r) => r.local);
@@ -285,7 +304,11 @@ function GapVisual({ caseId, f }: { caseId: string; f: Finding }) {
         disabled={!near?.local}
         onClick={() =>
           near?.local &&
-          open({ artifact: near.local.artifact, line: near.local.line, eventId: near.local.event_id })
+          open({
+            artifact: near.local.artifact,
+            line: near.local.line,
+            eventId: near.local.event_id,
+          })
         }
       >
         <span className="inv-gap-head">Local</span>
@@ -311,7 +334,15 @@ function GapVisual({ caseId, f }: { caseId: string; f: Finding }) {
   );
 }
 
-function ProblemCard({ f, caseId, lead }: { f: Finding; caseId: string; lead?: boolean }) {
+function ProblemCard({
+  f,
+  caseId,
+  lead,
+}: {
+  f: Finding;
+  caseId: string;
+  lead?: boolean;
+}) {
   const open = useContext(EvidenceCtx);
   const id = f.evidence_ids?.[0];
   return (
@@ -322,7 +353,11 @@ function ProblemCard({ f, caseId, lead }: { f: Finding; caseId: string; lead?: b
       <div className="inv-problem-head">
         <Icon type={f.claim_type} />
         <div>
-          <h3>{SHORT[f.claim_type] ?? CLAIM_TITLES[f.claim_type] ?? nice(f.claim_type)}</h3>
+          <h3>
+            {SHORT[f.claim_type] ??
+              CLAIM_TITLES[f.claim_type] ??
+              nice(f.claim_type)}
+          </h3>
           <p>{sentence(f)}</p>
         </div>
         {id && (
@@ -349,7 +384,11 @@ function Minor({ title, items }: { title: string; items: Finding[] }) {
         {items.length === 1 ? "" : "s"}
       </summary>
       {items.map((f) => (
-        <div key={f.id} className="inv-minor-row" data-testid={`finding-${f.id}`}>
+        <div
+          key={f.id}
+          className="inv-minor-row"
+          data-testid={`finding-${f.id}`}
+        >
           <b>{CLAIM_TITLES[f.claim_type] ?? nice(f.claim_type)}</b>
           <span>{firstSentence(f.rationale)}</span>
           <Chips ids={f.evidence_ids?.slice(0, 3)} />
@@ -365,44 +404,81 @@ const HUMAN: Record<string, string> = {
   not_assessed: "not assessed",
 };
 
+function StepHead({ n, children }: { n: number; children: ReactNode }) {
+  return (
+    <h2 className="inv-step">
+      <span className="inv-step-n" aria-hidden="true">
+        {n}
+      </span>
+      {children}
+    </h2>
+  );
+}
+
+function Attribution({ view }: { view: CaseView }) {
+  const a = view.report?.attribution;
+  if (!a) return null;
+  return (
+    <p className="inv-attribution" data-testid="attribution-panel">
+      Account: <b>{a.account_used ?? "none identified"}</b> · Person:{" "}
+      <b>
+        {a.human_identity === "supported_named_actor"
+          ? `${a.named_person_accused ?? "named"} — review carefully`
+          : (HUMAN[a.human_identity ?? "not_assessed"] ?? "not assessed")}
+      </b>
+    </p>
+  );
+}
+
 function Findings({ view }: { view: CaseView }) {
   const report = view.report!;
   const all = report.findings ?? [];
   const rejected = (f: Finding) => f.status === "rejected_by_verifier";
   // a problem is an allegation that stands in the report; one the skeptic downgraded is shown apart and not counted
   const downgraded = (f: Finding) =>
-    f.category === "incident_allegation" && f.status === "downgraded_by_skeptic";
+    f.category === "incident_allegation" &&
+    f.status === "downgraded_by_skeptic";
   const problems = all
-    .filter((f) => f.category === "incident_allegation" && !rejected(f) && !downgraded(f))
+    .filter(
+      (f) =>
+        f.category === "incident_allegation" && !rejected(f) && !downgraded(f),
+    )
     .sort(
       (a, b) =>
         Number(b.claim_type === "local_log_removal") -
         Number(a.claim_type === "local_log_removal"),
     );
-  const lead = problems[0]?.claim_type === "local_log_removal" ? problems[0] : null;
+  const lead =
+    problems[0]?.claim_type === "local_log_removal" ? problems[0] : null;
   const rest = lead ? problems.slice(1) : problems;
-  const benign = all.filter((f) => f.category === "benign_explanation" && !rejected(f));
-  const other = all.filter(
-    (f) => !problems.includes(f) && !benign.includes(f) && !rejected(f) && !downgraded(f),
+  const benign = all.filter(
+    (f) => f.category === "benign_explanation" && !rejected(f),
   );
-  const a = report.attribution;
+  const other = all.filter(
+    (f) =>
+      !problems.includes(f) &&
+      !benign.includes(f) &&
+      !rejected(f) &&
+      !downgraded(f),
+  );
   return (
-    <section className="inv-findings" aria-label="Findings" data-testid="inv-findings">
+    <section
+      className="inv-findings"
+      aria-label="Findings"
+      data-testid="inv-findings"
+    >
       <header className="inv-section-head">
-        <h2>Findings</h2>
-        <span className={problems.length ? "inv-count bad" : "inv-count ok"}>
-          {problems.length
-            ? `${problems.length} problem${problems.length === 1 ? "" : "s"} found`
-            : "No problems found"}
-        </span>
+        <StepHead n={2}>What it found</StepHead>
+        {!!problems.length && (
+          <span className="inv-count bad">
+            {problems.length} problem{problems.length === 1 ? "" : "s"}
+          </span>
+        )}
       </header>
       {!problems.length && (
         <div className="inv-clean" data-testid="inv-clean">
           <span aria-hidden="true">✓</span>
-          <div>
-            <h3>No problems found</h3>
-            <p>The investigator alleged no incident in this evidence.</p>
-          </div>
+          <h3>No problems found</h3>
         </div>
       )}
       {lead && <ProblemCard f={lead} caseId={view.case.case_id} lead />}
@@ -416,8 +492,14 @@ function Findings({ view }: { view: CaseView }) {
       <div className="inv-minors">
         <Minor title="benign explanation" items={benign} />
         <Minor title="unresolved item" items={other} />
-        <Minor title="allegation downgraded by the skeptic · not counted" items={all.filter(downgraded)} />
-        <Minor title="allegation rejected by the verifier" items={all.filter(rejected)} />
+        <Minor
+          title="allegation downgraded by the skeptic · not counted"
+          items={all.filter(downgraded)}
+        />
+        <Minor
+          title="allegation rejected by the verifier"
+          items={all.filter(rejected)}
+        />
         {!!report.open_questions?.length && (
           <details className="inv-minor">
             <summary>{report.open_questions.length} open questions</summary>
@@ -427,16 +509,6 @@ function Findings({ view }: { view: CaseView }) {
               ))}
             </ul>
           </details>
-        )}
-        {a && (
-          <span className="inv-attribution" data-testid="attribution-panel">
-            Account: <b>{a.account_used ?? "none identified"}</b> · Person:{" "}
-            <b>
-              {a.human_identity === "supported_named_actor"
-                ? `${a.named_person_accused ?? "named"} — review carefully`
-                : (HUMAN[a.human_identity ?? "not_assessed"] ?? "not assessed")}
-            </b>
-          </span>
         )}
       </div>
     </section>
@@ -454,13 +526,28 @@ function Reveal({ view, run }: { view: CaseView; run: Run }) {
   const caught = obs.filter((e) => e.outcome === "caught").length;
   const benign = t.case_kind === "benign" || s.case_kind === "benign";
   const falseAlarm = benign && s.benign_false_alert === true;
-  const pct = benign ? (falseAlarm ? 0 : 1) : obs.length ? caught / obs.length : 0;
-  const who = [...new Set((t.steps ?? []).map((x) => x.operator_true).filter(Boolean))];
-  const when = (t.steps ?? []).map((x) => x.t_start).filter(Boolean).sort()[0];
+  const pct = benign
+    ? falseAlarm
+      ? 0
+      : 1
+    : obs.length
+      ? caught / obs.length
+      : 0;
+  const who = [
+    ...new Set((t.steps ?? []).map((x) => x.operator_true).filter(Boolean)),
+  ];
+  const when = (t.steps ?? [])
+    .map((x) => x.t_start)
+    .filter(Boolean)
+    .sort()[0];
   const u = s.usage ?? run.usage ?? {};
   const ring = 2 * Math.PI * 52;
   return (
-    <section className="inv-reveal" data-testid="score-panel" aria-label="Results">
+    <section
+      className="inv-reveal"
+      data-testid="score-panel"
+      aria-label="Results"
+    >
       <div className="inv-ring">
         <svg viewBox="0 0 120 120" aria-hidden="true">
           <circle cx="60" cy="60" r="52" className="bg" />
@@ -473,7 +560,9 @@ function Reveal({ view, run }: { view: CaseView; run: Run }) {
           />
         </svg>
         <div>
-          <b>{benign ? (falseAlarm ? "✕" : "✓") : `${caught} / ${obs.length}`}</b>
+          <b>
+            {benign ? (falseAlarm ? "✕" : "✓") : `${caught} / ${obs.length}`}
+          </b>
           <span>{benign ? "clean run" : "caught"}</span>
         </div>
       </div>
@@ -499,9 +588,17 @@ function Reveal({ view, run }: { view: CaseView; run: Run }) {
             {eff.map((e) => (
               <li key={e.effect_id} className={"o-" + e.outcome}>
                 <span aria-hidden="true">
-                  {e.outcome === "caught" ? "✓" : e.outcome === "missed" ? "✕" : "◌"}
+                  {e.outcome === "caught"
+                    ? "✓"
+                    : e.outcome === "missed"
+                      ? "✕"
+                      : "◌"}
                 </span>
-                <b>{SHORT[e.effect_type] ?? CLAIM_TITLES[e.effect_type] ?? nice(e.effect_type)}</b>
+                <b>
+                  {SHORT[e.effect_type] ??
+                    CLAIM_TITLES[e.effect_type] ??
+                    nice(e.effect_type)}
+                </b>
                 <span className="mono">{base(e.object)}</span>
                 <em>{e.outcome}</em>
               </li>
@@ -512,7 +609,9 @@ function Reveal({ view, run }: { view: CaseView; run: Run }) {
           <p className="inv-who">
             Changed: <b>{who.join(", ").replace(/worker:/g, "Worker ")}</b>
             {when && <> · first action {hhmmss(when)} UTC</>}
-            {t.attribution?.account_used && <> · account {t.attribution.account_used}</>}
+            {t.attribution?.account_used && (
+              <> · account {t.attribution.account_used}</>
+            )}
           </p>
         )}
         <div className="inv-reveal-actions">
@@ -523,7 +622,9 @@ function Reveal({ view, run }: { view: CaseView; run: Run }) {
                 labApi
                   .operator(view.case.case_id)
                   .then(setOp)
-                  .catch((e: unknown) => setOpErr(e instanceof Error ? e.message : String(e)))
+                  .catch((e: unknown) =>
+                    setOpErr(e instanceof Error ? e.message : String(e)),
+                  )
               }
             >
               Operator history
@@ -534,9 +635,10 @@ function Reveal({ view, run }: { view: CaseView; run: Run }) {
         <details className="inv-minor scoring-details">
           <summary>Detailed scoring</summary>
           <p className="small">
-            Step recall <b data-testid="score-recall">{ratio(s.step_recall)}</b> · final
-            precision <b>{ratio(s.final_precision)}</b> · reference validity{" "}
-            <b>{ratio(s.evidence_reference_validity)}</b> · cover-up detected{" "}
+            Step recall <b data-testid="score-recall">{ratio(s.step_recall)}</b>{" "}
+            · final precision <b>{ratio(s.final_precision)}</b> · reference
+            validity <b>{ratio(s.evidence_reference_validity)}</b> · cover-up
+            detected{" "}
             <b>
               {s.coverup_detected == null
                 ? `N/A${s.coverup_detected_na_reason ? ` (${s.coverup_detected_na_reason})` : ""}`
@@ -551,8 +653,8 @@ function Reveal({ view, run }: { view: CaseView; run: Run }) {
             <ol className="small">
               {(t.steps ?? []).map((st) => (
                 <li key={st.step_id}>
-                  <b>{st.execution_status.toUpperCase()}</b> {st.step_name} · {st.host} as{" "}
-                  {st.account_used ?? "n/a"} {hhmmss(st.t_start)}
+                  <b>{st.execution_status.toUpperCase()}</b> {st.step_name} ·{" "}
+                  {st.host} as {st.account_used ?? "n/a"} {hhmmss(st.t_start)}
                   {st.outcome && <> — {st.outcome}</>}
                 </li>
               ))}
@@ -566,14 +668,15 @@ function Reveal({ view, run }: { view: CaseView; run: Run }) {
           <ul className="small">
             {(s.finding_outcomes ?? []).map((f) => (
               <li key={f.finding_id}>
-                <span className="mono">{f.finding_id}</span> {f.outcome.replace(/_/g, " ")} ·{" "}
-                {f.reason}
+                <span className="mono">{f.finding_id}</span>{" "}
+                {f.outcome.replace(/_/g, " ")} · {f.reason}
               </li>
             ))}
           </ul>
           <p className="small muted">
             Usage: {u.llm_calls ?? 0} llm_calls · {u.tokens_in ?? 0} tokens_in ·{" "}
-            {u.tokens_out ?? 0} tokens_out · wall_seconds {u.wall_seconds ?? "n/a"}
+            {u.tokens_out ?? 0} tokens_out · wall_seconds{" "}
+            {u.wall_seconds ?? "n/a"}
           </p>
         </details>
       </div>
@@ -622,6 +725,7 @@ export function InvestigationWorkspace(p: {
   onSources: () => void;
   onPanel: (d: "plan" | "trace" | "notes") => void;
   onLab: () => void;
+  onReset: () => void;
 }) {
   const { view, run } = p;
   const c = view.case;
@@ -675,14 +779,19 @@ export function InvestigationWorkspace(p: {
     const t = window.setTimeout(() => setCursor((n) => n + 1), pace);
     return () => window.clearTimeout(t);
   }, [paced, inRecap, cursor, rows.length]);
-  const done = reported && (!paced || (ready && !inRecap && cursor >= rows.length));
+  const done =
+    reported && (!paced || (ready && !inRecap && cursor >= rows.length));
   useEffect(() => {
     if (!done) return;
     markPlayed(id);
     if (paced) {
       setPaced(false);
       window.setTimeout(
-        () => findingsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+        () =>
+          findingsRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          }),
         60,
       );
     }
@@ -719,23 +828,26 @@ export function InvestigationWorkspace(p: {
         const more = document.querySelector<HTMLDetailsElement>(".inv-more");
         if (more) more.open = true;
         document.querySelector<HTMLInputElement>("#case-question")?.focus();
+        document
+          .getElementById("inv-questions")
+          ?.scrollIntoView({ block: "start" });
       }}
     />
   );
+  const locked = state === "report_locked" || state === "scored";
   return (
     <div className="inv" data-phase={phase}>
-      <section className="inv-card inv-activity" data-testid="inv-activity" aria-label="Activity">
+      <section
+        className="inv-card inv-activity"
+        data-testid="inv-activity"
+        aria-label="What the investigator did"
+      >
         <header className="inv-section-head">
-          <h2>Activity</h2>
-          <ol className="inv-stepper" aria-label="Activity phases">
-            {stage && <li className={phase === 1 ? "on" : "past"}>Sandbox recap</li>}
-            <li className={phase === 2 ? "on" : phase > 2 ? "past" : ""}>Investigator at work</li>
-            <li className={phase === 3 ? "on" : ""}>Findings</li>
-          </ol>
-          <span className="statepill" data-testid="case-state">
+          <StepHead n={1}>What the investigator did</StepHead>
+          <span className="sr-only" data-testid="case-state">
             {humanState(state)}
           </span>
-          {!done && !stopped && (
+          {!done && !stopped && paced && (
             <button
               className="inv-skip"
               data-testid="btn-skip"
@@ -744,9 +856,8 @@ export function InvestigationWorkspace(p: {
                 setRecap(false);
                 markPlayed(id);
               }}
-              disabled={!paced}
             >
-              Skip to findings
+              Skip
             </button>
           )}
           <button
@@ -768,12 +879,16 @@ export function InvestigationWorkspace(p: {
           >
             <span className="ok">✓</span>
             <span>
-              Investigation complete · {steps} recorded step{steps === 1 ? "" : "s"}
-              {delegations ? ` · ${delegations} delegation${delegations === 1 ? "" : "s"}` : ""}
+              {steps} step{steps === 1 ? "" : "s"}
+              {delegations
+                ? ` · ${delegations} delegation${delegations === 1 ? "" : "s"}`
+                : ""}
               {revisions ? ` · plan updated ${revisions}×` : ""}
               {notes ? ` · ${notes} case note${notes === 1 ? "" : "s"}` : ""}
             </span>
-            <span className="inv-summary-toggle">{expanded ? "Hide timeline" : "Show timeline"}</span>
+            <span className="inv-summary-toggle">
+              {expanded ? "Hide steps ▴" : "Show steps ▾"}
+            </span>
           </button>
         )}
         {stage && (inRecap || (done && expanded)) && <Recap stage={stage} />}
@@ -791,13 +906,15 @@ export function InvestigationWorkspace(p: {
             {waiting && (
               <li className="inv-waiting" role="status">
                 <span className="inv-spinner" aria-hidden="true" />
-                Investigator still working…
+                Working…
               </li>
             )}
             {stopped && (
               <li className="inv-stopped" role="status">
                 Investigation ended before review
-                {(c.error || run.error) && <span> · {c.error || run.error}</span>}
+                {(c.error || run.error) && (
+                  <span> · {c.error || run.error}</span>
+                )}
               </li>
             )}
           </ol>
@@ -805,93 +922,171 @@ export function InvestigationWorkspace(p: {
       </section>
 
       {done && (
-        <div className="inv-actionbar" role="group" aria-label="Report review">
-          {state === "awaiting_review" && (
-            <>
-              <button
-                className="primary inv-primary"
-                data-testid="btn-accept"
-                disabled={p.busy !== null}
-                onClick={() => p.onReview("accept")}
-              >
-                Lock report
-              </button>
-              <button
-                className="linkish"
-                data-testid="btn-reject"
-                disabled={p.busy !== null}
-                onClick={() => p.onReview("reject")}
-              >
-                Reject
-              </button>
-            </>
-          )}
-          {state === "report_locked" && c.scored !== false && (
-            <button
-              className="primary inv-primary"
-              data-testid="btn-unseal"
-              disabled={p.busy !== null}
-              onClick={p.onReveal}
-            >
-              Reveal results
-            </button>
-          )}
-          {(state === "report_locked" || state === "scored") && (
-            <span className="inv-locked">
-              Report locked · {c.review_decision ?? "recorded"}
-              {state === "report_locked" && c.scored === false && " · imported evidence has no sealed answer"}
-            </span>
-          )}
-          {p.reviewMsg && <span role="alert" className="bad">{p.reviewMsg}</span>}
-        </div>
-      )}
-
-      {done && (
         <div ref={findingsRef} className="inv-anchor">
           {c.parent_case_id && <ExperimentComparison view={view} />}
           <Findings view={view} />
         </div>
       )}
+
+      {done && (
+        <section className="inv-callstep" aria-label="Your call">
+          <StepHead n={3}>Your call</StepHead>
+          <div
+            className="inv-actionbar"
+            role="group"
+            aria-label="Report review"
+          >
+            {state === "awaiting_review" && (
+              <>
+                <button
+                  className="primary inv-primary"
+                  data-testid="btn-accept"
+                  disabled={p.busy !== null}
+                  onClick={() => p.onReview("accept")}
+                >
+                  Lock report
+                </button>
+                <button
+                  className="linkish"
+                  data-testid="btn-reject"
+                  disabled={p.busy !== null}
+                  onClick={() => p.onReview("reject")}
+                >
+                  Reject
+                </button>
+              </>
+            )}
+            {state === "report_locked" && c.scored !== false && (
+              <button
+                className="primary inv-primary"
+                data-testid="btn-unseal"
+                disabled={p.busy !== null}
+                onClick={p.onReveal}
+              >
+                Reveal results
+              </button>
+            )}
+            {locked && (
+              <span className="inv-locked">
+                Report locked · {c.review_decision ?? "recorded"}
+                {state === "report_locked" &&
+                  c.scored === false &&
+                  " · no sealed answer for imported evidence"}
+              </span>
+            )}
+            {p.reviewMsg && (
+              <span role="alert" className="bad">
+                {p.reviewMsg}
+              </span>
+            )}
+          </div>
+        </section>
+      )}
+
       {done && state === "scored" && view.reveal && (
-        <div ref={reveal} className="inv-anchor">
+        <div ref={reveal} className="inv-anchor inv-resultstep">
+          <StepHead n={4}>Result</StepHead>
           <Reveal view={view} run={run} />
         </div>
       )}
-      {done && (
+      {(done || stopped) && (
         <details className="inv-more" data-testid="inv-more">
-          <summary>More tools</summary>
-          {tools}
-          {(state === "report_locked" || state === "scored") && (
-            <a
-              className="export-link"
-              data-testid="report-export"
-              href={api.reportExportUrl(id)}
-              download
-            >
-              Download the locked report
-            </a>
-          )}
-          {c.lab && (
-            <div className="inv-lab-context" data-testid="worker-provenance">
-              <span>
-                {c.labels.investigation_mode_label} · {c.labels.worker_choices}
-              </span>
-              <span>{c.labels.changed_objective_policy}</span>
-              <button className="linkish" onClick={p.onLab}>
-                Inspect workers & activity ↗
+          <summary>Go deeper</summary>
+          <div className="inv-deeper">
+            {done && (
+              <>
+                <div className="inv-deeper-group">
+                  <h3>How it worked</h3>
+                  <div className="inv-deeper-row">
+                    <button onClick={() => p.onPanel("plan")}>
+                      Plan
+                      {run.todo.length > 0 &&
+                        ` ${run.todo.filter((t) => t.status === "completed").length}/${run.todo.length}`}
+                    </button>
+                    <button onClick={() => p.onPanel("trace")}>
+                      Delegations & trace
+                    </button>
+                    <button onClick={() => p.onPanel("notes")}>
+                      Case notes
+                    </button>
+                    <button
+                      data-testid="btn-sources-deeper"
+                      onClick={p.onSources}
+                    >
+                      Sources
+                    </button>
+                  </div>
+                  <Attribution view={view} />
+                  {c.lab && (
+                    <div
+                      className="inv-lab-context"
+                      data-testid="worker-provenance"
+                    >
+                      <span>
+                        {c.labels.investigation_mode_label} ·{" "}
+                        {c.labels.worker_choices}
+                      </span>
+                      <span>{c.labels.changed_objective_policy}</span>
+                      <button className="linkish" onClick={p.onLab}>
+                        Inspect workers ↗
+                      </button>
+                    </div>
+                  )}
+                  {view.report?.summary && (
+                    <p className="small">{view.report.summary}</p>
+                  )}
+                </div>
+                <div className="inv-deeper-group" id="inv-questions">
+                  <h3>Questions</h3>
+                  <Ask caseId={id} />
+                  <QuestionPanel
+                    caseId={id}
+                    available={!!view.report}
+                    runtime={p.runtime}
+                  />
+                </div>
+                <div className="inv-deeper-group">
+                  <h3>Evidence comparison & timeline</h3>
+                  {c.card_id === "cold-chain" && (
+                    <TemperatureRecords
+                      caseId={id}
+                      stateKey={view.manifest?.bundle_id ?? ""}
+                    />
+                  )}
+                  <EvidenceColumn
+                    caseId={id}
+                    view={view}
+                    run={run}
+                    selectedHost={p.selectedHost}
+                  />
+                </div>
+              </>
+            )}
+            <div className="inv-deeper-row inv-deeper-foot">
+              {locked && (
+                <a
+                  className="export-link"
+                  data-testid="report-export"
+                  href={api.reportExportUrl(id)}
+                  download
+                >
+                  Download the locked report
+                </a>
+              )}
+              <button
+                data-testid="btn-reset"
+                disabled={p.busy !== null}
+                onClick={p.onReset}
+              >
+                {p.busy === "reset" ? "Resetting…" : "Reset"}
               </button>
             </div>
-          )}
-          {view.report?.summary && <p className="small">{view.report.summary}</p>}
-          <Ask caseId={id} />
-          <QuestionPanel caseId={id} available={!!view.report} runtime={p.runtime} />
-          {c.card_id === "cold-chain" && (
-            <TemperatureRecords caseId={id} stateKey={view.manifest?.bundle_id ?? ""} />
-          )}
-          <EvidenceColumn caseId={id} view={view} run={run} selectedHost={p.selectedHost} />
+          </div>
         </details>
       )}
-      {p.raw && !p.narrow && <EvidenceInspector raw={p.raw} onClose={p.onCloseRaw} />}
+      {p.raw && !p.narrow && (
+        <EvidenceInspector raw={p.raw} onClose={p.onCloseRaw} />
+      )}
     </div>
   );
 }

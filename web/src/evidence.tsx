@@ -366,7 +366,6 @@ function CompareTable({
 export function RawViewer({ raw }: { raw: RawState | null }) {
   return (
     <div className="panel" data-testid="raw-viewer">
-      <p className="eyebrow">Exact source record & provenance</p>
       {!raw && (
         <p className="muted">
           Click any evidence chip or log line to see it here in its source file.
