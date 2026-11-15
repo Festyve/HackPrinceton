@@ -1,0 +1,25 @@
+[Unit]
+Description=ALIBI case board (offline recorded demo)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=alibi
+Group=alibi
+WorkingDirectory=/opt/alibi
+# Offline: zero model calls and zero spend, whatever a .env might say (Environment= wins over nothing; there is no .env).
+Environment=RUNTIME_MODE=offline
+Environment=LLM_MAX_USD=0
+Environment=BENCH_MAX_SYSTEM_RUNS=0
+ExecStart=/home/alibi/.local/bin/uv run --frozen --no-dev alibi serve --host 127.0.0.1 --port 8000
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/opt/alibi /home/alibi/.cache
+
+[Install]
+WantedBy=multi-user.target

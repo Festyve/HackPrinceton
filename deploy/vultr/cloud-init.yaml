@@ -1,0 +1,9 @@
+#cloud-config
+# Paste as "User Data" (Cloud-Init) when deploying a Vultr Ubuntu 24.04 instance.
+# DEPLOY_SRC_REF is the branch that contains deploy/vultr (this integration branch until it is merged);
+# ALIBI_REF is the app that gets served (the team's demo branch). Leave ALIBI_DOMAIN empty to serve plain HTTP
+# on the server IP until DNS points here. A private repository needs credentials: see deploy/vultr/README.md.
+runcmd:
+  - [bash, -c, "apt-get update -y && apt-get install -y git"]
+  - [bash, -c, "git clone --depth=50 --branch claude/compassionate-planck-v5iysn https://github.com/owly1/HackPrinceton.git /root/alibi-deploy-src"]
+  - [bash, -c, "ALIBI_REF=codex/alibi-build ALIBI_DOMAIN=whats-the-alibi.us bash /root/alibi-deploy-src/deploy/vultr/bootstrap.sh > /var/log/alibi-bootstrap.log 2>&1"]
