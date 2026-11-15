@@ -42,6 +42,8 @@ Open one from the case library, accept the report, then open the workers' record
 
 Known rough spots in these recordings, found by a browser smoke test and not fixed: in run A the expanded answer is cut off at 1440×900 (collapse it or use a taller window), and the answer's first claim is tagged "Unsupported" because the model filed a statement about a scheduler assignment as a claim about a login session. The three recordings were made before the worker link existed, so their reports name the account but tie it to no worker; a fresh run does.
 
+On the redesigned interface (checked offline in a browser at 1440×900, November 14 evening): every flow above completed. Presenter notes: to open a lab recording go to Cases, scroll to Recorded replays, select the row, then scroll back up to "Open selected case"; the Activity list shows only its first rows while events arrive, so point at the Pip feed (bottom right) or press "Show all" afterwards; the Pip widget overlaps the top of Accept on arrival at review, so scroll a little first; a viewer sees the investigator's plan, delegations and tool activity as they happen, while the workers' actions are shown afterwards as a table and, once the report is locked, as a step-through operator record; reopening a run that was already unsealed shows the answer dialog immediately, so use a fresh run or a recording on stage.
+
 ## If someone asks to see more
 
 - **Ask a question.** "What links the missing line to the transfer?" The answer comes back as single claims, each marked as checked by a deterministic check, cited, or the model's interpretation. Then ask "Who did it?": the answer names an account and says the person is not established.
