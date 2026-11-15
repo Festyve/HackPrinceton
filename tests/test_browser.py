@@ -101,9 +101,17 @@ def close_sources(pg):
         pg.keyboard.press("Escape")
 
 
+def open_more(pg) -> None:
+    """Presets, the mode picker and the designer sit under the Cases workspace's collapsed More."""
+    pg.wait_for_selector(tid("cases-more"))
+    if not pg.locator(f'{tid("cases-more")}[open]').count():
+        pg.click(f'{tid("cases-more")} > summary')
+
+
 def run_case(pg, base: str, preset: str = "hero-coverup") -> None:
     pg.goto(base + "/")
     pg.click(tid("nav-cases"))
+    open_more(pg)
     pg.click(tid(f"preset-{preset}"))
     pg.click(tid("btn-run"))
     wait_state(pg, "awaiting_review")

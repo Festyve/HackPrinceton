@@ -75,8 +75,7 @@ def test_lab_budget_and_permission_comparisons_preserve_actual_lineage(server, p
     first = page.request.get(f"{base}/api/cases/{original}").json()
     page.click(tid("tab-benchmark"))
     panel = page.locator(tid("lab-experiments"))
-    expect(panel).to_contain_text("same evidence")
-    panel.locator(".comparison-options > summary").click()
+    expect(panel.locator(".comparison-variable")).to_contain_text("Same evidence")
     panel.get_by_label("Investigator request allowance", exact=True).fill("4")
     page.click(tid("btn-lab-compare"))
     page.wait_for_function("old => !location.hash.endsWith(old)", arg=original)
@@ -88,11 +87,13 @@ def test_lab_budget_and_permission_comparisons_preserve_actual_lineage(server, p
     assert second["case"]["lab"]["lineage"]["same_evidence_as_parent"] is True
     page.click(tid("tab-benchmark"))
     panel.get_by_label("Starting worker run", exact=True).select_option(original)
-    expect(panel.locator(tid("lab-comparison-table"))).to_contain_text("Same frozen evidence as parent")
-    panel.locator(".comparison-options > summary").click()
+    budget_row = panel.locator(f'{tid("lab-comparison-table")} tr[data-run="{child}"]')
+    expect(budget_row).to_contain_text("Requests 10 → 4")
+    expect(budget_row.locator(".xp-same")).to_have_text("Same")
+    expect(panel.locator(tid("lab-comparison-table"))).to_contain_text("Hidden until every report is locked")
     panel.get_by_label("Variable to change", exact=True).select_option("rogue_permissions")
     panel.get_by_label("New permission profile", exact=True).select_option("export_only")
-    expect(panel.locator(".comparison-variable")).to_contain_text("new execution")
+    expect(panel.locator(".comparison-variable")).to_contain_text("New execution")
     # Backend rule (Eric, Nov 14): whether a new execution's evidence differs says whether anything was changed,
     # so it is refused until every report of this experiment is locked. The panel shows the server's reason.
     page.click(tid("btn-lab-compare"))
