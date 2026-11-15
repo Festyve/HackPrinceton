@@ -995,3 +995,37 @@ def test_an_exported_lab_report_says_who_chose_the_work_and_that_the_change_is_s
     text = export.render_markdown(doc)
     assert "| Changed objective |" in text and "| Workers |" in text
     assert "lab_incident" not in json.dumps(doc) and "W1" not in json.dumps(doc["provenance"])  # nothing sealed comes with it
+
+
+def test_the_stage_is_rebuilt_from_evidence_and_a_control_shows_nothing_out_of_place(env):
+    _, orch, c, _ = env
+    inc = _create(c, variant="incident", preset="balanced")["case"]["case_id"]
+    stage = c.get(f"/api/cases/{inc}/lab/stage").json()  # before any review: nothing sealed is needed for it
+    assert "Reconstruction from frozen evidence" in stage["label"]
+    kinds = [e["kind"] for e in stage["events"]]
+    assert stage["summary"]["unassigned"] == 2 and stage["summary"]["local_records_missing"] == 2
+    assert stage["summary"]["workers_with_unassigned_activity"] == ["W1"] and kinds.index("unassigned") > kinds.index("routine")
+    assert all(e["evidence_id"] and e["kept_by_collector"] for e in stage["events"])
+    assert "transition" not in json.dumps(stage) and "variant" not in json.dumps(stage)
+    ctl = _create(c, variant="control", preset="balanced", client_token="stage-ctl")["case"]["case_id"]
+    quiet = c.get(f"/api/cases/{ctl}/lab/stage").json()
+    assert quiet["summary"]["unassigned"] == 0 and quiet["summary"]["local_records_missing"] == 0
+    assert {e["kind"] for e in quiet["events"]} == {"routine"}
+
+
+def test_a_cases_files_are_listed_read_only_and_the_report_only_after_the_lock(env):
+    _, orch, c, _ = env
+    cid = _create(c, variant="incident", preset="balanced")["case"]["case_id"]
+    _wait(c, cid)
+    files = {f["path"]: f for f in c.get(f"/api/cases/{cid}/files").json()["files"]}
+    assert files["findings.json"]["available"] and files["evidence/manifest.json"]["available"] and not files["report.md"]["available"]
+    assert c.get(f"/api/cases/{cid}/files/content", params={"path": "report.md"}).status_code == 409
+    assert c.get(f"/api/cases/{cid}/files/content", params={"path": "../../sealed/x"}).status_code == 404
+    assert c.get(f"/api/cases/{cid}/files/content", params={"path": "notes/../report.json"}).status_code == 404
+    assert "findings" in json.loads(c.get(f"/api/cases/{cid}/files/content", params={"path": "findings.json"}).json()["content"])
+    c.post(f"/api/cases/{cid}/review", json={"decision": "accept", "note": ""})
+    body = c.get(f"/api/cases/{cid}/files/content", params={"path": "report.md"}).json()
+    assert body["kind"] == "markdown" and body["content"].startswith("# Investigation report")
+    everything = json.dumps([c.get(f"/api/cases/{cid}/files/content", params={"path": p}).json() for p, f in
+                             {f["path"]: f for f in c.get(f"/api/cases/{cid}/files").json()["files"]}.items() if f["available"]])
+    assert "operator_true" not in everything and "lab_incident" not in everything

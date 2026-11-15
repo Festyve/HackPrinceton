@@ -43,3 +43,7 @@ benchmarks/**/transcripts/
 
 # held by the process that owns the runs directory
 *.owner.lock
+
+# demo-flow reference screenshots stay local (annotated captures of a teammate browser)
+docs/demo-flow/reference/
+.DS_Store

@@ -419,6 +419,21 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
         """The experiment's settings, its workers and the activity the collector recorded. Evidence only."""
         return orch.lab_view(case_id)
 
+    @app.get("/api/cases/{case_id}/lab/stage")
+    def lab_stage(case_id: str) -> dict:
+        """What the frozen evidence shows the workers doing, for a short playback. Evidence only, never the sealed record."""
+        return orch.lab_stage(case_id)
+
+    @app.get("/api/cases/{case_id}/files")
+    def case_files(case_id: str) -> dict:
+        """A read-only listing of the case's readable files: report, findings, plan, agent notes, trace, manifest."""
+        return orch.case_files(case_id)
+
+    @app.get("/api/cases/{case_id}/files/content")
+    def case_file(case_id: str, path: str) -> dict:
+        """One listed file's content. 409 with the reason when it is not available yet."""
+        return orch.case_file(case_id, path)
+
     @app.get("/api/cases/{case_id}/lab/operator")
     def lab_operator(case_id: str) -> dict:
         """The operator's record of every attempted action and the change of objective. 409 until the report is locked."""

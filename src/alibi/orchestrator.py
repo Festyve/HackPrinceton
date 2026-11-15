@@ -795,6 +795,113 @@ class Orchestrator:
                                     "note": "what each worker's objective was and every attempted action is sealed "
                                             "until the report is locked"}}
 
+    # ------------------------------------------------------------------ the sandbox stage and the case's files
+    _STATIONS = [{"id": "raw", "label": "Raw datasets", "path": "/srv/lab/raw/"},
+                 {"id": "reports", "label": "Reports", "path": "/srv/lab/reports/"},
+                 {"id": "archive", "label": "Approved archive", "path": "approved archive store"},
+                 {"id": "tmp", "label": "Temporary exports", "path": "/srv/lab/tmp/"},
+                 {"id": "log", "label": "Local activity log", "path": lab_engine.APP_LOG},
+                 {"id": "collector", "label": "Collector", "path": "independent copy, outside the workers' reach"}]
+    _STATION_OF = {"ingest": "raw", "summarize": "reports", "archive": "archive", "export_bulk": "tmp"}
+
+    def lab_stage(self, case_id: str) -> dict[str, Any]:
+        """What the frozen evidence shows the workers doing, ordered for a short playback.
+
+        A reconstruction from evidence only: the collector's copy of the activity log, the scheduler's job
+        assignments and the comparison of the local log with the collector's copy. It never reads the sealed
+        scenario or the operator's record, so it shows nothing the evidence does not."""
+        from alibi.lab import assignments
+
+        rec, paths = self._lab_record(case_id), self._paths(case_id)
+        view = self.lab_view(case_id)
+        with EvidenceStore(paths.db) as store:
+            manifest = load_manifest(paths)
+            jobs = assignments.job_assignments(store, manifest)
+            recon = checks.reconcile_logs(store, manifest)
+        unassigned = {i: u["reason"] for u in jobs.get("unassigned_activity", []) for i in u["event_ids"]}
+        missing = {m["collector_event_id"]: m for f in recon["files"] if f["file"] == lab_engine.APP_LOG
+                   for m in f.get("unexplained_local_absence", [])}
+        accounts = {w["account"]: w["id"] for w in rec.lab["config"]["workers"]}
+        events: list[dict[str, Any]] = []
+        for a in view["activity"]:
+            off = a["event_id"] in unassigned
+            events.append({"t": a["t"], "worker": a["worker"], "account": a["account"], "action": a["action"],
+                           "dataset": a["dataset"], "station": self._STATION_OF.get(a["action"], "tmp"),
+                           "kind": "unassigned" if off else "routine", "reason": unassigned.get(a["event_id"]),
+                           "evidence_id": a["event_id"], "kept_by_collector": True,
+                           "missing_from_local_log": a["event_id"] in missing})
+        events.sort(key=lambda e: e["t"])
+        for m in missing.values():  # when a local line went missing is not recorded: these come after the activity
+            events.append({"t": None, "line_t": iso(m["line_ts"]) if not isinstance(m["line_ts"], str) else m["line_ts"],
+                           "worker": accounts.get(m.get("actor")), "account": m.get("actor"), "action": "local_record_missing",
+                           "dataset": None, "station": "log", "kind": "local_record_missing",
+                           "reason": "this line is in the collector's copy and absent from the local log",
+                           "evidence_id": m["collector_event_id"], "kept_by_collector": True, "missing_from_local_log": True})
+        flagged = sorted({e["worker"] for e in events if e["kind"] != "routine" and e["worker"]})
+        return {"case_id": case_id, "state": rec.state,
+                "label": "Reconstruction from frozen evidence · not the sealed operator record",
+                "source": "collector copy of the activity log, scheduler assignments, local-vs-collector comparison",
+                "workers": [{"id": w["id"], "account": w["account"], "job": w["job"]} for w in rec.lab["config"]["workers"]],
+                "stations": self._STATIONS, "events": events,
+                "summary": {"routine": sum(e["kind"] == "routine" for e in events),
+                            "unassigned": sum(e["kind"] == "unassigned" for e in events),
+                            "local_records_missing": len(missing), "collector_records": view["activity_total"],
+                            "workers_with_unassigned_activity": flagged}}
+
+    def case_files(self, case_id: str) -> dict[str, Any]:
+        """A read-only listing of this case's own readable files. Nothing sealed is listed or readable here."""
+        rec, paths = self._load(case_id), self._paths(case_id)
+        view = self.view(case_id)
+        locked = rec.state in ("report_locked", "scored") and (paths.case / "report.json").exists()
+        has_report = bool(view.get("report"))
+        notes = sorted(f.name for f in (paths.case / "notes").glob("*") if f.is_file()) if (paths.case / "notes").is_dir() else []
+        tr = trace.investigation_trace(self._log(case_id).since(0)) if has_report or rec.state == "investigating" else None
+        files = [
+            {"path": "report.md", "kind": "markdown", "title": "Locked report", "available": locked,
+             "reason": None if locked else "available once the report is reviewed and locked"},
+            {"path": "findings.json", "kind": "json", "title": "Findings", "available": has_report,
+             "reason": None if has_report else "no investigation has produced findings yet"},
+            {"path": "plan.md", "kind": "markdown", "title": "Investigator plan", "available": bool(tr and tr["plan"]),
+             "reason": None if tr and tr["plan"] else "this run recorded no plan"},
+            *[{"path": f"notes/{n}", "kind": "markdown" if n.endswith(".md") else "text", "title": n, "available": True,
+               "reason": None} for n in notes],
+            *([] if notes else [{"path": "notes/", "kind": "markdown", "title": "Agent notes", "available": False,
+                                 "reason": "this run wrote no case notes"}]),
+            {"path": "trace.json", "kind": "json", "title": "Investigation trace", "available": tr is not None,
+             "reason": None if tr is not None else "no investigation has run"},
+            {"path": "evidence/manifest.json", "kind": "json", "title": "Evidence manifest", "available": True, "reason": None},
+        ]
+        return {"case_id": case_id, "title": rec.title, "state": rec.state, "files": files,
+                "note": "Read-only. The answer key, the operator's record and other cases' files are not part of this listing."}
+
+    def case_file(self, case_id: str, path: str) -> dict[str, Any]:
+        listing = {f["path"]: f for f in self.case_files(case_id)["files"]}
+        entry = listing.get(path)
+        if entry is None:
+            raise NotFound(f"no such file in this case: {path}")
+        if not entry["available"]:
+            raise Conflict(entry["reason"] or "unavailable", self._load(case_id).state)
+        paths = self._paths(case_id)
+        if path == "report.md":
+            content = export.render_markdown(self.report_export(case_id))
+        elif path == "findings.json":
+            rep = self.view(case_id)["report"]
+            content = json.dumps({k: rep.get(k) for k in ("findings", "attribution", "open_questions", "summary")}, indent=2)
+        elif path == "plan.md":
+            tr = trace.investigation_trace(self._log(case_id).since(0))
+            mark = {"completed": "x", "in_progress": "~"}
+            content = "\n\n".join(
+                f"## Plan version {n} (event {v['seq']})\n\n" + "\n".join(
+                    f"- [{mark.get(str(i.get('status')), ' ')}] {i.get('text') or i.get('content') or ''}" if isinstance(i, dict) else f"- {i}"
+                    for i in v["items"]) for n, v in enumerate(tr["plan"], start=1))
+        elif path == "trace.json":
+            content = json.dumps(trace.investigation_trace(self._log(case_id).since(0)), indent=2)
+        elif path == "evidence/manifest.json":
+            content = json.dumps(self.view(case_id)["manifest"], indent=2, default=str)
+        else:  # notes/<name>: only names the listing produced, so no path can leave the notes directory
+            content = (paths.case / "notes" / path.split("/", 1)[1]).read_text(encoding="utf-8")
+        return {"case_id": case_id, **entry, "content": content[:400_000]}
+
     def _operator_open(self, rec: CaseRecord) -> bool:
         if os.environ.get("ALIBI_OPERATOR_VIEW") == "1":
             return True
