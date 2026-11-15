@@ -154,6 +154,9 @@ export default function App() {
 
   const clearCase = useCallback(() => {
     closeStream();
+    const gone = caseIdRef.current;
+    // the case is gone on the server: drop it from the list now, so no screen asks for its files
+    if (gone) setSavedCases((cs) => cs.filter((x) => x.case_id !== gone));
     caseIdRef.current = null;
     lastSeqRef.current = 0;
     rawRequest.current += 1;

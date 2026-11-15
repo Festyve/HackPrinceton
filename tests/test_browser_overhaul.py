@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 from playwright.sync_api import expect
 
-from .test_browser import browser, page, server, run_case, tid, wait_state  # noqa: F401
+from .test_browser import browser, page, server, run_case, tid, wait_state, inv_tool, open_more  # noqa: F401
 
 pytestmark = pytest.mark.browser
 
@@ -98,19 +98,19 @@ def test_plan_trace_and_case_file_display_recorded_events_after_refresh(server, 
     assert todos and tools and notes  # the test must exercise actual trace content
     page.reload()
     wait_state(page, "awaiting_review")
-    page.get_by_role("button", name="Plan", exact=False).click()
+    inv_tool(page, "Plan").click()  # Plan, Trace and Case file are behind the Activity card's Details
     plan = page.locator(tid("investigation-plan"))
     expect(plan.locator(".task-list > li")).to_have_count(len(todos[-1]["data"]["items"]))
     expect(plan).to_contain_text(todos[-1]["data"]["items"][0]["text"])
     plan.locator(".plan-history summary").click()
     expect(plan).to_contain_text("No triggering evidence reference was supplied")
     page.keyboard.press("Escape")
-    page.get_by_role("button", name="Trace", exact=True).click()
+    inv_tool(page, "Trace").click()
     expect(page.locator('dialog .trace-events > li[data-kind="tool"]')).to_have_count(len(tools))
     page.locator('dialog .trace-events [data-kind="tool"] summary').first.click()
     expect(page.locator(tid("investigation-trace"))).to_contain_text(tools[0]["data"]["tool"])
     page.keyboard.press("Escape")
-    page.get_by_role("button", name="Case file", exact=True).click()
+    inv_tool(page, "Case file").click()
     expect(page.locator(tid("case-file"))).to_contain_text(notes[0]["data"]["path"])
     assert page.errors == []
 
@@ -124,6 +124,7 @@ def test_saved_comparison_preserves_hash_conditions_and_never_unseals(server, pa
     mutations = []
     page.on("request", lambda r: mutations.append(r.url) if r.method == "POST" else None)
     page.click(tid("tab-benchmark"))
+    page.click(f'{tid("experiment-details")} > summary')  # saved comparisons sit under Details
     page.get_by_label("Comparison run A").select_option(first)
     page.get_by_label("Comparison run B").select_option(second)
     identity = page.locator(tid("comparison-identity"))
@@ -160,6 +161,7 @@ def test_case_creation_retry_keeps_token_when_server_response_is_lost(server, pa
     page.route("**/api/cases", lose_first_response)
     page.goto(base)
     page.click(tid("nav-cases"))
+    open_more(page)
     page.click(tid("preset-hero-coverup"))
     page.click(tid("btn-run"))
     expect(page.locator(tid("error-banner"))).to_contain_text("Cannot reach")

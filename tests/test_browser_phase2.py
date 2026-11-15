@@ -11,7 +11,8 @@ from __future__ import annotations
 
 import pytest
 
-from tests.test_browser import browser, page, run_case, server, tid, wait_state, open_sources, open_more  # noqa: F401  (fixtures)
+from tests.test_browser import (browser, page, run_case, server, tid, wait_state, open_sources, open_more,  # noqa: F401  (fixtures)
+                                open_inv_more, open_scoring)
 
 pytestmark = pytest.mark.browser
 
@@ -24,6 +25,21 @@ def open_replay(pg, base: str, replay: str) -> None:
     pg.click(tid(f"replay-{replay}"))
     pg.click(tid("btn-run"))
     wait_state(pg, "awaiting_review")
+    open_inv_more(pg)  # the question composer and saved answers are under "More tools"
+
+
+def labels(pg) -> dict:
+    """The case's provenance: the one pill on the case, its full inference label (the pill's title), and the
+    playback and evidence-origin lines of the Case details dialog. These replaced the three header badges."""
+    out = {"pill": pg.inner_text(tid("mode-label")), "inference": pg.get_attribute(tid("mode-label"), "title")}
+    pg.click(tid("btn-details"))
+    pg.wait_for_selector("dialog[open] .runtime-details")
+    facts = pg.evaluate("""() => Object.fromEntries([...document.querySelectorAll('dialog[open] .runtime-details dt')]
+        .map(dt => [dt.textContent.trim(), dt.nextElementSibling.textContent.trim()]))""")
+    pg.keyboard.press("Escape")
+    pg.wait_for_selector("dialog[open]", state="detached")
+    out["playback"], out["evidence"] = facts["Playback"], facts["Evidence"]
+    return out
 
 
 def test_recorded_answers_replay_closed_with_their_labels_and_open_citations(server, page):
@@ -50,7 +66,7 @@ def test_recorded_answers_replay_closed_with_their_labels_and_open_citations(ser
     assert len(page.inner_text(tid("raw-focus-line")).strip()) > 20
     page.keyboard.press("Escape")
     # the recorded run is still a recording, and the composer says no model will answer here
-    assert "Recorded AI run" in page.inner_text(tid("badge-inference"))
+    assert "Recorded AI run" in page.inner_text(tid("mode-label"))
     assert "No model is configured" in page.inner_text(tid("question-composer"))
     assert page.errors == []
 
@@ -58,6 +74,7 @@ def test_recorded_answers_replay_closed_with_their_labels_and_open_citations(ser
 def test_a_question_with_no_model_is_recorded_as_unanswered_never_as_an_answer(server, page):
     base, _ = server
     run_case(page, base)
+    open_inv_more(page)
     findings = page.locator('[data-testid^="finding-"]').count()
     assert page.locator(tid("question-answer")).count() == 0
     page.fill("#case-question", "Who removed the log line?")
@@ -76,6 +93,7 @@ def test_a_question_with_no_model_is_recorded_as_unanswered_never_as_an_answer(s
     assert page.locator('[data-testid^="finding-"]').count() == findings
     page.reload()
     wait_state(page, "awaiting_review")
+    open_inv_more(page)
     page.wait_for_selector(tid("question-answer"))
     assert "Who removed the log line?" in page.inner_text(tid("question-answers"))
     assert page.errors == []
@@ -95,7 +113,7 @@ def test_removing_the_collector_shows_what_can_no_longer_be_established(server, 
     assert derived != original
     assert "reduced evidence view" in page.inner_text(tid("case-eyebrow")).lower()  # the heading says what this is
     # the reduced view was examined by the checks, not by a model, and says so
-    assert "Deterministic baseline · no model inference" in page.inner_text(tid("badge-inference"))
+    assert "Deterministic baseline · no model inference" in page.get_attribute(tid("mode-label"), "title")
     cmp_ = page.locator(tid("experiment-comparison"))
     assert "log collector" in cmp_.inner_text() and "no model" in cmp_.inner_text()
     removed = cmp_.locator("li", has_text="Host log line removed")
@@ -128,6 +146,7 @@ def test_removing_the_collector_shows_what_can_no_longer_be_established(server, 
 def test_cold_chain_shows_two_temperature_records_and_where_they_disagree(server, page):
     base, _ = server
     run_case(page, base, "cold-chain")
+    open_inv_more(page)  # the temperature records are under "More tools"
     page.wait_for_selector(tid("temperature-records"))
     panel = page.locator(tid("temperature-records"))
     assert "disagree" in page.inner_text(tid("temperature-status"))
@@ -296,12 +315,13 @@ def test_a_designed_environment_is_previewed_labeled_and_generated_without_showi
     # before the reveal nothing on the case says what the operator chose
     body = page.inner_text("body")
     assert "inside-job-coverup" not in body and "Operator only" not in body and page.locator(tid("designer")).count() == 0
-    assert "Scripted fixture · no model inference" in page.inner_text(tid("badge-inference"))
+    assert "Scripted fixture · no model inference" in page.get_attribute(tid("mode-label"), "title")
     page.click(tid("btn-accept"))
     wait_state(page, "report_locked")
     page.click(tid("btn-unseal"))
     wait_state(page, "scored")
     page.wait_for_selector(tid("score-panel"))
+    open_scoring(page)  # the executed steps and their label are under the result's "Detailed scoring"
     assert "no model chose these steps" in page.inner_text(tid("score-panel"))  # the incident is a scripted scenario
     assert page.errors == []
 
@@ -519,6 +539,7 @@ def test_answers_stay_with_their_case_when_another_case_is_opened(model_server, 
     # it is where it belongs
     page.goto(f"{base}/#case={first}")
     page.wait_for_function("id => document.querySelector('[data-testid=app-root]')?.dataset.caseId === id", arg=first)
+    open_inv_more(page)
     page.wait_for_selector(f'{tid("question-answer")}[data-status="insufficient_evidence"]', timeout=30_000)
     assert "Belongs to the first case?" in page.inner_text(tid("question-answers"))
     assert _quiet(page) == []
@@ -527,6 +548,7 @@ def test_answers_stay_with_their_case_when_another_case_is_opened(model_server, 
 def test_the_chart_readout_shows_the_values_the_server_sent(server, page):
     base, _ = server
     run_case(page, base, "cold-chain")
+    open_inv_more(page)  # the temperature records are under "More tools"
     page.wait_for_selector(tid("temperature-records"))
     data = page.request.get(f"{base}/api/cases/{_case_id(page)}/evidence/sensor-streams").json()
     ref = next(s for s in data["series"] if s["key"] == "reference")["points"]
@@ -574,12 +596,14 @@ def test_the_chart_readout_shows_the_values_the_server_sent(server, page):
 def test_a_reduced_cold_chain_view_counts_nothing_when_nothing_could_be_compared(server, page):
     base, _ = server
     run_case(page, base, "cold-chain")
+    open_inv_more(page)  # the temperature records are under "More tools"
     page.wait_for_selector(tid("temperature-records"))
     open_sources(page)
     page.select_option(tid("witness-select"), "reference")
     page.click(tid("btn-derive"))
     page.wait_for_selector(tid("experiment-comparison"))
     wait_state(page, "awaiting_review")
+    open_inv_more(page)
     page.wait_for_selector(tid("temperature-not-compared"))
     panel = page.inner_text(tid("temperature-records"))
     assert "reference logger" in page.inner_text(tid("temperature-status"))  # the server's reason, in amber
@@ -632,7 +656,7 @@ def test_two_designed_cases_look_the_same_whatever_the_operator_placed(server, p
         case = page.request.get(f"{base}/api/cases/{cid}").json()["case"]
         seen.append({
             "heading": page.inner_text("h1"), "eyebrow": page.inner_text(tid("case-eyebrow")).replace(cid.replace("case-", "")[:8], "…").replace(cid.replace("case-", "")[:8].upper(), "…"),
-            "badges": [page.inner_text(tid(b)) for b in ("badge-inference", "badge-evidence", "badge-playback")],
+            "badges": labels(page),
             # each press of "Ask for a design" is a new design with its own exercise number, so title and seed
             # differ between the two for that reason; tests/test_m14_designer.py pins them for one design
             "record": {k: v for k, v in case.items() if k not in ("case_id", "bundle_id", "created_at", "updated_at", "timings",
@@ -652,10 +676,12 @@ def test_a_captured_case_is_labeled_as_captured_and_unscored_and_has_nothing_to_
     orch.start_investigation(rec.case_id)
     page.goto(f"{base}/#case={rec.case_id}")
     wait_state(page, "awaiting_review")
-    assert page.inner_text(tid("badge-evidence")) == "Captured evidence · Docker containers"
-    assert "no model inference" in page.inner_text(tid("badge-inference"))
+    shown = labels(page)
+    assert shown["evidence"] == "Captured evidence · Docker containers"
+    assert "no model inference" in shown["inference"]
     assert page.inner_text(tid("case-eyebrow")).lower().endswith("· imported evidence, unscored")  # shown in capitals
     # the one finding is about the host's own log, and nothing on the page speaks of the simulated clinic
+    open_inv_more(page)  # the finding names the log by its file name; the full path is in the detailed tools
     body = page.inner_text("body")
     assert "/var/log/records-app/access.log" in body and "clinic" not in body.lower()
     page.click(tid("btn-accept"))
