@@ -123,7 +123,7 @@ export function Navigation({
       </nav>
       <div className="recent-runs">
         <p className="rail-caption">Recent runs</p>
-        {cases.slice(0, 4).map((c) => (
+        {cases.slice(0, 3).map((c) => (
           <button key={c.case_id} onClick={() => onOpen?.(c.case_id)}>
             <span className={c.state === "scored" ? "ok" : "amber"}>●</span>
             <span>

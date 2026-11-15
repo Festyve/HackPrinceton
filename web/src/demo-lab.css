@@ -662,3 +662,11 @@
     align-items: stretch;
   }
 }
+
+/* integration: recent runs never push the sidebar footer off screen */
+.recent-runs button span:last-child {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

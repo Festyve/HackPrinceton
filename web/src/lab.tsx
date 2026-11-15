@@ -221,9 +221,11 @@ export function Lab({
             <span aria-hidden="true">▶</span>
           </button>
           <span className="mono small muted" data-testid="lab-mode-caption">
-            {live
-              ? "Live model · uses API budget"
-              : "Scripted fixture · no model calls"}
+            {current?.lab && current.labels?.playback === "REPLAY"
+              ? `Showing a recording · ${current.labels.inference_label}`
+              : live
+                ? "Live model · uses API budget"
+                : "Scripted fixture · no model calls"}
           </span>
           {onRecording && (
             <button

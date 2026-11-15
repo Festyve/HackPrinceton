@@ -369,8 +369,11 @@ function Findings({ view }: { view: CaseView }) {
   const report = view.report!;
   const all = report.findings ?? [];
   const rejected = (f: Finding) => f.status === "rejected_by_verifier";
+  // a problem is an allegation that stands in the report; one the skeptic downgraded is shown apart and not counted
+  const downgraded = (f: Finding) =>
+    f.category === "incident_allegation" && f.status === "downgraded_by_skeptic";
   const problems = all
-    .filter((f) => f.category === "incident_allegation" && !rejected(f))
+    .filter((f) => f.category === "incident_allegation" && !rejected(f) && !downgraded(f))
     .sort(
       (a, b) =>
         Number(b.claim_type === "local_log_removal") -
@@ -380,7 +383,7 @@ function Findings({ view }: { view: CaseView }) {
   const rest = lead ? problems.slice(1) : problems;
   const benign = all.filter((f) => f.category === "benign_explanation" && !rejected(f));
   const other = all.filter(
-    (f) => !problems.includes(f) && !benign.includes(f) && !rejected(f),
+    (f) => !problems.includes(f) && !benign.includes(f) && !rejected(f) && !downgraded(f),
   );
   const a = report.attribution;
   return (
@@ -413,6 +416,7 @@ function Findings({ view }: { view: CaseView }) {
       <div className="inv-minors">
         <Minor title="benign explanation" items={benign} />
         <Minor title="unresolved item" items={other} />
+        <Minor title="allegation downgraded by the skeptic · not counted" items={all.filter(downgraded)} />
         <Minor title="allegation rejected by the verifier" items={all.filter(rejected)} />
         {!!report.open_questions?.length && (
           <details className="inv-minor">

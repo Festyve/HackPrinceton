@@ -2,7 +2,7 @@
 from __future__ import annotations
 import pytest
 from playwright.sync_api import expect
-from .test_browser import browser, page, server, tid, wait_state  # noqa: F401
+from .test_browser import browser, inv_tool, open_inv_more, page, server, skip_playback, tid, wait_state  # noqa: F401
 
 pytestmark = pytest.mark.browser
 
@@ -148,8 +148,10 @@ def test_lab_options_error_and_budget_stopped_run_remain_honest(server, page):
     page.reload(); wait_state(page, "failed")
     expect(page.locator(tid("error-banner"))).to_contain_text("Budget exhausted")
     page.click(tid("tab-benchmark"))
-    expect(page.locator(tid("lab-comparison-table"))).to_contain_text("failed")
-    expect(page.locator(tid("lab-comparison-table"))).to_contain_text("Budget exhausted")
+    # The one table states the stop in plain words; the recorded reason is in the detailed table below it.
+    expect(page.locator(tid("lab-comparison-table"))).to_contain_text("Investigation stopped")
+    page.click(f'{tid("experiment-details")} > summary')
+    expect(page.locator(tid("lab-comparison-details"))).to_contain_text("Budget exhausted")
 
 
 @pytest.mark.parametrize("width,height", [(1440, 900), (1280, 720), (390, 844)])
@@ -187,11 +189,14 @@ def test_default_scripted_lab_agent_reaches_real_review(server, page):
     page.click(tid("btn-stage-skip"))
     page.click(tid("btn-open-investigation"))
     wait_state(page, "awaiting_review")
-    expect(page.locator(tid("badge-inference"))).to_contain_text("Scripted fixture")
+    expect(page.locator(tid("mode-label"))).to_have_text("Scripted fixture")
+    skip_playback(page)
+    expect(page.locator(tid("inv-findings"))).to_be_visible()
+    open_inv_more(page)
     row = page.locator(tid("compare-row-retained")).first
     expect(row).to_be_visible()
     box = row.bounding_box()
     assert box["y"] + box["height"] <= page.locator(tid("question-composer")).bounding_box()["y"]
-    page.get_by_role("button", name="Trace", exact=True).click()
+    inv_tool(page, "Trace").click()
     expect(page.locator(".trace-events > li").first).to_be_visible()
     assert page.errors == []
