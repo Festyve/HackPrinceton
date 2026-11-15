@@ -124,8 +124,12 @@ def inv_tool(pg, name: str):
 
 def open_inv_more(pg) -> None:
     """Explanations, the question composer, the comparison table and the timeline are under "Go deeper"."""
-    skip_playback(pg)
-    pg.wait_for_selector(tid("inv-more"))
+    # "Go deeper" appears once the Activity playback is over (findings shown) or the investigation stopped.
+    pg.wait_for_function("""() => {
+        if (document.querySelector('[data-testid="inv-more"]')) return true;
+        document.querySelector('[data-testid="btn-skip"]:not(:disabled)')?.click();
+        return false;
+    }""", timeout=45_000)
     if not pg.locator(f'{tid("inv-more")}[open]').count():
         pg.click(f'{tid("inv-more")} > summary')
 
@@ -137,11 +141,16 @@ def open_scoring(pg) -> None:
         pg.click(f'{tid("score-panel")} details.scoring-details > summary')
 
 
-def provenance(pg) -> str:
-    """The full inference, playback and evidence-origin labels, as the Case details dialog states them."""
-    pg.click(tid("btn-command"))  # the top-bar Details button is gone; the palette keeps the action
+def open_details(pg) -> None:
+    """Runtime and case details: the top-bar Details button is gone; the ⌘K palette keeps the action."""
+    pg.click(tid("btn-command"))
     pg.click("#command-details")
     pg.wait_for_selector("dialog[open] .runtime-details")
+
+
+def provenance(pg) -> str:
+    """The full inference, playback and evidence-origin labels, as the Case details dialog states them."""
+    open_details(pg)
     text = pg.inner_text("dialog[open] .runtime-details")
     pg.keyboard.press("Escape")
     pg.wait_for_selector("dialog[open]", state="detached")
@@ -206,7 +215,7 @@ def test_hero_flow_in_the_browser_and_reset_twice(server, page):
         details = provenance(page)
         assert "Scripted fixture · no model inference" in details
         assert "Simulated evidence" in details and "LIVE" in details and "REPLAY" not in details
-        # The findings lead with the gap itself; the detailed comparison row is under More tools.
+        # The findings lead with the gap itself; the detailed comparison row is under Go deeper.
         page.wait_for_selector(tid("compare-row-retained"))
         gap = page.inner_text(tid("compare-row-retained"))
         assert "Missing" in gap and "Retained" in gap and "session opened for user" in gap
@@ -497,16 +506,15 @@ def test_source_selection_and_modal_keyboard_return(server, page):
     page.click(tid("source-workstation"))
     close_sources(page)
     page.wait_for_selector(tid("compare-row-retained"))
-    page.locator(tid("btn-details")).focus()
-    page.click(tid("btn-details"))
-    page.wait_for_selector("dialog[open]")
+    page.locator(tid("btn-command")).focus()  # Details now opens from the ⌘K palette
+    open_details(page)
     assert "Live AI unavailable" in page.inner_text(tid("runtime-status"))
     for _ in range(12):
         page.keyboard.press("Tab")
         assert page.evaluate("document.querySelector('dialog[open]').contains(document.activeElement)")
     page.keyboard.press("Escape")
     assert page.locator("dialog[open]").count() == 0
-    assert page.locator(tid("btn-details")).evaluate("el => el === document.activeElement")
+    assert page.locator(tid("btn-command")).evaluate("el => el === document.activeElement")
     assert page.errors == []
 
 
@@ -543,15 +551,17 @@ def test_empty_library_and_library_connection_error(server, page):
     page.route("**/api/presets", lambda route: route.fulfill(json={"presets": [], "replays": []}))
     page.goto(base + "/")
     page.click(tid("nav-cases"))
-    page.get_by_text("No cases available", exact=True).wait_for()
-    page.click(tid("nav-cases"))
+    # The Cases workspace says it has no recordings and offers no scenario to open
+    page.locator(".cases-section", has_text="Recordings").get_by_text("None saved.", exact=True).wait_for()
+    open_more(page)
+    assert page.locator('[data-testid^="preset-"], [data-testid^="replay-"]').count() == 0
     assert page.locator(f'{tid("btn-run")}:enabled').count() == 0  # nothing to open: no usable run control
     page.unroute("**/api/presets")
     page.route("**/api/presets", lambda route: route.fulfill(status=503, json={"error": "Server unavailable"}))
     page.reload()
     page.click(tid("nav-cases"))
     page.get_by_role("alert").wait_for()
-    assert "Could not load the case library" in page.inner_text("body")
+    assert "Could not load recordings" in page.get_by_role("alert").inner_text()
     assert "Reload to reconnect" in page.inner_text("body")
 
 

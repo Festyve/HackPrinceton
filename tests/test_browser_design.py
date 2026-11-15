@@ -1,7 +1,7 @@
 """The imported design stays connected to the existing application."""
 import pytest
 from playwright.sync_api import expect
-from .test_browser import browser, page, server, run_case, tid, shot, inv_tool, provenance
+from .test_browser import browser, page, server, run_case, tid, shot, inv_tool, provenance, open_more
 
 pytestmark = pytest.mark.browser
 
@@ -73,10 +73,24 @@ def test_design_recorded_trace_seek_and_recent_run(server, page):
     expect(page.locator("dialog[open]")).to_have_count(0)
     assert page.locator(".workspace-content").evaluate("e => e.scrollWidth <= e.clientWidth + 1")
     shot(page,"design-investigation-1920")
-    case_url = page.url
+    # Recent runs lists lab runs only, and opens one on Lab (its sandbox replays first), then the investigation.
+    made = page.request.post(f"{base}/api/lab/experiments", data={
+        "variant": "incident", "seed": 11, "preset": "balanced", "runner": "agent-fixture",
+        "ordinary_work": "scripted", "client_token": "design-recent", "autostart": True})
+    assert made.ok
+    lab_id = made.json()["case"]["case_id"]
     page.click(tid("nav-lab"))
-    page.locator(".recent-runs > button").first.click()
-    expect(page).to_have_url(case_url)
+    page.reload()
+    recent = page.locator(".recent-runs > button").first
+    recent.wait_for()
+    recent.click()
+    page.wait_for_function("id => location.hash.includes(id)", arg=lab_id)
+    expect(page.locator(tid("app-root"))).to_have_attribute("data-workspace", "lab")
+    expect(page.locator(tid("nav-lab"))).to_have_attribute("aria-current","page")
+    expect(page.locator(tid("sandbox-stage"))).to_be_visible()
+    if page.locator(tid("sandbox-stage") + '[data-stage="playing"]').count():
+        page.click(tid("btn-stage-skip"))
+    page.click(tid("btn-open-investigation"))
     expect(page.get_by_role("button",name="Investigation",exact=True)).to_have_attribute("aria-current","page")
     assert page.errors == []
 
@@ -114,11 +128,11 @@ def test_opening_another_case_resets_embedded_playback(server, page):
     expect(activity.locator(".trace-events > li")).to_have_count(0)
     page.keyboard.press("Escape")
     expect(page.locator(tid("btn-skip"))).to_have_count(0)  # this case's Activity playback is over
-    # Open from the case-library dialog so React does not unmount the workspace through Cases.
-    page.get_by_role("button",name="Case library",exact=True).click()
-    library = page.get_by_role("dialog",name="Case library",exact=True)
-    library.locator(tid("preset-sealed-control")).click()
-    library.get_by_role("button",name="Open selected case",exact=True).click()
+    # The investigation heading's Case library button is gone: open the next case in-app, through Cases.
+    page.click(tid("nav-cases"))
+    open_more(page)
+    page.click(tid("preset-sealed-control"))
+    page.click(tid("btn-run"))
     page.wait_for_function("old => location.href !== old", arg=original)
     # The new case plays its own Activity from the start instead of inheriting the finished one.
     expect(page.locator(tid("btn-skip"))).to_be_visible()

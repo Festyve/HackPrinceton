@@ -12,7 +12,7 @@ from __future__ import annotations
 import pytest
 
 from tests.test_browser import (browser, page, run_case, server, tid, wait_state, open_sources, open_more,  # noqa: F401  (fixtures)
-                                open_inv_more, open_scoring)
+                                open_inv_more, open_scoring, open_details)
 
 pytestmark = pytest.mark.browser
 
@@ -25,15 +25,14 @@ def open_replay(pg, base: str, replay: str) -> None:
     pg.click(tid(f"replay-{replay}"))
     pg.click(tid("btn-run"))
     wait_state(pg, "awaiting_review")
-    open_inv_more(pg)  # the question composer and saved answers are under "More tools"
+    open_inv_more(pg)  # the question composer and saved answers are under "Go deeper"
 
 
 def labels(pg) -> dict:
     """The case's provenance: the one pill on the case, its full inference label (the pill's title), and the
     playback and evidence-origin lines of the Case details dialog. These replaced the three header badges."""
     out = {"pill": pg.inner_text(tid("mode-label")), "inference": pg.get_attribute(tid("mode-label"), "title")}
-    pg.click(tid("btn-details"))
-    pg.wait_for_selector("dialog[open] .runtime-details")
+    open_details(pg)
     facts = pg.evaluate("""() => Object.fromEntries([...document.querySelectorAll('dialog[open] .runtime-details dt')]
         .map(dt => [dt.textContent.trim(), dt.nextElementSibling.textContent.trim()]))""")
     pg.keyboard.press("Escape")
@@ -146,7 +145,7 @@ def test_removing_the_collector_shows_what_can_no_longer_be_established(server, 
 def test_cold_chain_shows_two_temperature_records_and_where_they_disagree(server, page):
     base, _ = server
     run_case(page, base, "cold-chain")
-    open_inv_more(page)  # the temperature records are under "More tools"
+    open_inv_more(page)  # the temperature records are under "Go deeper"
     page.wait_for_selector(tid("temperature-records"))
     panel = page.locator(tid("temperature-records"))
     assert "disagree" in page.inner_text(tid("temperature-status"))
@@ -223,14 +222,14 @@ def test_the_chosen_investigation_mode_is_recorded_with_the_case_and_spend_is_st
     page.click(tid("preset-hero-coverup"))
     page.click(tid("btn-run"))
     wait_state(page, "awaiting_review")
-    page.click(tid("btn-details"))
+    open_details(page)
     assert "Fast investigation · one agent" in page.inner_text(tid("investigation-mode"))
     page.wait_for_function("document.querySelector('[data-testid=spend-line]')?.textContent.includes('billed')")
     assert "nothing can be spent" in page.inner_text(tid("spend-line"))
     page.keyboard.press("Escape")
     page.reload()  # the mode belongs to the case, not to the page
     wait_state(page, "awaiting_review")
-    page.click(tid("btn-details"))
+    open_details(page)
     assert "Fast investigation · one agent" in page.inner_text(tid("investigation-mode"))
     assert page.errors == []
 
@@ -522,11 +521,11 @@ def test_answers_stay_with_their_case_when_another_case_is_opened(model_server, 
     page.click(tid("btn-ask"))
     try:
         page.wait_for_selector(f'{tid("question-answer")}[data-status="pending"]')
-        # open a second case while the first one's answer is still being produced, through the in-app library:
+        # open a second case while the first one's answer is still being produced, in-app through Cases:
         # no page load happens, so anything the page still remembers about the first case is still there
-        page.get_by_role("button", name="Case library", exact=True).click()
-        page.locator(f'dialog {tid("replay-sealed-control-fixture")}').click()
-        page.locator('dialog button:has-text("Open selected case")').click()
+        page.click(tid("nav-cases"))
+        page.click(tid("replay-sealed-control-fixture"))
+        page.click(tid("btn-run"))
         page.wait_for_function("old => !location.hash.includes(old)", arg=first)
         wait_state(page, "awaiting_review")
         second = _case_id(page)
@@ -548,7 +547,7 @@ def test_answers_stay_with_their_case_when_another_case_is_opened(model_server, 
 def test_the_chart_readout_shows_the_values_the_server_sent(server, page):
     base, _ = server
     run_case(page, base, "cold-chain")
-    open_inv_more(page)  # the temperature records are under "More tools"
+    open_inv_more(page)  # the temperature records are under "Go deeper"
     page.wait_for_selector(tid("temperature-records"))
     data = page.request.get(f"{base}/api/cases/{_case_id(page)}/evidence/sensor-streams").json()
     ref = next(s for s in data["series"] if s["key"] == "reference")["points"]
@@ -596,7 +595,7 @@ def test_the_chart_readout_shows_the_values_the_server_sent(server, page):
 def test_a_reduced_cold_chain_view_counts_nothing_when_nothing_could_be_compared(server, page):
     base, _ = server
     run_case(page, base, "cold-chain")
-    open_inv_more(page)  # the temperature records are under "More tools"
+    open_inv_more(page)  # the temperature records are under "Go deeper"
     page.wait_for_selector(tid("temperature-records"))
     open_sources(page)
     page.select_option(tid("witness-select"), "reference")
