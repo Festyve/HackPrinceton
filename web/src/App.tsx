@@ -762,7 +762,7 @@ export default function App() {
             )}
           </div>
         </div>
-        <div className="pip-dock" hidden={workspace === "lab"}>
+        <div className="pip-dock" hidden={workspace === "lab" || workspace === "investigation"}>
           {pipOpen && (
             <section className="pip-feed" aria-label="Pip activity feed">
               <header>

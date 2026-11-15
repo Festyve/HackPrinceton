@@ -738,3 +738,23 @@
   height: 40px;
   padding: 9px;
 }
+
+/* integration: the review bar sits in the flow, between the activity summary and the findings */
+.workspace-content .inv-actionbar,
+.workspace-content .inv-actionbar[class] {
+  position: static !important;
+  margin: 0 0 14px;
+  padding-right: 22px;
+}
+/* one compact heading on the investigation: no eyebrow, smaller title */
+.case-heading [data-testid="case-eyebrow"] {
+  display: none;
+}
+.case-heading:has([data-testid="mode-label"]) h1 {
+  font-size: clamp(26px, 2.6vw, 34px);
+  line-height: 1.15;
+  margin: 0 0 8px;
+}
+.case-heading:has([data-testid="mode-label"]) {
+  padding-bottom: 12px;
+}

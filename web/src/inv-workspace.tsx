@@ -801,17 +801,6 @@ export function InvestigationWorkspace(p: {
       </section>
 
       {done && (
-        <div ref={findingsRef} className="inv-anchor">
-          {c.parent_case_id && <ExperimentComparison view={view} />}
-          <Findings view={view} />
-        </div>
-      )}
-      {done && state === "scored" && view.reveal && (
-        <div ref={reveal} className="inv-anchor">
-          <Reveal view={view} run={run} />
-        </div>
-      )}
-      {done && (
         <div className="inv-actionbar" role="group" aria-label="Report review">
           {state === "awaiting_review" && (
             <>
@@ -853,6 +842,17 @@ export function InvestigationWorkspace(p: {
         </div>
       )}
 
+      {done && (
+        <div ref={findingsRef} className="inv-anchor">
+          {c.parent_case_id && <ExperimentComparison view={view} />}
+          <Findings view={view} />
+        </div>
+      )}
+      {done && state === "scored" && view.reveal && (
+        <div ref={reveal} className="inv-anchor">
+          <Reveal view={view} run={run} />
+        </div>
+      )}
       {done && (
         <details className="inv-more" data-testid="inv-more">
           <summary>More tools</summary>
