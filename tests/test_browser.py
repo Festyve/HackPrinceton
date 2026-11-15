@@ -139,7 +139,8 @@ def open_scoring(pg) -> None:
 
 def provenance(pg) -> str:
     """The full inference, playback and evidence-origin labels, as the Case details dialog states them."""
-    pg.click(tid("btn-details"))
+    pg.click(tid("btn-command"))  # the top-bar Details button is gone; the palette keeps the action
+    pg.click("#command-details")
     pg.wait_for_selector("dialog[open] .runtime-details")
     text = pg.inner_text("dialog[open] .runtime-details")
     pg.keyboard.press("Escape")

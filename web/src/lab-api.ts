@@ -8,6 +8,7 @@ export interface LabConditions {
   investigator_requests: number;
   rogue_permissions: string;
   context_load: string;
+  allowance_enforced?: boolean;
 }
 export interface LabLineage {
   root_case_id: string;
@@ -142,7 +143,69 @@ export interface StageView {
     local_records_missing: number;
     collector_records: number;
     workers_with_unassigned_activity: string[];
+    copies_out?: number;
   };
+}
+export interface TraceSpan {
+  span_id: string;
+  parent_id: string | null;
+  kind: "run" | "delegation" | "tool";
+  actor: string;
+  tool?: string;
+  task?: string;
+  status: string;
+}
+export interface TraceView {
+  spans: TraceSpan[];
+}
+/** One step of the investigator's walk on the stage, built only from recorded tool spans. */
+export interface InvestigatorStep {
+  station: "log" | "tmp" | "sched" | "center";
+  caption: string;
+  delegate: string | null;
+  collector: boolean;
+}
+const LEADS = new Set(["lead-investigator", "single-agent"]);
+const pretty = (s: string) => s.replace(/[-_]/g, " ");
+export function investigatorSteps(trace: TraceView): InvestigatorStep[] {
+  const steps: Array<InvestigatorStep & { key: string; n: number }> = [];
+  for (const s of trace.spans) {
+    if (s.kind !== "tool" || !s.tool) continue;
+    const t = s.tool.toLowerCase();
+    const delegate = LEADS.has(s.actor) ? null : s.actor;
+    let station: InvestigatorStep["station"] = "center";
+    let caption = pretty(s.tool);
+    let collector = false;
+    if (/local.*collector|reconcil|access_log|log_gap/.test(t)) {
+      station = "log";
+      collector = true;
+      caption = "Comparing local log with collector copy";
+    } else if (/transfer|flow|export|session|egress/.test(t)) {
+      station = "tmp";
+      caption = "Checking transfers out of tmp exports";
+    } else if (/assign|schedul/.test(t)) {
+      station = "sched";
+      caption = "Checking who was assigned what";
+    } else if (/submit_finding/.test(t)) caption = "Filing a finding";
+    else if (/brief/.test(t)) caption = "Reading the case brief";
+    const key = `${s.actor}|${station}|${caption}`;
+    const last = steps[steps.length - 1];
+    if (last && last.key === key) {
+      last.n += 1;
+      continue;
+    }
+    steps.push({ station, caption, delegate, collector, key, n: 1 });
+  }
+  return steps.map((st) => ({
+    station: st.station,
+    delegate: st.delegate,
+    collector: st.collector,
+    caption:
+      (st.delegate ? `${pretty(st.delegate)}: ` : "") +
+      (st.n > 1 && st.caption === "Filing a finding"
+        ? `Filing ${st.n} findings`
+        : st.caption + (st.n > 1 ? ` (×${st.n})` : "")),
+  }));
 }
 const q = encodeURIComponent;
 const post = <T>(path: string, body: unknown) =>
@@ -157,6 +220,7 @@ export const labApi = {
     post<{ case: CaseInfo; lab: LabView }>("/api/lab/experiments", body),
   view: (id: string) => req<LabView>(`/api/cases/${q(id)}/lab`),
   stage: (id: string) => req<StageView>(`/api/cases/${q(id)}/lab/stage`),
+  trace: (id: string) => req<TraceView>(`/api/cases/${q(id)}/trace`),
   operator: (id: string) =>
     req<OperatorRecord>(`/api/cases/${q(id)}/lab/operator`),
   comparisons: (id: string) =>
