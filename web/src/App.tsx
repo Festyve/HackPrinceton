@@ -8,20 +8,13 @@ import type {
   Runtime,
   ServerEvent,
 } from "./api";
-import { applyEvents, emptyRun, hasReport } from "./model";
+import { applyEvents, emptyRun } from "./model";
 import type { Run } from "./model";
 import { EvidenceCtx } from "./common";
-import { CenterColumn, Ask } from "./panels";
 import { Dialog } from "./dialog";
-import {
-  Sources,
-  RuntimeDetails,
-  ProgressActivity,
-  humanState,
-  originLabel,
-} from "./workbench";
-import { EvidenceColumn, RawViewer } from "./evidence";
-import { ScoreOverlay } from "./score";
+import { Sources, RuntimeDetails, humanState } from "./workbench";
+import { RawViewer } from "./evidence";
+import { InvestigationWorkspace, InvModeLabel } from "./inv-workspace";
 import { BenchmarkTab } from "./bench";
 import { Navigation, CommandPalette, SavedCases, Pip } from "./shell";
 import type { Workspace, PaletteAction } from "./shell";
@@ -29,20 +22,8 @@ import { Lab, WorkerActivity } from "./lab";
 import { LabExperiments } from "./lab-experiments";
 import { useActionToken } from "./features/operation";
 import { SavedComparison } from "./comparisons";
-import {
-  EvidenceInspector,
-  InvestigationTools,
-  PlanView,
-  TraceView,
-  CaseFile,
-  Help,
-} from "./investigation";
-import {
-  DesignerDialog,
-  ExperimentComparison,
-  QuestionPanel,
-  TemperatureRecords,
-} from "./phase2";
+import { PlanView, TraceView, CaseFile, Help } from "./investigation";
+import { DesignerDialog } from "./phase2";
 
 const EVENT_TYPES = [
   "state",
@@ -117,7 +98,7 @@ export default function App() {
     data: RawView | null;
     eventId?: string;
   } | null>(null);
-  const [showScore, setShowScore] = useState(true);
+  const [, setShowScore] = useState(true);
   const [showDetails, setShowDetails] = useState(false);
   const [showLibrary, setShowLibrary] = useState(false);
   const [selectedHost, setSelectedHost] = useState<string | null>(null);
@@ -485,7 +466,6 @@ export default function App() {
   const bannerMsg = failed ? c?.error || c?.detail || state : run.error;
   const title =
     (c?.lab ? c.title : view?.card?.title) ?? c?.title ?? "Case library";
-  const reviewPhase = state === "awaiting_review" || state === "report_locked";
   const closeRaw = () => {
     rawRequest.current += 1;
     setRaw(null);
@@ -646,37 +626,7 @@ export default function App() {
                           ? title
                           : "Open a case to begin."}
                 </h1>
-                {labeledCase && (
-                  <div
-                    className="badges run-provenance"
-                    role="group"
-                    aria-label="Run provenance"
-                  >
-                    <span className="badge" data-testid="badge-inference">
-                      {labeledCase?.labels.inference_label ??
-                        (presets?.replays.length
-                          ? "Offline replay available"
-                          : "Connecting to the lab")}
-                    </span>
-                    {labeledCase && (
-                      <span className="badge" data-testid="badge-evidence">
-                        {originLabel(labeledCase.labels.evidence_origin)}
-                      </span>
-                    )}
-                    {labeledCase && (
-                      <span
-                        className="badge playback"
-                        data-testid="badge-playback"
-                      >
-                        {labeledCase.labels.playback === "REPLAY"
-                          ? "REPLAY · recorded playback"
-                          : labeledCase.labels.playback === "LIVE"
-                            ? "LIVE · fresh case"
-                            : labeledCase.labels.playback}
-                      </span>
-                    )}
-                  </div>
-                )}
+                {labeledCase && <InvModeLabel c={labeledCase} />}
               </div>
               <div className="heading-actions">
                 {view && workspace === "investigation" ? (
@@ -845,147 +795,23 @@ export default function App() {
                 {workspace === "cases" && <StartState {...libraryProps} />}
               </main>
             ) : (
-              <>
-                <div className="case-subhead">
-                  <span>{view.card?.audience_setup ?? c?.detail}</span>
-                  <ol className="workflow" aria-label="Case progress">
-                    <li
-                      className={
-                        !reviewPhase && state !== "scored" ? "current" : ""
-                      }
-                    >
-                      Investigation
-                    </li>
-                    <li className={reviewPhase ? "current" : ""}>Review</li>
-                    <li className={state === "scored" ? "current" : ""}>
-                      Reveal
-                    </li>
-                  </ol>
-                  <span className="statepill" data-testid="case-state">
-                    {humanState(state)}
-                  </span>
-                </div>
-                {c?.lab && (
-                  <div
-                    className="worker-run-context"
-                    data-testid="worker-provenance"
-                  >
-                    <div>
-                      <span>
-                        {c.labels.investigation_mode_label} ·{" "}
-                        {c.labels.worker_choices}
-                      </span>
-                      <span>{c.labels.changed_objective_policy}</span>
-                    </div>
-                    <button onClick={() => setWorkspace("lab")}>
-                      Inspect workers & activity ↗
-                    </button>
-                  </div>
-                )}
-                <InvestigationTools
-                  hasCase={!!view}
-                  planProgress={
-                    run.todo.length
-                      ? `${run.todo.filter((t) => t.status === "completed").length}/${run.todo.length}`
-                      : undefined
-                  }
-                  onSources={() => setShowSources(true)}
-                  onPlan={() => setPanelDialog("plan")}
-                  onCaseFile={() => setPanelDialog("notes")}
-                  onTrace={() => setPanelDialog("trace")}
-                  onQuestions={() =>
-                    document
-                      .querySelector<HTMLInputElement>("#case-question")
-                      ?.focus()
-                  }
-                />
-                <div className="design-investigation-top">
-                  <section className="design-card design-plan">
-                    <header>
-                      <h2>Plan</h2>
-                      <span className="mono small muted">
-                        {
-                          run.todo.filter((t) => t.status === "completed")
-                            .length
-                        }{" "}
-                        / {run.todo.length} done
-                      </span>
-                    </header>
-                    <PlanView
-                      key={view.case.case_id}
-                      run={run}
-                      caseId={view.case.case_id}
-                      embedded
-                    />
-                  </section>
-                  <section className="design-card design-activity">
-                    <header>
-                      <h2>Activity</h2>
-                      <span className="mono small muted">
-                        Recorded tool events
-                      </span>
-                    </header>
-                    <TraceView
-                      key={view.case.case_id}
-                      run={run}
-                      caseId={view.case.case_id}
-                      embedded
-                    />
-                  </section>
-                </div>
-                <div
-                  className={
-                    "case-workspace" + (raw && !narrow ? " inspector-open" : "")
-                  }
-                >
-                  <div className="case-content">
-                    <main className="grid">
-                      <section
-                        className="col evidence-area"
-                        aria-label="Evidence comparison"
-                      >
-                        {c?.parent_case_id && (
-                          <ExperimentComparison view={view} />
-                        )}
-                        {c?.card_id === "cold-chain" && hasReport(state) && (
-                          <TemperatureRecords
-                            caseId={view.case.case_id}
-                            stateKey={view.manifest?.bundle_id ?? ""}
-                          />
-                        )}
-                        {hasReport(state) ? (
-                          <EvidenceColumn
-                            caseId={view.case.case_id}
-                            view={view}
-                            run={run}
-                            selectedHost={selectedHost}
-                          />
-                        ) : (
-                          <ProgressActivity run={run} state={state} />
-                        )}
-                        {view.report && <Ask caseId={view.case.case_id} />}
-                      </section>
-                      <CenterColumn
-                        view={view}
-                        run={run}
-                        busy={busy}
-                        reviewMsg={reviewMsg}
-                        onReview={doReview}
-                        onReveal={doReveal}
-                        onShowScore={() => setShowScore(true)}
-                      />
-                    </main>
-                    <QuestionPanel
-                      caseId={view.case.case_id}
-                      available={!!view.report}
-                      runtime={runtime}
-                    />
-                  </div>
-                  {raw && !narrow && (
-                    <EvidenceInspector raw={raw} onClose={closeRaw} />
-                  )}
-                </div>
-              </>
+              <InvestigationWorkspace
+                key={view.case.case_id}
+                view={view}
+                run={run}
+                busy={busy}
+                reviewMsg={reviewMsg}
+                raw={raw}
+                narrow={narrow}
+                runtime={runtime}
+                selectedHost={selectedHost}
+                onReview={doReview}
+                onReveal={doReveal}
+                onCloseRaw={closeRaw}
+                onSources={() => setShowSources(true)}
+                onPanel={setPanelDialog}
+                onLab={() => setWorkspace("lab")}
+              />
             )}
             {(workspace !== "investigation" || !view) && (
               <span className="sr-only" data-testid="case-state">
@@ -1146,16 +972,6 @@ export default function App() {
             <RawViewer raw={raw} />
           </Dialog>
         )}
-        {state === "scored" &&
-          view?.reveal &&
-          showScore &&
-          workspace === "investigation" && (
-            <ScoreOverlay
-              view={view}
-              run={run}
-              onClose={() => setShowScore(false)}
-            />
-          )}
       </div>
     </EvidenceCtx.Provider>
   );
