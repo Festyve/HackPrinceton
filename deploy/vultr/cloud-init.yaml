@@ -5,5 +5,5 @@
 # on the server IP until DNS points here. A private repository needs credentials: see deploy/vultr/README.md.
 runcmd:
   - [bash, -c, "apt-get update -y && apt-get install -y git"]
-  - [bash, -c, "git clone --depth=50 --branch claude/compassionate-planck-v5iysn https://github.com/owly1/HackPrinceton.git /root/alibi-deploy-src"]
+  - [bash, -c, "git clone --depth=50 --branch integrations-side-prizes https://github.com/owly1/HackPrinceton.git /root/alibi-deploy-src"]
   - [bash, -c, "ALIBI_REF=codex/alibi-build ALIBI_DOMAIN=whats-the-alibi.us bash /root/alibi-deploy-src/deploy/vultr/bootstrap.sh > /var/log/alibi-bootstrap.log 2>&1"]
