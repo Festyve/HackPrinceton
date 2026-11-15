@@ -54,18 +54,18 @@ Rayan confirmed **$20 cumulative**, including prior spend; keep the $19.50 autom
 
 Previous plans remain below for provenance; they do not override the new product definition. The audit baseline is default-branch `6e7d322`, with reusable UI wiring at `1b9216d`.
 
-## Overhaul handoff — Eric's session, Saturday November 14, 18:02 ET
+## Overhaul handoff — Eric's session, Saturday November 14, 19:51 ET
 
 This block is the current handoff for the backend and integration. Gate-by-gate status with evidence is in [`docs/overhaul/ACCEPTANCE.md`](docs/overhaul/ACCEPTANCE.md). Terry's and Daniel's own handoffs: [`docs/terry-overhaul-handoff.md`](docs/terry-overhaul-handoff.md), [`docs/overhaul/daniel/HANDOFF.md`](docs/overhaul/daniel/HANDOFF.md).
 
 | | |
 |---|---|
-| Branch | `codex/eric-overhaul` is the integration branch: the worker lab, Terry's interface (`f51f8f8`) and Daniel's fixtures, protocol and validator (`dbc2936`). The default branch `codex/alibi-build` is fast-forwarded to this branch after a full test pass and a fresh-clone check; the log at the end of this file says which commit it is at. The build from before the overhaul is unchanged on `codex/eric-phase2` (`6e7d322`). |
+| Branch | `codex/eric-overhaul` is the integration branch: the worker lab, Terry's interface (`f51f8f8`), the design implementation by Rayan with Terry's review fixes (pull request 5, `a2f0992`) and Daniel's fixtures, protocol and validator (`dbc2936`). The default branch `codex/alibi-build` is fast-forwarded to this branch after a full test pass and a fresh-clone check; the log at the end of this file says which commit it is at. The build from before the overhaul is unchanged on `codex/eric-phase2` (`6e7d322`). |
 | Launch | `uv sync --frozen && npm --prefix web ci && npm --prefix web run build && ./start.sh`, then http://127.0.0.1:8000. No key or network is needed for recordings. |
 | Demo selection | Recorded lab runs, real model, replay offline: **lab-run-a-three-agents-haiku-5-5**, **lab-run-b-one-agent-haiku-5-5**, **lab-run-c-one-agent-haiku-5-5**. The clinic recordings from the earlier runs remain. Notes for each are in [`docs/demo-script.md`](docs/demo-script.md). |
 | Model in use | `anthropic:claude-haiku-5-5`, effort low, for the workers' ordinary work and every investigator role. |
 | Spend | Estimated **$3.922** of the **$20** cap (1062 model calls). The overhaul: about **$0.27**. Reserved: $0. Unreconciled: $0. Automatic calls stop at $19.50. `uv run alibi spend`. |
-| Tests | `uv run pytest` → **651 passed, none failed or skipped** at `ebd608e`: 594 offline, 57 in headless Chrome. |
+| Tests | `uv run pytest` → **657 passed, none failed or skipped** at `7e75415`: 594 offline, 63 in headless Chrome. |
 | Recordings | `demo/replays/`: 7 real-model runs (1 Opus, 6 Haiku) and 2 scripted-fixture runs. All reproduce their evidence and replay offline. |
 | Measured lab results | `benchmarks/worker-lab-eric-matrix/` (my declared matrix, 18 cells, [`docs/worker-lab-eric-matrix.md`](docs/worker-lab-eric-matrix.md)); `benchmarks/worker-lab-v1/eric/live/` (the 8 live cells of Daniel's protocol, accepted by his validator); `benchmarks/worker-lab-v1/daniel/` (his offline and scripted-runtime results); four records in `benchmarks/feature-checks/worker-lab-*.json`. |
 
@@ -594,3 +594,6 @@ Phase-two model spend so far: about **$0.08** (ledger total $3.006 of the $20 ca
 ## PR #5 design integration review — 2026-11-14
 
 Reviewed the already committed Claude Design implementation at d180212 in an isolated worktree, without reimporting its ZIP or replacing the implementation. Fixed three review findings on its PR branch: visible live/replay/evidence provenance across desktop and phone, case-scoped inline playback, and explicit missing-usage presentation. Added failing-before/passing-after coverage. Production build passed; full offline suite 594 passed; expanded browser suite 63 passed. Actual-browser inspection exercised the offline sandbox, exact citation, local playback, rejected/accepted report locking, reveal and same-evidence comparison. No model/API budget spent. Details and proof: `docs/design-review.md`, `docs/verification/design-review/`.
+
+- 19:43 Terry merged pull request 5 (Rayan's design implementation `d180212` plus Terry's review fixes `7255449`) into the default branch as `a2f0992`. `7e75415` joins it here; the only conflict was the end of this file, and both entries are kept. On `7e75415`: build, `uv run pytest` → **657 passed** (594 offline, 63 in a browser). A fresh clone of `a2f0992` with no `.env` (the same code; this file is the only difference) gave 657 passed, the lab ran offline from a terminal, three recordings replayed, and Daniel's validator and the matrix reader passed. Only `web/`, browser tests and documents changed in that pull request; no backend file and no route. **Release candidate: the commit that carries this line, on both branches.** The interface defects listed in `BLOCKERS.md` were found on the earlier interface and were not rechecked on this one.
+- Ledger at 19:51: $3.922419, 1062 calls, nothing reserved or unreconciled.
