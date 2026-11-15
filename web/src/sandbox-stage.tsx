@@ -46,41 +46,27 @@ const reduced = () =>
   typeof window !== "undefined" &&
   !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
+/* Hand-drawn characters, cropped from the team's sketch: a plain box worker, the
+   same box gone rogue (red, horns, starry eyes), and the investigator in a top hat. */
+const WORKER_IMG = new URL("./assets/worker.png", import.meta.url).href;
+const ROGUE_IMG = new URL("./assets/rogue.png", import.meta.url).href;
+const SLEUTH_IMG = new URL("./assets/investigator.png", import.meta.url).href;
 export function WorkerFace({ red = false }: { red?: boolean }) {
   return (
     <span className={"bot" + (red ? " bot-red" : "")} aria-hidden="true">
-      <i />
-      <i />
+      <img src={red ? ROGUE_IMG : WORKER_IMG} alt="" draggable={false} />
     </span>
   );
 }
 export function InvestigatorFace() {
   return (
-    <svg className="sleuth" viewBox="0 0 64 70" aria-hidden="true">
-      <rect x="8" y="22" width="48" height="46" rx="11" fill="#4f8ff7" />
-      <rect x="18" y="4" width="28" height="17" rx="5" fill="#27457e" />
-      <rect x="2" y="18" width="60" height="7" rx="3.5" fill="#27457e" />
-      <rect x="18" y="13" width="28" height="4" fill="#9cc0ff" />
-      <circle
-        cx="23"
-        cy="42"
-        r="8"
-        fill="#eaf2ff"
-        stroke="#10203f"
-        strokeWidth="3"
-      />
-      <circle
-        cx="41"
-        cy="42"
-        r="8"
-        fill="#eaf2ff"
-        stroke="#10203f"
-        strokeWidth="3"
-      />
-      <path d="M31 42h2" stroke="#10203f" strokeWidth="3" />
-      <circle className="sleuth-eye" cx="24" cy="42" r="2.6" fill="#10203f" />
-      <circle className="sleuth-eye" cx="42" cy="42" r="2.6" fill="#10203f" />
-    </svg>
+    <img
+      className="sleuth"
+      src={SLEUTH_IMG}
+      alt=""
+      aria-hidden="true"
+      draggable={false}
+    />
   );
 }
 

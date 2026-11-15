@@ -174,14 +174,8 @@
   color: #d5d8d2;
 }
 .chip-bot .bot {
-  width: 18px;
-  height: 18px;
-  border-radius: 5px;
-  gap: 3px;
-}
-.chip-bot .bot i {
-  width: 3px;
-  height: 4px;
+  width: 20px;
+  height: 20px;
 }
 .chip-bot .sleuth {
   width: 17px;
@@ -348,8 +342,8 @@
   color: #cfe0ff;
 }
 .sleuth {
-  width: 44px;
-  height: 48px;
+  width: 48px;
+  height: 60px;
   animation: bob 3.2s ease-in-out infinite;
 }
 .sleuth-eye {
@@ -506,28 +500,26 @@
 }
 .bot {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  gap: 7px;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: #f6f4ee;
-  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
-  transition: background 0.3s;
+  width: 52px;
+  height: 52px;
 }
-.bot i {
-  width: 6px;
-  height: 9px;
-  border-radius: 3px;
-  background: #111;
-  animation: blink 4.2s infinite;
+.bot img,
+img.sleuth {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+  /* a thin pale halo so the black ink reads on the dark stage */
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.85))
+    drop-shadow(0 0 1px rgba(255, 255, 255, 0.6));
 }
-.bot-red {
-  background: #e5484d;
-  box-shadow:
-    0 3px 0 rgba(0, 0, 0, 0.35),
-    0 0 18px #e5484d88;
+.bot-red img {
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.85))
+    drop-shadow(0 0 8px #e5484daa);
 }
 .vm-worker .bot {
   animation: bob 2.6s ease-in-out infinite;
@@ -717,10 +709,8 @@
   border-color: #4f8ff7;
   box-shadow: 0 0 0 2px #4f8ff755;
 }
-.vm-worker.checked .bot {
-  box-shadow:
-    0 3px 0 rgba(0, 0, 0, 0.35),
-    0 0 0 2px #4f8ff7;
+.vm-worker.checked .bot img {
+  filter: drop-shadow(0 0 4px #4f8ff7) drop-shadow(0 0 2px #4f8ff7);
 }
 .vm-inv {
   position: absolute;
@@ -735,8 +725,8 @@
   animation: next-in 0.35s ease-out;
 }
 .vm-inv .sleuth {
-  width: 40px;
-  height: 44px;
+  width: 46px;
+  height: 56px;
 }
 .vm-inv-delegate {
   display: flex;
