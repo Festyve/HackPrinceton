@@ -7,5 +7,6 @@ import "./design.css";
 import "./demo-lab.css";
 import "./demo-investigation.css";
 import "./demo-cases.css";
+import "./demo-experiments.css";
 
 createRoot(document.getElementById("root") as HTMLElement).render(<App />);

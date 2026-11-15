@@ -1,0 +1,104 @@
+/* demo-experiments: Caught vs investigator budget chart on Experiments */
+.xp .xc {
+  margin: 0;
+  padding: 16px 18px 10px;
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  --solo: #e2b56f;
+  --spec: #86b6dc;
+}
+.xp .xc-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 18px;
+  margin-bottom: 6px;
+}
+.xp .xc-head h3 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.xp .xc-legend {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--soft);
+}
+.xp .xc-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.xp .xc-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.xp .xc-dot.solo {
+  background: var(--solo);
+}
+.xp .xc-dot.spec {
+  background: var(--spec);
+}
+.xp .xc-dot.hollow {
+  border: 1.5px solid var(--soft);
+  width: 9px;
+  height: 9px;
+}
+.xp .xc-empty {
+  margin: 8px 0 10px;
+  color: var(--soft);
+}
+.xp .xc-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.xp .xc-grid {
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 1;
+}
+.xp .xc-tick {
+  fill: var(--soft);
+  font-size: 11px;
+  font-family: var(--mono);
+}
+.xp .xc-axis {
+  fill: var(--soft);
+  font-size: 12px;
+}
+.xp .xc-pt {
+  stroke: rgba(15, 18, 20, 0.85);
+  stroke-width: 1.5;
+  cursor: pointer;
+}
+.xp .xc-pt.solo {
+  fill: var(--solo);
+}
+.xp .xc-pt.spec {
+  fill: var(--spec);
+}
+.xp .xc-pt.hollow {
+  fill: none;
+  stroke-width: 1.5;
+}
+.xp .xc-pt.hollow.solo {
+  stroke: var(--solo);
+}
+.xp .xc-pt.hollow.spec {
+  stroke: var(--spec);
+}
+.xp .xc-pt:hover {
+  stroke: #fff;
+}
+.xp .xp-rule {
+  font-size: 12px;
+  color: var(--soft);
+  margin: 0;
+}

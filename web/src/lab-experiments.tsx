@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import type { CaseInfo, Runtime } from "./api";
+import type { CaseInfo, Ratio, Runtime } from "./api";
+import { api } from "./api";
 import { labApi, permissionLabel } from "./lab-api";
 import { filesApi } from "./files-api";
 import type { ExperimentRun, ExperimentRuns } from "./files-api";
@@ -93,9 +94,172 @@ function Caught({ r, withheld }: { r: ExperimentRun; withheld: boolean }) {
         <i style={{ width: `${(100 * num) / den}%` }} />
       </span>
       <b>
-        {num} / {den - num}
+        {num} / {den}
       </b>
     </span>
+  );
+}
+
+type Point = {
+  id: string;
+  x: number;
+  turns: number;
+  solo: boolean;
+  num: number | null;
+  den: number | null;
+};
+
+/** Caught vs investigator budget: one dot per lab run on this server. */
+function ExperimentsChart({
+  cases,
+  onOpen,
+}: {
+  cases: CaseInfo[];
+  onOpen: (id: string) => void;
+}) {
+  const labs = cases.filter(
+    (c) =>
+      c.lab &&
+      (c.investigation_mode === "fast" || c.investigation_mode === "specialist"),
+  );
+  const key = labs.map((c) => `${c.case_id}:${c.state}`).join("|");
+  const [recall, setRecall] = useState<Record<string, Ratio | null>>({});
+  useEffect(() => {
+    let live = true;
+    Promise.all(
+      labs.map((c) =>
+        api
+          .getCase(c.case_id)
+          .then(
+            (v) =>
+              [
+                c.case_id,
+                ((v.reveal?.score as { step_recall?: Ratio | null } | undefined)
+                  ?.step_recall ?? null) as Ratio | null,
+              ] as const,
+          )
+          .catch(() => [c.case_id, null] as const),
+      ),
+    ).then((pairs) => live && setRecall(Object.fromEntries(pairs)));
+    return () => {
+      live = false;
+    };
+  }, [key]);
+  const points: Point[] = labs.map((c) => {
+    const r = recall[c.case_id];
+    const ok = r && r.den != null && r.den > 0 && r.num != null;
+    return {
+      id: c.case_id,
+      x: c.lab!.conditions.investigator_requests,
+      turns: c.lab!.conditions.rogue_requests,
+      solo: c.investigation_mode === "fast",
+      num: ok ? r!.num! : null,
+      den: ok ? r!.den! : null,
+    };
+  });
+  const revealed = points.filter((p) => p.den != null);
+  const W = 920,
+    H = 210,
+    L = 44,
+    R = 16,
+    T = 14,
+    B = 38;
+  const sx = (x: number) => L + ((x - 1) / 18) * (W - L - R);
+  const sy = (f: number) => T + (1 - f) * (H - T - B);
+  // spread dots that share a spot
+  const seen: Record<string, number> = {};
+  const nudge = (p: Point) => {
+    const k = `${p.x}:${p.den == null ? "u" : (p.num! / p.den!).toFixed(3)}`;
+    const n = (seen[k] = (seen[k] ?? -1) + 1);
+    return n === 0 ? 0 : (n % 2 ? 1 : -1) * Math.ceil(n / 2) * 9;
+  };
+  return (
+    <figure className="xc" data-testid="experiments-chart">
+      <figcaption className="xc-head">
+        <h3>Caught vs investigator budget</h3>
+        {revealed.length >= 2 && (
+          <span className="xc-legend">
+            <span>
+              <i className="xc-dot solo" /> Solo
+            </span>
+            <span>
+              <i className="xc-dot spec" /> Specialists
+            </span>
+            <span>
+              <i className="xc-dot hollow" /> Not revealed
+            </span>
+          </span>
+        )}
+      </figcaption>
+      {revealed.length < 2 ? (
+        <p className="xc-empty">
+          Run the lab at a few settings and reveal the results to compare.
+        </p>
+      ) : (
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          role="img"
+          aria-label="Effects caught by investigator requests"
+          className="xc-svg"
+        >
+          {[0, 0.5, 1].map((f) => (
+            <g key={f}>
+              <line
+                className="xc-grid"
+                x1={L}
+                x2={W - R}
+                y1={sy(f)}
+                y2={sy(f)}
+              />
+              <text className="xc-tick" x={L - 8} y={sy(f) + 4} textAnchor="end">
+                {Math.round(f * 100)}%
+              </text>
+            </g>
+          ))}
+          {[1, 5, 10, 15, 19].map((x) => (
+            <text
+              key={x}
+              className="xc-tick"
+              x={sx(x)}
+              y={H - B + 16}
+              textAnchor="middle"
+            >
+              {x}
+            </text>
+          ))}
+          <text
+            className="xc-axis"
+            x={(L + W - R) / 2}
+            y={H - 4}
+            textAnchor="middle"
+          >
+            Investigator requests
+          </text>
+          {points.map((p) => {
+            const hollow = p.den == null;
+            const cx = sx(Math.min(19, Math.max(1, p.x))) + nudge(p);
+            const cy = hollow ? sy(0) : sy(p.num! / p.den!);
+            return (
+              <circle
+                key={p.id}
+                data-run={p.id}
+                className={`xc-pt ${p.solo ? "solo" : "spec"} ${hollow ? "hollow" : ""}`}
+                cx={cx}
+                cy={cy}
+                r={hollow ? 5 : 6.5}
+                onClick={() => onOpen(p.id)}
+              >
+                <title>
+                  {`${p.solo ? "Solo" : "Specialists"} · ${p.x} investigator requests · ${p.turns} saboteur turns · ${
+                    hollow ? "not revealed" : `${p.num} / ${p.den} caught`
+                  }`}
+                </title>
+              </circle>
+            );
+          })}
+        </svg>
+      )}
+    </figure>
   );
 }
 
@@ -201,6 +365,7 @@ export function LabExperiments({
   const sameEvidence = kind !== "rogue_permissions";
   return (
     <section className="lab-experiments xp" data-testid="lab-experiments">
+      <ExperimentsChart cases={cases} onOpen={onOpen} />
       {!roots.length ? (
         <p className="xp-empty">No experiments yet. Run one in Lab.</p>
       ) : (
@@ -318,7 +483,7 @@ export function LabExperiments({
                       <th>Run</th>
                       <th>Changed</th>
                       <th>Evidence</th>
-                      <th>Caught / missed</th>
+                      <th>Caught</th>
                       <th>Requests used</th>
                     </tr>
                   </thead>
