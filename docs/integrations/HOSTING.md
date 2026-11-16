@@ -13,6 +13,7 @@ domain offer and the side prizes is in [`SIDE_PRIZES.md`](https://github.com/owl
 | Server | **Vultr** → Compute → Instances → `alibi-demo` | Shared CPU `vc2-1c-2gb` (1 vCPU, 2 GB RAM, 55 GB SSD), Ubuntu 24.04 LTS x64, New York (NJ), public IPv4 only |
 | HTTPS | Caddy on the server | Automatic Let's Encrypt certificate. Nothing was bought. |
 | Code served | Branch `codex/alibi-build`, cloned to `/opt/alibi` | Deploy scripts come from branch `integrations-side-prizes` (`/root/alibi-deploy-src`) |
+| Deploys | **Automatic.** `alibi-update.timer` on the server checks GitHub every 5 minutes | A push to `codex/alibi-build` is live in about 5 to 10 minutes. https://whats-the-alibi.us/deploy.json shows the live commit |
 
 ## DNS records (Porkbun)
 
@@ -62,10 +63,15 @@ curl -sI https://www.whats-the-alibi.us           # HTTP/2 301 → https://whats
 
 ## Common operations
 
-- **Update the demo to the latest `codex/alibi-build`:** open the Vultr console and run
-  `ALIBI_REF=codex/alibi-build ALIBI_DOMAIN=whats-the-alibi.us bash /root/alibi-deploy-src/deploy/vultr/bootstrap.sh`.
-  Add `ALIBI_REF=<sha>` to freeze a commit before judging.
-- **Logs:** `journalctl -u alibi -f`, `journalctl -u caddy -f`, `tail -30 /var/log/alibi-bootstrap.log`.
+- **Update the demo:** nothing to do. Push to `codex/alibi-build`, and the server redeploys itself within about 10
+  minutes. Check `curl -s https://whats-the-alibi.us/deploy.json`. To force it now from the console:
+  `systemctl start alibi-update.service`. To freeze a commit before judging: set `ALIBI_REF=<sha>` in
+  `/etc/alibi-deploy.env`.
+- **Reinstalling without logging in:** Vultr → `alibi-demo` → Server Reinstall keeps the IP and reruns the User Data,
+  so the server rebuilds itself from GitHub in about 8 minutes. It was reinstalled this way on 2026-11-15 to add
+  auto-deploy.
+- **Logs:** `journalctl -u alibi -f`, `journalctl -u caddy -f`, `tail -30 /var/log/alibi-bootstrap.log`,
+  `tail /var/log/alibi-update.log` (one line per automatic deploy).
 - **New server:** follow `deploy/vultr/README.md`, then replace the two `A` records above with the new IPv4 and update
   this file.
 
